@@ -7,7 +7,6 @@ import {
 } from 'xiv-strat-board'
 import { getIconConfig } from '../utils/iconMap.ts'
 import { getBoardUrl, getIconUrl } from '../utils/staticImage.ts'
-import { getCode } from '../utils/getCode.ts'
 import { loadImage, FontLibrary } from 'skia-canvas'
 import { SCENE_HEIGHT, SCENE_WIDTH } from '../utils/resize.ts'
 

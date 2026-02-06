@@ -17,7 +17,11 @@ export function renderImage(code = 'default') {
     return cache
   }
 
-  const renderPromise = stageLoader(code, hash, filePath)
+  const renderPromise = stageLoader(code, hash, filePath).catch((err) => {
+    console.error(`code: ${code} render error. clean cache`);
+    rendererCache.delete(hash)
+    throw err
+  })
   rendererCache.set(hash, renderPromise)
   return renderPromise
 }
