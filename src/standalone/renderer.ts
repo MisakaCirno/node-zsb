@@ -9,6 +9,19 @@ import { getIconConfig } from '../utils/iconMap.ts'
 import { getBoardUrl, getIconUrl } from '../utils/staticImage.ts'
 import { loadImage, FontLibrary } from 'skia-canvas'
 import { SCENE_HEIGHT, SCENE_WIDTH } from '../utils/resize.ts'
+import { fileURLToPath } from 'node:url'
+import path from 'node:path'
+
+const __dirname = path.dirname(fileURLToPath(import.meta.url))
+const FONT_PATH = path.resolve(
+  __dirname,
+  '..',
+  'assets',
+  'fonts',
+  'AlibabaPuHuiTi-3-55-Regular.ttf',
+)
+
+FontLibrary.use('AlibabaPuHuiTi', [FONT_PATH])
 
 // --- Helper Functions from Components ---
 
@@ -55,10 +68,6 @@ function createTextBlock(data: StrategyObject): Konva.Text {
   const textWidth = calcTextWidth(text, fontSize)
   const offsetX = textWidth / 2
   const offsetY = fontSize / 2
-
-  FontLibrary.use('AlibabaPuHuiTi', [
-    'src/assets/fonts/AlibabaPuHuiTi-3-55-Regular.ttf',
-  ])
 
   return new Konva.Text({
     text: data.text,

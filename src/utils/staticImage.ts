@@ -1,9 +1,13 @@
+import { fileURLToPath } from 'node:url'
+import path from 'node:path'
+
+const __dirname = path.dirname(fileURLToPath(import.meta.url))
+const assetsDir = path.resolve(__dirname, '..', 'assets')
+
 export function getBoardUrl(boardName: string): string {
-  if(process) return `src/assets/background/${boardName}.webp`
-  return new URL(`../assets/background/${boardName}.webp`, import.meta.url).href
+  return path.join(assetsDir, 'background', `${boardName}.webp`)
 }
 
 export function getIconUrl(iconName: string): string {
-  if(process) return `src/assets/objects/${iconName}.webp`
-  return new URL(`../assets/objects/${iconName}.webp`, import.meta.url).href
+  return path.join(assetsDir, 'objects', `${iconName}.webp`)
 }
