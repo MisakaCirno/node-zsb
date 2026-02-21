@@ -1,26 +1,33 @@
 import { Image } from 'skia-canvas'
 
 const cache = new Map<string, Image>()
-const handlers = new Set<string>()
+const pending = new Map<string, Promise<Image>>()
 
-
-export function loadImage(url: string, callback?: (img: Image) => void) {
-  const imageObj = new Image()
-  imageObj.src = url
-  handlers.add(url)
-  cache.set(url, imageObj)
-  imageObj.onload = () => {
-    if (callback) {
-      callback(imageObj)
-    }
-    handlers.delete(url)
-    if (handlers.size === 0) {
-      // all images are loaded
-      console.log('All images loaded')
-    }
+export function loadImage(url: string): Promise<Image> {
+  const cached = cache.get(url)
+  if (cached) {
+    return Promise.resolve(cached)
   }
-}
 
-export function onImageLoad(callback: () => void) {
+  const existing = pending.get(url)
+  if (existing) {
+    return existing
+  }
 
+  const promise = new Promise<Image>((resolve, reject) => {
+    const imageObj = new Image()
+    imageObj.onload = () => {
+      cache.set(url, imageObj)
+      pending.delete(url)
+      resolve(imageObj)
+    }
+    imageObj.onerror = (err) => {
+      pending.delete(url)
+      reject(err)
+    }
+    imageObj.src = url
+  })
+
+  pending.set(url, promise)
+  return promise
 }
