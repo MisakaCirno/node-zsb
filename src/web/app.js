@@ -487,6 +487,7 @@ function renderInspector() {
   els.emptyState.classList.toggle('hidden', Boolean(object))
   els.inspector.classList.toggle('hidden', !object)
   if (!object) return
+  updateInspectorVisibility(object)
   els.type.value = object.type
   els.x.value = object.x ?? 256
   els.y.value = object.y ?? 192
@@ -506,21 +507,53 @@ function renderInspector() {
 function updateSelectedFromInspector() {
   const object = getSelected()
   if (!object) return
+  const capabilities = getObjectCapabilities(object.type)
   recordHistory()
   object.x = numberValue(els.x, 0, 512)
   object.y = numberValue(els.y, 0, 384)
   object.size = numberValue(els.size, 10, 300)
   object.angle = numberValue(els.angle, 0, 360)
-  object.color = els.color.value
-  object.transparency = numberValue(els.transparency, 0, 100)
-  object.text = els.text.value || undefined
-  object.endX = numberValue(els.endX, 0, 512)
-  object.endY = numberValue(els.endY, 0, 384)
-  object.arcAngle = numberValue(els.arc, 10, 360)
-  object.donutRadius = numberValue(els.donut, 0, 240)
+  object.color = capabilities.appearance ? els.color.value : undefined
+  object.transparency = capabilities.appearance
+    ? numberValue(els.transparency, 0, 100)
+    : undefined
+  object.text = capabilities.text ? els.text.value || undefined : undefined
+  object.endX = capabilities.line ? numberValue(els.endX, 0, 512) : undefined
+  object.endY = capabilities.line ? numberValue(els.endY, 0, 384) : undefined
+  object.arcAngle = capabilities.arcAngle ? numberValue(els.arc, 10, 360) : undefined
+  object.donutRadius = capabilities.donutRadius
+    ? numberValue(els.donut, 0, 240)
+    : undefined
   object.hidden = els.hidden.checked || undefined
   object.locked = els.locked.checked || undefined
   renderAll()
+}
+
+function updateInspectorVisibility(object) {
+  const capabilities = getObjectCapabilities(object.type)
+  setFieldVisible('appearance', capabilities.appearance)
+  setFieldVisible('text', capabilities.text)
+  setFieldVisible('line', capabilities.line)
+  setFieldVisible('arc', capabilities.arcAngle || capabilities.donutRadius)
+  setFieldVisible('arc-angle', capabilities.arcAngle)
+  setFieldVisible('donut-radius', capabilities.donutRadius)
+}
+
+function setFieldVisible(field, visible) {
+  const element = document.querySelector(`[data-field="${field}"]`)
+  if (element) {
+    element.classList.toggle('hidden', !visible)
+  }
+}
+
+function getObjectCapabilities(type) {
+  return {
+    appearance: ['text', 'line', 'line_aoe', 'donut'].includes(type),
+    text: type === 'text',
+    line: type === 'line',
+    arcAngle: type === 'fan_aoe',
+    donutRadius: type === 'donut',
+  }
 }
 
 function renderLayers() {
@@ -620,13 +653,36 @@ function cleanBoard(board) {
     name: board.name || undefined,
     boardBackground: board.boardBackground,
     objects: board.objects.map((object) => {
-      const copy = { ...object }
+      const copy = sanitizeObject(object)
       for (const key of Object.keys(copy)) {
         if (copy[key] === undefined || copy[key] === '') delete copy[key]
       }
       return copy
     }),
   }
+}
+
+function sanitizeObject(object) {
+  const capabilities = getObjectCapabilities(object.type)
+  const copy = { ...object }
+  if (!capabilities.appearance) {
+    delete copy.color
+    delete copy.transparency
+  }
+  if (!capabilities.text) {
+    delete copy.text
+  }
+  if (!capabilities.line) {
+    delete copy.endX
+    delete copy.endY
+  }
+  if (!capabilities.arcAngle) {
+    delete copy.arcAngle
+  }
+  if (!capabilities.donutRadius) {
+    delete copy.donutRadius
+  }
+  return copy
 }
 
 function recordHistory() {

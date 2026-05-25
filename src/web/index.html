@@ -55,7 +55,7 @@
               <span>类型</span>
               <input id="object-type" disabled />
             </label>
-            <div class="field-grid">
+            <div class="field-grid" data-field="position">
               <label class="field">
                 <span>X</span>
                 <input id="object-x" type="number" min="0" max="512" />
@@ -65,7 +65,7 @@
                 <input id="object-y" type="number" min="0" max="384" />
               </label>
             </div>
-            <div class="field-grid">
+            <div class="field-grid" data-field="transform">
               <label class="field">
                 <span>大小</span>
                 <input id="object-size" type="number" min="10" max="300" />
@@ -75,7 +75,7 @@
                 <input id="object-angle" type="number" min="0" max="360" />
               </label>
             </div>
-            <div class="field-grid">
+            <div class="field-grid" data-field="appearance">
               <label class="field">
                 <span>颜色</span>
                 <input id="object-color" type="color" />
@@ -85,11 +85,11 @@
                 <input id="object-transparency" type="number" min="0" max="100" />
               </label>
             </div>
-            <label class="field">
+            <label class="field" data-field="text">
               <span>文字</span>
               <input id="object-text" maxlength="30" />
             </label>
-            <div class="field-grid">
+            <div class="field-grid" data-field="line">
               <label class="field">
                 <span>终点 X</span>
                 <input id="object-end-x" type="number" min="0" max="512" />
@@ -99,12 +99,12 @@
                 <input id="object-end-y" type="number" min="0" max="384" />
               </label>
             </div>
-            <div class="field-grid">
-              <label class="field">
+            <div class="field-grid" data-field="arc">
+              <label class="field" data-field="arc-angle">
                 <span>弧度</span>
                 <input id="object-arc" type="number" min="10" max="360" step="10" />
               </label>
-              <label class="field">
+              <label class="field" data-field="donut-radius">
                 <span>内圈</span>
                 <input id="object-donut" type="number" min="0" max="240" />
               </label>

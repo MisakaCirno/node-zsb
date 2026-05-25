@@ -204,3 +204,39 @@ test('editor toggles hidden and locked states from the layer list', async ({
   await page.getByRole('button', { name: '撤销' }).click()
   await expect(page.locator('#object-locked')).not.toBeChecked()
 })
+
+test('editor shows inspector fields that match the selected object type', async ({
+  page,
+  request,
+}) => {
+  await page.goto('/editor')
+  await expect(page.locator('#layers')).toContainText('tank')
+
+  await page.locator('#layers .layer-row').first().click()
+  await expect(page.locator('[data-field="text"]')).toBeHidden()
+  await expect(page.locator('[data-field="line"]')).toBeHidden()
+  await expect(page.locator('[data-field="arc"]')).toBeHidden()
+
+  await page.getByRole('button', { name: '形状' }).click()
+  await page.getByTitle('text').click()
+  await expect(page.locator('[data-field="text"]')).toBeVisible()
+  await expect(page.locator('[data-field="line"]')).toBeHidden()
+
+  await page.locator('button[title="line"]').click()
+  await expect(page.locator('[data-field="line"]')).toBeVisible()
+  await expect(page.locator('[data-field="text"]')).toBeHidden()
+
+  await page.locator('#layers .layer-row').filter({ hasText: 'tank' }).first().click()
+  await page.getByRole('button', { name: '导出' }).click()
+  const code = await page.locator('#code-output').inputValue()
+  const decoded = await request.post('/utils/code2json', {
+    data: { code },
+  })
+  const payload = await decoded.json()
+  const tank = payload.data.objects.find(
+    (object: { type: string }) => object.type === 'tank',
+  )
+  expect(tank.text).toBeUndefined()
+  expect(tank.endX).toBeUndefined()
+  expect(tank.arcAngle).toBeUndefined()
+})
