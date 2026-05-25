@@ -136,6 +136,38 @@ test('editor updates object action button states from the selection', async ({
   await expect(page.locator('#center-object')).toBeDisabled()
 })
 
+test('editor clears the board with confirmation and undo support', async ({
+  page,
+}) => {
+  await page.goto('/editor')
+  await expect(page.locator('#layers')).toContainText('tank')
+
+  const before = await page.locator('#layers .layer-row').count()
+  await expect(page.locator('#clear-board')).toBeEnabled()
+
+  page.once('dialog', async (dialog) => {
+    expect(dialog.message()).toContain('清空')
+    await dialog.dismiss()
+  })
+  await page.locator('#clear-board').click()
+  await expect(page.locator('#layers .layer-row')).toHaveCount(before)
+
+  page.once('dialog', async (dialog) => {
+    expect(dialog.message()).toContain('清空')
+    await dialog.accept()
+  })
+  await page.locator('#clear-board').click()
+  await expect(page.locator('#layers .layer-row')).toHaveCount(0)
+  await expect(page.locator('#empty-state')).toBeVisible()
+  await expect(page.locator('#clear-board')).toBeDisabled()
+  await expect(page.locator('#delete-object')).toBeDisabled()
+  await expect(page.locator('#status')).toContainText('已清空画板')
+
+  await page.getByRole('button', { name: '撤销' }).click()
+  await expect(page.locator('#layers .layer-row')).toHaveCount(before)
+  await expect(page.locator('#clear-board')).toBeEnabled()
+})
+
 test('editor persists the board across reloads', async ({ page }) => {
   await page.goto('/editor')
   await expect(page.locator('#layers')).toContainText('tank')

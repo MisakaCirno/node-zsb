@@ -66,6 +66,7 @@ const els = {
   status: document.querySelector('#status'),
   undo: document.querySelector('#undo-action'),
   redo: document.querySelector('#redo-action'),
+  clearBoard: document.querySelector('#clear-board'),
   deleteObject: document.querySelector('#delete-object'),
   duplicateObject: document.querySelector('#duplicate-object'),
   moveUp: document.querySelector('#move-up'),
@@ -141,6 +142,7 @@ function bindEvents() {
   })
   els.undo.addEventListener('click', undo)
   els.redo.addEventListener('click', redo)
+  els.clearBoard.addEventListener('click', clearBoard)
   els.deleteObject.addEventListener('click', deleteSelected)
   els.duplicateObject.addEventListener('click', duplicateSelected)
   els.moveUp.addEventListener('click', () => moveSelected(1))
@@ -695,6 +697,16 @@ function deleteSelected() {
   showStatus(`已删除 ${object?.type ?? '对象'}`)
 }
 
+function clearBoard() {
+  if (state.board.objects.length === 0) return
+  if (!window.confirm('清空当前画板上的所有对象？')) return
+  recordHistory()
+  state.board.objects = []
+  state.selectedIndex = -1
+  renderAll()
+  showStatus('已清空画板')
+}
+
 function duplicateSelected() {
   const object = getSelected()
   if (!object) return
@@ -897,6 +909,7 @@ function updateHistoryButtons() {
 function updateSelectionActions() {
   const object = getSelected()
   const hasSelection = Boolean(object)
+  els.clearBoard.disabled = state.board.objects.length === 0
   els.deleteObject.disabled = !hasSelection
   els.duplicateObject.disabled = !hasSelection
   els.centerObject.disabled = !hasSelection || Boolean(object?.locked)
