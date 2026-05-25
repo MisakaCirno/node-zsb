@@ -3,13 +3,9 @@ import {
   normalizeCoordinate as normalizeCoordinateValue,
   normalizePoint as normalizePointValue,
 } from './geometry.js'
-import {
-  loadSavedBoard,
-  persistSavedBoard,
-} from './storage.js'
+import { persistSavedBoard } from './storage.js'
 import {
   cleanBoard,
-  normalizeBoard,
 } from './board.js'
 import { getEditorData } from './api.js'
 import {
@@ -22,6 +18,7 @@ import { bindEditorEvents } from './editorBindings.js'
 import { getEditorElements } from './editorElements.js'
 import { createEditorFeedback } from './editorFeedback.js'
 import { createEditorHistoryControls } from './editorHistoryControls.js'
+import { initializeEditorBoard } from './editorStartup.js'
 import { createStageRenderer } from './stageRenderer.js'
 import { createInspectorControls } from './inspectorControls.js'
 import { createLocalBoardsPanel } from './localBoardsPanel.js'
@@ -160,25 +157,20 @@ export function createEditorApp({
     state.iconConfigs = meta.iconConfigs
     state.iconGroups = meta.iconGroups
     state.backgrounds = meta.backgrounds
-    const codeFromUrl = new URLSearchParams(window.location.search).get('code')
-    const savedBoard = loadSavedBoard()
-    if (codeFromUrl) {
-      els.codeInput.value = codeFromUrl
-      await loadFromCode(codeFromUrl, { record: false })
-    } else if (savedBoard) {
-      state.board = normalizeBoard(savedBoard)
-      syncBoardNameInput()
-      renderBackgroundOptions()
-    } else {
-      els.codeInput.value = meta.defaultCode
-      await loadFromCode(meta.defaultCode, { record: false })
-    }
+    const initialSource = await initializeEditorBoard({
+      elements: els,
+      loadFromCode,
+      meta,
+      renderBackgroundOptions,
+      state,
+      syncBoardNameInput,
+    })
     bindEvents()
     renderLocalBoards()
     renderPaletteTabs()
     renderAll()
     applyFitZoom({ silent: true })
-    showStatus(codeFromUrl ? '已从链接导入战术板' : '编辑器已就绪')
+    showStatus(initialSource.statusText)
   }
 
   function bindEvents() {
