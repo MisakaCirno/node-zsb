@@ -225,12 +225,16 @@ test('editor toggles hidden and locked states from the layer list', async ({
 
   await firstLayer.locator('[data-action="locked"]').click()
   await expect(page.locator('#object-locked')).toBeChecked()
+  await expect(page.locator('#object-x')).toBeDisabled()
+  await expect(page.locator('#object-size')).toBeDisabled()
+  await expect(page.locator('#object-color')).toBeEnabled()
 
   await page.keyboard.press('ArrowRight')
   await expect(page.locator('#object-x')).toHaveValue(beforeX)
 
   await page.getByRole('button', { name: '撤销' }).click()
   await expect(page.locator('#object-locked')).not.toBeChecked()
+  await expect(page.locator('#object-x')).toBeEnabled()
 })
 
 test('editor shows inspector fields that match the selected object type', async ({

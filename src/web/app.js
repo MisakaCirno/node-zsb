@@ -578,6 +578,7 @@ function renderInspector() {
   els.donut.value = object.donutRadius ?? 80
   els.hidden.checked = Boolean(object.hidden)
   els.locked.checked = Boolean(object.locked)
+  updateInspectorLockState(object)
 }
 
 function updateSelectedFromInspector() {
@@ -614,6 +615,22 @@ function updateInspectorVisibility(object) {
   setFieldVisible('arc', capabilities.arcAngle || capabilities.donutRadius)
   setFieldVisible('arc-angle', capabilities.arcAngle)
   setFieldVisible('donut-radius', capabilities.donutRadius)
+}
+
+function updateInspectorLockState(object) {
+  const locked = Boolean(object.locked)
+  for (const input of [
+    els.x,
+    els.y,
+    els.size,
+    els.angle,
+    els.endX,
+    els.endY,
+    els.arc,
+    els.donut,
+  ]) {
+    input.disabled = locked
+  }
 }
 
 function setFieldVisible(field, visible) {
