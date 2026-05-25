@@ -61,6 +61,7 @@ const els = {
   paletteTabs: document.querySelector('#palette-tabs'),
   palette: document.querySelector('#palette'),
   layers: document.querySelector('#layers'),
+  layerCount: document.querySelector('#layer-count'),
   stageHost: document.querySelector('#stage-host'),
   preview: document.querySelector('#preview-image'),
   status: document.querySelector('#status'),
@@ -654,6 +655,14 @@ function getObjectCapabilities(type) {
 
 function renderLayers() {
   els.layers.innerHTML = ''
+  els.layerCount.textContent = String(state.board.objects.length)
+  if (state.board.objects.length === 0) {
+    const empty = document.createElement('div')
+    empty.className = 'layer-empty'
+    empty.textContent = '暂无对象'
+    els.layers.append(empty)
+    return
+  }
   state.board.objects.forEach((object, index) => {
     const row = document.createElement('div')
     row.className = 'layer-row'

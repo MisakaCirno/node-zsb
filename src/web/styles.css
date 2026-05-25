@@ -258,6 +258,15 @@ textarea {
   opacity: 0.65;
 }
 
+.layer-empty {
+  border: 1px dashed #303b43;
+  border-radius: 6px;
+  color: #81909a;
+  font-size: 13px;
+  padding: 14px;
+  text-align: center;
+}
+
 .layer-toggle {
   width: 28px;
   height: 26px;

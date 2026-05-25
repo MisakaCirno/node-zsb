@@ -143,6 +143,7 @@ test('editor clears the board with confirmation and undo support', async ({
   await expect(page.locator('#layers')).toContainText('tank')
 
   const before = await page.locator('#layers .layer-row').count()
+  await expect(page.locator('#layer-count')).toHaveText(String(before))
   await expect(page.locator('#clear-board')).toBeEnabled()
 
   page.once('dialog', async (dialog) => {
@@ -158,6 +159,8 @@ test('editor clears the board with confirmation and undo support', async ({
   })
   await page.locator('#clear-board').click()
   await expect(page.locator('#layers .layer-row')).toHaveCount(0)
+  await expect(page.locator('#layers')).toContainText('暂无对象')
+  await expect(page.locator('#layer-count')).toHaveText('0')
   await expect(page.locator('#empty-state')).toBeVisible()
   await expect(page.locator('#clear-board')).toBeDisabled()
   await expect(page.locator('#delete-object')).toBeDisabled()
@@ -165,6 +168,7 @@ test('editor clears the board with confirmation and undo support', async ({
 
   await page.getByRole('button', { name: '撤销' }).click()
   await expect(page.locator('#layers .layer-row')).toHaveCount(before)
+  await expect(page.locator('#layer-count')).toHaveText(String(before))
   await expect(page.locator('#clear-board')).toBeEnabled()
 })
 
