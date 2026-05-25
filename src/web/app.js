@@ -16,6 +16,7 @@ import {
   createEditorState,
   getSelectedObject,
 } from './editorState.js'
+import { createBoardMetaControls } from './boardMetaControls.js'
 import { createBoardCodeActions } from './boardCodeActions.js'
 import { bindEditorEvents } from './editorBindings.js'
 import { createEditorFeedback } from './editorFeedback.js'
@@ -134,6 +135,18 @@ const els = {
 }
 
 const {
+  onBackgroundChange,
+  onBoardNameChange,
+  renderBackgroundOptions,
+  syncBoardNameInput,
+} = createBoardMetaControls({
+  state,
+  elements: els,
+  recordHistory,
+  renderAll,
+})
+
+const {
   renderInspector: renderInspectorControl,
   updateSelectedFromInspector,
 } = createInspectorControls({
@@ -200,7 +213,7 @@ async function init() {
     await loadFromCode(codeFromUrl, { record: false })
   } else if (savedBoard) {
     state.board = normalizeBoard(savedBoard)
-    els.boardName.value = state.board.name ?? ''
+    syncBoardNameInput()
     renderBackgroundOptions()
   } else {
     els.codeInput.value = meta.defaultCode
@@ -250,28 +263,6 @@ function bindEvents() {
   })
 }
 
-function onBackgroundChange() {
-  recordHistory()
-  state.board.boardBackground = els.background.value
-  renderAll()
-}
-
-function onBoardNameChange() {
-  recordHistory()
-  state.board.name = els.boardName.value
-}
-
-function renderBackgroundOptions() {
-  els.background.innerHTML = ''
-  for (const key of Object.keys(state.backgrounds)) {
-    const option = document.createElement('option')
-    option.value = key
-    option.textContent = key
-    option.selected = key === state.board.boardBackground
-    els.background.append(option)
-  }
-}
-
 function renderPaletteTabs() {
   renderPaletteTabsPanel({
     state,
@@ -308,7 +299,7 @@ function renderLayers() {
 }
 
 function restoreCurrentState() {
-  els.boardName.value = state.board.name ?? ''
+  syncBoardNameInput()
   renderBackgroundOptions()
   renderAll()
   updateHistoryButtons()
