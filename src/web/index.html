@@ -27,6 +27,19 @@
         </label>
 
         <section>
+          <div class="section-title">本地存档</div>
+          <label class="field">
+            <span>存档槽</span>
+            <select id="local-board-select"></select>
+          </label>
+          <div class="toolbar local-board-actions">
+            <button id="save-local-board" type="button">保存</button>
+            <button id="load-local-board" type="button" disabled>读取</button>
+            <button id="delete-local-board" type="button" disabled>删除</button>
+          </div>
+        </section>
+
+        <section>
           <div class="section-title">对象</div>
           <div id="palette-tabs" class="segmented"></div>
           <div id="palette" class="palette"></div>

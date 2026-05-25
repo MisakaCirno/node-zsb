@@ -5,6 +5,8 @@ const SNAP_STEP = 16
 const GRID_STEP = SNAP_STEP * LOGICAL_SCALE
 const ZOOM_LEVELS = [0.5, 0.75, 1, 1.25, 1.5]
 const STORAGE_KEY = 'node-zsb-editor-board-v1'
+const LOCAL_BOARDS_KEY = 'node-zsb-editor-local-boards-v1'
+const MAX_LOCAL_BOARDS = 20
 
 const state = {
   board: {
@@ -58,6 +60,10 @@ const els = {
   exportCode: document.querySelector('#export-code'),
   renderPreview: document.querySelector('#render-preview'),
   background: document.querySelector('#background-select'),
+  localBoardSelect: document.querySelector('#local-board-select'),
+  saveLocalBoard: document.querySelector('#save-local-board'),
+  loadLocalBoard: document.querySelector('#load-local-board'),
+  deleteLocalBoard: document.querySelector('#delete-local-board'),
   boardName: document.querySelector('#board-name'),
   paletteTabs: document.querySelector('#palette-tabs'),
   palette: document.querySelector('#palette'),
@@ -117,6 +123,7 @@ async function init() {
     await loadFromCode(meta.defaultCode, { record: false })
   }
   bindEvents()
+  renderLocalBoards()
   renderPaletteTabs()
   renderAll()
   applyFitZoom({ silent: true })
@@ -148,6 +155,10 @@ function bindEvents() {
     recordHistory()
     state.board.name = els.boardName.value
   })
+  els.localBoardSelect.addEventListener('change', updateLocalBoardButtons)
+  els.saveLocalBoard.addEventListener('click', saveLocalBoard)
+  els.loadLocalBoard.addEventListener('click', loadLocalBoard)
+  els.deleteLocalBoard.addEventListener('click', deleteLocalBoard)
   els.undo.addEventListener('click', undo)
   els.redo.addEventListener('click', redo)
   els.clearBoard.addEventListener('click', clearBoard)
@@ -240,6 +251,45 @@ function renderBackgroundOptions() {
     option.selected = key === state.board.boardBackground
     els.background.append(option)
   }
+}
+
+function renderLocalBoards(selectedId = els.localBoardSelect.value) {
+  const boards = loadLocalBoards()
+  els.localBoardSelect.innerHTML = ''
+  if (boards.length === 0) {
+    const option = document.createElement('option')
+    option.value = ''
+    option.textContent = '暂无本地存档'
+    els.localBoardSelect.append(option)
+    updateLocalBoardButtons()
+    return
+  }
+
+  for (const board of boards) {
+    const option = document.createElement('option')
+    option.value = board.id
+    option.textContent = formatLocalBoardLabel(board)
+    option.selected = board.id === selectedId
+    els.localBoardSelect.append(option)
+  }
+  if (!boards.some((board) => board.id === selectedId)) {
+    els.localBoardSelect.value = boards[0].id
+  }
+  updateLocalBoardButtons()
+}
+
+function updateLocalBoardButtons() {
+  const hasSelection = Boolean(els.localBoardSelect.value)
+  els.loadLocalBoard.disabled = !hasSelection
+  els.deleteLocalBoard.disabled = !hasSelection
+}
+
+function formatLocalBoardLabel(entry) {
+  const date = new Date(entry.updatedAt)
+  const time = Number.isNaN(date.getTime())
+    ? ''
+    : ` ${date.toLocaleString('zh-CN', { hour12: false })}`
+  return `${entry.name || '未命名'}${time}`
 }
 
 function renderPaletteTabs() {
@@ -811,6 +861,50 @@ function clearBoard() {
   showStatus('已清空画板')
 }
 
+function saveLocalBoard() {
+  const boards = loadLocalBoards()
+  const entry = {
+    id: createLocalBoardId(),
+    name: state.board.name || '未命名',
+    updatedAt: new Date().toISOString(),
+    board: cleanBoard(state.board),
+  }
+  boards.unshift(entry)
+  if (!saveLocalBoards(boards.slice(0, MAX_LOCAL_BOARDS))) return
+  renderLocalBoards(entry.id)
+  showStatus('已保存到浏览器本地存储')
+}
+
+function loadLocalBoard() {
+  const boards = loadLocalBoards()
+  const entry = boards.find((board) => board.id === els.localBoardSelect.value)
+  if (!entry) return
+  recordHistory()
+  state.board = normalizeBoard(entry.board)
+  state.selectedIndex = -1
+  els.boardName.value = state.board.name ?? ''
+  renderBackgroundOptions()
+  renderAll()
+  showStatus(`已读取本地存档 ${entry.name || '未命名'}`)
+}
+
+function deleteLocalBoard() {
+  const boards = loadLocalBoards()
+  const entry = boards.find((board) => board.id === els.localBoardSelect.value)
+  if (!entry) return
+  if (!window.confirm(`删除本地存档“${entry.name || '未命名'}”？`)) return
+  if (!saveLocalBoards(boards.filter((board) => board.id !== entry.id))) return
+  renderLocalBoards()
+  showStatus('已删除本地存档')
+}
+
+function createLocalBoardId() {
+  if (window.crypto?.randomUUID) {
+    return window.crypto.randomUUID()
+  }
+  return `${Date.now()}-${Math.random().toString(16).slice(2)}`
+}
+
 function duplicateSelected() {
   const object = getSelected()
   if (!object) return
@@ -1206,6 +1300,30 @@ function loadSavedBoard() {
   } catch (error) {
     console.warn('Failed to load saved board', error)
     return null
+  }
+}
+
+function loadLocalBoards() {
+  try {
+    const raw = window.localStorage.getItem(LOCAL_BOARDS_KEY)
+    const boards = raw ? JSON.parse(raw) : []
+    return Array.isArray(boards)
+      ? boards.filter((entry) => entry?.id && entry?.board)
+      : []
+  } catch (error) {
+    console.warn('Failed to load local boards', error)
+    return []
+  }
+}
+
+function saveLocalBoards(boards) {
+  try {
+    window.localStorage.setItem(LOCAL_BOARDS_KEY, JSON.stringify(boards))
+    return true
+  } catch (error) {
+    console.warn('Failed to save local boards', error)
+    showStatus('保存本地存档失败', { type: 'error' })
+    return false
   }
 }
 

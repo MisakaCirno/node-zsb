@@ -266,6 +266,43 @@ test('editor clears the board with confirmation and undo support', async ({
   await expect(page.locator('#clear-board')).toBeEnabled()
 })
 
+test('editor saves, loads, and deletes local browser board slots', async ({
+  page,
+}) => {
+  await page.goto('/editor')
+  await page.evaluate(() =>
+    localStorage.removeItem('node-zsb-editor-local-boards-v1'),
+  )
+  await page.reload()
+  await expect(page.locator('#layers')).toContainText('tank')
+  await expect(page.locator('#local-board-select')).toContainText('暂无本地存档')
+  await expect(page.locator('#load-local-board')).toBeDisabled()
+  await expect(page.locator('#delete-local-board')).toBeDisabled()
+
+  await page.locator('#board-name').fill('本地草稿')
+  await page.locator('#board-name').dispatchEvent('change')
+  await page.locator('#save-local-board').click()
+  await expect(page.locator('#status')).toContainText('已保存到浏览器本地存储')
+  await expect(page.locator('#local-board-select')).toContainText('本地草稿')
+  await expect(page.locator('#load-local-board')).toBeEnabled()
+  await expect(page.locator('#delete-local-board')).toBeEnabled()
+
+  await page.locator('#board-name').fill('临时修改')
+  await page.locator('#board-name').dispatchEvent('change')
+  await page.locator('#load-local-board').click()
+  await expect(page.locator('#board-name')).toHaveValue('本地草稿')
+  await expect(page.locator('#status')).toContainText('已读取本地存档 本地草稿')
+
+  page.once('dialog', async (dialog) => {
+    expect(dialog.message()).toContain('删除本地存档')
+    await dialog.accept()
+  })
+  await page.locator('#delete-local-board').click()
+  await expect(page.locator('#local-board-select')).toContainText('暂无本地存档')
+  await expect(page.locator('#load-local-board')).toBeDisabled()
+  await expect(page.locator('#delete-local-board')).toBeDisabled()
+})
+
 test('editor persists the board across reloads', async ({ page }) => {
   await page.goto('/editor')
   await expect(page.locator('#layers')).toContainText('tank')
