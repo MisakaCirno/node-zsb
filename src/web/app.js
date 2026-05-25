@@ -14,6 +14,9 @@ const state = {
   backgrounds: {},
   activeGroup: 'rolesAndJobs',
   images: new Map(),
+  history: [],
+  future: [],
+  statusTimer: 0,
 }
 
 const stage = new Konva.Stage({
@@ -48,6 +51,9 @@ const els = {
   palette: document.querySelector('#palette'),
   layers: document.querySelector('#layers'),
   preview: document.querySelector('#preview-image'),
+  status: document.querySelector('#status'),
+  undo: document.querySelector('#undo-action'),
+  redo: document.querySelector('#redo-action'),
   deleteObject: document.querySelector('#delete-object'),
   duplicateObject: document.querySelector('#duplicate-object'),
   moveUp: document.querySelector('#move-up'),
@@ -76,27 +82,39 @@ async function init() {
   state.iconGroups = meta.iconGroups
   state.backgrounds = meta.backgrounds
   els.codeInput.value = meta.defaultCode
-  await loadFromCode(meta.defaultCode)
+  await loadFromCode(meta.defaultCode, { record: false })
   bindEvents()
   renderPaletteTabs()
   renderAll()
+  showStatus('编辑器已就绪')
 }
 
 function bindEvents() {
-  els.loadCode.addEventListener('click', () => loadFromCode(els.codeInput.value))
-  els.exportCode.addEventListener('click', exportCode)
-  els.renderPreview.addEventListener('click', renderPreview)
+  els.loadCode.addEventListener('click', () =>
+    runAction(() => loadFromCode(els.codeInput.value), '已导入战术板'),
+  )
+  els.exportCode.addEventListener('click', () =>
+    runAction(exportCode, '已导出战术板代码'),
+  )
+  els.renderPreview.addEventListener('click', () =>
+    runAction(renderPreview, '已渲染预览图'),
+  )
   els.background.addEventListener('change', () => {
+    recordHistory()
     state.board.boardBackground = els.background.value
     renderAll()
   })
-  els.boardName.addEventListener('input', () => {
+  els.boardName.addEventListener('change', () => {
+    recordHistory()
     state.board.name = els.boardName.value
   })
+  els.undo.addEventListener('click', undo)
+  els.redo.addEventListener('click', redo)
   els.deleteObject.addEventListener('click', deleteSelected)
   els.duplicateObject.addEventListener('click', duplicateSelected)
   els.moveUp.addEventListener('click', () => moveSelected(1))
   els.moveDown.addEventListener('click', () => moveSelected(-1))
+  document.addEventListener('keydown', handleKeyboard)
   stage.on('click tap', (event) => {
     if (event.target === stage || event.target.getLayer() === boardLayer) {
       selectObject(-1)
@@ -122,8 +140,11 @@ function bindEvents() {
   }
 }
 
-async function loadFromCode(code) {
+async function loadFromCode(code, options = {}) {
   const payload = await postJson('/utils/code2json', { code })
+  if (options.record !== false) {
+    recordHistory()
+  }
   state.board = normalizeBoard(payload.data)
   state.selectedIndex = -1
   els.boardName.value = state.board.name ?? ''
@@ -205,6 +226,7 @@ function renderPalette() {
 }
 
 function addObject(type) {
+  recordHistory()
   const object = createDefaultObject(type)
   state.board.objects.push(object)
   selectObject(state.board.objects.length - 1)
@@ -294,6 +316,9 @@ async function createNode(object, index) {
   node.on('click tap', (event) => {
     event.cancelBubble = true
     selectObject(index)
+  })
+  node.on('dragstart', () => {
+    recordHistory()
   })
   node.on('dragend', () => {
     handleDragEnd(node, object)
@@ -467,6 +492,7 @@ function renderInspector() {
 function updateSelectedFromInspector() {
   const object = getSelected()
   if (!object) return
+  recordHistory()
   object.x = numberValue(els.x, 0, 512)
   object.y = numberValue(els.y, 0, 384)
   object.size = numberValue(els.size, 10, 300)
@@ -497,6 +523,7 @@ function renderLayers() {
 
 function deleteSelected() {
   if (state.selectedIndex < 0) return
+  recordHistory()
   state.board.objects.splice(state.selectedIndex, 1)
   state.selectedIndex = -1
   renderAll()
@@ -505,6 +532,7 @@ function deleteSelected() {
 function duplicateSelected() {
   const object = getSelected()
   if (!object) return
+  recordHistory()
   const copy = structuredClone(object)
   copy.x = clamp(copy.x + 18, 0, 512)
   copy.y = clamp(copy.y + 18, 0, 384)
@@ -516,6 +544,7 @@ function moveSelected(delta) {
   const index = state.selectedIndex
   const target = index + delta
   if (index < 0 || target < 0 || target >= state.board.objects.length) return
+  recordHistory()
   const [object] = state.board.objects.splice(index, 1)
   state.board.objects.splice(target, 0, object)
   selectObject(target)
@@ -561,6 +590,104 @@ function cleanBoard(board) {
       return copy
     }),
   }
+}
+
+function recordHistory() {
+  state.history.push({
+    board: structuredClone(state.board),
+    selectedIndex: state.selectedIndex,
+  })
+  if (state.history.length > 80) {
+    state.history.shift()
+  }
+  state.future = []
+  updateHistoryButtons()
+}
+
+function undo() {
+  const snapshot = state.history.pop()
+  if (!snapshot) return
+  state.future.push({
+    board: structuredClone(state.board),
+    selectedIndex: state.selectedIndex,
+  })
+  restoreSnapshot(snapshot)
+  showStatus('已撤销')
+}
+
+function redo() {
+  const snapshot = state.future.pop()
+  if (!snapshot) return
+  state.history.push({
+    board: structuredClone(state.board),
+    selectedIndex: state.selectedIndex,
+  })
+  restoreSnapshot(snapshot)
+  showStatus('已重做')
+}
+
+function restoreSnapshot(snapshot) {
+  state.board = structuredClone(snapshot.board)
+  state.selectedIndex = Math.min(
+    snapshot.selectedIndex,
+    state.board.objects.length - 1,
+  )
+  els.boardName.value = state.board.name ?? ''
+  renderBackgroundOptions()
+  renderAll()
+  updateHistoryButtons()
+}
+
+function updateHistoryButtons() {
+  els.undo.disabled = state.history.length === 0
+  els.redo.disabled = state.future.length === 0
+}
+
+function handleKeyboard(event) {
+  const target = event.target
+  const isEditingText =
+    target instanceof HTMLInputElement || target instanceof HTMLTextAreaElement
+  if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === 'z') {
+    event.preventDefault()
+    if (event.shiftKey) {
+      redo()
+    } else {
+      undo()
+    }
+    return
+  }
+  if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === 'y') {
+    event.preventDefault()
+    redo()
+    return
+  }
+  if (!isEditingText && event.key === 'Delete') {
+    deleteSelected()
+  }
+}
+
+async function runAction(action, successMessage) {
+  try {
+    await action()
+    showStatus(successMessage)
+  } catch (error) {
+    handleError(error)
+  }
+}
+
+function handleError(error) {
+  console.error(error)
+  showStatus(error.message ?? '操作失败', { type: 'error' })
+}
+
+function showStatus(message, options = {}) {
+  clearTimeout(state.statusTimer)
+  els.status.textContent = message
+  els.status.classList.toggle('error', options.type === 'error')
+  els.status.classList.add('visible')
+  state.statusTimer = window.setTimeout(() => {
+    els.status.classList.remove('visible')
+  }, 2200)
 }
 
 function getSelected() {

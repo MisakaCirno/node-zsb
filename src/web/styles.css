@@ -34,6 +34,11 @@ button {
   cursor: pointer;
 }
 
+button:disabled {
+  cursor: not-allowed;
+  opacity: 0.45;
+}
+
 button:hover,
 button.active {
   border-color: #66c2a5;
@@ -109,6 +114,10 @@ textarea {
 
 .stage-toolbar input {
   width: 170px;
+}
+
+.stage-toolbar button {
+  min-width: 58px;
 }
 
 #stage-host {
@@ -227,4 +236,30 @@ textarea {
   border: 1px solid #303b43;
   border-radius: 6px;
   margin-top: 10px;
+}
+
+.status {
+  position: fixed;
+  left: 50%;
+  bottom: 18px;
+  transform: translateX(-50%);
+  max-width: min(560px, calc(100vw - 32px));
+  border: 1px solid #31404a;
+  background: rgba(21, 27, 32, 0.96);
+  color: #dce6ea;
+  border-radius: 6px;
+  padding: 9px 14px;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 140ms ease;
+  box-shadow: 0 12px 34px rgba(0, 0, 0, 0.36);
+}
+
+.status.visible {
+  opacity: 1;
+}
+
+.status.error {
+  border-color: #b95d5d;
+  color: #ffd9d9;
 }

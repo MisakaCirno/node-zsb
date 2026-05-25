@@ -36,6 +36,8 @@
       <section class="stage-wrap">
         <div class="stage-toolbar">
           <input id="board-name" maxlength="7" placeholder="名称" />
+          <button id="undo-action" type="button" disabled>撤销</button>
+          <button id="redo-action" type="button" disabled>重做</button>
           <button id="delete-object" type="button">删除</button>
           <button id="duplicate-object" type="button">复制</button>
           <button id="move-up" type="button">上移</button>
@@ -126,6 +128,7 @@
         </section>
       </aside>
     </main>
+    <div id="status" class="status" role="status"></div>
     <script type="module" src="/editor/app.js"></script>
   </body>
 </html>

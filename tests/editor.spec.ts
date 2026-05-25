@@ -79,8 +79,6 @@ test('editor imports code, changes background, and edits text and line objects',
 test('editor reports invalid share code without replacing the board', async ({
   page,
 }) => {
-  page.on('dialog', (dialog) => dialog.accept())
-
   await page.goto('/editor')
   await expect(page.locator('#layers')).toContainText('tank')
   const before = await page.locator('#layers').textContent()
@@ -88,5 +86,23 @@ test('editor reports invalid share code without replacing the board', async ({
   await page.locator('#code-input').fill('[invalid]')
   await page.getByRole('button', { name: '导入' }).click()
 
+  await expect(page.locator('#status')).toContainText(/share code/i)
   await expect(page.locator('#layers')).toHaveText(before ?? '')
+})
+
+test('editor supports undo and redo for object creation', async ({ page }) => {
+  await page.goto('/editor')
+  await expect(page.locator('#layers')).toContainText('tank')
+
+  const before = await page.locator('#layers .layer-row').count()
+  await page.getByTitle('tank').first().click()
+  await expect(page.locator('#layers .layer-row')).toHaveCount(before + 1)
+
+  await page.getByRole('button', { name: '撤销' }).click()
+  await expect(page.locator('#layers .layer-row')).toHaveCount(before)
+  await expect(page.locator('#status')).toContainText('已撤销')
+
+  await page.getByRole('button', { name: '重做' }).click()
+  await expect(page.locator('#layers .layer-row')).toHaveCount(before + 1)
+  await expect(page.locator('#status')).toContainText('已重做')
 })
