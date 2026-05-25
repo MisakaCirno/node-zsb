@@ -40,6 +40,7 @@ import {
 } from './history.js'
 import { createStageRenderer } from './stageRenderer.js'
 import { renderInspector as renderInspectorPanel } from './inspectorPanel.js'
+import { handleEditorKeyboard } from './keyboardShortcuts.js'
 import { renderLayers as renderLayersPanel } from './layersPanel.js'
 import { renderPaletteTabs as renderPaletteTabsPanel } from './palettePanel.js'
 
@@ -196,7 +197,20 @@ function bindEvents() {
       applyFitZoom({ silent: true })
     }
   })
-  document.addEventListener('keydown', handleKeyboard)
+  document.addEventListener('keydown', (event) =>
+    handleEditorKeyboard(event, {
+      applyFitZoom,
+      copySelected,
+      deleteSelected,
+      deselect,
+      duplicateSelected,
+      nudgeSelected,
+      pasteObject,
+      redo,
+      stepZoom,
+      undo,
+    }),
+  )
   for (const input of [
     els.x,
     els.y,
@@ -584,92 +598,9 @@ function updateSelectionActions() {
   els.moveDown.disabled = !hasSelection || state.selectedIndex <= 0
 }
 
-function handleKeyboard(event) {
-  const target = event.target
-  const isEditingText = isTextEditingTarget(target)
-  if (handleZoomShortcut(event)) {
-    return
-  }
-  if (!isEditingText && (event.ctrlKey || event.metaKey) && event.key.toLowerCase() === 'c') {
-    event.preventDefault()
-    copySelected()
-    return
-  }
-  if (!isEditingText && (event.ctrlKey || event.metaKey) && event.key.toLowerCase() === 'd') {
-    event.preventDefault()
-    duplicateSelected()
-    return
-  }
-  if (!isEditingText && (event.ctrlKey || event.metaKey) && event.key.toLowerCase() === 'v') {
-    event.preventDefault()
-    pasteObject()
-    return
-  }
-  if (!isEditingText && ['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(event.key)) {
-    event.preventDefault()
-    nudgeSelected(event.key, event.shiftKey ? 10 : 1)
-    return
-  }
-  if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === 'z') {
-    event.preventDefault()
-    if (event.shiftKey) {
-      redo()
-    } else {
-      undo()
-    }
-    return
-  }
-  if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === 'y') {
-    event.preventDefault()
-    redo()
-    return
-  }
-  if (!isEditingText && event.key === 'Escape') {
-    event.preventDefault()
-    selectObject(-1)
-    showStatus('已取消选择')
-    return
-  }
-  if (!isEditingText && ['Backspace', 'Delete'].includes(event.key)) {
-    event.preventDefault()
-    deleteSelected()
-    return
-  }
-}
-
-function isTextEditingTarget(target) {
-  if (target instanceof HTMLTextAreaElement || target instanceof HTMLSelectElement) {
-    return true
-  }
-  if (!(target instanceof HTMLInputElement)) {
-    return false
-  }
-  return !['button', 'checkbox', 'color', 'file', 'radio', 'range', 'reset', 'submit'].includes(
-    target.type,
-  )
-}
-
-function handleZoomShortcut(event) {
-  if (!(event.ctrlKey || event.metaKey)) return false
-
-  const key = event.key.toLowerCase()
-  if (key === '+' || key === '=' || event.code === 'Equal' || event.code === 'NumpadAdd') {
-    event.preventDefault()
-    stepZoom(1)
-    return true
-  }
-  if (key === '-' || key === '_' || event.code === 'Minus' || event.code === 'NumpadSubtract') {
-    event.preventDefault()
-    stepZoom(-1)
-    return true
-  }
-  if (key === '0' || event.code === 'Digit0' || event.code === 'Numpad0') {
-    event.preventDefault()
-    applyFitZoom()
-    return true
-  }
-
-  return false
+function deselect() {
+  selectObject(-1)
+  showStatus('已取消选择')
 }
 
 function copySelected() {
