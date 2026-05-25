@@ -24,6 +24,7 @@ import {
   undoHistory,
 } from './history.js'
 import { createBoardCodeActions } from './boardCodeActions.js'
+import { createEditorFeedback } from './editorFeedback.js'
 import { createStageRenderer } from './stageRenderer.js'
 import { renderInspector as renderInspectorPanel } from './inspectorPanel.js'
 import { handleEditorKeyboard } from './keyboardShortcuts.js'
@@ -34,6 +35,13 @@ import { renderPaletteTabs as renderPaletteTabsPanel } from './palettePanel.js'
 import { createViewportControls } from './viewportControls.js'
 
 const state = createEditorState()
+const {
+  runAction,
+  showStatus,
+} = createEditorFeedback({
+  state,
+  getElements: () => els,
+})
 const stageRenderer = createStageRenderer({
   container: 'stage-host',
   state,
@@ -392,56 +400,6 @@ function updateSelectionActions() {
 function deselect() {
   selectObject(-1)
   showStatus('已取消选择')
-}
-
-async function runAction(action, successMessage, options = {}) {
-  if (state.actionRunning) return
-  state.actionRunning = true
-  setAsyncActionsDisabled(true)
-  if (options.busyMessage) {
-    showStatus(options.busyMessage)
-  }
-  try {
-    await action()
-    showStatus(successMessage)
-  } catch (error) {
-    handleError(error)
-  } finally {
-    state.actionRunning = false
-    setAsyncActionsDisabled(false)
-  }
-}
-
-function setAsyncActionsDisabled(disabled) {
-  for (const button of [els.loadCode, els.exportCode, els.renderPreview]) {
-    button.disabled = disabled
-    button.setAttribute('aria-busy', String(disabled))
-  }
-  for (const control of [
-    els.background,
-    els.boardName,
-    els.localBoardSelect,
-    els.saveLocalBoard,
-    els.loadLocalBoard,
-    els.deleteLocalBoard,
-  ]) {
-    control.disabled = disabled
-  }
-}
-
-function handleError(error) {
-  console.error(error)
-  showStatus(error.message ?? '操作失败', { type: 'error' })
-}
-
-function showStatus(message, options = {}) {
-  clearTimeout(state.statusTimer)
-  els.status.textContent = message
-  els.status.classList.toggle('error', options.type === 'error')
-  els.status.classList.add('visible')
-  state.statusTimer = window.setTimeout(() => {
-    els.status.classList.remove('visible')
-  }, 2200)
 }
 
 function persistBoard() {
