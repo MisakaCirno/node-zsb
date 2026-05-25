@@ -16,7 +16,7 @@ export const webController = new Elysia()
     ({ params }) => file(path.join(webDir, params.asset)),
     {
       params: t.Object({
-        asset: t.RegExp(/^(?:(?:app|board|constants|geometry|storage)\.js|styles\.css)$/),
+        asset: t.RegExp(/^(?:(?:api|app|board|constants|editorState|geometry|history|storage)\.js|styles\.css)$/),
       }),
     },
   )

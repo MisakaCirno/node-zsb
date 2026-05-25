@@ -26,29 +26,24 @@ import {
   getObjectCapabilities,
   normalizeBoard,
 } from './board.js'
+import {
+  decodeBoardCode,
+  encodeBoardCode,
+  getEditorData,
+  renderPreviewImage,
+} from './api.js'
+import {
+  createEditorState,
+  getSelectedObject,
+  replaceBoard,
+} from './editorState.js'
+import {
+  recordHistory as pushHistory,
+  redoHistory,
+  undoHistory,
+} from './history.js'
 
-const state = {
-  board: {
-    name: '',
-    boardBackground: 'checkered',
-    objects: [],
-  },
-  selectedIndex: -1,
-  iconConfigs: {},
-  iconGroups: {},
-  backgrounds: {},
-  activeGroup: 'rolesAndJobs',
-  snapToGrid: false,
-  showGrid: false,
-  zoom: 1,
-  zoomMode: 'fit',
-  images: new Map(),
-  history: [],
-  future: [],
-  clipboard: null,
-  actionRunning: false,
-  statusTimer: 0,
-}
+const state = createEditorState()
 
 const stage = new Konva.Stage({
   container: 'stage-host',
@@ -124,7 +119,7 @@ const els = {
 }
 
 async function init() {
-  const meta = await getJson('/editor-data')
+  const meta = await getEditorData()
   state.iconConfigs = meta.iconConfigs
   state.iconGroups = meta.iconGroups
   state.backgrounds = meta.backgrounds
@@ -237,12 +232,11 @@ function bindEvents() {
 }
 
 async function loadFromCode(code, options = {}) {
-  const payload = await postJson('/utils/code2json', { code })
+  const board = await decodeBoardCode(code)
   if (options.record !== false) {
     recordHistory()
   }
-  state.board = normalizeBoard(payload.data)
-  state.selectedIndex = -1
+  replaceBoard(state, normalizeBoard(board))
   els.boardName.value = state.board.name ?? ''
   renderBackgroundOptions()
   await renderAll()
@@ -973,75 +967,45 @@ function formatZoom(zoom) {
 }
 
 async function exportCode() {
-  const payload = await postJson('/utils/json2code', {
-    board: cleanBoard(state.board),
-    key: 14,
-  })
-  els.codeOutput.value = payload.code
-  els.codeInput.value = payload.code
-  updateCodeUrl(payload.code)
+  const code = await encodeBoardCode(cleanBoard(state.board))
+  els.codeOutput.value = code
+  els.codeInput.value = code
+  updateCodeUrl(code)
 }
 
 async function renderPreview() {
   const code = await exportAndReturnCode()
-  const payload = await postJson('/board/render', {
-    code,
-  })
-  els.preview.src = `/preview/${payload.data.hash}.webp?${Date.now()}`
+  const data = await renderPreviewImage(code)
+  els.preview.src = `/preview/${data.hash}.webp?${Date.now()}`
   els.preview.style.display = 'block'
 }
 
 async function exportAndReturnCode() {
-  const payload = await postJson('/utils/json2code', {
-    board: cleanBoard(state.board),
-    key: 14,
-  })
-  els.codeOutput.value = payload.code
-  els.codeInput.value = payload.code
-  updateCodeUrl(payload.code)
-  return payload.code
+  const code = await encodeBoardCode(cleanBoard(state.board))
+  els.codeOutput.value = code
+  els.codeInput.value = code
+  updateCodeUrl(code)
+  return code
 }
 
 function recordHistory() {
-  state.history.push({
-    board: structuredClone(state.board),
-    selectedIndex: state.selectedIndex,
-  })
-  if (state.history.length > 80) {
-    state.history.shift()
-  }
-  state.future = []
+  pushHistory(state)
   updateHistoryButtons()
 }
 
 function undo() {
-  const snapshot = state.history.pop()
-  if (!snapshot) return
-  state.future.push({
-    board: structuredClone(state.board),
-    selectedIndex: state.selectedIndex,
-  })
-  restoreSnapshot(snapshot)
+  if (!undoHistory(state)) return
+  restoreCurrentState()
   showStatus('已撤销')
 }
 
 function redo() {
-  const snapshot = state.future.pop()
-  if (!snapshot) return
-  state.history.push({
-    board: structuredClone(state.board),
-    selectedIndex: state.selectedIndex,
-  })
-  restoreSnapshot(snapshot)
+  if (!redoHistory(state)) return
+  restoreCurrentState()
   showStatus('已重做')
 }
 
-function restoreSnapshot(snapshot) {
-  state.board = structuredClone(snapshot.board)
-  state.selectedIndex = Math.min(
-    snapshot.selectedIndex,
-    state.board.objects.length - 1,
-  )
+function restoreCurrentState() {
   els.boardName.value = state.board.name ?? ''
   renderBackgroundOptions()
   renderAll()
@@ -1271,7 +1235,7 @@ function updateCodeUrl(code) {
 }
 
 function getSelected() {
-  return state.board.objects[state.selectedIndex]
+  return getSelectedObject(state)
 }
 
 function loadImage(src) {
@@ -1308,25 +1272,6 @@ function normalizeCoordinate(value, min, max) {
 
 function getSnapStep() {
   return state.snapToGrid ? SNAP_STEP : 0
-}
-
-async function getJson(url) {
-  const response = await fetch(url)
-  if (!response.ok) throw new Error(await response.text())
-  return response.json()
-}
-
-async function postJson(url, body) {
-  const response = await fetch(url, {
-    method: 'POST',
-    headers: { 'content-type': 'application/json' },
-    body: JSON.stringify(body),
-  })
-  const payload = await response.json()
-  if (!response.ok || payload.ok === false) {
-    throw new Error(payload.error ?? '请求失败')
-  }
-  return payload
 }
 
 init().catch((error) => {
