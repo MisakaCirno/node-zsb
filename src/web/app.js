@@ -2,7 +2,6 @@ import { SNAP_STEP } from './constants.js'
 import {
   normalizeCoordinate as normalizeCoordinateValue,
   normalizePoint as normalizePointValue,
-  numberValue,
 } from './geometry.js'
 import {
   loadSavedBoard,
@@ -10,7 +9,6 @@ import {
 } from './storage.js'
 import {
   cleanBoard,
-  getObjectCapabilities,
   normalizeBoard,
 } from './board.js'
 import { getEditorData } from './api.js'
@@ -22,7 +20,7 @@ import { createBoardCodeActions } from './boardCodeActions.js'
 import { createEditorFeedback } from './editorFeedback.js'
 import { createEditorHistoryControls } from './editorHistoryControls.js'
 import { createStageRenderer } from './stageRenderer.js'
-import { renderInspector as renderInspectorPanel } from './inspectorPanel.js'
+import { createInspectorControls } from './inspectorControls.js'
 import { handleEditorKeyboard } from './keyboardShortcuts.js'
 import { createLocalBoardsPanel } from './localBoardsPanel.js'
 import { renderLayers as renderLayersPanel } from './layersPanel.js'
@@ -134,6 +132,18 @@ const els = {
   hidden: document.querySelector('#object-hidden'),
   locked: document.querySelector('#object-locked'),
 }
+
+const {
+  renderInspector: renderInspectorControl,
+  updateSelectedFromInspector,
+} = createInspectorControls({
+  state,
+  elements: els,
+  getSelected,
+  normalizePoint,
+  recordHistory,
+  renderAll,
+})
 
 const {
   exportCode,
@@ -321,37 +331,7 @@ function selectObject(index) {
 }
 
 function renderInspector() {
-  renderInspectorPanel({
-    object: getSelected(),
-    elements: els,
-    updateSelectionActions,
-  })
-}
-
-function updateSelectedFromInspector() {
-  const object = getSelected()
-  if (!object) return
-  const capabilities = getObjectCapabilities(object.type)
-  recordHistory()
-  const point = normalizePoint(numberValue(els.x, 0, 512), numberValue(els.y, 0, 384))
-  object.x = point.x
-  object.y = point.y
-  object.size = numberValue(els.size, 10, 300)
-  object.angle = numberValue(els.angle, 0, 360)
-  object.color = capabilities.appearance ? els.color.value : undefined
-  object.transparency = capabilities.appearance
-    ? numberValue(els.transparency, 0, 100)
-    : undefined
-  object.text = capabilities.text ? els.text.value || undefined : undefined
-  object.endX = capabilities.line ? numberValue(els.endX, 0, 512) : undefined
-  object.endY = capabilities.line ? numberValue(els.endY, 0, 384) : undefined
-  object.arcAngle = capabilities.arcAngle ? numberValue(els.arc, 10, 360) : undefined
-  object.donutRadius = capabilities.donutRadius
-    ? numberValue(els.donut, 0, 240)
-    : undefined
-  object.hidden = els.hidden.checked || undefined
-  object.locked = els.locked.checked || undefined
-  renderAll()
+  renderInspectorControl()
 }
 
 function renderLayers() {
@@ -368,18 +348,6 @@ function restoreCurrentState() {
   renderBackgroundOptions()
   renderAll()
   updateHistoryButtons()
-}
-
-function updateSelectionActions() {
-  const object = getSelected()
-  const hasSelection = Boolean(object)
-  els.clearBoard.disabled = state.board.objects.length === 0
-  els.deleteObject.disabled = !hasSelection
-  els.duplicateObject.disabled = !hasSelection
-  els.centerObject.disabled = !hasSelection || Boolean(object?.locked)
-  els.moveUp.disabled =
-    !hasSelection || state.selectedIndex >= state.board.objects.length - 1
-  els.moveDown.disabled = !hasSelection || state.selectedIndex <= 0
 }
 
 function deselect() {
