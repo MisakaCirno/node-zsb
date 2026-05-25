@@ -18,13 +18,9 @@ import {
   createEditorState,
   getSelectedObject,
 } from './editorState.js'
-import {
-  recordHistory as pushHistory,
-  redoHistory,
-  undoHistory,
-} from './history.js'
 import { createBoardCodeActions } from './boardCodeActions.js'
 import { createEditorFeedback } from './editorFeedback.js'
+import { createEditorHistoryControls } from './editorHistoryControls.js'
 import { createStageRenderer } from './stageRenderer.js'
 import { renderInspector as renderInspectorPanel } from './inspectorPanel.js'
 import { handleEditorKeyboard } from './keyboardShortcuts.js'
@@ -41,6 +37,17 @@ const {
 } = createEditorFeedback({
   state,
   getElements: () => els,
+})
+const {
+  recordHistory,
+  redo,
+  undo,
+  updateHistoryButtons,
+} = createEditorHistoryControls({
+  state,
+  getElements: () => els,
+  restoreCurrentState,
+  showStatus,
 })
 const stageRenderer = createStageRenderer({
   container: 'stage-host',
@@ -356,33 +363,11 @@ function renderLayers() {
   })
 }
 
-function recordHistory() {
-  pushHistory(state)
-  updateHistoryButtons()
-}
-
-function undo() {
-  if (!undoHistory(state)) return
-  restoreCurrentState()
-  showStatus('已撤销')
-}
-
-function redo() {
-  if (!redoHistory(state)) return
-  restoreCurrentState()
-  showStatus('已重做')
-}
-
 function restoreCurrentState() {
   els.boardName.value = state.board.name ?? ''
   renderBackgroundOptions()
   renderAll()
   updateHistoryButtons()
-}
-
-function updateHistoryButtons() {
-  els.undo.disabled = state.history.length === 0
-  els.redo.disabled = state.future.length === 0
 }
 
 function updateSelectionActions() {
