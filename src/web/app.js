@@ -17,11 +17,11 @@ import {
   getSelectedObject,
 } from './editorState.js'
 import { createBoardCodeActions } from './boardCodeActions.js'
+import { bindEditorEvents } from './editorBindings.js'
 import { createEditorFeedback } from './editorFeedback.js'
 import { createEditorHistoryControls } from './editorHistoryControls.js'
 import { createStageRenderer } from './stageRenderer.js'
 import { createInspectorControls } from './inspectorControls.js'
-import { handleEditorKeyboard } from './keyboardShortcuts.js'
 import { createLocalBoardsPanel } from './localBoardsPanel.js'
 import { renderLayers as renderLayersPanel } from './layersPanel.js'
 import { createObjectCommands } from './objectCommands.js'
@@ -215,86 +215,50 @@ async function init() {
 }
 
 function bindEvents() {
-  els.loadCode.addEventListener('click', () =>
-    runAction(() => loadFromCode(els.codeInput.value), '已导入战术板', {
-      busyMessage: '正在导入战术板...',
-    }),
-  )
-  els.exportCode.addEventListener('click', () =>
-    runAction(exportCode, '已导出战术板代码', {
-      busyMessage: '正在导出战术板代码...',
-    }),
-  )
-  els.renderPreview.addEventListener('click', () =>
-    runAction(renderPreview, '已渲染预览图', {
-      busyMessage: '正在渲染预览图...',
-    }),
-  )
-  els.background.addEventListener('change', () => {
-    recordHistory()
-    state.board.boardBackground = els.background.value
-    renderAll()
-  })
-  els.boardName.addEventListener('change', () => {
-    recordHistory()
-    state.board.name = els.boardName.value
-  })
-  els.localBoardSelect.addEventListener('change', updateLocalBoardButtons)
-  els.saveLocalBoard.addEventListener('click', saveLocalBoard)
-  els.loadLocalBoard.addEventListener('click', loadLocalBoard)
-  els.deleteLocalBoard.addEventListener('click', deleteLocalBoard)
-  els.undo.addEventListener('click', undo)
-  els.redo.addEventListener('click', redo)
-  els.clearBoard.addEventListener('click', clearBoard)
-  els.deleteObject.addEventListener('click', deleteSelected)
-  els.duplicateObject.addEventListener('click', duplicateSelected)
-  els.moveUp.addEventListener('click', () => moveSelected(1))
-  els.moveDown.addEventListener('click', () => moveSelected(-1))
-  els.centerObject.addEventListener('click', centerSelected)
-  els.zoomOut.addEventListener('click', () => stepZoom(-1))
-  els.zoomIn.addEventListener('click', () => stepZoom(1))
-  els.fitStage.addEventListener('click', () => applyFitZoom())
-  els.zoomSelect.addEventListener('change', () => {
-    if (els.zoomSelect.value === 'fit') {
-      applyFitZoom()
-      return
-    }
-    setStageZoom(Number(els.zoomSelect.value), { mode: 'manual' })
-  })
-  els.snap.addEventListener('change', toggleSnapToGrid)
-  els.grid.addEventListener('change', toggleGrid)
-  window.addEventListener('resize', applyFitZoomOnResize)
-  document.addEventListener('keydown', (event) =>
-    handleEditorKeyboard(event, {
+  bindEditorEvents({
+    elements: els,
+    runAction,
+    actions: {
       applyFitZoom,
+      applyFitZoomOnResize,
+      centerSelected,
+      clearBoard,
       copySelected,
+      deleteLocalBoard,
       deleteSelected,
       deselect,
       duplicateSelected,
+      exportCode,
+      loadFromCode,
+      loadLocalBoard,
+      moveSelected,
       nudgeSelected,
+      onBackgroundChange,
+      onBoardNameChange,
       pasteObject,
       redo,
+      renderPreview,
+      saveLocalBoard,
+      setStageZoom,
       stepZoom,
+      toggleGrid,
+      toggleSnapToGrid,
       undo,
-    }),
-  )
-  for (const input of [
-    els.x,
-    els.y,
-    els.size,
-    els.angle,
-    els.color,
-    els.transparency,
-    els.text,
-    els.endX,
-    els.endY,
-    els.arc,
-    els.donut,
-    els.hidden,
-    els.locked,
-  ]) {
-    input.addEventListener('input', updateSelectedFromInspector)
-  }
+      updateLocalBoardButtons,
+      updateSelectedFromInspector,
+    },
+  })
+}
+
+function onBackgroundChange() {
+  recordHistory()
+  state.board.boardBackground = els.background.value
+  renderAll()
+}
+
+function onBoardNameChange() {
+  recordHistory()
+  state.board.name = els.boardName.value
 }
 
 function renderBackgroundOptions() {

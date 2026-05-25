@@ -1,0 +1,81 @@
+import { handleEditorKeyboard } from './keyboardShortcuts.js'
+
+export function bindEditorEvents({
+  elements,
+  runAction,
+  actions,
+}) {
+  elements.loadCode.addEventListener('click', () =>
+    runAction(() => actions.loadFromCode(elements.codeInput.value), '已导入战术板', {
+      busyMessage: '正在导入战术板...',
+    }),
+  )
+  elements.exportCode.addEventListener('click', () =>
+    runAction(actions.exportCode, '已导出战术板代码', {
+      busyMessage: '正在导出战术板代码...',
+    }),
+  )
+  elements.renderPreview.addEventListener('click', () =>
+    runAction(actions.renderPreview, '已渲染预览图', {
+      busyMessage: '正在渲染预览图...',
+    }),
+  )
+  elements.background.addEventListener('change', actions.onBackgroundChange)
+  elements.boardName.addEventListener('change', actions.onBoardNameChange)
+  elements.localBoardSelect.addEventListener('change', actions.updateLocalBoardButtons)
+  elements.saveLocalBoard.addEventListener('click', actions.saveLocalBoard)
+  elements.loadLocalBoard.addEventListener('click', actions.loadLocalBoard)
+  elements.deleteLocalBoard.addEventListener('click', actions.deleteLocalBoard)
+  elements.undo.addEventListener('click', actions.undo)
+  elements.redo.addEventListener('click', actions.redo)
+  elements.clearBoard.addEventListener('click', actions.clearBoard)
+  elements.deleteObject.addEventListener('click', actions.deleteSelected)
+  elements.duplicateObject.addEventListener('click', actions.duplicateSelected)
+  elements.moveUp.addEventListener('click', () => actions.moveSelected(1))
+  elements.moveDown.addEventListener('click', () => actions.moveSelected(-1))
+  elements.centerObject.addEventListener('click', actions.centerSelected)
+  elements.zoomOut.addEventListener('click', () => actions.stepZoom(-1))
+  elements.zoomIn.addEventListener('click', () => actions.stepZoom(1))
+  elements.fitStage.addEventListener('click', () => actions.applyFitZoom())
+  elements.zoomSelect.addEventListener('change', () => {
+    if (elements.zoomSelect.value === 'fit') {
+      actions.applyFitZoom()
+      return
+    }
+    actions.setStageZoom(Number(elements.zoomSelect.value), { mode: 'manual' })
+  })
+  elements.snap.addEventListener('change', actions.toggleSnapToGrid)
+  elements.grid.addEventListener('change', actions.toggleGrid)
+  window.addEventListener('resize', actions.applyFitZoomOnResize)
+  document.addEventListener('keydown', (event) =>
+    handleEditorKeyboard(event, {
+      applyFitZoom: actions.applyFitZoom,
+      copySelected: actions.copySelected,
+      deleteSelected: actions.deleteSelected,
+      deselect: actions.deselect,
+      duplicateSelected: actions.duplicateSelected,
+      nudgeSelected: actions.nudgeSelected,
+      pasteObject: actions.pasteObject,
+      redo: actions.redo,
+      stepZoom: actions.stepZoom,
+      undo: actions.undo,
+    }),
+  )
+  for (const input of [
+    elements.x,
+    elements.y,
+    elements.size,
+    elements.angle,
+    elements.color,
+    elements.transparency,
+    elements.text,
+    elements.endX,
+    elements.endY,
+    elements.arc,
+    elements.donut,
+    elements.hidden,
+    elements.locked,
+  ]) {
+    input.addEventListener('input', actions.updateSelectedFromInspector)
+  }
+}
