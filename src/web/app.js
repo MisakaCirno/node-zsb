@@ -442,22 +442,79 @@ function createLineNode(object) {
   const startY = object.y * LOGICAL_SCALE
   const endX = (object.endX ?? object.x) * LOGICAL_SCALE
   const endY = (object.endY ?? object.y) * LOGICAL_SCALE
+  const endLocalX = endX - startX
+  const endLocalY = endY - startY
   const group = new Konva.Group({
     x: startX,
     y: startY,
     rotation: object.angle ?? 0,
   })
-  group.add(
-    new Konva.Line({
-      points: [0, 0, endX - startX, endY - startY],
-      stroke: object.color ?? '#ff8000',
-      strokeWidth: (object.height ?? 6) * LOGICAL_SCALE,
-      lineCap: 'round',
-    }),
-  )
-  group.add(new Konva.Circle({ x: 0, y: 0, radius: 8, fill: 'white', stroke: '#43A8D8', strokeWidth: 2 }))
-  group.add(new Konva.Circle({ x: endX - startX, y: endY - startY, radius: 8, fill: 'white', stroke: '#43A8D8', strokeWidth: 2 }))
+  const line = new Konva.Line({
+    points: [0, 0, endLocalX, endLocalY],
+    stroke: object.color ?? '#ff8000',
+    strokeWidth: (object.height ?? 6) * LOGICAL_SCALE,
+    lineCap: 'round',
+  })
+  const startHandle = createLineHandle(0, 0, !object.locked)
+  const endHandle = createLineHandle(endLocalX, endLocalY, !object.locked)
+  bindLineHandleDrag({
+    object,
+    group,
+    line,
+    startHandle,
+    endHandle,
+  })
+  group.add(line)
+  group.add(startHandle)
+  group.add(endHandle)
   return group
+}
+
+function createLineHandle(x, y, draggable) {
+  return new Konva.Circle({
+    x,
+    y,
+    radius: 8,
+    fill: 'white',
+    stroke: '#43A8D8',
+    strokeWidth: 2,
+    draggable,
+  })
+}
+
+function bindLineHandleDrag({ object, group, line, startHandle, endHandle }) {
+  for (const handle of [startHandle, endHandle]) {
+    handle.on('dragstart', (event) => {
+      event.cancelBubble = true
+      recordHistory()
+    })
+    handle.on('dragmove', (event) => {
+      event.cancelBubble = true
+      line.points([startHandle.x(), startHandle.y(), endHandle.x(), endHandle.y()])
+      objectLayer.batchDraw()
+    })
+    handle.on('dragend', (event) => {
+      event.cancelBubble = true
+      commitLineEndpointDrag(object, group, startHandle, endHandle)
+    })
+  }
+}
+
+function commitLineEndpointDrag(object, group, startHandle, endHandle) {
+  const start = normalizePoint(
+    Math.round((group.x() + startHandle.x()) / LOGICAL_SCALE),
+    Math.round((group.y() + startHandle.y()) / LOGICAL_SCALE),
+  )
+  const end = normalizePoint(
+    Math.round((group.x() + endHandle.x()) / LOGICAL_SCALE),
+    Math.round((group.y() + endHandle.y()) / LOGICAL_SCALE),
+  )
+  object.x = start.x
+  object.y = start.y
+  object.endX = end.x
+  object.endY = end.y
+  renderAll()
+  showStatus('已调整线段端点')
 }
 
 function createLineAoeNode(object) {
