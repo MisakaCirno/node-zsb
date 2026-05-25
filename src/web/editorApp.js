@@ -3,10 +3,6 @@ import {
   normalizeCoordinate as normalizeCoordinateValue,
   normalizePoint as normalizePointValue,
 } from './geometry.js'
-import { persistSavedBoard } from './storage.js'
-import {
-  cleanBoard,
-} from './board.js'
 import { getEditorData } from './api.js'
 import {
   createEditorState,
@@ -18,11 +14,11 @@ import { bindEditorEvents } from './editorBindings.js'
 import { getEditorElements } from './editorElements.js'
 import { createEditorFeedback } from './editorFeedback.js'
 import { createEditorHistoryControls } from './editorHistoryControls.js'
+import { createEditorRenderLoop } from './editorRenderLoop.js'
 import { initializeEditorBoard } from './editorStartup.js'
 import { createStageRenderer } from './stageRenderer.js'
 import { createInspectorControls } from './inspectorControls.js'
 import { createLocalBoardsPanel } from './localBoardsPanel.js'
-import { renderLayers as renderLayersPanel } from './layersPanel.js'
 import { createObjectCommands } from './objectCommands.js'
 import { renderPaletteTabs as renderPaletteTabsPanel } from './palettePanel.js'
 import { createViewportControls } from './viewportControls.js'
@@ -32,6 +28,7 @@ export function createEditorApp({
 } = {}) {
   const els = getEditorElements()
   const state = createEditorState()
+  let renderLoop
   const {
     runAction,
     showStatus,
@@ -151,6 +148,14 @@ export function createEditorApp({
     showStatus,
     confirmAction,
   })
+  renderLoop = createEditorRenderLoop({
+    state,
+    elements: els,
+    stageRenderer,
+    renderInspectorPanel: renderInspectorControl,
+    onSelectObject: selectObject,
+    onToggleLayerFlag: toggleLayerFlag,
+  })
 
   async function start() {
     const meta = await getEditorData()
@@ -218,12 +223,7 @@ export function createEditorApp({
   }
 
   async function renderAll() {
-    await stageRenderer.renderBoard()
-    stageRenderer.renderGrid()
-    await stageRenderer.renderObjects()
-    renderLayers()
-    renderInspector()
-    persistBoard()
+    await renderLoop.renderAll()
   }
 
   function selectObject(index) {
@@ -232,16 +232,11 @@ export function createEditorApp({
   }
 
   function renderInspector() {
-    renderInspectorControl()
+    renderLoop.renderInspector()
   }
 
   function renderLayers() {
-    renderLayersPanel({
-      state,
-      elements: els,
-      onSelectObject: selectObject,
-      onToggleLayerFlag: toggleLayerFlag,
-    })
+    renderLoop.renderLayers()
   }
 
   function restoreCurrentState() {
@@ -254,10 +249,6 @@ export function createEditorApp({
   function deselect() {
     selectObject(-1)
     showStatus('已取消选择')
-  }
-
-  function persistBoard() {
-    persistSavedBoard(cleanBoard(state.board))
   }
 
   function getSelected() {
