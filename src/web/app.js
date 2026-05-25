@@ -3,6 +3,7 @@ const SCENE_HEIGHT = 768
 const LOGICAL_SCALE = 2
 const SNAP_STEP = 16
 const GRID_STEP = SNAP_STEP * LOGICAL_SCALE
+const ZOOM_LEVELS = [0.5, 0.75, 1, 1.25, 1.5]
 const STORAGE_KEY = 'node-zsb-editor-board-v1'
 
 const state = {
@@ -18,6 +19,8 @@ const state = {
   activeGroup: 'rolesAndJobs',
   snapToGrid: false,
   showGrid: false,
+  zoom: 1,
+  zoomMode: 'fit',
   images: new Map(),
   history: [],
   future: [],
@@ -58,6 +61,7 @@ const els = {
   paletteTabs: document.querySelector('#palette-tabs'),
   palette: document.querySelector('#palette'),
   layers: document.querySelector('#layers'),
+  stageHost: document.querySelector('#stage-host'),
   preview: document.querySelector('#preview-image'),
   status: document.querySelector('#status'),
   undo: document.querySelector('#undo-action'),
@@ -67,6 +71,10 @@ const els = {
   moveUp: document.querySelector('#move-up'),
   moveDown: document.querySelector('#move-down'),
   centerObject: document.querySelector('#center-object'),
+  zoomOut: document.querySelector('#zoom-out'),
+  zoomSelect: document.querySelector('#zoom-select'),
+  zoomIn: document.querySelector('#zoom-in'),
+  fitStage: document.querySelector('#fit-stage'),
   snap: document.querySelector('#snap-toggle'),
   grid: document.querySelector('#grid-toggle'),
   emptyState: document.querySelector('#empty-state'),
@@ -108,6 +116,7 @@ async function init() {
   bindEvents()
   renderPaletteTabs()
   renderAll()
+  applyFitZoom({ silent: true })
   showStatus(codeFromUrl ? '已从链接导入战术板' : '编辑器已就绪')
 }
 
@@ -137,6 +146,16 @@ function bindEvents() {
   els.moveUp.addEventListener('click', () => moveSelected(1))
   els.moveDown.addEventListener('click', () => moveSelected(-1))
   els.centerObject.addEventListener('click', centerSelected)
+  els.zoomOut.addEventListener('click', () => stepZoom(-1))
+  els.zoomIn.addEventListener('click', () => stepZoom(1))
+  els.fitStage.addEventListener('click', () => applyFitZoom())
+  els.zoomSelect.addEventListener('change', () => {
+    if (els.zoomSelect.value === 'fit') {
+      applyFitZoom()
+      return
+    }
+    setStageZoom(Number(els.zoomSelect.value), { mode: 'manual' })
+  })
   els.snap.addEventListener('change', () => {
     state.snapToGrid = els.snap.checked
     showStatus(state.snapToGrid ? '已开启网格吸附' : '已关闭网格吸附')
@@ -145,6 +164,11 @@ function bindEvents() {
     state.showGrid = els.grid.checked
     renderGrid()
     showStatus(state.showGrid ? '已显示辅助网格' : '已隐藏辅助网格')
+  })
+  window.addEventListener('resize', () => {
+    if (state.zoomMode === 'fit') {
+      applyFitZoom({ silent: true })
+    }
   })
   document.addEventListener('keydown', handleKeyboard)
   stage.on('click tap', (event) => {
@@ -686,6 +710,52 @@ function centerSelected() {
   }
   renderAll()
   showStatus('已居中选中对象')
+}
+
+function applyFitZoom(options = {}) {
+  const styles = getComputedStyle(els.stageHost)
+  const horizontalPadding =
+    Number.parseFloat(styles.paddingLeft) + Number.parseFloat(styles.paddingRight)
+  const verticalPadding =
+    Number.parseFloat(styles.paddingTop) + Number.parseFloat(styles.paddingBottom)
+  const availableWidth = Math.max(0, els.stageHost.clientWidth - horizontalPadding)
+  const availableHeight = Math.max(0, els.stageHost.clientHeight - verticalPadding)
+  const zoom = Math.min(1, availableWidth / SCENE_WIDTH, availableHeight / SCENE_HEIGHT)
+  setStageZoom(zoom, { mode: 'fit', ...options })
+}
+
+function stepZoom(direction) {
+  const current = state.zoom
+  const target =
+    direction > 0
+      ? ZOOM_LEVELS.find((level) => level > current + 0.01) ?? ZOOM_LEVELS.at(-1)
+      : ZOOM_LEVELS.findLast((level) => level < current - 0.01) ?? ZOOM_LEVELS[0]
+  setStageZoom(target, { mode: 'manual' })
+}
+
+function setStageZoom(zoom, options = {}) {
+  const nextZoom = clamp(Number.isFinite(zoom) ? zoom : 1, 0.35, 1.5)
+  state.zoom = nextZoom
+  state.zoomMode = options.mode ?? 'manual'
+  stage.scale({ x: nextZoom, y: nextZoom })
+  stage.width(Math.round(SCENE_WIDTH * nextZoom))
+  stage.height(Math.round(SCENE_HEIGHT * nextZoom))
+  stage.batchDraw()
+  updateZoomControls()
+  if (!options.silent) {
+    const action = state.zoomMode === 'fit' ? '已适配画布视图' : '已设置画布缩放'
+    showStatus(`${action} ${formatZoom(nextZoom)}`)
+  }
+}
+
+function updateZoomControls() {
+  els.zoomSelect.value = state.zoomMode === 'fit' ? 'fit' : String(state.zoom)
+  els.zoomOut.disabled = state.zoom <= ZOOM_LEVELS[0]
+  els.zoomIn.disabled = state.zoom >= ZOOM_LEVELS.at(-1)
+}
+
+function formatZoom(zoom) {
+  return `${Math.round(zoom * 100)}%`
 }
 
 async function exportCode() {

@@ -228,10 +228,12 @@ test('editor shows inspector fields that match the selected object type', async 
 
   await page.locator('#layers .layer-row').filter({ hasText: 'tank' }).first().click()
   await page.getByRole('button', { name: '导出' }).click()
+  await expect(page.locator('#code-output')).toHaveValue(/\[stgy:/)
   const code = await page.locator('#code-output').inputValue()
   const decoded = await request.post('/utils/code2json', {
     data: { code },
   })
+  expect(decoded.ok()).toBeTruthy()
   const payload = await decoded.json()
   const tank = payload.data.objects.find(
     (object: { type: string }) => object.type === 'tank',
@@ -305,4 +307,27 @@ test('editor deselects and deletes objects with keyboard shortcuts', async ({
 
   await page.getByRole('button', { name: '撤销' }).click()
   await expect(page.locator('#layers .layer-row')).toHaveCount(before + 1)
+})
+
+test('editor fits the stage and changes zoom levels', async ({ page }) => {
+  await page.goto('/editor')
+  await expect(page.locator('#layers')).toContainText('tank')
+
+  const canvas = page.locator('#stage-host canvas').first()
+  await expect(page.locator('#zoom-select')).toHaveValue('fit')
+  const fittedBox = await canvas.boundingBox()
+  expect(fittedBox?.width).toBeLessThan(900)
+
+  await page.locator('#zoom-select').selectOption('1')
+  await expect(page.locator('#status')).toContainText('已设置画布缩放 100%')
+  const fullBox = await canvas.boundingBox()
+  expect(fullBox?.width).toBeGreaterThan(1000)
+
+  await page.locator('#zoom-out').click()
+  await expect(page.locator('#zoom-select')).toHaveValue('0.75')
+  await expect(page.locator('#status')).toContainText('已设置画布缩放 75%')
+
+  await page.locator('#fit-stage').click()
+  await expect(page.locator('#zoom-select')).toHaveValue('fit')
+  await expect(page.locator('#status')).toContainText('已适配画布视图')
 })

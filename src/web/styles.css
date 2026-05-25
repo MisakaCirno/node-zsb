@@ -125,9 +125,20 @@ textarea {
   width: 140px;
 }
 
+.stage-toolbar select {
+  width: 88px;
+}
+
 .stage-toolbar button {
   min-width: 52px;
   padding: 0 10px;
+}
+
+#zoom-in,
+#zoom-out {
+  min-width: 34px;
+  width: 34px;
+  padding: 0;
 }
 
 .toolbar-toggle {
