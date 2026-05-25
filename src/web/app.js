@@ -561,6 +561,7 @@ function renderInspector() {
   const object = getSelected()
   els.emptyState.classList.toggle('hidden', Boolean(object))
   els.inspector.classList.toggle('hidden', !object)
+  updateSelectionActions()
   if (!object) return
   updateInspectorVisibility(object)
   els.type.value = object.type
@@ -876,10 +877,20 @@ function updateHistoryButtons() {
   els.redo.disabled = state.future.length === 0
 }
 
+function updateSelectionActions() {
+  const object = getSelected()
+  const hasSelection = Boolean(object)
+  els.deleteObject.disabled = !hasSelection
+  els.duplicateObject.disabled = !hasSelection
+  els.centerObject.disabled = !hasSelection || Boolean(object?.locked)
+  els.moveUp.disabled =
+    !hasSelection || state.selectedIndex >= state.board.objects.length - 1
+  els.moveDown.disabled = !hasSelection || state.selectedIndex <= 0
+}
+
 function handleKeyboard(event) {
   const target = event.target
-  const isEditingText =
-    target instanceof HTMLInputElement || target instanceof HTMLTextAreaElement
+  const isEditingText = isTextEditingTarget(target)
   if (handleZoomShortcut(event)) {
     return
   }
@@ -923,6 +934,18 @@ function handleKeyboard(event) {
     deleteSelected()
     return
   }
+}
+
+function isTextEditingTarget(target) {
+  if (target instanceof HTMLTextAreaElement || target instanceof HTMLSelectElement) {
+    return true
+  }
+  if (!(target instanceof HTMLInputElement)) {
+    return false
+  }
+  return !['button', 'checkbox', 'color', 'file', 'radio', 'range', 'reset', 'submit'].includes(
+    target.type,
+  )
 }
 
 function handleZoomShortcut(event) {

@@ -108,6 +108,34 @@ test('editor supports undo and redo for object creation', async ({ page }) => {
   await expect(page.locator('#status')).toContainText('已重做')
 })
 
+test('editor updates object action button states from the selection', async ({
+  page,
+}) => {
+  await page.goto('/editor')
+  await expect(page.locator('#layers')).toContainText('tank')
+
+  await expect(page.locator('#delete-object')).toBeDisabled()
+  await expect(page.locator('#duplicate-object')).toBeDisabled()
+  await expect(page.locator('#center-object')).toBeDisabled()
+  await expect(page.locator('#move-up')).toBeDisabled()
+  await expect(page.locator('#move-down')).toBeDisabled()
+
+  await page.locator('#layers .layer-row').first().click()
+  await expect(page.locator('#delete-object')).toBeEnabled()
+  await expect(page.locator('#duplicate-object')).toBeEnabled()
+  await expect(page.locator('#center-object')).toBeEnabled()
+  await expect(page.locator('#move-up')).toBeEnabled()
+  await expect(page.locator('#move-down')).toBeDisabled()
+
+  await page.locator('#object-locked').check()
+  await expect(page.locator('#center-object')).toBeDisabled()
+
+  await page.keyboard.press('Escape')
+  await expect(page.locator('#delete-object')).toBeDisabled()
+  await expect(page.locator('#duplicate-object')).toBeDisabled()
+  await expect(page.locator('#center-object')).toBeDisabled()
+})
+
 test('editor persists the board across reloads', async ({ page }) => {
   await page.goto('/editor')
   await expect(page.locator('#layers')).toContainText('tank')
