@@ -39,6 +39,9 @@ import {
   undoHistory,
 } from './history.js'
 import { createStageRenderer } from './stageRenderer.js'
+import { renderInspector as renderInspectorPanel } from './inspectorPanel.js'
+import { renderLayers as renderLayersPanel } from './layersPanel.js'
+import { renderPaletteTabs as renderPaletteTabsPanel } from './palettePanel.js'
 
 const state = createEditorState()
 const stageRenderer = createStageRenderer({
@@ -275,52 +278,11 @@ function formatLocalBoardLabel(entry) {
 }
 
 function renderPaletteTabs() {
-  const labels = {
-    rolesAndJobs: '职能',
-    mechanics: '机制',
-    enemiesAndMarkers: '标记',
-    shapes: '形状',
-    backgrounds: '地面',
-  }
-  els.paletteTabs.innerHTML = ''
-  for (const key of Object.keys(state.iconGroups)) {
-    const button = document.createElement('button')
-    button.type = 'button'
-    button.textContent = labels[key] ?? key
-    button.classList.toggle('active', key === state.activeGroup)
-    button.addEventListener('click', () => {
-      state.activeGroup = key
-      renderPaletteTabs()
-      renderPalette()
-    })
-    els.paletteTabs.append(button)
-  }
-  renderPalette()
-}
-
-function renderPalette() {
-  els.palette.innerHTML = ''
-  const extras = state.activeGroup === 'shapes' ? ['text', 'line', 'line_aoe', 'circle_aoe', 'fan_aoe', 'donut'] : []
-  const types = [...(state.iconGroups[state.activeGroup] ?? []), ...extras]
-  for (const type of [...new Set(types)]) {
-    const button = document.createElement('button')
-    button.type = 'button'
-    button.title = type
-    const config = state.iconConfigs[type]
-    if (config) {
-      const img = document.createElement('img')
-      img.src = `/assets/objects/${config.src}.webp`
-      img.alt = type
-      button.append(img)
-    } else {
-      const span = document.createElement('span')
-      span.className = 'text-swatch'
-      span.textContent = type === 'text' ? 'T' : type.slice(0, 2)
-      button.append(span)
-    }
-    button.addEventListener('click', () => addObject(type))
-    els.palette.append(button)
-  }
+  renderPaletteTabsPanel({
+    state,
+    elements: els,
+    onAddObject: addObject,
+  })
 }
 
 function addObject(type) {
@@ -363,27 +325,11 @@ function selectObject(index) {
 }
 
 function renderInspector() {
-  const object = getSelected()
-  els.emptyState.classList.toggle('hidden', Boolean(object))
-  els.inspector.classList.toggle('hidden', !object)
-  updateSelectionActions()
-  if (!object) return
-  updateInspectorVisibility(object)
-  els.type.value = object.type
-  els.x.value = object.x ?? 256
-  els.y.value = object.y ?? 192
-  els.size.value = object.size ?? 100
-  els.angle.value = object.angle ?? 0
-  els.color.value = object.color ?? '#ff8000'
-  els.transparency.value = object.transparency ?? 0
-  els.text.value = object.text ?? ''
-  els.endX.value = object.endX ?? object.x ?? 256
-  els.endY.value = object.endY ?? object.y ?? 192
-  els.arc.value = object.arcAngle ?? (object.type === 'fan_aoe' ? 90 : 360)
-  els.donut.value = object.donutRadius ?? 80
-  els.hidden.checked = Boolean(object.hidden)
-  els.locked.checked = Boolean(object.locked)
-  updateInspectorLockState(object)
+  renderInspectorPanel({
+    object: getSelected(),
+    elements: els,
+    updateSelectionActions,
+  })
 }
 
 function updateSelectedFromInspector() {
@@ -412,70 +358,12 @@ function updateSelectedFromInspector() {
   renderAll()
 }
 
-function updateInspectorVisibility(object) {
-  const capabilities = getObjectCapabilities(object.type)
-  setFieldVisible('appearance', capabilities.appearance)
-  setFieldVisible('text', capabilities.text)
-  setFieldVisible('line', capabilities.line)
-  setFieldVisible('arc', capabilities.arcAngle || capabilities.donutRadius)
-  setFieldVisible('arc-angle', capabilities.arcAngle)
-  setFieldVisible('donut-radius', capabilities.donutRadius)
-}
-
-function updateInspectorLockState(object) {
-  const locked = Boolean(object.locked)
-  for (const input of [
-    els.x,
-    els.y,
-    els.size,
-    els.angle,
-    els.endX,
-    els.endY,
-    els.arc,
-    els.donut,
-  ]) {
-    input.disabled = locked
-  }
-}
-
-function setFieldVisible(field, visible) {
-  const element = document.querySelector(`[data-field="${field}"]`)
-  if (element) {
-    element.classList.toggle('hidden', !visible)
-  }
-}
-
 function renderLayers() {
-  els.layers.innerHTML = ''
-  els.layerCount.textContent = String(state.board.objects.length)
-  if (state.board.objects.length === 0) {
-    const empty = document.createElement('div')
-    empty.className = 'layer-empty'
-    empty.textContent = '暂无对象'
-    els.layers.append(empty)
-    return
-  }
-  state.board.objects.forEach((object, index) => {
-    const row = document.createElement('div')
-    row.className = 'layer-row'
-    row.classList.toggle('active', index === state.selectedIndex)
-    row.classList.toggle('muted', Boolean(object.hidden))
-    row.innerHTML = `
-      <button class="layer-toggle" type="button" data-action="hidden" title="${object.hidden ? '显示' : '隐藏'}">${object.hidden ? '隐' : '显'}</button>
-      <button class="layer-toggle" type="button" data-action="locked" title="${object.locked ? '解锁' : '锁定'}">${object.locked ? '锁' : '开'}</button>
-      <span class="layer-name">${index + 1}. ${object.type}</span>
-      <span class="layer-position">${Math.round(object.x)}, ${Math.round(object.y)}</span>
-    `
-    row.querySelector('[data-action="hidden"]').addEventListener('click', (event) => {
-      event.stopPropagation()
-      toggleLayerFlag(index, 'hidden')
-    })
-    row.querySelector('[data-action="locked"]').addEventListener('click', (event) => {
-      event.stopPropagation()
-      toggleLayerFlag(index, 'locked')
-    })
-    row.addEventListener('click', () => selectObject(index))
-    els.layers.append(row)
+  renderLayersPanel({
+    state,
+    elements: els,
+    onSelectObject: selectObject,
+    onToggleLayerFlag: toggleLayerFlag,
   })
 }
 
