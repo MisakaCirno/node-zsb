@@ -1,6 +1,7 @@
 const SCENE_WIDTH = 1024
 const SCENE_HEIGHT = 768
 const LOGICAL_SCALE = 2
+const STORAGE_KEY = 'node-zsb-editor-board-v1'
 
 const state = {
   board: {
@@ -81,12 +82,23 @@ async function init() {
   state.iconConfigs = meta.iconConfigs
   state.iconGroups = meta.iconGroups
   state.backgrounds = meta.backgrounds
-  els.codeInput.value = meta.defaultCode
-  await loadFromCode(meta.defaultCode, { record: false })
+  const codeFromUrl = new URLSearchParams(window.location.search).get('code')
+  const savedBoard = loadSavedBoard()
+  if (codeFromUrl) {
+    els.codeInput.value = codeFromUrl
+    await loadFromCode(codeFromUrl, { record: false })
+  } else if (savedBoard) {
+    state.board = normalizeBoard(savedBoard)
+    els.boardName.value = state.board.name ?? ''
+    renderBackgroundOptions()
+  } else {
+    els.codeInput.value = meta.defaultCode
+    await loadFromCode(meta.defaultCode, { record: false })
+  }
   bindEvents()
   renderPaletteTabs()
   renderAll()
-  showStatus('编辑器已就绪')
+  showStatus(codeFromUrl ? '已从链接导入战术板' : '编辑器已就绪')
 }
 
 function bindEvents() {
@@ -255,6 +267,7 @@ async function renderAll() {
   await renderObjects()
   renderLayers()
   renderInspector()
+  persistBoard()
 }
 
 async function renderBoard() {
@@ -557,6 +570,7 @@ async function exportCode() {
   })
   els.codeOutput.value = payload.code
   els.codeInput.value = payload.code
+  updateCodeUrl(payload.code)
 }
 
 async function renderPreview() {
@@ -575,6 +589,7 @@ async function exportAndReturnCode() {
   })
   els.codeOutput.value = payload.code
   els.codeInput.value = payload.code
+  updateCodeUrl(payload.code)
   return payload.code
 }
 
@@ -647,6 +662,11 @@ function handleKeyboard(event) {
   const target = event.target
   const isEditingText =
     target instanceof HTMLInputElement || target instanceof HTMLTextAreaElement
+  if (!isEditingText && ['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(event.key)) {
+    event.preventDefault()
+    nudgeSelected(event.key, event.shiftKey ? 10 : 1)
+    return
+  }
   if ((event.ctrlKey || event.metaKey) && event.key.toLowerCase() === 'z') {
     event.preventDefault()
     if (event.shiftKey) {
@@ -664,6 +684,27 @@ function handleKeyboard(event) {
   if (!isEditingText && event.key === 'Delete') {
     deleteSelected()
   }
+}
+
+function nudgeSelected(key, step) {
+  const object = getSelected()
+  if (!object || object.locked) return
+  const delta = {
+    ArrowUp: [0, -step],
+    ArrowDown: [0, step],
+    ArrowLeft: [-step, 0],
+    ArrowRight: [step, 0],
+  }[key]
+  if (!delta) return
+  recordHistory()
+  const [dx, dy] = delta
+  object.x = clamp(Math.round(object.x + dx), 0, 512)
+  object.y = clamp(Math.round(object.y + dy), 0, 384)
+  if (object.type === 'line' && object.endX !== undefined && object.endY !== undefined) {
+    object.endX = clamp(Math.round(object.endX + dx), 0, 512)
+    object.endY = clamp(Math.round(object.endY + dy), 0, 384)
+  }
+  renderAll()
 }
 
 async function runAction(action, successMessage) {
@@ -688,6 +729,30 @@ function showStatus(message, options = {}) {
   state.statusTimer = window.setTimeout(() => {
     els.status.classList.remove('visible')
   }, 2200)
+}
+
+function loadSavedBoard() {
+  try {
+    const raw = window.localStorage.getItem(STORAGE_KEY)
+    return raw ? JSON.parse(raw) : null
+  } catch (error) {
+    console.warn('Failed to load saved board', error)
+    return null
+  }
+}
+
+function persistBoard() {
+  try {
+    window.localStorage.setItem(STORAGE_KEY, JSON.stringify(cleanBoard(state.board)))
+  } catch (error) {
+    console.warn('Failed to save board', error)
+  }
+}
+
+function updateCodeUrl(code) {
+  const url = new URL(window.location.href)
+  url.searchParams.set('code', code)
+  window.history.replaceState(null, '', url)
 }
 
 function getSelected() {

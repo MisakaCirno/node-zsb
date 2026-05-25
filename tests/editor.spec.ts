@@ -106,3 +106,54 @@ test('editor supports undo and redo for object creation', async ({ page }) => {
   await expect(page.locator('#layers .layer-row')).toHaveCount(before + 1)
   await expect(page.locator('#status')).toContainText('已重做')
 })
+
+test('editor persists the board across reloads', async ({ page }) => {
+  await page.goto('/editor')
+  await expect(page.locator('#layers')).toContainText('tank')
+
+  const before = await page.locator('#layers .layer-row').count()
+  await page.getByTitle('tank').first().click()
+  await expect(page.locator('#layers .layer-row')).toHaveCount(before + 1)
+
+  await page.reload()
+  await expect(page.locator('#layers .layer-row')).toHaveCount(before + 1)
+})
+
+test('editor can open a board from the code query parameter', async ({
+  page,
+  request,
+}) => {
+  const response = await request.post('/utils/json2code', {
+    data: {
+      key: 14,
+      board: {
+        name: 'url',
+        boardBackground: 'grey_square',
+        objects: [{ type: 'text', x: 256, y: 192, text: 'URL' }],
+      },
+    },
+  })
+  expect(response.ok()).toBeTruthy()
+  const payload = await response.json()
+
+  await page.goto(`/editor?code=${encodeURIComponent(payload.code)}`)
+
+  await expect(page.locator('#background-select')).toHaveValue('grey_square')
+  await expect(page.locator('#layers')).toContainText('text')
+  await expect(page.locator('#status')).toContainText('已从链接导入战术板')
+})
+
+test('editor nudges the selected object with arrow keys', async ({ page }) => {
+  await page.goto('/editor')
+  await expect(page.locator('#layers')).toContainText('tank')
+
+  await page.getByTitle('tank').first().click()
+  await expect(page.locator('#object-type')).toHaveValue('tank')
+  const before = Number(await page.locator('#object-x').inputValue())
+
+  await page.keyboard.press('ArrowRight')
+  await expect(page.locator('#object-x')).toHaveValue(String(before + 1))
+
+  await page.keyboard.press('Shift+ArrowDown')
+  await expect(page.locator('#object-y')).toHaveValue('202')
+})
