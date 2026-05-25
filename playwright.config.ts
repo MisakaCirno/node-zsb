@@ -1,5 +1,14 @@
 import { defineConfig, devices } from '@playwright/test'
 
+const webServer = process.env.PLAYWRIGHT_SKIP_WEB_SERVER
+  ? undefined
+  : {
+      command: 'bun index.ts',
+      url: 'http://localhost:3000/editor',
+      reuseExistingServer: true,
+      timeout: 30_000,
+    }
+
 export default defineConfig({
   testDir: './tests',
   timeout: 30_000,
@@ -13,12 +22,7 @@ export default defineConfig({
     trace: 'on-first-retry',
     screenshot: 'only-on-failure',
   },
-  webServer: {
-    command: 'bun run start',
-    url: 'http://localhost:3000/editor',
-    reuseExistingServer: true,
-    timeout: 30_000,
-  },
+  webServer,
   projects: [
     {
       name: 'chromium',

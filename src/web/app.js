@@ -1,12 +1,31 @@
-const SCENE_WIDTH = 1024
-const SCENE_HEIGHT = 768
-const LOGICAL_SCALE = 2
-const SNAP_STEP = 16
-const GRID_STEP = SNAP_STEP * LOGICAL_SCALE
-const ZOOM_LEVELS = [0.5, 0.75, 1, 1.25, 1.5]
-const STORAGE_KEY = 'node-zsb-editor-board-v1'
-const LOCAL_BOARDS_KEY = 'node-zsb-editor-local-boards-v1'
-const MAX_LOCAL_BOARDS = 20
+import {
+  GRID_STEP,
+  LOGICAL_SCALE,
+  MAX_LOCAL_BOARDS,
+  SCENE_HEIGHT,
+  SCENE_WIDTH,
+  SNAP_STEP,
+  ZOOM_LEVELS,
+} from './constants.js'
+import {
+  clamp,
+  normalizeAngle,
+  normalizeCoordinate as normalizeCoordinateValue,
+  normalizePoint as normalizePointValue,
+  numberValue,
+  rotatePoint,
+} from './geometry.js'
+import {
+  loadLocalBoards,
+  loadSavedBoard,
+  persistLocalBoards,
+  persistSavedBoard,
+} from './storage.js'
+import {
+  cleanBoard,
+  getObjectCapabilities,
+  normalizeBoard,
+} from './board.js'
 
 const state = {
   board: {
@@ -227,19 +246,6 @@ async function loadFromCode(code, options = {}) {
   els.boardName.value = state.board.name ?? ''
   renderBackgroundOptions()
   await renderAll()
-}
-
-function normalizeBoard(board) {
-  return {
-    name: board.name ?? '',
-    boardBackground: board.boardBackground ?? 'checkered',
-    objects: (board.objects ?? []).map((object) => ({
-      size: 100,
-      color: '#ff8000',
-      transparency: 0,
-      ...object,
-    })),
-  }
 }
 
 function renderBackgroundOptions() {
@@ -595,16 +601,6 @@ function normalizePointFromScene(point) {
   )
 }
 
-function rotatePoint(point, degrees) {
-  const radians = (degrees * Math.PI) / 180
-  const cos = Math.cos(radians)
-  const sin = Math.sin(radians)
-  return {
-    x: point.x * cos - point.y * sin,
-    y: point.x * sin + point.y * cos,
-  }
-}
-
 function createLineAoeNode(object) {
   const width = object.width ?? 128
   const height = object.height ?? 128
@@ -785,16 +781,6 @@ function setFieldVisible(field, visible) {
   const element = document.querySelector(`[data-field="${field}"]`)
   if (element) {
     element.classList.toggle('hidden', !visible)
-  }
-}
-
-function getObjectCapabilities(type) {
-  return {
-    appearance: ['text', 'line', 'line_aoe', 'donut'].includes(type),
-    text: type === 'text',
-    line: type === 'line',
-    arcAngle: type === 'fan_aoe',
-    donutRadius: type === 'donut',
   }
 }
 
@@ -1014,43 +1000,6 @@ async function exportAndReturnCode() {
   els.codeInput.value = payload.code
   updateCodeUrl(payload.code)
   return payload.code
-}
-
-function cleanBoard(board) {
-  return {
-    name: board.name || undefined,
-    boardBackground: board.boardBackground,
-    objects: board.objects.map((object) => {
-      const copy = sanitizeObject(object)
-      for (const key of Object.keys(copy)) {
-        if (copy[key] === undefined || copy[key] === '') delete copy[key]
-      }
-      return copy
-    }),
-  }
-}
-
-function sanitizeObject(object) {
-  const capabilities = getObjectCapabilities(object.type)
-  const copy = { ...object }
-  if (!capabilities.appearance) {
-    delete copy.color
-    delete copy.transparency
-  }
-  if (!capabilities.text) {
-    delete copy.text
-  }
-  if (!capabilities.line) {
-    delete copy.endX
-    delete copy.endY
-  }
-  if (!capabilities.arcAngle) {
-    delete copy.arcAngle
-  }
-  if (!capabilities.donutRadius) {
-    delete copy.donutRadius
-  }
-  return copy
 }
 
 function recordHistory() {
@@ -1276,6 +1225,16 @@ function setAsyncActionsDisabled(disabled) {
     button.disabled = disabled
     button.setAttribute('aria-busy', String(disabled))
   }
+  for (const control of [
+    els.background,
+    els.boardName,
+    els.localBoardSelect,
+    els.saveLocalBoard,
+    els.loadLocalBoard,
+    els.deleteLocalBoard,
+  ]) {
+    control.disabled = disabled
+  }
 }
 
 function handleError(error) {
@@ -1293,46 +1252,16 @@ function showStatus(message, options = {}) {
   }, 2200)
 }
 
-function loadSavedBoard() {
-  try {
-    const raw = window.localStorage.getItem(STORAGE_KEY)
-    return raw ? JSON.parse(raw) : null
-  } catch (error) {
-    console.warn('Failed to load saved board', error)
-    return null
-  }
-}
-
-function loadLocalBoards() {
-  try {
-    const raw = window.localStorage.getItem(LOCAL_BOARDS_KEY)
-    const boards = raw ? JSON.parse(raw) : []
-    return Array.isArray(boards)
-      ? boards.filter((entry) => entry?.id && entry?.board)
-      : []
-  } catch (error) {
-    console.warn('Failed to load local boards', error)
-    return []
-  }
-}
-
 function saveLocalBoards(boards) {
-  try {
-    window.localStorage.setItem(LOCAL_BOARDS_KEY, JSON.stringify(boards))
+  if (persistLocalBoards(boards)) {
     return true
-  } catch (error) {
-    console.warn('Failed to save local boards', error)
-    showStatus('保存本地存档失败', { type: 'error' })
-    return false
   }
+  showStatus('保存本地存档失败', { type: 'error' })
+  return false
 }
 
 function persistBoard() {
-  try {
-    window.localStorage.setItem(STORAGE_KEY, JSON.stringify(cleanBoard(state.board)))
-  } catch (error) {
-    console.warn('Failed to save board', error)
-  }
+  persistSavedBoard(cleanBoard(state.board))
 }
 
 function updateCodeUrl(code) {
@@ -1369,30 +1298,16 @@ function calcTextWidth(text, fontSize) {
   return width
 }
 
-function numberValue(input, min, max) {
-  return clamp(Number(input.value || 0), min, max)
-}
-
-function clamp(value, min, max) {
-  return Math.min(max, Math.max(min, value))
-}
-
-function normalizeAngle(value) {
-  return Math.round(((value % 360) + 360) % 360)
-}
-
 function normalizePoint(x, y) {
-  return {
-    x: normalizeCoordinate(x, 0, 512),
-    y: normalizeCoordinate(y, 0, 384),
-  }
+  return normalizePointValue(x, y, getSnapStep())
 }
 
 function normalizeCoordinate(value, min, max) {
-  const rounded = state.snapToGrid
-    ? Math.round(value / SNAP_STEP) * SNAP_STEP
-    : Math.round(value)
-  return clamp(rounded, min, max)
+  return normalizeCoordinateValue(value, min, max, getSnapStep())
+}
+
+function getSnapStep() {
+  return state.snapToGrid ? SNAP_STEP : 0
 }
 
 async function getJson(url) {
