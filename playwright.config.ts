@@ -1,5 +1,6 @@
 import { defineConfig, devices } from '@playwright/test'
 
+const workers = Number(process.env.PLAYWRIGHT_WORKERS ?? 4)
 const webServer = process.env.PLAYWRIGHT_SKIP_WEB_SERVER
   ? undefined
   : {
@@ -16,6 +17,7 @@ export default defineConfig({
     timeout: 5_000,
   },
   fullyParallel: true,
+  workers: Number.isFinite(workers) && workers > 0 ? workers : 4,
   reporter: [['list'], ['html', { open: 'never' }]],
   use: {
     baseURL: 'http://localhost:3000',
