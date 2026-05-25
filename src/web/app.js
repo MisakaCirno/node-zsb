@@ -1,11 +1,5 @@
+import { SNAP_STEP } from './constants.js'
 import {
-  SCENE_HEIGHT,
-  SCENE_WIDTH,
-  SNAP_STEP,
-  ZOOM_LEVELS,
-} from './constants.js'
-import {
-  clamp,
   normalizeCoordinate as normalizeCoordinateValue,
   normalizePoint as normalizePointValue,
   numberValue,
@@ -37,6 +31,7 @@ import { createLocalBoardsPanel } from './localBoardsPanel.js'
 import { renderLayers as renderLayersPanel } from './layersPanel.js'
 import { createObjectCommands } from './objectCommands.js'
 import { renderPaletteTabs as renderPaletteTabsPanel } from './palettePanel.js'
+import { createViewportControls } from './viewportControls.js'
 
 const state = createEditorState()
 const stageRenderer = createStageRenderer({
@@ -138,6 +133,21 @@ const {
 })
 
 const {
+  applyFitZoom,
+  applyFitZoomOnResize,
+  setStageZoom,
+  stepZoom,
+  toggleGrid,
+  toggleSnapToGrid,
+} = createViewportControls({
+  state,
+  elements: els,
+  stage,
+  stageRenderer,
+  showStatus,
+})
+
+const {
   deleteLocalBoard,
   loadLocalBoard,
   renderLocalBoards,
@@ -226,20 +236,9 @@ function bindEvents() {
     }
     setStageZoom(Number(els.zoomSelect.value), { mode: 'manual' })
   })
-  els.snap.addEventListener('change', () => {
-    state.snapToGrid = els.snap.checked
-    showStatus(state.snapToGrid ? '已开启网格吸附' : '已关闭网格吸附')
-  })
-  els.grid.addEventListener('change', () => {
-    state.showGrid = els.grid.checked
-    stageRenderer.renderGrid()
-    showStatus(state.showGrid ? '已显示辅助网格' : '已隐藏辅助网格')
-  })
-  window.addEventListener('resize', () => {
-    if (state.zoomMode === 'fit') {
-      applyFitZoom({ silent: true })
-    }
-  })
+  els.snap.addEventListener('change', toggleSnapToGrid)
+  els.grid.addEventListener('change', toggleGrid)
+  window.addEventListener('resize', applyFitZoomOnResize)
   document.addEventListener('keydown', (event) =>
     handleEditorKeyboard(event, {
       applyFitZoom,
@@ -347,52 +346,6 @@ function renderLayers() {
     onSelectObject: selectObject,
     onToggleLayerFlag: toggleLayerFlag,
   })
-}
-
-function applyFitZoom(options = {}) {
-  const styles = getComputedStyle(els.stageHost)
-  const horizontalPadding =
-    Number.parseFloat(styles.paddingLeft) + Number.parseFloat(styles.paddingRight)
-  const verticalPadding =
-    Number.parseFloat(styles.paddingTop) + Number.parseFloat(styles.paddingBottom)
-  const availableWidth = Math.max(0, els.stageHost.clientWidth - horizontalPadding)
-  const availableHeight = Math.max(0, els.stageHost.clientHeight - verticalPadding)
-  const zoom = Math.min(1, availableWidth / SCENE_WIDTH, availableHeight / SCENE_HEIGHT)
-  setStageZoom(zoom, { mode: 'fit', ...options })
-}
-
-function stepZoom(direction) {
-  const current = state.zoom
-  const target =
-    direction > 0
-      ? ZOOM_LEVELS.find((level) => level > current + 0.01) ?? ZOOM_LEVELS.at(-1)
-      : ZOOM_LEVELS.findLast((level) => level < current - 0.01) ?? ZOOM_LEVELS[0]
-  setStageZoom(target, { mode: 'manual' })
-}
-
-function setStageZoom(zoom, options = {}) {
-  const nextZoom = clamp(Number.isFinite(zoom) ? zoom : 1, 0.35, 1.5)
-  state.zoom = nextZoom
-  state.zoomMode = options.mode ?? 'manual'
-  stage.scale({ x: nextZoom, y: nextZoom })
-  stage.width(Math.round(SCENE_WIDTH * nextZoom))
-  stage.height(Math.round(SCENE_HEIGHT * nextZoom))
-  stage.batchDraw()
-  updateZoomControls()
-  if (!options.silent) {
-    const action = state.zoomMode === 'fit' ? '已适配画布视图' : '已设置画布缩放'
-    showStatus(`${action} ${formatZoom(nextZoom)}`)
-  }
-}
-
-function updateZoomControls() {
-  els.zoomSelect.value = state.zoomMode === 'fit' ? 'fit' : String(state.zoom)
-  els.zoomOut.disabled = state.zoom <= ZOOM_LEVELS[0]
-  els.zoomIn.disabled = state.zoom >= ZOOM_LEVELS.at(-1)
-}
-
-function formatZoom(zoom) {
-  return `${Math.round(zoom * 100)}%`
 }
 
 function recordHistory() {
