@@ -1,3 +1,4 @@
+import 'konva/skia-backend'
 import Konva from 'konva'
 import {
   type BackgroundType,
@@ -444,7 +445,7 @@ export async function renderBoard(
   const iconLayer = new Konva.Layer()
 
   // Add Icons (reversed order as in App.tsx)
-  const items = boardData.objects.reverse().map((obj) => createIcon(obj))
+  const items = [...boardData.objects].reverse().map((obj) => createIcon(obj))
   const resolvedItems = await Promise.all(items)
   resolvedItems.forEach((iconNode) => {
     if (iconNode) {

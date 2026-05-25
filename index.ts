@@ -1,4 +1,3 @@
-import 'konva/skia-backend'
 import Elysia from 'elysia'
 import openapi, { fromTypes } from '@elysiajs/openapi'
 import { node } from '@elysiajs/node'

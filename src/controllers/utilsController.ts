@@ -13,7 +13,7 @@ export const utilsController = new Elysia({ prefix: '/utils' })
           data: board,
         }
       } catch (error) {
-        throw status(500, {
+        throw status(400, {
           ok: false,
           error: (error as Error).message,
         })
@@ -37,7 +37,7 @@ export const utilsController = new Elysia({ prefix: '/utils' })
         })
         return { ok: true, code }
       } catch (error) {
-        throw status(500, {
+        throw status(400, {
           ok: false,
           error: (error as Error).message,
         })

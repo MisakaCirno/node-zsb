@@ -1,20 +1,31 @@
-import Elysia, { file, t } from 'elysia'
+import Elysia, { file, status, t } from 'elysia'
 import {
   getCachePath,
   renderImage,
   renderImageOffline,
 } from '../utils/imageHelper.ts'
+import { isBoardCodeError } from '../utils/getCode.ts'
 
 export const boardController = new Elysia()
   .get(
     '/board/:code?',
     async ({ params, set }) => {
-      const webp = await renderImage(params.code)
+      try {
+        const webp = await renderImage(params.code)
 
-      set.headers = {
-        'content-type': 'image/webp',
+        set.headers = {
+          'content-type': 'image/webp',
+        }
+        return webp
+      } catch (error) {
+        if (isBoardCodeError(error)) {
+          throw status(400, {
+            ok: false,
+            error: error.message,
+          })
+        }
+        throw error
       }
-      return webp
     },
     {
       detail: {
@@ -25,10 +36,20 @@ export const boardController = new Elysia()
   .post(
     '/board/render',
     async ({ body }) => {
-      const info = await renderImageOffline(body.code)
-      return {
-        ok: true,
-        data: info,
+      try {
+        const info = await renderImageOffline(body.code)
+        return {
+          ok: true,
+          data: info,
+        }
+      } catch (error) {
+        if (isBoardCodeError(error)) {
+          throw status(400, {
+            ok: false,
+            error: error.message,
+          })
+        }
+        throw error
       }
     },
     {

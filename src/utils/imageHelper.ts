@@ -3,14 +3,18 @@ import { existsSync, mkdirSync } from 'fs'
 import sharp, { type Sharp } from 'sharp'
 import { renderBoard } from '../standalone/renderer.ts'
 import { createHash } from 'crypto'
-import { getCode } from './getCode.ts'
+import path from 'node:path'
+import { fileURLToPath } from 'node:url'
+import { defaultCode, getCode } from './getCode.ts'
 import type { DecodeResult } from 'xiv-strat-board'
 import { rgbaToThumbHash } from 'thumbhash'
 
+const __dirname = path.dirname(fileURLToPath(import.meta.url))
+const cacheDir = path.resolve(__dirname, '..', '..', 'cache')
 const rendererCache = new Map<string, Promise<Buffer>>()
 
 // 外部调用接口
-export function renderImage(code = 'default') {
+export function renderImage(code = defaultCode) {
   const { hash, filePath } = getHashKey(code)
   const cache = getCache(hash)
   if (cache) {
@@ -18,7 +22,7 @@ export function renderImage(code = 'default') {
   }
 
   const renderPromise = stageLoader(code, hash, filePath).catch((err) => {
-    console.error(`code: ${code} render error. clean cache`);
+    console.error(`code: ${code} render error. clean cache`)
     rendererCache.delete(hash)
     throw err
   })
@@ -47,25 +51,27 @@ async function stageLoader(code: string, hash: string, filePath: string) {
   const buffer = await renderStage(boardData)
 
   // convert to webp and save to cache
-  const webp = sharp(buffer).webp({ quality: 80 })
+  const image = sharp(buffer)
+  const webp = image.clone().webp({ quality: 80 })
 
   // save to file
-  // Ensure cache directory exists
-  if (!existsSync('./cache')) {
-    mkdirSync('./cache')
-  }
-  webp.toFile(filePath).then(() => {
-    rendererCache.delete(hash)
-  })
+  ensureCacheDir()
+  const result = await webp.toBuffer()
+  await sharp(result).toFile(filePath)
+  rendererCache.delete(hash)
 
-  return webp.toBuffer()
+  return result
 }
 
 async function renderStage(boardData: DecodeResult) {
   const stage = await renderBoard(boardData)
-  stage.draw()
-  const data = stage.toDataURL()
-  return Buffer.from(data.split(',')[1] as string, 'base64')
+  try {
+    stage.draw()
+    const data = stage.toDataURL()
+    return Buffer.from(data.split(',')[1] as string, 'base64')
+  } finally {
+    stage.destroy()
+  }
 }
 
 export function getHashKey(code: string) {
@@ -76,11 +82,11 @@ export function getHashKey(code: string) {
 }
 
 export function getCachePath(hash: string) {
-  return `./cache/${hash}.webp`
+  return path.join(cacheDir, `${hash}.webp`)
 }
 
 // 离线渲染用
-export async function renderImageOffline(code: string) {
+export async function renderImageOffline(code = defaultCode) {
   const { hash, filePath } = getHashKey(code)
   const boardData = getCode(code)
 
@@ -92,14 +98,11 @@ export async function renderImageOffline(code: string) {
     // 否则渲染并保存
     const buffer = await renderStage(boardData)
     const img = sharp(buffer)
-    image = img.clone()
+    image = img.clone().webp({ quality: 80 })
 
     // 保存文件
-    // Ensure cache directory exists
-    if (!existsSync('./cache')) {
-      mkdirSync('./cache')
-    }
-    img.webp({ quality: 80 }).toFile(filePath)
+    ensureCacheDir()
+    await image.clone().toFile(filePath)
   }
 
   //生成缩略图
@@ -113,5 +116,11 @@ export async function renderImageOffline(code: string) {
   return {
     hash,
     thumbhash: thumbHashToBase64,
+  }
+}
+
+function ensureCacheDir() {
+  if (!existsSync(cacheDir)) {
+    mkdirSync(cacheDir, { recursive: true })
   }
 }
