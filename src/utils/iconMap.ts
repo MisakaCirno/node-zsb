@@ -203,8 +203,12 @@ function easySpriteCrop(
   const result: Record<string, JobIconConfig> = {}
   let leftOffset = 0
   Object.entries(itemNames).forEach(([name, size], index) => {
+    if (size === undefined) {
+      return
+    }
+
     const left = spriteSizeMap ? leftOffset : spriteWidth * index
-    const width = spriteSizeMap ? spriteSizeMap[name] * 2 : spriteWidth
+    const width = spriteSizeMap ? (spriteSizeMap[name] ?? size) * 2 : spriteWidth
     result[name] = {
       src: imageName,
       crop: {
