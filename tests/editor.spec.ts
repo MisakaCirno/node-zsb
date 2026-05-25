@@ -41,6 +41,24 @@ test('editor loads, edits an object, exports code, and renders a preview', async
   expect(consoleErrors).toEqual([])
 })
 
+test('editor renders readable Chinese labels', async ({ page }) => {
+  await page.goto('/editor')
+
+  await expect(page).toHaveTitle('战术板编辑器')
+  await expect(page.getByRole('button', { name: '导入' })).toBeVisible()
+  await expect(page.getByRole('button', { name: '导出' })).toBeVisible()
+  await expect(page.getByRole('button', { name: '渲染' })).toBeVisible()
+  await expect(page.getByPlaceholder('名称')).toBeVisible()
+  await expect(page.locator('#layers')).toContainText('tank')
+  await expect(page.locator('#layer-count')).not.toHaveText('0')
+  await expect(page.locator('.section-title')).toContainText([
+    '对象',
+    '属性',
+    '图层',
+    '输出',
+  ])
+})
+
 test('editor disables async action buttons while exporting', async ({ page }) => {
   await page.goto('/editor')
   await expect(page.locator('#layers')).toContainText('tank')
