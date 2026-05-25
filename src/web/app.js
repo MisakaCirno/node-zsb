@@ -19,6 +19,7 @@ import {
 import { createBoardMetaControls } from './boardMetaControls.js'
 import { createBoardCodeActions } from './boardCodeActions.js'
 import { bindEditorEvents } from './editorBindings.js'
+import { getEditorElements } from './editorElements.js'
 import { createEditorFeedback } from './editorFeedback.js'
 import { createEditorHistoryControls } from './editorHistoryControls.js'
 import { createStageRenderer } from './stageRenderer.js'
@@ -83,56 +84,7 @@ const {
   confirmAction: (message) => window.confirm(message),
 })
 
-const els = {
-  codeInput: document.querySelector('#code-input'),
-  codeOutput: document.querySelector('#code-output'),
-  loadCode: document.querySelector('#load-code'),
-  exportCode: document.querySelector('#export-code'),
-  renderPreview: document.querySelector('#render-preview'),
-  background: document.querySelector('#background-select'),
-  localBoardSelect: document.querySelector('#local-board-select'),
-  saveLocalBoard: document.querySelector('#save-local-board'),
-  loadLocalBoard: document.querySelector('#load-local-board'),
-  deleteLocalBoard: document.querySelector('#delete-local-board'),
-  boardName: document.querySelector('#board-name'),
-  paletteTabs: document.querySelector('#palette-tabs'),
-  palette: document.querySelector('#palette'),
-  layers: document.querySelector('#layers'),
-  layerCount: document.querySelector('#layer-count'),
-  stageHost: document.querySelector('#stage-host'),
-  preview: document.querySelector('#preview-image'),
-  status: document.querySelector('#status'),
-  undo: document.querySelector('#undo-action'),
-  redo: document.querySelector('#redo-action'),
-  clearBoard: document.querySelector('#clear-board'),
-  deleteObject: document.querySelector('#delete-object'),
-  duplicateObject: document.querySelector('#duplicate-object'),
-  moveUp: document.querySelector('#move-up'),
-  moveDown: document.querySelector('#move-down'),
-  centerObject: document.querySelector('#center-object'),
-  zoomOut: document.querySelector('#zoom-out'),
-  zoomSelect: document.querySelector('#zoom-select'),
-  zoomIn: document.querySelector('#zoom-in'),
-  fitStage: document.querySelector('#fit-stage'),
-  snap: document.querySelector('#snap-toggle'),
-  grid: document.querySelector('#grid-toggle'),
-  emptyState: document.querySelector('#empty-state'),
-  inspector: document.querySelector('#inspector-form'),
-  type: document.querySelector('#object-type'),
-  x: document.querySelector('#object-x'),
-  y: document.querySelector('#object-y'),
-  size: document.querySelector('#object-size'),
-  angle: document.querySelector('#object-angle'),
-  color: document.querySelector('#object-color'),
-  transparency: document.querySelector('#object-transparency'),
-  text: document.querySelector('#object-text'),
-  endX: document.querySelector('#object-end-x'),
-  endY: document.querySelector('#object-end-y'),
-  arc: document.querySelector('#object-arc'),
-  donut: document.querySelector('#object-donut'),
-  hidden: document.querySelector('#object-hidden'),
-  locked: document.querySelector('#object-locked'),
-}
+const els = getEditorElements()
 
 const {
   onBackgroundChange,
