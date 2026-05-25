@@ -19,22 +19,17 @@ import {
   getObjectCapabilities,
   normalizeBoard,
 } from './board.js'
-import {
-  decodeBoardCode,
-  encodeBoardCode,
-  getEditorData,
-  renderPreviewImage,
-} from './api.js'
+import { getEditorData } from './api.js'
 import {
   createEditorState,
   getSelectedObject,
-  replaceBoard,
 } from './editorState.js'
 import {
   recordHistory as pushHistory,
   redoHistory,
   undoHistory,
 } from './history.js'
+import { createBoardCodeActions } from './boardCodeActions.js'
 import { createStageRenderer } from './stageRenderer.js'
 import { renderInspector as renderInspectorPanel } from './inspectorPanel.js'
 import { handleEditorKeyboard } from './keyboardShortcuts.js'
@@ -129,6 +124,18 @@ const els = {
   hidden: document.querySelector('#object-hidden'),
   locked: document.querySelector('#object-locked'),
 }
+
+const {
+  exportCode,
+  loadFromCode,
+  renderPreview,
+} = createBoardCodeActions({
+  state,
+  elements: els,
+  recordHistory,
+  renderAll,
+  renderBackgroundOptions,
+})
 
 const {
   deleteLocalBoard,
@@ -266,17 +273,6 @@ function bindEvents() {
   }
 }
 
-async function loadFromCode(code, options = {}) {
-  const board = await decodeBoardCode(code)
-  if (options.record !== false) {
-    recordHistory()
-  }
-  replaceBoard(state, normalizeBoard(board))
-  els.boardName.value = state.board.name ?? ''
-  renderBackgroundOptions()
-  await renderAll()
-}
-
 function renderBackgroundOptions() {
   els.background.innerHTML = ''
   for (const key of Object.keys(state.backgrounds)) {
@@ -399,28 +395,6 @@ function formatZoom(zoom) {
   return `${Math.round(zoom * 100)}%`
 }
 
-async function exportCode() {
-  const code = await encodeBoardCode(cleanBoard(state.board))
-  els.codeOutput.value = code
-  els.codeInput.value = code
-  updateCodeUrl(code)
-}
-
-async function renderPreview() {
-  const code = await exportAndReturnCode()
-  const data = await renderPreviewImage(code)
-  els.preview.src = `/preview/${data.hash}.webp?${Date.now()}`
-  els.preview.style.display = 'block'
-}
-
-async function exportAndReturnCode() {
-  const code = await encodeBoardCode(cleanBoard(state.board))
-  els.codeOutput.value = code
-  els.codeInput.value = code
-  updateCodeUrl(code)
-  return code
-}
-
 function recordHistory() {
   pushHistory(state)
   updateHistoryButtons()
@@ -519,12 +493,6 @@ function showStatus(message, options = {}) {
 
 function persistBoard() {
   persistSavedBoard(cleanBoard(state.board))
-}
-
-function updateCodeUrl(code) {
-  const url = new URL(window.location.href)
-  url.searchParams.set('code', code)
-  window.history.replaceState(null, '', url)
 }
 
 function getSelected() {
