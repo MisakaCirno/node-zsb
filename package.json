@@ -6,7 +6,10 @@
   "scripts": {
     "start": "bun run index.ts",
     "dev": "bun --watch index.ts",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "test:e2e": "playwright test",
+    "test:e2e:headed": "playwright test --headed",
+    "test:e2e:ui": "playwright test --ui"
   },
   "dependencies": {
     "@elysiajs/node": "^1.4.3",
@@ -22,6 +25,7 @@
     "skia-canvas"
   ],
   "devDependencies": {
+    "@playwright/test": "^1.60.0",
     "@types/node": "^25.0.9",
     "typescript": "^5.9.3"
   }
