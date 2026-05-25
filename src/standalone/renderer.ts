@@ -12,6 +12,17 @@ import { loadImage, FontLibrary } from 'skia-canvas'
 import { SCENE_HEIGHT, SCENE_WIDTH } from '../utils/resize.ts'
 import { fileURLToPath } from 'node:url'
 import path from 'node:path'
+import {
+  AOE_RADIUS,
+  calcTextWidth,
+  calculateCircleOffset as getCircleOffset,
+  calculateDonutOffset as getDonutOffset,
+  degreesToRadians,
+  flippedScale,
+  objectOpacity,
+  objectScale,
+  toSceneCoordinate,
+} from '../shared/boardGeometry.js'
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
 const FONT_PATH = path.resolve(
@@ -51,18 +62,6 @@ async function createBoardLayer(backgroundType: BackgroundType = 'checkered') {
   return layer
 }
 
-// From TextBlock.tsx
-function calcTextWidth(text: string, fontSize: number) {
-  const averageCharWidth = fontSize * 0.6
-  let width = 0
-  for (let i = 0; i < text.length; i++) {
-    const char = text[i]
-    const isAscii = char!.charCodeAt(0) < 128
-    width += isAscii ? averageCharWidth : averageCharWidth * 2
-  }
-  return width
-}
-
 function createTextBlock(data: StrategyObject): Konva.Text {
   const text = data.text ?? ''
   const fontSize = 28
@@ -73,8 +72,8 @@ function createTextBlock(data: StrategyObject): Konva.Text {
   return new Konva.Text({
     text: data.text,
     fill: data.color,
-    x: data.x * 2,
-    y: data.y * 2,
+    x: toSceneCoordinate(data.x),
+    y: toSceneCoordinate(data.y),
     fontFamily: 'AlibabaPuHuiTi',
     fontSize: fontSize,
     offsetX: offsetX,
@@ -90,18 +89,18 @@ function createTextBlock(data: StrategyObject): Konva.Text {
 
 // From LineBlock.tsx
 function createLineBlock(data: StrategyObject): Konva.Group {
-  const startX = data.x * 2
-  const startY = data.y * 2
-  const endX = (data.endX ?? data.x) * 2
-  const endY = (data.endY ?? data.y) * 2
-  const opacity = data.hidden ? 0 : (100 - (data.transparency ?? 0)) / 100
+  const startX = toSceneCoordinate(data.x)
+  const startY = toSceneCoordinate(data.y)
+  const endX = toSceneCoordinate(data.endX ?? data.x)
+  const endY = toSceneCoordinate(data.endY ?? data.y)
+  const opacity = objectOpacity(data)
 
   const group = new Konva.Group()
 
   const line = new Konva.Line({
     points: [startX, startY, endX, endY],
     stroke: data.color ?? '#ff8000',
-    strokeWidth: (data.height ?? 6) * 2,
+    strokeWidth: toSceneCoordinate(data.height ?? 6),
     opacity: opacity,
   })
 
@@ -135,16 +134,16 @@ function createLineBlock(data: StrategyObject): Konva.Group {
 function createLineAoe(data: StrategyObject): Konva.Rect {
   const width = data.width ?? 128
   const height = data.height ?? 128
-  const scale = (data.size ?? 100) / 100
-  const opacity = data.hidden ? 0 : (100 - (data.transparency ?? 0)) / 100
+  const scale = objectScale(data)
+  const opacity = objectOpacity(data)
 
   return new Konva.Rect({
-    x: data.x * 2,
-    y: data.y * 2,
+    x: toSceneCoordinate(data.x),
+    y: toSceneCoordinate(data.y),
     offsetX: width,
     offsetY: height,
-    width: width * 2,
-    height: height * 2,
+    width: toSceneCoordinate(width),
+    height: toSceneCoordinate(height),
     fill: data.color ?? '#ff8000',
     scaleX: scale,
     scaleY: scale,
@@ -153,104 +152,24 @@ function createLineAoe(data: StrategyObject): Konva.Rect {
   })
 }
 
-// From Donut.tsx
-function calculateDonutOffset({
-  arcAngle,
-  outerRadius,
-  innerRadius,
-}: {
-  arcAngle: number
-  outerRadius: number
-  innerRadius: number
-}) {
-  if (arcAngle === 360) {
-    return { offsetX: 0, offsetY: 0 }
-  }
-
-  const angleRad = (arcAngle * Math.PI) / 180
-  const startAngle = -Math.PI / 2
-  const endAngle = startAngle + angleRad
-
-  // 计算扇形的边界框
-  let minX = Infinity
-  let maxX = -Infinity
-  let minY = Infinity
-  let maxY = -Infinity
-
-  const points = []
-
-  // 外圆弧端点
-  points.push({
-    x: outerRadius * Math.cos(startAngle),
-    y: outerRadius * Math.sin(startAngle),
-  })
-  points.push({
-    x: outerRadius * Math.cos(endAngle),
-    y: outerRadius * Math.sin(endAngle),
-  })
-
-  // 内圆弧端点
-  points.push({
-    x: innerRadius * Math.cos(startAngle),
-    y: innerRadius * Math.sin(startAngle),
-  })
-  points.push({
-    x: innerRadius * Math.cos(endAngle),
-    y: innerRadius * Math.sin(endAngle),
-  })
-
-  // 检查圆弧是否穿过关键角度点（0°, 90°, 180°, 270°）
-  const checkAngle = (angle: number) => {
-    const normalized = ((angle % (2 * Math.PI)) + 2 * Math.PI) % (2 * Math.PI)
-    const start = ((startAngle % (2 * Math.PI)) + 2 * Math.PI) % (2 * Math.PI)
-    let end = ((endAngle % (2 * Math.PI)) + 2 * Math.PI) % (2 * Math.PI)
-
-    if (end < start) end += 2 * Math.PI
-    const check = normalized < start ? normalized + 2 * Math.PI : normalized
-
-    return check >= start && check <= end
-  }
-
-  // 0° (右)
-  if (checkAngle(0)) points.push({ x: outerRadius, y: 0 })
-  // 90° (下)
-  if (checkAngle(Math.PI / 2)) points.push({ x: 0, y: outerRadius })
-  // 180° (左)
-  if (checkAngle(Math.PI)) points.push({ x: -outerRadius, y: 0 })
-  // 270° (上)
-  if (checkAngle((3 * Math.PI) / 2)) points.push({ x: 0, y: -outerRadius })
-
-  points.forEach((p) => {
-    minX = Math.min(minX, p.x)
-    maxX = Math.max(maxX, p.x)
-    minY = Math.min(minY, p.y)
-    maxY = Math.max(maxY, p.y)
-  })
-
-  const centerX = (minX + maxX) / 2
-  const centerY = (minY + maxY) / 2
-
-  return { offsetX: centerX, offsetY: centerY }
-}
-
 function createDonut(data: StrategyObject): Konva.Group {
-  const scale = (data.size ?? 100) / 100
-  const opacity = data.hidden ? 0 : (100 - (data.transparency ?? 0)) / 100
-  const outerRadius = 512
-  const innerRadius = (data.donutRadius ?? 0) * 2
+  const scale = objectScale(data)
+  const opacity = objectOpacity(data)
+  const outerRadius = AOE_RADIUS
+  const innerRadius = toSceneCoordinate(data.donutRadius ?? 0)
   const arcAngle = data.arcAngle ?? 360
 
-  const { offsetX, offsetY } = calculateDonutOffset({
+  const { offsetX, offsetY } = getDonutOffset({
     arcAngle,
     outerRadius,
     innerRadius,
   })
 
   const group = new Konva.Group({
-    x: data.x * 2,
-    y: data.y * 2 - 10,
-    scaleX: scale * (data.horizontalFlip ? -1 : 1),
-    scaleY: scale * (data.verticalFlip ? -1 : 1),
+    x: toSceneCoordinate(data.x),
+    y: toSceneCoordinate(data.y) - 10,
+    scaleX: flippedScale(scale, data.horizontalFlip),
+    scaleY: flippedScale(scale, data.verticalFlip),
     opacity: opacity,
     offsetX: offsetX,
     offsetY: offsetY,
@@ -259,7 +178,7 @@ function createDonut(data: StrategyObject): Konva.Group {
 
   const shape = new Konva.Shape({
     sceneFunc: (ctx, shape) => {
-      const angleRad = (arcAngle * Math.PI) / 180
+      const angleRad = degreesToRadians(arcAngle)
       const startAngle = -Math.PI / 2
       const endAngle = startAngle + angleRad
 
@@ -285,66 +204,18 @@ function createDonut(data: StrategyObject): Konva.Group {
   return group
 }
 
-// From CircleAoe.tsx
-function calculateCircleOffset(arcAngle: number) {
-  if (arcAngle === 360) {
-    return { offsetX: 512, offsetY: 512 }
-  }
-
-  const r = 512
-  const angleRad = (arcAngle * Math.PI) / 180
-  const startAngle = -Math.PI / 2
-  const endAngle = -Math.PI / 2 + angleRad
-
-  let minX = 512
-  let maxX = 512
-  let minY = 512
-  let maxY = 512
-
-  const startX = 512 + r * Math.cos(startAngle)
-  const startY = 512 + r * Math.sin(startAngle)
-  const endX = 512 + r * Math.cos(endAngle)
-  const endY = 512 + r * Math.sin(endAngle)
-
-  minX = Math.min(minX, startX, endX)
-  maxX = Math.max(maxX, startX, endX)
-  minY = Math.min(minY, startY, endY)
-  maxY = Math.max(maxY, startY, endY)
-
-  const checkAngle = (angle: number) => {
-    const normalized = ((angle % (2 * Math.PI)) + 2 * Math.PI) % (2 * Math.PI)
-    const start = ((startAngle % (2 * Math.PI)) + 2 * Math.PI) % (2 * Math.PI)
-    let end = ((endAngle % (2 * Math.PI)) + 2 * Math.PI) % (2 * Math.PI)
-
-    if (end < start) end += 2 * Math.PI
-    const check = normalized < start ? normalized + 2 * Math.PI : normalized
-
-    return check >= start && check <= end
-  }
-
-  if (checkAngle(0)) maxX = Math.max(maxX, 512 + r)
-  if (checkAngle(Math.PI / 2)) maxY = Math.max(maxY, 512 + r)
-  if (checkAngle(Math.PI)) minX = Math.min(minX, 512 - r)
-  if (checkAngle((3 * Math.PI) / 2)) minY = Math.min(minY, 512 - r)
-
-  const centerX = (minX + maxX) / 2
-  const centerY = (minY + maxY) / 2
-
-  return { offsetX: centerX, offsetY: centerY }
-}
-
 async function createCircleAoe(data: StrategyObject) {
-  const scale = (data.size ?? 100) / 100
-  const opacity = data.hidden ? 0 : (100 - (data.transparency ?? 0)) / 100
+  const scale = objectScale(data)
+  const opacity = objectOpacity(data)
   const arcAngle = data.type === 'fan_aoe' ? (data.arcAngle ?? 90) : 360
-  const { offsetX, offsetY } = calculateCircleOffset(arcAngle)
+  const { offsetX, offsetY } = getCircleOffset(arcAngle)
 
   const group = new Konva.Group({
-    x: data.x * 2,
-    y: data.y * 2,
+    x: toSceneCoordinate(data.x),
+    y: toSceneCoordinate(data.y),
     rotation: data.angle ?? 0,
-    scaleX: scale * (data.horizontalFlip ? -1 : 1),
-    scaleY: scale * (data.verticalFlip ? -1 : 1),
+    scaleX: flippedScale(scale, data.horizontalFlip),
+    scaleY: flippedScale(scale, data.verticalFlip),
     opacity: opacity,
     offsetX: offsetX,
     offsetY: offsetY,
@@ -353,7 +224,7 @@ async function createCircleAoe(data: StrategyObject) {
   if (arcAngle !== 360) {
     group.clipFunc((ctx) => {
       const r = 512
-      const angleRad = (arcAngle * Math.PI) / 180
+      const angleRad = degreesToRadians(arcAngle)
       const startAngle = -Math.PI / 2
       const endAngle = -Math.PI / 2 + angleRad
 
@@ -386,21 +257,21 @@ async function createNormalIcon(data: StrategyObject): Promise<Konva.Image> {
     return new Konva.Image()
   }
 
-  const scale = (data.size ?? 100) / 100
-  const opacity = data.hidden ? 0 : (100 - (data.transparency ?? 0)) / 100
+  const scale = objectScale(data)
+  const opacity = objectOpacity(data)
   const iconUrl = getIconUrl(config.src)
 
   const imageObj = await loadImage(iconUrl)
   const imageNode = new Konva.Image({
     image: imageObj,
-    width: config.size * 2,
-    height: config.size * 2,
+    width: toSceneCoordinate(config.size),
+    height: toSceneCoordinate(config.size),
     offsetX: config.size,
     offsetY: config.size,
-    x: data.x * 2,
-    y: data.y * 2,
-    scaleX: scale * (data.horizontalFlip ? -1 : 1),
-    scaleY: scale * (data.verticalFlip ? -1 : 1),
+    x: toSceneCoordinate(data.x),
+    y: toSceneCoordinate(data.y),
+    scaleX: flippedScale(scale, data.horizontalFlip),
+    scaleY: flippedScale(scale, data.verticalFlip),
     rotation: data.angle ?? 0,
     opacity: opacity,
     crop: config.crop,

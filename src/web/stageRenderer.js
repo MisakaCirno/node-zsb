@@ -1,6 +1,5 @@
 import {
   GRID_STEP,
-  LOGICAL_SCALE,
   SCENE_HEIGHT,
   SCENE_WIDTH,
 } from './constants.js'
@@ -9,6 +8,14 @@ import {
   normalizeAngle,
   rotatePoint,
 } from './geometry.js'
+import {
+  calcTextWidth,
+  calculateCircleOffset,
+  objectOpacity,
+  objectScale,
+  toLogicalCoordinate,
+  toSceneCoordinate,
+} from '../shared/boardGeometry.js'
 
 export function createStageRenderer({
   container,
@@ -132,7 +139,7 @@ export function createStageRenderer({
     }
     node.setAttr('objectIndex', index)
     node.draggable(!object.locked)
-    node.opacity(object.hidden ? 0.15 : getOpacity(object))
+    node.opacity(objectOpacity(object, { hiddenOpacity: 0.15 }))
     node.on('click tap', (event) => {
       event.cancelBubble = true
       selectObject(index)
@@ -154,8 +161,8 @@ export function createStageRenderer({
     return new Konva.Text({
       text: object.text ?? '',
       fill: object.color ?? '#ffffff',
-      x: object.x * LOGICAL_SCALE,
-      y: object.y * LOGICAL_SCALE,
+      x: toSceneCoordinate(object.x),
+      y: toSceneCoordinate(object.y),
       fontSize: 28,
       fontFamily: 'Arial',
       offsetX: calcTextWidth(object.text ?? '', 28) / 2,
@@ -170,10 +177,10 @@ export function createStageRenderer({
   }
 
   function createLineNode(object) {
-    const startX = object.x * LOGICAL_SCALE
-    const startY = object.y * LOGICAL_SCALE
-    const endX = (object.endX ?? object.x) * LOGICAL_SCALE
-    const endY = (object.endY ?? object.y) * LOGICAL_SCALE
+    const startX = toSceneCoordinate(object.x)
+    const startY = toSceneCoordinate(object.y)
+    const endX = toSceneCoordinate(object.endX ?? object.x)
+    const endY = toSceneCoordinate(object.endY ?? object.y)
     const endLocalX = endX - startX
     const endLocalY = endY - startY
     const group = new Konva.Group({
@@ -184,7 +191,7 @@ export function createStageRenderer({
     const line = new Konva.Line({
       points: [0, 0, endLocalX, endLocalY],
       stroke: object.color ?? '#ff8000',
-      strokeWidth: (object.height ?? 6) * LOGICAL_SCALE,
+      strokeWidth: toSceneCoordinate(object.height ?? 6),
       lineCap: 'round',
     })
     const startHandle = createLineHandle(0, 0, !object.locked)
@@ -265,8 +272,8 @@ export function createStageRenderer({
 
   function normalizePointFromScene(point) {
     return normalizePoint(
-      Math.round(point.x / LOGICAL_SCALE),
-      Math.round(point.y / LOGICAL_SCALE),
+      toLogicalCoordinate(point.x),
+      toLogicalCoordinate(point.y),
     )
   }
 
@@ -274,28 +281,29 @@ export function createStageRenderer({
     const width = object.width ?? 128
     const height = object.height ?? 128
     return new Konva.Rect({
-      x: object.x * LOGICAL_SCALE,
-      y: object.y * LOGICAL_SCALE,
+      x: toSceneCoordinate(object.x),
+      y: toSceneCoordinate(object.y),
       offsetX: width,
       offsetY: height,
-      width: width * LOGICAL_SCALE,
-      height: height * LOGICAL_SCALE,
+      width: toSceneCoordinate(width),
+      height: toSceneCoordinate(height),
       fill: object.color ?? '#ff8000',
-      scaleX: (object.size ?? 100) / 100,
-      scaleY: (object.size ?? 100) / 100,
+      scaleX: objectScale(object),
+      scaleY: objectScale(object),
       rotation: object.angle ?? 0,
     })
   }
 
   async function createCircleAoeNode(object) {
     const arcAngle = object.type === 'fan_aoe' ? (object.arcAngle ?? 90) : 360
+    const { offsetX, offsetY } = calculateCircleOffset(arcAngle)
     const group = new Konva.Group({
-      x: object.x * LOGICAL_SCALE,
-      y: object.y * LOGICAL_SCALE,
-      offsetX: 512,
-      offsetY: 512,
-      scaleX: (object.size ?? 100) / 100,
-      scaleY: (object.size ?? 100) / 100,
+      x: toSceneCoordinate(object.x),
+      y: toSceneCoordinate(object.y),
+      offsetX,
+      offsetY,
+      scaleX: objectScale(object),
+      scaleY: objectScale(object),
       rotation: object.angle ?? 0,
     })
     if (arcAngle !== 360) {
@@ -316,13 +324,13 @@ export function createStageRenderer({
 
   function createDonutNode(object) {
     return new Konva.Ring({
-      x: object.x * LOGICAL_SCALE,
-      y: object.y * LOGICAL_SCALE,
-      innerRadius: (object.donutRadius ?? 80) * LOGICAL_SCALE,
+      x: toSceneCoordinate(object.x),
+      y: toSceneCoordinate(object.y),
+      innerRadius: toSceneCoordinate(object.donutRadius ?? 80),
       outerRadius: 512,
       fill: object.color ?? '#ff8000',
-      scaleX: (object.size ?? 100) / 100,
-      scaleY: (object.size ?? 100) / 100,
+      scaleX: objectScale(object),
+      scaleY: objectScale(object),
       rotation: object.angle ?? 0,
     })
   }
@@ -336,14 +344,14 @@ export function createStageRenderer({
     return new Konva.Image({
       image,
       crop: config.crop,
-      width: config.size * LOGICAL_SCALE,
-      height: config.size * LOGICAL_SCALE,
+      width: toSceneCoordinate(config.size),
+      height: toSceneCoordinate(config.size),
       offsetX: config.size,
       offsetY: config.size,
-      x: object.x * LOGICAL_SCALE,
-      y: object.y * LOGICAL_SCALE,
-      scaleX: (object.size ?? 100) / 100,
-      scaleY: (object.size ?? 100) / 100,
+      x: toSceneCoordinate(object.x),
+      y: toSceneCoordinate(object.y),
+      scaleX: objectScale(object),
+      scaleY: objectScale(object),
       rotation: object.angle ?? 0,
     })
   }
@@ -352,8 +360,8 @@ export function createStageRenderer({
     const oldX = object.x
     const oldY = object.y
     const point = normalizePoint(
-      Math.round(node.x() / LOGICAL_SCALE),
-      Math.round(node.y() / LOGICAL_SCALE),
+      toLogicalCoordinate(node.x()),
+      toLogicalCoordinate(node.y()),
     )
     object.x = point.x
     object.y = point.y
@@ -375,18 +383,6 @@ export function createStageRenderer({
     })
     state.images.set(src, promise)
     return promise
-  }
-
-  function getOpacity(object) {
-    return (100 - (object.transparency ?? 0)) / 100
-  }
-
-  function calcTextWidth(text, fontSize) {
-    let width = 0
-    for (const char of text) {
-      width += char.charCodeAt(0) < 128 ? fontSize * 0.6 : fontSize * 1.2
-    }
-    return width
   }
 
   return {

@@ -8,6 +8,7 @@ import { getBoardUrl, getIconUrl } from '../utils/staticImage.ts'
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
 const rootDir = path.resolve(__dirname, '..', '..')
 const webDir = path.join(rootDir, 'src', 'web')
+const sharedDir = path.join(rootDir, 'src', 'shared')
 
 export const webController = new Elysia()
   .get('/editor', () => file(path.join(webDir, 'index.html')))
@@ -17,6 +18,15 @@ export const webController = new Elysia()
     {
       params: t.Object({
         asset: t.RegExp(/^(?:(?:api|app|board|constants|editorState|geometry|history|stageRenderer|storage)\.js|styles\.css)$/),
+      }),
+    },
+  )
+  .get(
+    '/shared/:asset',
+    ({ params }) => file(path.join(sharedDir, params.asset)),
+    {
+      params: t.Object({
+        asset: t.RegExp(/^boardGeometry\.js$/),
       }),
     },
   )
