@@ -28,12 +28,14 @@ const app = new Elysia()
   .use(utilsController)
   .use(webController)
 
+let server: unknown
+
 function initNodeServer() {
-  const server = new Elysia({ adapter: node() }).use(app).listen(serverInfo)
+  server = new Elysia({ adapter: node() }).use(app).listen(serverInfo)
 }
 
 function initBunServer() {
-  const server = app.listen(serverInfo)
+  server = app.listen(serverInfo)
 }
 
 process.isBun ? initBunServer() : initNodeServer()
