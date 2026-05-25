@@ -646,9 +646,11 @@ function toggleLayerFlag(index, key) {
 function deleteSelected() {
   if (state.selectedIndex < 0) return
   recordHistory()
+  const object = getSelected()
   state.board.objects.splice(state.selectedIndex, 1)
   state.selectedIndex = -1
   renderAll()
+  showStatus(`已删除 ${object?.type ?? '对象'}`)
 }
 
 function duplicateSelected() {
@@ -837,8 +839,16 @@ function handleKeyboard(event) {
     redo()
     return
   }
-  if (!isEditingText && event.key === 'Delete') {
+  if (!isEditingText && event.key === 'Escape') {
+    event.preventDefault()
+    selectObject(-1)
+    showStatus('已取消选择')
+    return
+  }
+  if (!isEditingText && ['Backspace', 'Delete'].includes(event.key)) {
+    event.preventDefault()
     deleteSelected()
+    return
   }
 }
 
