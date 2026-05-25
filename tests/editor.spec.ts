@@ -45,6 +45,7 @@ test('editor imports code, changes background, and edits text and line objects',
   page,
 }) => {
   await page.goto('/editor')
+  await expect(page.locator('#layers')).toContainText('tank')
 
   const initialCode = await page.locator('#code-input').inputValue()
   await page.locator('#code-input').fill(initialCode)
@@ -156,4 +157,26 @@ test('editor nudges the selected object with arrow keys', async ({ page }) => {
 
   await page.keyboard.press('Shift+ArrowDown')
   await expect(page.locator('#object-y')).toHaveValue('202')
+})
+
+test('editor copies and pastes the selected object with keyboard shortcuts', async ({
+  page,
+}) => {
+  await page.goto('/editor')
+  await expect(page.locator('#layers')).toContainText('tank')
+
+  const before = await page.locator('#layers .layer-row').count()
+  await page.locator('#layers .layer-row').first().click()
+  await expect(page.locator('#object-type')).toHaveValue('tank')
+
+  await page.keyboard.press('Control+C')
+  await expect(page.locator('#status')).toContainText('已复制 tank')
+  await page.keyboard.press('Control+V')
+
+  await expect(page.locator('#layers .layer-row')).toHaveCount(before + 1)
+  await expect(page.locator('#status')).toContainText('已粘贴 tank')
+  await expect(page.locator('#object-type')).toHaveValue('tank')
+
+  await page.getByRole('button', { name: '撤销' }).click()
+  await expect(page.locator('#layers .layer-row')).toHaveCount(before)
 })

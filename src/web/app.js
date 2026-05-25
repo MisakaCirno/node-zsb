@@ -17,6 +17,7 @@ const state = {
   images: new Map(),
   history: [],
   future: [],
+  clipboard: null,
   statusTimer: 0,
 }
 
@@ -161,7 +162,7 @@ async function loadFromCode(code, options = {}) {
   state.selectedIndex = -1
   els.boardName.value = state.board.name ?? ''
   renderBackgroundOptions()
-  renderAll()
+  await renderAll()
 }
 
 function normalizeBoard(board) {
@@ -546,9 +547,7 @@ function duplicateSelected() {
   const object = getSelected()
   if (!object) return
   recordHistory()
-  const copy = structuredClone(object)
-  copy.x = clamp(copy.x + 18, 0, 512)
-  copy.y = clamp(copy.y + 18, 0, 384)
+  const copy = createPastedObject(object)
   state.board.objects.push(copy)
   selectObject(state.board.objects.length - 1)
 }
@@ -662,6 +661,16 @@ function handleKeyboard(event) {
   const target = event.target
   const isEditingText =
     target instanceof HTMLInputElement || target instanceof HTMLTextAreaElement
+  if (!isEditingText && (event.ctrlKey || event.metaKey) && event.key.toLowerCase() === 'c') {
+    event.preventDefault()
+    copySelected()
+    return
+  }
+  if (!isEditingText && (event.ctrlKey || event.metaKey) && event.key.toLowerCase() === 'v') {
+    event.preventDefault()
+    pasteObject()
+    return
+  }
   if (!isEditingText && ['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(event.key)) {
     event.preventDefault()
     nudgeSelected(event.key, event.shiftKey ? 10 : 1)
@@ -684,6 +693,33 @@ function handleKeyboard(event) {
   if (!isEditingText && event.key === 'Delete') {
     deleteSelected()
   }
+}
+
+function copySelected() {
+  const object = getSelected()
+  if (!object) return
+  state.clipboard = structuredClone(object)
+  showStatus(`已复制 ${object.type}`)
+}
+
+function pasteObject() {
+  if (!state.clipboard) return
+  recordHistory()
+  const object = createPastedObject(state.clipboard)
+  state.board.objects.push(object)
+  selectObject(state.board.objects.length - 1)
+  showStatus(`已粘贴 ${object.type}`)
+}
+
+function createPastedObject(object) {
+  const copy = structuredClone(object)
+  copy.x = clamp((copy.x ?? 256) + 18, 0, 512)
+  copy.y = clamp((copy.y ?? 192) + 18, 0, 384)
+  if (copy.type === 'line' && copy.endX !== undefined && copy.endY !== undefined) {
+    copy.endX = clamp(copy.endX + 18, 0, 512)
+    copy.endY = clamp(copy.endY + 18, 0, 384)
+  }
+  return copy
 }
 
 function nudgeSelected(key, step) {
