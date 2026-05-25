@@ -3,8 +3,10 @@
   "module": "index.ts",
   "type": "module",
   "private": true,
-  "peerDependencies": {
-    "typescript": "^5.9.3"
+  "scripts": {
+    "start": "bun run index.ts",
+    "dev": "bun --watch index.ts",
+    "typecheck": "tsc --noEmit"
   },
   "dependencies": {
     "@elysiajs/node": "^1.4.3",
@@ -20,6 +22,7 @@
     "skia-canvas"
   ],
   "devDependencies": {
-    "@types/node": "^25.0.9"
+    "@types/node": "^25.0.9",
+    "typescript": "^5.9.3"
   }
 }

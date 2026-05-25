@@ -16,8 +16,6 @@
       },
       "devDependencies": {
         "@types/node": "^25.0.9",
-      },
-      "peerDependencies": {
         "typescript": "^5.9.3",
       },
     },
