@@ -1,6 +1,7 @@
 const SCENE_WIDTH = 1024
 const SCENE_HEIGHT = 768
 const LOGICAL_SCALE = 2
+const SNAP_STEP = 16
 const STORAGE_KEY = 'node-zsb-editor-board-v1'
 
 const state = {
@@ -14,6 +15,7 @@ const state = {
   iconGroups: {},
   backgrounds: {},
   activeGroup: 'rolesAndJobs',
+  snapToGrid: false,
   images: new Map(),
   history: [],
   future: [],
@@ -60,6 +62,8 @@ const els = {
   duplicateObject: document.querySelector('#duplicate-object'),
   moveUp: document.querySelector('#move-up'),
   moveDown: document.querySelector('#move-down'),
+  centerObject: document.querySelector('#center-object'),
+  snap: document.querySelector('#snap-toggle'),
   emptyState: document.querySelector('#empty-state'),
   inspector: document.querySelector('#inspector-form'),
   type: document.querySelector('#object-type'),
@@ -127,6 +131,11 @@ function bindEvents() {
   els.duplicateObject.addEventListener('click', duplicateSelected)
   els.moveUp.addEventListener('click', () => moveSelected(1))
   els.moveDown.addEventListener('click', () => moveSelected(-1))
+  els.centerObject.addEventListener('click', centerSelected)
+  els.snap.addEventListener('change', () => {
+    state.snapToGrid = els.snap.checked
+    showStatus(state.snapToGrid ? '已开启网格吸附' : '已关闭网格吸附')
+  })
   document.addEventListener('keydown', handleKeyboard)
   stage.on('click tap', (event) => {
     if (event.target === stage || event.target.getLayer() === boardLayer) {
@@ -467,8 +476,12 @@ async function createIconNode(object) {
 function handleDragEnd(node, object) {
   const oldX = object.x
   const oldY = object.y
-  object.x = clamp(Math.round(node.x() / LOGICAL_SCALE), 0, 512)
-  object.y = clamp(Math.round(node.y() / LOGICAL_SCALE), 0, 384)
+  const point = normalizePoint(
+    Math.round(node.x() / LOGICAL_SCALE),
+    Math.round(node.y() / LOGICAL_SCALE),
+  )
+  object.x = point.x
+  object.y = point.y
   if (object.type === 'line' && object.endX !== undefined && object.endY !== undefined) {
     object.endX = clamp(Math.round(object.endX + object.x - oldX), 0, 512)
     object.endY = clamp(Math.round(object.endY + object.y - oldY), 0, 384)
@@ -509,8 +522,9 @@ function updateSelectedFromInspector() {
   if (!object) return
   const capabilities = getObjectCapabilities(object.type)
   recordHistory()
-  object.x = numberValue(els.x, 0, 512)
-  object.y = numberValue(els.y, 0, 384)
+  const point = normalizePoint(numberValue(els.x, 0, 512), numberValue(els.y, 0, 384))
+  object.x = point.x
+  object.y = point.y
   object.size = numberValue(els.size, 10, 300)
   object.angle = numberValue(els.angle, 0, 360)
   object.color = capabilities.appearance ? els.color.value : undefined
@@ -616,6 +630,22 @@ function moveSelected(delta) {
   const [object] = state.board.objects.splice(index, 1)
   state.board.objects.splice(target, 0, object)
   selectObject(target)
+}
+
+function centerSelected() {
+  const object = getSelected()
+  if (!object || object.locked) return
+  recordHistory()
+  const oldX = object.x
+  const oldY = object.y
+  object.x = 256
+  object.y = 192
+  if (object.type === 'line' && object.endX !== undefined && object.endY !== undefined) {
+    object.endX = clamp(Math.round(object.endX + object.x - oldX), 0, 512)
+    object.endY = clamp(Math.round(object.endY + object.y - oldY), 0, 384)
+  }
+  renderAll()
+  showStatus('已居中选中对象')
 }
 
 async function exportCode() {
@@ -813,8 +843,9 @@ function nudgeSelected(key, step) {
   if (!delta) return
   recordHistory()
   const [dx, dy] = delta
-  object.x = clamp(Math.round(object.x + dx), 0, 512)
-  object.y = clamp(Math.round(object.y + dy), 0, 384)
+  const point = normalizePoint(object.x + dx, object.y + dy)
+  object.x = point.x
+  object.y = point.y
   if (object.type === 'line' && object.endX !== undefined && object.endY !== undefined) {
     object.endX = clamp(Math.round(object.endX + dx), 0, 512)
     object.endY = clamp(Math.round(object.endY + dy), 0, 384)
@@ -908,6 +939,20 @@ function clamp(value, min, max) {
 
 function normalizeAngle(value) {
   return Math.round(((value % 360) + 360) % 360)
+}
+
+function normalizePoint(x, y) {
+  return {
+    x: normalizeCoordinate(x, 0, 512),
+    y: normalizeCoordinate(y, 0, 384),
+  }
+}
+
+function normalizeCoordinate(value, min, max) {
+  const rounded = state.snapToGrid
+    ? Math.round(value / SNAP_STEP) * SNAP_STEP
+    : Math.round(value)
+  return clamp(rounded, min, max)
 }
 
 async function getJson(url) {

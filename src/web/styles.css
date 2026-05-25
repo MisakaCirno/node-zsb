@@ -103,6 +103,7 @@ textarea {
   display: grid;
   grid-template-rows: 50px 1fr;
   background: #0f1215;
+  overflow: hidden;
 }
 
 .stage-toolbar {
@@ -110,14 +111,36 @@ textarea {
   padding: 8px 12px;
   border-bottom: 1px solid #27313a;
   background: #151a1f;
+  min-width: 0;
+  overflow-x: auto;
+  overflow-y: hidden;
+  white-space: nowrap;
+}
+
+.stage-toolbar > * {
+  flex: 0 0 auto;
 }
 
 .stage-toolbar input {
-  width: 170px;
+  width: 140px;
 }
 
 .stage-toolbar button {
-  min-width: 58px;
+  min-width: 52px;
+  padding: 0 10px;
+}
+
+.snap-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: #a8b4bd;
+  font-size: 13px;
+}
+
+.snap-toggle input {
+  width: auto;
+  min-height: 0;
 }
 
 #stage-host {

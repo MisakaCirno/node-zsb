@@ -240,3 +240,29 @@ test('editor shows inspector fields that match the selected object type', async 
   expect(tank.endX).toBeUndefined()
   expect(tank.arcAngle).toBeUndefined()
 })
+
+test('editor snaps positions to the grid and centers the selected object', async ({
+  page,
+}) => {
+  await page.goto('/editor')
+  await expect(page.locator('#layers')).toContainText('tank')
+
+  await page.locator('#layers .layer-row').first().click()
+  await page.locator('#snap-toggle').check()
+  await expect(page.locator('#status')).toContainText('已开启网格吸附')
+
+  await page.locator('#object-x').fill('263')
+  await page.locator('#object-y').fill('199')
+  await expect(page.locator('#object-x')).toHaveValue('256')
+  await expect(page.locator('#object-y')).toHaveValue('192')
+
+  await page.locator('#object-x').fill('300')
+  await page.locator('#object-y').fill('220')
+  await expect(page.locator('#object-x')).toHaveValue('304')
+  await expect(page.locator('#object-y')).toHaveValue('224')
+
+  await page.getByRole('button', { name: '居中' }).click()
+  await expect(page.locator('#object-x')).toHaveValue('256')
+  await expect(page.locator('#object-y')).toHaveValue('192')
+  await expect(page.locator('#status')).toContainText('已居中选中对象')
+})
