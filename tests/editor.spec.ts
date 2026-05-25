@@ -327,6 +327,18 @@ test('editor fits the stage and changes zoom levels', async ({ page }) => {
   await expect(page.locator('#zoom-select')).toHaveValue('0.75')
   await expect(page.locator('#status')).toContainText('已设置画布缩放 75%')
 
+  await page.keyboard.press('Control+=')
+  await expect(page.locator('#zoom-select')).toHaveValue('1')
+  await expect(page.locator('#status')).toContainText('已设置画布缩放 100%')
+
+  await page.keyboard.press('Control+-')
+  await expect(page.locator('#zoom-select')).toHaveValue('0.75')
+  await expect(page.locator('#status')).toContainText('已设置画布缩放 75%')
+
+  await page.keyboard.press('Control+0')
+  await expect(page.locator('#zoom-select')).toHaveValue('fit')
+  await expect(page.locator('#status')).toContainText('已适配画布视图')
+
   await page.locator('#fit-stage').click()
   await expect(page.locator('#zoom-select')).toHaveValue('fit')
   await expect(page.locator('#status')).toContainText('已适配画布视图')

@@ -880,6 +880,9 @@ function handleKeyboard(event) {
   const target = event.target
   const isEditingText =
     target instanceof HTMLInputElement || target instanceof HTMLTextAreaElement
+  if (handleZoomShortcut(event)) {
+    return
+  }
   if (!isEditingText && (event.ctrlKey || event.metaKey) && event.key.toLowerCase() === 'c') {
     event.preventDefault()
     copySelected()
@@ -920,6 +923,29 @@ function handleKeyboard(event) {
     deleteSelected()
     return
   }
+}
+
+function handleZoomShortcut(event) {
+  if (!(event.ctrlKey || event.metaKey)) return false
+
+  const key = event.key.toLowerCase()
+  if (key === '+' || key === '=' || event.code === 'Equal' || event.code === 'NumpadAdd') {
+    event.preventDefault()
+    stepZoom(1)
+    return true
+  }
+  if (key === '-' || key === '_' || event.code === 'Minus' || event.code === 'NumpadSubtract') {
+    event.preventDefault()
+    stepZoom(-1)
+    return true
+  }
+  if (key === '0' || event.code === 'Digit0' || event.code === 'Numpad0') {
+    event.preventDefault()
+    applyFitZoom()
+    return true
+  }
+
+  return false
 }
 
 function copySelected() {
