@@ -40,3 +40,53 @@ test('editor loads, edits an object, exports code, and renders a preview', async
 
   expect(consoleErrors).toEqual([])
 })
+
+test('editor imports code, changes background, and edits text and line objects', async ({
+  page,
+}) => {
+  await page.goto('/editor')
+
+  const initialCode = await page.locator('#code-input').inputValue()
+  await page.locator('#code-input').fill(initialCode)
+  await page.getByRole('button', { name: '导入' }).click()
+
+  await page.locator('#background-select').selectOption('grey_square')
+  await expect(page.locator('#background-select')).toHaveValue('grey_square')
+
+  await page.getByRole('button', { name: '形状' }).click()
+  await page.getByTitle('text').click()
+  await expect(page.locator('#object-type')).toHaveValue('text')
+  await page.locator('#object-text').fill('MT')
+  await page.locator('#object-color').fill('#00ffcc')
+  await expect(page.locator('#layers')).toContainText('text')
+
+  await page.locator('button[title="line"]').click()
+  await expect(page.locator('#object-type')).toHaveValue('line')
+  await page.locator('#object-end-x').fill('360')
+  await page.locator('#object-end-y').fill('240')
+  await expect(page.locator('#layers')).toContainText('line')
+
+  await page.getByRole('button', { name: '导出' }).click()
+  await expect(page.locator('#code-output')).toHaveValue(/\[stgy:/)
+
+  const exported = await page.locator('#code-output').inputValue()
+  await page.locator('#code-input').fill(exported)
+  await page.getByRole('button', { name: '导入' }).click()
+  await expect(page.locator('#layers')).toContainText('text')
+  await expect(page.locator('#layers')).toContainText('line')
+})
+
+test('editor reports invalid share code without replacing the board', async ({
+  page,
+}) => {
+  page.on('dialog', (dialog) => dialog.accept())
+
+  await page.goto('/editor')
+  await expect(page.locator('#layers')).toContainText('tank')
+  const before = await page.locator('#layers').textContent()
+
+  await page.locator('#code-input').fill('[invalid]')
+  await page.getByRole('button', { name: '导入' }).click()
+
+  await expect(page.locator('#layers')).toHaveText(before ?? '')
+})
