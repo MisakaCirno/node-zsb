@@ -135,6 +135,22 @@ test('editor drags line endpoints directly on the canvas', async ({ page }) => {
   await page.getByRole('button', { name: '撤销' }).click()
   await expect(page.locator('#object-end-x')).toHaveValue('320')
   await expect(page.locator('#object-end-y')).toHaveValue('192')
+
+  const startFrom = point(256, 192)
+  const startTo = point(240, 176)
+  await page.mouse.move(startFrom.x, startFrom.y)
+  await page.mouse.down()
+  await page.mouse.move(startTo.x, startTo.y, { steps: 8 })
+  await page.mouse.up()
+
+  const startX = Number(await page.locator('#object-x').inputValue())
+  const startY = Number(await page.locator('#object-y').inputValue())
+  expect(startX).toBeGreaterThanOrEqual(238)
+  expect(startX).toBeLessThanOrEqual(241)
+  expect(startY).toBeGreaterThanOrEqual(174)
+  expect(startY).toBeLessThanOrEqual(177)
+  await expect(page.locator('#object-end-x')).toHaveValue('320')
+  await expect(page.locator('#object-end-y')).toHaveValue('192')
 })
 
 test('editor reports invalid share code without replacing the board', async ({

@@ -508,20 +508,51 @@ function bindLineHandleDrag({ object, group, line, startHandle, endHandle }) {
 }
 
 function commitLineEndpointDrag(object, group, startHandle, endHandle) {
-  const start = normalizePoint(
-    Math.round((group.x() + startHandle.x()) / LOGICAL_SCALE),
-    Math.round((group.y() + startHandle.y()) / LOGICAL_SCALE),
+  const rotation = group.rotation()
+  const start = normalizePointFromScene(
+    getLineHandleScenePoint(group, startHandle, rotation),
   )
-  const end = normalizePoint(
-    Math.round((group.x() + endHandle.x()) / LOGICAL_SCALE),
-    Math.round((group.y() + endHandle.y()) / LOGICAL_SCALE),
+  const visualEnd = normalizePointFromScene(
+    getLineHandleScenePoint(group, endHandle, rotation),
+  )
+  const endpointVector = rotatePoint(
+    {
+      x: visualEnd.x - start.x,
+      y: visualEnd.y - start.y,
+    },
+    -rotation,
   )
   object.x = start.x
   object.y = start.y
-  object.endX = end.x
-  object.endY = end.y
+  object.endX = normalizeCoordinate(start.x + endpointVector.x, 0, 512)
+  object.endY = normalizeCoordinate(start.y + endpointVector.y, 0, 384)
   renderAll()
   showStatus('已调整线段端点')
+}
+
+function getLineHandleScenePoint(group, handle, rotation) {
+  const point = rotatePoint({ x: handle.x(), y: handle.y() }, rotation)
+  return {
+    x: group.x() + point.x,
+    y: group.y() + point.y,
+  }
+}
+
+function normalizePointFromScene(point) {
+  return normalizePoint(
+    Math.round(point.x / LOGICAL_SCALE),
+    Math.round(point.y / LOGICAL_SCALE),
+  )
+}
+
+function rotatePoint(point, degrees) {
+  const radians = (degrees * Math.PI) / 180
+  const cos = Math.cos(radians)
+  const sin = Math.sin(radians)
+  return {
+    x: point.x * cos - point.y * sin,
+    y: point.x * sin + point.y * cos,
+  }
 }
 
 function createLineAoeNode(object) {
