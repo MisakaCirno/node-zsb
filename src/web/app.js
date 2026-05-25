@@ -2,6 +2,7 @@ const SCENE_WIDTH = 1024
 const SCENE_HEIGHT = 768
 const LOGICAL_SCALE = 2
 const SNAP_STEP = 16
+const GRID_STEP = SNAP_STEP * LOGICAL_SCALE
 const STORAGE_KEY = 'node-zsb-editor-board-v1'
 
 const state = {
@@ -16,6 +17,7 @@ const state = {
   backgrounds: {},
   activeGroup: 'rolesAndJobs',
   snapToGrid: false,
+  showGrid: false,
   images: new Map(),
   history: [],
   future: [],
@@ -29,6 +31,7 @@ const stage = new Konva.Stage({
   height: SCENE_HEIGHT,
 })
 const boardLayer = new Konva.Layer()
+const gridLayer = new Konva.Layer({ listening: false })
 const objectLayer = new Konva.Layer()
 const transformerLayer = new Konva.Layer()
 const transformer = new Konva.Transformer({
@@ -39,6 +42,7 @@ const transformer = new Konva.Transformer({
 })
 
 stage.add(boardLayer)
+stage.add(gridLayer)
 stage.add(objectLayer)
 stage.add(transformerLayer)
 transformerLayer.add(transformer)
@@ -64,6 +68,7 @@ const els = {
   moveDown: document.querySelector('#move-down'),
   centerObject: document.querySelector('#center-object'),
   snap: document.querySelector('#snap-toggle'),
+  grid: document.querySelector('#grid-toggle'),
   emptyState: document.querySelector('#empty-state'),
   inspector: document.querySelector('#inspector-form'),
   type: document.querySelector('#object-type'),
@@ -135,6 +140,11 @@ function bindEvents() {
   els.snap.addEventListener('change', () => {
     state.snapToGrid = els.snap.checked
     showStatus(state.snapToGrid ? '已开启网格吸附' : '已关闭网格吸附')
+  })
+  els.grid.addEventListener('change', () => {
+    state.showGrid = els.grid.checked
+    renderGrid()
+    showStatus(state.showGrid ? '已显示辅助网格' : '已隐藏辅助网格')
   })
   document.addEventListener('keydown', handleKeyboard)
   stage.on('click tap', (event) => {
@@ -274,6 +284,7 @@ function createDefaultObject(type) {
 
 async function renderAll() {
   await renderBoard()
+  renderGrid()
   await renderObjects()
   renderLayers()
   renderInspector()
@@ -292,6 +303,33 @@ async function renderBoard() {
     }),
   )
   boardLayer.draw()
+}
+
+function renderGrid() {
+  gridLayer.destroyChildren()
+  if (!state.showGrid) {
+    gridLayer.draw()
+    return
+  }
+
+  for (let x = 0, index = 0; x <= SCENE_WIDTH; x += GRID_STEP, index++) {
+    gridLayer.add(createGridLine([x, 0, x, SCENE_HEIGHT], index))
+  }
+  for (let y = 0, index = 0; y <= SCENE_HEIGHT; y += GRID_STEP, index++) {
+    gridLayer.add(createGridLine([0, y, SCENE_WIDTH, y], index))
+  }
+  gridLayer.draw()
+}
+
+function createGridLine(points, index) {
+  const major = index % 4 === 0
+  return new Konva.Line({
+    points,
+    stroke: '#d9f3ff',
+    strokeWidth: major ? 1.1 : 0.7,
+    opacity: major ? 0.28 : 0.14,
+    listening: false,
+  })
 }
 
 async function renderObjects() {

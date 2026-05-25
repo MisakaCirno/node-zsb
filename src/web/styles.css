@@ -130,7 +130,7 @@ textarea {
   padding: 0 10px;
 }
 
-.snap-toggle {
+.toolbar-toggle {
   display: inline-flex;
   align-items: center;
   gap: 6px;
@@ -138,7 +138,7 @@ textarea {
   font-size: 13px;
 }
 
-.snap-toggle input {
+.toolbar-toggle input {
   width: auto;
   min-height: 0;
 }

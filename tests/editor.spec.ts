@@ -266,3 +266,19 @@ test('editor snaps positions to the grid and centers the selected object', async
   await expect(page.locator('#object-y')).toHaveValue('192')
   await expect(page.locator('#status')).toContainText('已居中选中对象')
 })
+
+test('editor toggles the visual grid overlay', async ({ page }) => {
+  await page.goto('/editor')
+  await expect(page.locator('#layers')).toContainText('tank')
+
+  const stage = page.locator('#stage-host')
+  const before = await stage.screenshot()
+
+  await page.locator('#grid-toggle').check()
+  await expect(page.locator('#status')).toContainText('已显示辅助网格')
+  const withGrid = await stage.screenshot()
+  expect(withGrid.equals(before)).toBe(false)
+
+  await page.locator('#grid-toggle').uncheck()
+  await expect(page.locator('#status')).toContainText('已隐藏辅助网格')
+})
