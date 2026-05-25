@@ -1,5 +1,4 @@
 import {
-  MAX_LOCAL_BOARDS,
   SCENE_HEIGHT,
   SCENE_WIDTH,
   SNAP_STEP,
@@ -12,9 +11,7 @@ import {
   numberValue,
 } from './geometry.js'
 import {
-  loadLocalBoards,
   loadSavedBoard,
-  persistLocalBoards,
   persistSavedBoard,
 } from './storage.js'
 import {
@@ -41,6 +38,7 @@ import {
 import { createStageRenderer } from './stageRenderer.js'
 import { renderInspector as renderInspectorPanel } from './inspectorPanel.js'
 import { handleEditorKeyboard } from './keyboardShortcuts.js'
+import { createLocalBoardsPanel } from './localBoardsPanel.js'
 import { renderLayers as renderLayersPanel } from './layersPanel.js'
 import { createObjectCommands } from './objectCommands.js'
 import { renderPaletteTabs as renderPaletteTabsPanel } from './palettePanel.js'
@@ -131,6 +129,22 @@ const els = {
   hidden: document.querySelector('#object-hidden'),
   locked: document.querySelector('#object-locked'),
 }
+
+const {
+  deleteLocalBoard,
+  loadLocalBoard,
+  renderLocalBoards,
+  saveLocalBoard,
+  updateLocalBoardButtons,
+} = createLocalBoardsPanel({
+  state,
+  elements: els,
+  recordHistory,
+  renderAll,
+  renderBackgroundOptions,
+  showStatus,
+  confirmAction: (message) => window.confirm(message),
+})
 
 async function init() {
   const meta = await getEditorData()
@@ -274,45 +288,6 @@ function renderBackgroundOptions() {
   }
 }
 
-function renderLocalBoards(selectedId = els.localBoardSelect.value) {
-  const boards = loadLocalBoards()
-  els.localBoardSelect.innerHTML = ''
-  if (boards.length === 0) {
-    const option = document.createElement('option')
-    option.value = ''
-    option.textContent = '暂无本地存档'
-    els.localBoardSelect.append(option)
-    updateLocalBoardButtons()
-    return
-  }
-
-  for (const board of boards) {
-    const option = document.createElement('option')
-    option.value = board.id
-    option.textContent = formatLocalBoardLabel(board)
-    option.selected = board.id === selectedId
-    els.localBoardSelect.append(option)
-  }
-  if (!boards.some((board) => board.id === selectedId)) {
-    els.localBoardSelect.value = boards[0].id
-  }
-  updateLocalBoardButtons()
-}
-
-function updateLocalBoardButtons() {
-  const hasSelection = Boolean(els.localBoardSelect.value)
-  els.loadLocalBoard.disabled = !hasSelection
-  els.deleteLocalBoard.disabled = !hasSelection
-}
-
-function formatLocalBoardLabel(entry) {
-  const date = new Date(entry.updatedAt)
-  const time = Number.isNaN(date.getTime())
-    ? ''
-    : ` ${date.toLocaleString('zh-CN', { hour12: false })}`
-  return `${entry.name || '未命名'}${time}`
-}
-
 function renderPaletteTabs() {
   renderPaletteTabsPanel({
     state,
@@ -376,50 +351,6 @@ function renderLayers() {
     onSelectObject: selectObject,
     onToggleLayerFlag: toggleLayerFlag,
   })
-}
-
-function saveLocalBoard() {
-  const boards = loadLocalBoards()
-  const entry = {
-    id: createLocalBoardId(),
-    name: state.board.name || '未命名',
-    updatedAt: new Date().toISOString(),
-    board: cleanBoard(state.board),
-  }
-  boards.unshift(entry)
-  if (!saveLocalBoards(boards.slice(0, MAX_LOCAL_BOARDS))) return
-  renderLocalBoards(entry.id)
-  showStatus('已保存到浏览器本地存储')
-}
-
-function loadLocalBoard() {
-  const boards = loadLocalBoards()
-  const entry = boards.find((board) => board.id === els.localBoardSelect.value)
-  if (!entry) return
-  recordHistory()
-  state.board = normalizeBoard(entry.board)
-  state.selectedIndex = -1
-  els.boardName.value = state.board.name ?? ''
-  renderBackgroundOptions()
-  renderAll()
-  showStatus(`已读取本地存档 ${entry.name || '未命名'}`)
-}
-
-function deleteLocalBoard() {
-  const boards = loadLocalBoards()
-  const entry = boards.find((board) => board.id === els.localBoardSelect.value)
-  if (!entry) return
-  if (!window.confirm(`删除本地存档“${entry.name || '未命名'}”？`)) return
-  if (!saveLocalBoards(boards.filter((board) => board.id !== entry.id))) return
-  renderLocalBoards()
-  showStatus('已删除本地存档')
-}
-
-function createLocalBoardId() {
-  if (window.crypto?.randomUUID) {
-    return window.crypto.randomUUID()
-  }
-  return `${Date.now()}-${Math.random().toString(16).slice(2)}`
 }
 
 function applyFitZoom(options = {}) {
@@ -584,14 +515,6 @@ function showStatus(message, options = {}) {
   state.statusTimer = window.setTimeout(() => {
     els.status.classList.remove('visible')
   }, 2200)
-}
-
-function saveLocalBoards(boards) {
-  if (persistLocalBoards(boards)) {
-    return true
-  }
-  showStatus('保存本地存档失败', { type: 'error' })
-  return false
 }
 
 function persistBoard() {
