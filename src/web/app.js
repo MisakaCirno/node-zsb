@@ -25,6 +25,7 @@ const state = {
   history: [],
   future: [],
   clipboard: null,
+  actionRunning: false,
   statusTimer: 0,
 }
 
@@ -124,13 +125,19 @@ async function init() {
 
 function bindEvents() {
   els.loadCode.addEventListener('click', () =>
-    runAction(() => loadFromCode(els.codeInput.value), '已导入战术板'),
+    runAction(() => loadFromCode(els.codeInput.value), '已导入战术板', {
+      busyMessage: '正在导入战术板...',
+    }),
   )
   els.exportCode.addEventListener('click', () =>
-    runAction(exportCode, '已导出战术板代码'),
+    runAction(exportCode, '已导出战术板代码', {
+      busyMessage: '正在导出战术板代码...',
+    }),
   )
   els.renderPreview.addEventListener('click', () =>
-    runAction(renderPreview, '已渲染预览图'),
+    runAction(renderPreview, '已渲染预览图', {
+      busyMessage: '正在渲染预览图...',
+    }),
   )
   els.background.addEventListener('change', () => {
     recordHistory()
@@ -1121,12 +1128,28 @@ function nudgeSelected(key, step) {
   renderAll()
 }
 
-async function runAction(action, successMessage) {
+async function runAction(action, successMessage, options = {}) {
+  if (state.actionRunning) return
+  state.actionRunning = true
+  setAsyncActionsDisabled(true)
+  if (options.busyMessage) {
+    showStatus(options.busyMessage)
+  }
   try {
     await action()
     showStatus(successMessage)
   } catch (error) {
     handleError(error)
+  } finally {
+    state.actionRunning = false
+    setAsyncActionsDisabled(false)
+  }
+}
+
+function setAsyncActionsDisabled(disabled) {
+  for (const button of [els.loadCode, els.exportCode, els.renderPreview]) {
+    button.disabled = disabled
+    button.setAttribute('aria-busy', String(disabled))
   }
 }
 

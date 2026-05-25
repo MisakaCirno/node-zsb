@@ -41,6 +41,31 @@ test('editor loads, edits an object, exports code, and renders a preview', async
   expect(consoleErrors).toEqual([])
 })
 
+test('editor disables async action buttons while exporting', async ({ page }) => {
+  await page.goto('/editor')
+  await expect(page.locator('#layers')).toContainText('tank')
+
+  let releaseExport: () => void = () => {}
+  await page.route('**/utils/json2code', async (route) => {
+    await new Promise<void>((resolve) => {
+      releaseExport = resolve
+    })
+    await route.continue()
+  })
+
+  await page.getByRole('button', { name: '导出' }).click()
+  await expect(page.locator('#load-code')).toBeDisabled()
+  await expect(page.locator('#export-code')).toBeDisabled()
+  await expect(page.locator('#render-preview')).toBeDisabled()
+  await expect(page.locator('#status')).toContainText('正在导出战术板代码')
+
+  releaseExport()
+  await expect(page.locator('#code-output')).toHaveValue(/\[stgy:/)
+  await expect(page.locator('#load-code')).toBeEnabled()
+  await expect(page.locator('#export-code')).toBeEnabled()
+  await expect(page.locator('#render-preview')).toBeEnabled()
+})
+
 test('editor imports code, changes background, and edits text and line objects', async ({
   page,
 }) => {
