@@ -1,16 +1,9 @@
-import { SNAP_STEP } from './constants.js'
-import {
-  normalizeCoordinate as normalizeCoordinateValue,
-  normalizePoint as normalizePointValue,
-} from './geometry.js'
 import { getEditorData } from './api.js'
-import {
-  createEditorState,
-  getSelectedObject,
-} from './editorState.js'
+import { createEditorState } from './editorState.js'
 import { createBoardMetaControls } from './boardMetaControls.js'
 import { createBoardCodeActions } from './boardCodeActions.js'
 import { bindEditorEvents } from './editorBindings.js'
+import { createEditorContext } from './editorContext.js'
 import { getEditorElements } from './editorElements.js'
 import { createEditorFeedback } from './editorFeedback.js'
 import { createEditorHistoryControls } from './editorHistoryControls.js'
@@ -45,6 +38,17 @@ export function createEditorApp({
     state,
     getElements: () => els,
     restoreCurrentState,
+    showStatus,
+  })
+  const {
+    deselect,
+    getSelected,
+    normalizeCoordinate,
+    normalizePoint,
+    selectObject,
+  } = createEditorContext({
+    state,
+    renderAll,
     showStatus,
   })
   const stageRenderer = createStageRenderer({
@@ -226,11 +230,6 @@ export function createEditorApp({
     await renderLoop.renderAll()
   }
 
-  function selectObject(index) {
-    state.selectedIndex = index
-    renderAll()
-  }
-
   function renderInspector() {
     renderLoop.renderInspector()
   }
@@ -244,27 +243,6 @@ export function createEditorApp({
     renderBackgroundOptions()
     renderAll()
     updateHistoryButtons()
-  }
-
-  function deselect() {
-    selectObject(-1)
-    showStatus('已取消选择')
-  }
-
-  function getSelected() {
-    return getSelectedObject(state)
-  }
-
-  function normalizePoint(x, y) {
-    return normalizePointValue(x, y, getSnapStep())
-  }
-
-  function normalizeCoordinate(value, min, max) {
-    return normalizeCoordinateValue(value, min, max, getSnapStep())
-  }
-
-  function getSnapStep() {
-    return state.snapToGrid ? SNAP_STEP : 0
   }
 
   return {
