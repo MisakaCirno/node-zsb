@@ -916,6 +916,11 @@ function handleKeyboard(event) {
     copySelected()
     return
   }
+  if (!isEditingText && (event.ctrlKey || event.metaKey) && event.key.toLowerCase() === 'd') {
+    event.preventDefault()
+    duplicateSelected()
+    return
+  }
   if (!isEditingText && (event.ctrlKey || event.metaKey) && event.key.toLowerCase() === 'v') {
     event.preventDefault()
     pasteObject()

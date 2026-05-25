@@ -209,6 +209,25 @@ test('editor copies and pastes the selected object with keyboard shortcuts', asy
   await expect(page.locator('#layers .layer-row')).toHaveCount(before)
 })
 
+test('editor duplicates the selected object with a keyboard shortcut', async ({
+  page,
+}) => {
+  await page.goto('/editor')
+  await expect(page.locator('#layers')).toContainText('tank')
+
+  const before = await page.locator('#layers .layer-row').count()
+  await page.locator('#layers .layer-row').first().click()
+  await page.keyboard.press('Control+D')
+
+  await expect(page.locator('#layers .layer-row')).toHaveCount(before + 1)
+  await expect(page.locator('#object-type')).toHaveValue('tank')
+  await expect(page.locator('#object-x')).toHaveValue('274')
+  await expect(page.locator('#object-y')).toHaveValue('150')
+
+  await page.getByRole('button', { name: '撤销' }).click()
+  await expect(page.locator('#layers .layer-row')).toHaveCount(before)
+})
+
 test('editor toggles hidden and locked states from the layer list', async ({
   page,
 }) => {
