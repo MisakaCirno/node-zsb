@@ -529,10 +529,33 @@ function renderLayers() {
     const row = document.createElement('div')
     row.className = 'layer-row'
     row.classList.toggle('active', index === state.selectedIndex)
-    row.innerHTML = `<span>${index + 1}. ${object.type}</span><span>${Math.round(object.x)}, ${Math.round(object.y)}</span>`
+    row.classList.toggle('muted', Boolean(object.hidden))
+    row.innerHTML = `
+      <button class="layer-toggle" type="button" data-action="hidden" title="${object.hidden ? '显示' : '隐藏'}">${object.hidden ? '隐' : '显'}</button>
+      <button class="layer-toggle" type="button" data-action="locked" title="${object.locked ? '解锁' : '锁定'}">${object.locked ? '锁' : '开'}</button>
+      <span class="layer-name">${index + 1}. ${object.type}</span>
+      <span class="layer-position">${Math.round(object.x)}, ${Math.round(object.y)}</span>
+    `
+    row.querySelector('[data-action="hidden"]').addEventListener('click', (event) => {
+      event.stopPropagation()
+      toggleLayerFlag(index, 'hidden')
+    })
+    row.querySelector('[data-action="locked"]').addEventListener('click', (event) => {
+      event.stopPropagation()
+      toggleLayerFlag(index, 'locked')
+    })
     row.addEventListener('click', () => selectObject(index))
     els.layers.append(row)
   })
+}
+
+function toggleLayerFlag(index, key) {
+  const object = state.board.objects[index]
+  if (!object) return
+  recordHistory()
+  object[key] = object[key] ? undefined : true
+  state.selectedIndex = index
+  renderAll()
 }
 
 function deleteSelected() {

@@ -180,3 +180,27 @@ test('editor copies and pastes the selected object with keyboard shortcuts', asy
   await page.getByRole('button', { name: '撤销' }).click()
   await expect(page.locator('#layers .layer-row')).toHaveCount(before)
 })
+
+test('editor toggles hidden and locked states from the layer list', async ({
+  page,
+}) => {
+  await page.goto('/editor')
+  await expect(page.locator('#layers')).toContainText('tank')
+
+  const firstLayer = page.locator('#layers .layer-row').first()
+  await firstLayer.click()
+  const beforeX = await page.locator('#object-x').inputValue()
+
+  await firstLayer.locator('[data-action="hidden"]').click()
+  await expect(page.locator('#object-hidden')).toBeChecked()
+  await expect(firstLayer).toHaveClass(/muted/)
+
+  await firstLayer.locator('[data-action="locked"]').click()
+  await expect(page.locator('#object-locked')).toBeChecked()
+
+  await page.keyboard.press('ArrowRight')
+  await expect(page.locator('#object-x')).toHaveValue(beforeX)
+
+  await page.getByRole('button', { name: '撤销' }).click()
+  await expect(page.locator('#object-locked')).not.toBeChecked()
+})

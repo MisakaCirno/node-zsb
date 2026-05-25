@@ -207,15 +207,40 @@ textarea {
   border: 1px solid #303b43;
   background: #1b2228;
   border-radius: 6px;
-  padding: 8px;
+  padding: 6px;
   cursor: pointer;
-  display: flex;
-  justify-content: space-between;
+  display: grid;
+  grid-template-columns: 28px 28px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 6px;
 }
 
 .layer-row.active {
   border-color: #66c2a5;
   background: #20362f;
+}
+
+.layer-row.muted {
+  opacity: 0.65;
+}
+
+.layer-toggle {
+  width: 28px;
+  height: 26px;
+  min-width: 0;
+  padding: 0;
+  font-size: 12px;
+}
+
+.layer-name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.layer-position {
+  color: #81909a;
+  font-size: 12px;
 }
 
 .empty-state {
