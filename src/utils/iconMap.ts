@@ -194,6 +194,14 @@ interface JobIconConfig {
   size: number
 }
 
+export const iconGroups = {
+  rolesAndJobs: Object.keys(tab1),
+  mechanics: Object.keys(tab2),
+  enemiesAndMarkers: Object.keys(tab3),
+  shapes: Object.keys(tab4),
+  backgrounds: Object.keys(tab5),
+}
+
 function easySpriteCrop(
   imageName: string,
   spriteWidth: number,
@@ -244,4 +252,8 @@ const iconMap: Partial<Record<IconType, JobIconConfig>> = {
 
 export function getIconConfig(data: StrategyObject): JobIconConfig | undefined {
   return iconMap[data.type as IconType]
+}
+
+export function getAllIconConfigs(): Partial<Record<IconType, JobIconConfig>> {
+  return iconMap
 }

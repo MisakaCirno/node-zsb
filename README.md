@@ -22,6 +22,12 @@ bun run dev
 
 服务默认监听 `http://localhost:3000`。
 
+可编辑画板入口：
+
+```bash
+http://localhost:3000/editor
+```
+
 ## 校验
 
 ```bash
@@ -35,6 +41,7 @@ bun run typecheck
 - `GET /preview/:name`：根据 hash 读取缓存图片。
 - `POST /utils/code2json`：战术板代码转 JSON。
 - `POST /utils/json2code`：战术板 JSON 转代码。
+- `GET /editor`：打开可编辑战术板画板。
 
 无效战术板代码会返回 400，不再静默回退为默认图。
 

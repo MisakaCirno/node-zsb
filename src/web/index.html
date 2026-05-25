@@ -1,0 +1,131 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>战术板编辑器</title>
+    <link rel="stylesheet" href="/editor/styles.css" />
+    <script src="/vendor/konva.min.js"></script>
+  </head>
+  <body>
+    <main class="editor-shell">
+      <aside class="panel sidebar">
+        <section class="toolbar">
+          <button id="load-code" type="button">导入</button>
+          <button id="export-code" type="button">导出</button>
+          <button id="render-preview" type="button">渲染</button>
+        </section>
+
+        <label class="field">
+          <span>战术板代码</span>
+          <textarea id="code-input" spellcheck="false"></textarea>
+        </label>
+
+        <label class="field">
+          <span>背景</span>
+          <select id="background-select"></select>
+        </label>
+
+        <section>
+          <div class="section-title">对象</div>
+          <div id="palette-tabs" class="segmented"></div>
+          <div id="palette" class="palette"></div>
+        </section>
+      </aside>
+
+      <section class="stage-wrap">
+        <div class="stage-toolbar">
+          <input id="board-name" maxlength="7" placeholder="名称" />
+          <button id="delete-object" type="button">删除</button>
+          <button id="duplicate-object" type="button">复制</button>
+          <button id="move-up" type="button">上移</button>
+          <button id="move-down" type="button">下移</button>
+        </div>
+        <div id="stage-host"></div>
+      </section>
+
+      <aside class="panel inspector">
+        <section>
+          <div class="section-title">属性</div>
+          <div id="empty-state" class="empty-state">选择一个对象</div>
+          <div id="inspector-form" class="inspector-form hidden">
+            <label class="field">
+              <span>类型</span>
+              <input id="object-type" disabled />
+            </label>
+            <div class="field-grid">
+              <label class="field">
+                <span>X</span>
+                <input id="object-x" type="number" min="0" max="512" />
+              </label>
+              <label class="field">
+                <span>Y</span>
+                <input id="object-y" type="number" min="0" max="384" />
+              </label>
+            </div>
+            <div class="field-grid">
+              <label class="field">
+                <span>大小</span>
+                <input id="object-size" type="number" min="10" max="300" />
+              </label>
+              <label class="field">
+                <span>角度</span>
+                <input id="object-angle" type="number" min="0" max="360" />
+              </label>
+            </div>
+            <div class="field-grid">
+              <label class="field">
+                <span>颜色</span>
+                <input id="object-color" type="color" />
+              </label>
+              <label class="field">
+                <span>透明度</span>
+                <input id="object-transparency" type="number" min="0" max="100" />
+              </label>
+            </div>
+            <label class="field">
+              <span>文字</span>
+              <input id="object-text" maxlength="30" />
+            </label>
+            <div class="field-grid">
+              <label class="field">
+                <span>终点 X</span>
+                <input id="object-end-x" type="number" min="0" max="512" />
+              </label>
+              <label class="field">
+                <span>终点 Y</span>
+                <input id="object-end-y" type="number" min="0" max="384" />
+              </label>
+            </div>
+            <div class="field-grid">
+              <label class="field">
+                <span>弧度</span>
+                <input id="object-arc" type="number" min="10" max="360" step="10" />
+              </label>
+              <label class="field">
+                <span>内圈</span>
+                <input id="object-donut" type="number" min="0" max="240" />
+              </label>
+            </div>
+            <div class="checks">
+              <label><input id="object-hidden" type="checkbox" /> 隐藏</label>
+              <label><input id="object-locked" type="checkbox" /> 锁定</label>
+            </div>
+          </div>
+        </section>
+
+        <section>
+          <div class="section-title">图层</div>
+          <div id="layers" class="layers"></div>
+        </section>
+
+        <section>
+          <div class="section-title">输出</div>
+          <textarea id="code-output" spellcheck="false" readonly></textarea>
+          <img id="preview-image" alt="" />
+        </section>
+      </aside>
+    </main>
+    <script type="module" src="/editor/app.js"></script>
+  </body>
+</html>

@@ -3,6 +3,7 @@ import openapi, { fromTypes } from '@elysiajs/openapi'
 import { node } from '@elysiajs/node'
 import { boardController } from './src/controllers/imageController.ts'
 import { utilsController } from './src/controllers/utilsController.ts'
+import { webController } from './src/controllers/webController.ts'
 
 const serverInfo = {
   hostname: 'localhost',
@@ -25,6 +26,7 @@ const app = new Elysia()
   )
   .use(boardController)
   .use(utilsController)
+  .use(webController)
 
 function initNodeServer() {
   const server = new Elysia({ adapter: node() }).use(app).listen(serverInfo)
