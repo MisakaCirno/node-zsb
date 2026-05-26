@@ -39,19 +39,12 @@ function renderPalette({ state, elements, onAddObject }) {
     const button = document.createElement('button')
     button.type = 'button'
     button.title = type
-    const config = state.iconConfigs[type]
-    if (config) {
-      const img = document.createElement('img')
-      img.src = `/assets/objects/${config.src}.webp`
-      img.alt = type
-      button.append(img)
-    } else {
-      const span = document.createElement('span')
-      span.className = 'text-swatch'
-      span.textContent = type === 'text' ? 'T' : type.slice(0, 2)
-      button.append(span)
-    }
+    button.append(createObjectPreview({
+      iconConfigs: state.iconConfigs,
+      type,
+    }))
     button.addEventListener('click', () => onAddObject(type))
     elements.palette.append(button)
   }
 }
+import { createObjectPreview } from './iconPreview.js'

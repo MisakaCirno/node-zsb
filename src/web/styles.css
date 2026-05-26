@@ -206,12 +206,16 @@ textarea {
   place-items: center;
 }
 
-.palette img {
-  max-width: 28px;
-  max-height: 28px;
+.object-preview {
+  display: inline-grid;
+  place-items: center;
+  flex: 0 0 auto;
+  background-repeat: no-repeat;
+  image-rendering: auto;
 }
 
-.palette .text-swatch {
+.text-swatch {
+  color: #eef2f3;
   font-weight: 700;
 }
 
@@ -276,7 +280,7 @@ textarea {
   padding: 6px;
   cursor: pointer;
   display: grid;
-  grid-template-columns: 28px 28px minmax(0, 1fr) auto;
+  grid-template-columns: 28px 28px 28px minmax(0, 1fr) auto;
   align-items: center;
   gap: 6px;
 }
@@ -304,7 +308,22 @@ textarea {
   height: 26px;
   min-width: 0;
   padding: 0;
-  font-size: 12px;
+  display: grid;
+  place-items: center;
+}
+
+.layer-toggle svg {
+  width: 15px;
+  height: 15px;
+  fill: none;
+  stroke: currentColor;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-width: 2;
+}
+
+.layer-preview {
+  justify-self: center;
 }
 
 .layer-name {

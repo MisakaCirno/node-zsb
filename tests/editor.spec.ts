@@ -51,6 +51,14 @@ test('editor renders readable Chinese labels', async ({ page }) => {
   await expect(page.getByPlaceholder('名称')).toBeVisible()
   await expect(page.locator('#layers')).toContainText('tank')
   await expect(page.locator('#layer-count')).not.toHaveText('0')
+  await expect(page.getByTitle('tank').first().locator('.object-preview')).toHaveCSS(
+    'background-image',
+    /tab1\.webp/,
+  )
+  await expect(page.locator('#layers .layer-row').first().locator('.layer-preview')).toHaveCSS(
+    'background-image',
+    /tab1\.webp/,
+  )
   await expect(page.locator('.section-title')).toContainText([
     '对象',
     '属性',
