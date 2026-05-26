@@ -7,6 +7,7 @@ import {
   moveLayerNodeAfter,
   moveLayerNodeBefore,
   moveLayerNodeIntoGroup,
+  moveLayerNodeToRoot,
   removeObjectLayerNodes,
   renameGroup,
   syncBoardOrderFromLayerTree,
@@ -191,6 +192,14 @@ export function createObjectCommands({
       syncBoardOrderFromLayerTree(state)
       renderAll()
       showStatus('已移动到组内')
+    },
+
+    moveLayerNodeToRoot(dragged) {
+      recordHistory()
+      if (!moveLayerNodeToRoot(state.layerTree, dragged)) return
+      syncBoardOrderFromLayerTree(state)
+      renderAll()
+      showStatus('已移动到根层级')
     },
 
     groupSelected() {

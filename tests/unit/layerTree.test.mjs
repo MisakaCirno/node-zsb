@@ -7,6 +7,7 @@ import {
   moveLayerNodeAfter,
   moveLayerNodeBefore,
   moveLayerNodeIntoGroup,
+  moveLayerNodeToRoot,
   removeObjectLayerNodes,
 } from '../../src/web/layerTree.js'
 
@@ -125,4 +126,23 @@ test('moveLayerNodeIntoGroup rejects moving a group into itself or its descendan
 
   assert.equal(moveLayerNodeIntoGroup(layerTree, { type: 'group', id: 'grp_1' }, 'grp_1'), false)
   assert.equal(moveLayerNodeIntoGroup(layerTree, { type: 'group', id: 'grp_1' }, 'grp_2'), false)
+})
+
+test('moveLayerNodeToRoot lifts nested groups back to the root', () => {
+  const layerTree = [
+    {
+      type: 'group',
+      id: 'grp_1',
+      name: 'Outer',
+      children: [
+        { type: 'group', id: 'grp_2', name: 'Inner', children: [{ type: 'object', id: 'obj_a' }] },
+      ],
+    },
+  ]
+
+  assert.equal(moveLayerNodeToRoot(layerTree, { type: 'group', id: 'grp_2' }), true)
+  assert.deepEqual(layerTree, [
+    { type: 'group', id: 'grp_1', name: 'Outer', children: [] },
+    { type: 'group', id: 'grp_2', name: 'Inner', children: [{ type: 'object', id: 'obj_a' }] },
+  ])
 })

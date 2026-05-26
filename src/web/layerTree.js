@@ -131,6 +131,14 @@ export function moveLayerNodeIntoGroup(layerTree, dragged, groupId) {
   return true
 }
 
+export function moveLayerNodeToRoot(layerTree, dragged) {
+  if (!dragged?.id) return false
+  const removed = removeLayerNode(layerTree, dragged)
+  if (!removed) return false
+  layerTree.push(removed)
+  return true
+}
+
 export function syncBoardOrderFromLayerTree(state) {
   const selectedIds = (state.selectedIndexes ?? [])
     .map((index) => state.board.objects[index]?.editorId)

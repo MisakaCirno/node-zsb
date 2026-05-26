@@ -35,6 +35,7 @@ export function createEditorActionRegistry({
     groupSelected: objectCommands.groupSelected,
     moveLayerNodeBefore: objectCommands.moveLayerNodeBefore,
     moveLayerNodeIntoGroup: objectCommands.moveLayerNodeIntoGroup,
+    moveLayerNodeToRoot: objectCommands.moveLayerNodeToRoot,
     ungroupSelectedGroup: objectCommands.ungroupSelectedGroup,
     toggleLayerGroup: objectCommands.toggleLayerGroup,
     toggleLayerGroupFlag: objectCommands.toggleLayerGroupFlag,

@@ -8,6 +8,7 @@ export function renderLayers({
   onRenameLayerGroup,
   onMoveLayerNodeBefore,
   onMoveLayerNodeIntoGroup,
+  onMoveLayerNodeToRoot,
   onSelectGroup,
   onSelectObject,
   onToggleLayerGroup,
@@ -29,6 +30,7 @@ export function renderLayers({
   const layerTree = state.layerTree?.length
     ? state.layerTree
     : state.board.objects.map((object) => ({ type: 'object', id: object.editorId }))
+  renderRootDropTarget()
   for (const node of layerTree) {
     renderLayerNode(node, 0)
   }
@@ -76,11 +78,17 @@ export function renderLayers({
     })
     const name = createLayerText('layer-name', group.name ?? '组')
     name.title = '双击重命名'
+    let selectTimer = 0
     name.addEventListener('click', (event) => {
       event.stopPropagation()
+      window.clearTimeout(selectTimer)
+      selectTimer = window.setTimeout(() => {
+        onSelectGroup(group.id)
+      }, 180)
     })
     name.addEventListener('dblclick', (event) => {
       event.stopPropagation()
+      window.clearTimeout(selectTimer)
       startGroupRename(name, group, onRenameLayerGroup)
     })
     row.append(
@@ -122,6 +130,36 @@ export function renderLayers({
     })
     row.addEventListener('click', () => onSelectGroup(group.id))
     elements.layers.append(row)
+  }
+
+  function renderRootDropTarget() {
+    const target = document.createElement('div')
+    target.id = 'layer-root-drop'
+    target.className = 'layer-root-drop'
+    target.textContent = '拖到这里移到根层级'
+    target.addEventListener('dragenter', (event) => {
+      event.preventDefault()
+      target.classList.add('drop-target')
+    })
+    target.addEventListener('dragover', (event) => {
+      event.preventDefault()
+      event.dataTransfer.dropEffect = 'move'
+      target.classList.add('drop-target')
+    })
+    target.addEventListener('dragleave', () => {
+      target.classList.remove('drop-target')
+    })
+    target.addEventListener('drop', (event) => {
+      const dragged = getDraggedLayerNode(event)
+      if (!dragged) return
+      event.preventDefault()
+      target.classList.remove('drop-target')
+      const selectedGroup = state.selectedGroupId && state.selectedGroupId !== dragged.id
+        ? { type: 'group', id: state.selectedGroupId }
+        : null
+      onMoveLayerNodeToRoot(selectedGroup ?? dragged)
+    })
+    elements.layers.append(target)
   }
 
   function renderObjectRow(object, index, depth) {

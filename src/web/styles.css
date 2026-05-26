@@ -976,6 +976,22 @@ textarea {
   margin: 0 0 10px;
 }
 
+.layer-root-drop {
+  border: 1px dashed #303b43;
+  border-radius: 6px;
+  color: #81909a;
+  font-size: 12px;
+  min-height: 42px;
+  padding: 12px 8px;
+  text-align: center;
+}
+
+.layer-root-drop.drop-target {
+  border-color: #9ed9c6;
+  background: #263c35;
+  color: #eef2f3;
+}
+
 .layer-toolbar button {
   width: 34px;
   min-width: 34px;

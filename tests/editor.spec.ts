@@ -180,6 +180,9 @@ test('editor groups selected layers and exports the group in project JSON', asyn
 
   await expect(page.locator('#layers .layer-group-row')).toHaveCount(1)
   const groupRow = page.locator('#layers .layer-group-row')
+  await groupRow.locator('.layer-name').click()
+  await expect(groupRow).toHaveClass(/active/)
+  await expect(page.locator('#ungroup-layers')).toBeEnabled()
   await groupRow.locator('.layer-name').dblclick()
   await groupRow.locator('.layer-name-input').fill('第一组')
   await page.keyboard.press('Enter')
@@ -228,6 +231,44 @@ test('editor groups selected layers and exports the group in project JSON', asyn
   await page.locator('#layers .layer-group-row').click()
   await page.locator('#ungroup-layers').click()
   await expect(page.locator('#layers .layer-group-row')).toHaveCount(0)
+})
+
+test('editor drags nested groups back to the layer root', async ({ page }) => {
+  await page.goto('/editor')
+  await expect(page.locator('#layers')).toContainText('tank')
+
+  await page.locator('#layers .layer-row').nth(0).click()
+  await page.locator('#layers .layer-row').nth(1).click({ modifiers: ['Shift'] })
+  await page.locator('#group-layers').click()
+  await expect(page.locator('#layers .layer-group-row')).toHaveCount(1)
+
+  await page.locator('#layers .layer-row').nth(3).click()
+  await page.locator('#layers .layer-row').nth(4).click({ modifiers: ['Shift'] })
+  await page.locator('#group-layers').click()
+  await expect(page.locator('#layers .layer-group-row')).toHaveCount(2)
+
+  const outerGroup = page.locator('#layers .layer-group-row').nth(0)
+  const innerGroup = page.locator('#layers .layer-group-row').nth(1)
+  const exportProject = async () => {
+    await openFileMenu(page)
+    const downloadPromise = page.waitForEvent('download')
+    await page.locator('#export-project-file').click()
+    const download = await downloadPromise
+    const path = await download.path()
+    if (!path) throw new Error('Project download path is unavailable')
+    return JSON.parse(await readFile(path, 'utf8'))
+  }
+
+  await innerGroup.dragTo(outerGroup, { force: true })
+  await expect(page.locator('#layers .layer-group-row')).toHaveCount(2)
+  const nestedProject = await exportProject()
+  expect(nestedProject.layers[0].children.some((node: { type: string }) =>
+    node.type === 'group')).toBe(true)
+
+  await innerGroup.dragTo(page.locator('#layer-root-drop'), { force: true })
+  await expect(page.locator('#layers .layer-group-row')).toHaveCount(2)
+  const project = await exportProject()
+  expect(project.layers.filter((node: { type: string }) => node.type === 'group')).toHaveLength(2)
 })
 
 test('editor resizes side panels and keeps object tabs visible', async ({ page }) => {
