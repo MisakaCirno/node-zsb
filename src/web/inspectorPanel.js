@@ -65,7 +65,7 @@ function setFieldVisible(elements, field, visible) {
 }
 
 function syncToggleButton(input) {
-  const button = input.closest('.toggle-button')
+  const button = input.closest('.toggle-button, .inspector-toggle')
   if (!button) return
   button.classList.toggle('active', input.checked)
   button.setAttribute('aria-pressed', String(input.checked))
