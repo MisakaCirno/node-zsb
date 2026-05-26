@@ -361,6 +361,44 @@ textarea {
   font-weight: 700;
 }
 
+.shape-swatch svg {
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+}
+
+.shape-swatch .shape-fill {
+  fill: rgba(102, 194, 165, 0.24);
+  stroke: #66c2a5;
+  stroke-width: 2;
+}
+
+.shape-swatch .shape-stroke {
+  fill: none;
+  stroke: #66c2a5;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-width: 2.4;
+}
+
+.shape-swatch .shape-dot {
+  fill: #eef2f3;
+  stroke: #66c2a5;
+  stroke-width: 1.4;
+}
+
+.shape-swatch .shape-ring {
+  fill: none;
+  stroke: #66c2a5;
+  stroke-width: 5;
+}
+
+.shape-swatch .shape-ring-hole {
+  fill: #151a1f;
+  stroke: rgba(238, 242, 243, 0.72);
+  stroke-width: 1.2;
+}
+
 .background-list {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));

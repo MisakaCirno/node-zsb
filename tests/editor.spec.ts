@@ -77,6 +77,7 @@ test('editor renders readable Chinese labels', async ({ page }) => {
   await openExportDialog(page)
   await expect(page.locator('#render-preview')).toBeVisible()
   await expect(page.getByPlaceholder('名称')).toBeVisible()
+  await page.locator('#export-dialog').evaluate((dialog) => dialog.close())
   await expect(page.locator('#layers')).toContainText('tank')
   await expect(page.locator('#layer-count')).not.toHaveText('0')
   await expect(page.getByTitle('tank').first().locator('.object-preview')).toHaveCSS(
@@ -95,6 +96,10 @@ test('editor renders readable Chinese labels', async ({ page }) => {
   await expect(page.locator('#align-left svg')).toBeVisible()
   await expect(page.locator('#asset-tab-background')).toHaveAttribute('role', 'tab')
   await expect(page.locator('#asset-tab-objects')).toHaveAttribute('aria-selected', 'true')
+  await page.getByRole('button', { name: '形状' }).click()
+  for (const shapeType of ['line', 'line_aoe', 'circle_aoe', 'fan_aoe', 'donut']) {
+    await expect(page.locator(`button[title="${shapeType}"] svg`)).toBeVisible()
+  }
   await expect(page.locator('.section-title')).toContainText([
     '属性',
     '图层',
