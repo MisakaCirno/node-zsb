@@ -247,9 +247,10 @@ test('editor renders readable Chinese labels', async ({ page }) => {
     'background-image',
     /tab1\.webp/,
   )
-  await expect(page.locator('.stage-toolbar-row')).toHaveCount(1)
+  await expect(page.locator('.stage-toolbar-row')).toHaveCount(2)
   await expect(page.locator('.stage-toolbar-main #zoom-select')).toHaveCount(1)
-  await expect(page.locator('.stage-toolbar-main #undo-action')).toHaveCount(1)
+  await expect(page.locator('.stage-toolbar-main #undo-action')).toHaveCount(0)
+  await expect(page.locator('.stage-toolbar-actions #undo-action')).toHaveCount(1)
   await expect(page.locator('#align-left')).toHaveText('')
   await expect(page.locator('#align-left svg')).toBeVisible()
   await expect(page.locator('#asset-tab-background')).toHaveAttribute('role', 'tab')
@@ -464,6 +465,23 @@ test('editor multi-selects objects on the canvas and aligns them', async ({ page
   await expect(page.locator('#object-y')).toHaveValue('220')
   await page.getByRole('button', { name: '撤销' }).click()
   await expect(page.locator('#object-x')).toHaveValue('320')
+})
+
+test('editor aligns a single selected object to the canvas', async ({ page }) => {
+  await page.goto('/editor')
+  await expect(page.locator('#layers')).toContainText('tank')
+
+  await page.getByTitle('tank').first().click()
+  await page.locator('#object-x').fill('120')
+  await page.locator('#object-y').fill('80')
+  await expect(page.locator('#align-center-x')).toBeEnabled()
+
+  await page.locator('#align-center-x').click()
+  await expect(page.locator('#object-x')).toHaveValue('256')
+  await expect(page.locator('#status')).toContainText('已对齐到画布')
+
+  await page.locator('#align-center-y').click()
+  await expect(page.locator('#object-y')).toHaveValue('192')
 })
 
 test('editor marquee-selects objects with contained and intersect modes', async ({ page }) => {

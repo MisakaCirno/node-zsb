@@ -49,7 +49,6 @@ export function createInspectorControls({
     const object = getSelected()
     const hasSelection = Boolean(object)
     const selectedIndexes = getSelectedIndexes(state)
-    const hasMultipleSelection = selectedIndexes.length > 1
     const hasMovableSelection = selectedIndexes
       .some((index) => !state.board.objects[index]?.locked)
     elements.clearBoard.disabled = state.board.objects.length === 0
@@ -69,7 +68,7 @@ export function createInspectorControls({
       elements.alignCenterY,
       elements.alignBottom,
     ]) {
-      button.disabled = !hasMultipleSelection || !hasMovableSelection
+      button.disabled = !hasSelection || !hasMovableSelection
     }
   }
 

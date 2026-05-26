@@ -12,6 +12,12 @@ const BOARD_CENTER = {
   x: 256,
   y: 192,
 }
+const BOARD_BOUNDS = {
+  left: 0,
+  right: 512,
+  top: 0,
+  bottom: 384,
+}
 
 export function createObjectCommands({
   state,
@@ -152,18 +158,20 @@ export function createObjectCommands({
 
     alignSelected(alignment) {
       const selectedObjects = getSelectedList()
-      if (selectedObjects.length < 2) return
+      if (selectedObjects.length === 0) return
       const movableObjects = selectedObjects.filter((object) => object && !object.locked)
       if (movableObjects.length === 0) return
       recordHistory()
-      const selectionBounds = getSelectionBounds(selectedObjects, state)
+      const targetBounds = selectedObjects.length === 1
+        ? BOARD_BOUNDS
+        : getSelectionBounds(selectedObjects, state)
       for (const object of movableObjects) {
         const objectBounds = getObjectBounds(object, state)
-        const delta = getAlignmentDelta(alignment, objectBounds, selectionBounds)
+        const delta = getAlignmentDelta(alignment, objectBounds, targetBounds)
         moveObjectBy(object, delta.dx, delta.dy)
       }
       renderAll()
-      showStatus(`已对齐 ${movableObjects.length} 个对象`)
+      showStatus(movableObjects.length === 1 ? '已对齐到画布' : `已对齐 ${movableObjects.length} 个对象`)
     },
 
     copySelected() {
