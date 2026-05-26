@@ -35,8 +35,17 @@
                 <input id="board-name" maxlength="7" placeholder="名称" />
               </label>
               <button id="open-local-board-dialog" class="text-tool" type="button">本地存档</button>
-              <button id="open-import-dialog" class="text-tool" type="button" title="导入分享码">导入分享码</button>
-              <button id="open-export-dialog" class="text-tool" type="button" title="导出分享码">导出分享码</button>
+              <button id="open-import-dialog" class="icon-tool" type="button" title="导入分享码" aria-label="导入分享码">
+                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v12"/><path d="m7 10 5 5 5-5"/><path d="M5 21h14"/></svg>
+              </button>
+              <button id="open-export-code-dialog" class="icon-tool text-tool" type="button" title="导出分享码" aria-label="导出分享码">
+                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 7 4 12l4 5"/><path d="m16 7 4 5-4 5"/><path d="m14 4-4 16"/></svg>
+                <span>导出分享码</span>
+              </button>
+              <button id="open-export-image-dialog" class="icon-tool text-tool" type="button" title="导出图片" aria-label="导出图片">
+                <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="5" width="16" height="14" rx="2"/><circle cx="9" cy="10" r="1.5"/><path d="m7 17 4-4 3 3 2-2 3 3"/></svg>
+                <span>导出图片</span>
+              </button>
             </div>
             <div class="toolbar-group zoom-actions" aria-label="缩放">
               <button id="zoom-out" class="icon-tool" type="button" title="缩小" aria-label="缩小">
@@ -273,21 +282,32 @@
         </footer>
       </form>
     </dialog>
-    <dialog id="export-dialog" class="editor-dialog">
+    <dialog id="export-code-dialog" class="editor-dialog">
       <form method="dialog" class="dialog-panel">
         <header class="dialog-header">
-          <h2>导出战术板</h2>
-          <button id="close-export-dialog" class="icon-button" type="submit" aria-label="关闭">x</button>
+          <h2>导出分享码</h2>
+          <button id="close-export-code-dialog" class="icon-button" type="submit" aria-label="关闭">x</button>
         </header>
-        <div class="dialog-actions">
-          <button id="export-code" type="button">生成代码</button>
-          <button id="render-preview" type="button">生成预览图</button>
-        </div>
         <label class="field">
-          <span>战术板代码</span>
+          <span>分享码</span>
           <textarea id="code-output" spellcheck="false" readonly></textarea>
         </label>
+        <footer class="dialog-actions">
+          <button id="copy-export-code" type="button">复制分享码</button>
+        </footer>
+      </form>
+    </dialog>
+    <dialog id="export-image-dialog" class="editor-dialog">
+      <form method="dialog" class="dialog-panel">
+        <header class="dialog-header">
+          <h2>导出图片</h2>
+          <button id="close-export-image-dialog" class="icon-button" type="submit" aria-label="关闭">x</button>
+        </header>
         <img id="preview-image" alt="战术板预览图" />
+        <footer class="dialog-actions">
+          <button id="copy-export-image" type="button">复制图片</button>
+          <button id="download-preview-image" type="button">下载图片</button>
+        </footer>
       </form>
     </dialog>
     <div id="context-menu" class="context-menu hidden" role="menu">

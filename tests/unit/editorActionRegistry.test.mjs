@@ -12,10 +12,13 @@ test('createEditorActionRegistry exposes the event binding action surface', () =
       'alignSelected',
       'centerSelected',
       'clearBoard',
+      'copyExportCode',
+      'copyExportImage',
       'copySelected',
       'deleteLocalBoard',
       'deleteSelected',
       'deselect',
+      'downloadPreviewImage',
       'duplicateSelected',
       'exportCode',
       'getLastLayerIndex',
@@ -45,6 +48,9 @@ test('createEditorActionRegistry exposes the event binding action surface', () =
 
   const actions = createEditorActionRegistry({
     boardCodeActions: {
+      copyExportCode: handlers.copyExportCode,
+      copyExportImage: handlers.copyExportImage,
+      downloadPreviewImage: handlers.downloadPreviewImage,
       exportCode: handlers.exportCode,
       loadFromCode: handlers.loadFromCode,
       renderPreview: handlers.renderPreview,

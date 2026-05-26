@@ -25,14 +25,45 @@ export function createBoardCodeActions({
   }
 
   async function exportCode() {
-    await exportAndReturnCode()
+    return exportAndReturnCode()
   }
 
   async function renderPreview() {
     const code = await exportAndReturnCode()
     const data = await renderPreviewImage(code)
-    elements.preview.src = `/preview/${data.hash}.webp?${Date.now()}`
+    const src = `/preview/${data.hash}.webp?${Date.now()}`
+    elements.preview.src = src
     elements.preview.style.display = 'block'
+    elements.preview.dataset.downloadUrl = `/preview/${data.hash}.webp`
+    return src
+  }
+
+  async function copyExportCode() {
+    const code = elements.codeOutput.value || await exportAndReturnCode()
+    await navigator.clipboard.writeText(code)
+  }
+
+  async function copyExportImage() {
+    const url = elements.preview.dataset.downloadUrl || await renderPreview()
+    const response = await fetch(url)
+    const blob = await response.blob()
+    if (!navigator.clipboard?.write || !window.ClipboardItem) {
+      throw new Error('当前浏览器不支持复制图片')
+    }
+    await navigator.clipboard.write([
+      new ClipboardItem({ [blob.type || 'image/webp']: blob }),
+    ])
+  }
+
+  function downloadPreviewImage() {
+    const url = elements.preview.dataset.downloadUrl
+    if (!url) return
+    const link = document.createElement('a')
+    link.href = url
+    link.download = `${state.board.name || '战术板'}.webp`
+    document.body.append(link)
+    link.click()
+    link.remove()
   }
 
   async function exportAndReturnCode() {
@@ -44,6 +75,9 @@ export function createBoardCodeActions({
   }
 
   return {
+    copyExportCode,
+    copyExportImage,
+    downloadPreviewImage,
     exportCode,
     loadFromCode,
     renderPreview,

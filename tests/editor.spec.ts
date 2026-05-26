@@ -5,9 +5,14 @@ async function openImportDialog(page: Page) {
   await expect(page.locator('#import-dialog')).toBeVisible()
 }
 
-async function openExportDialog(page: Page) {
-  await page.locator('#open-export-dialog').click()
-  await expect(page.locator('#export-dialog')).toBeVisible()
+async function openExportCodeDialog(page: Page) {
+  await page.locator('#open-export-code-dialog').click()
+  await expect(page.locator('#export-code-dialog')).toBeVisible()
+}
+
+async function openExportImageDialog(page: Page) {
+  await page.locator('#open-export-image-dialog').click()
+  await expect(page.locator('#export-image-dialog')).toBeVisible()
 }
 
 async function openLocalBoardDialog(page: Page) {
@@ -16,8 +21,7 @@ async function openLocalBoardDialog(page: Page) {
 }
 
 async function exportBoardCode(page: Page) {
-  await openExportDialog(page)
-  await page.locator('#export-code').click()
+  await openExportCodeDialog(page)
   await expect(page.locator('#code-output')).toHaveValue(/\[stgy:/)
   return page.locator('#code-output').inputValue()
 }
@@ -36,7 +40,8 @@ test('editor loads, edits an object, exports code, and renders a preview', async
 
   await expect(page).toHaveTitle('战术板编辑器')
   await expect(page.locator('#stage-host canvas').first()).toBeVisible()
-  await expect(page.getByRole('button', { name: '导出' })).toBeVisible()
+  await expect(page.getByRole('button', { name: '导出分享码' })).toBeVisible()
+  await expect(page.getByRole('button', { name: '导出图片' })).toBeVisible()
 
   const canvas = page.locator('#stage-host canvas').first()
   await expect(canvas).toBeVisible()
@@ -50,11 +55,11 @@ test('editor loads, edits an object, exports code, and renders a preview', async
   await page.locator('#object-y').fill('196')
   await expect(page.locator('#layers')).toContainText('tank')
 
-  await openExportDialog(page)
-  await page.locator('#export-code').click()
+  await openExportCodeDialog(page)
   await expect(page.locator('#code-output')).toHaveValue(/\[stgy:/)
+  await page.locator('#export-code-dialog').evaluate((dialog) => dialog.close())
 
-  await page.locator('#render-preview').click()
+  await openExportImageDialog(page)
   await expect(page.locator('#preview-image')).toBeVisible()
   await expect(page.locator('#preview-image')).toHaveAttribute(
     'src',
@@ -172,16 +177,20 @@ test('editor renders readable Chinese labels', async ({ page }) => {
 
   await expect(page).toHaveTitle('战术板编辑器')
   await expect(page.getByRole('button', { name: '导入' })).toBeVisible()
-  await expect(page.getByRole('button', { name: '导出' })).toBeVisible()
+  await expect(page.getByRole('button', { name: '导出分享码' })).toBeVisible()
+  await expect(page.getByRole('button', { name: '导出图片' })).toBeVisible()
   await expect(page.locator('#open-import-dialog')).toHaveAttribute('title', '导入分享码')
-  await expect(page.locator('#open-export-dialog')).toHaveAttribute('title', '导出分享码')
-  await expect(page.locator('#open-import-dialog')).toHaveText('导入分享码')
-  await expect(page.locator('#open-export-dialog')).toHaveText('导出分享码')
+  await expect(page.locator('#open-export-code-dialog')).toHaveAttribute('title', '导出分享码')
+  await expect(page.locator('#open-export-image-dialog')).toHaveAttribute('title', '导出图片')
+  await expect(page.locator('#open-import-dialog')).toHaveText('')
+  await expect(page.locator('#open-import-dialog svg')).toBeVisible()
+  await expect(page.locator('#open-export-code-dialog svg')).toBeVisible()
+  await expect(page.locator('#open-export-image-dialog svg')).toBeVisible()
   await expect(page.locator('.board-name-label')).toHaveText('名称')
-  await openExportDialog(page)
-  await expect(page.locator('#render-preview')).toBeVisible()
+  await openExportCodeDialog(page)
+  await expect(page.locator('#copy-export-code')).toBeVisible()
   await expect(page.getByPlaceholder('名称')).toBeVisible()
-  await page.locator('#export-dialog').evaluate((dialog) => dialog.close())
+  await page.locator('#export-code-dialog').evaluate((dialog) => dialog.close())
   await expect(page.locator('#layers')).toContainText('tank')
   await expect(page.locator('#layer-count')).not.toHaveText('0')
   await expect(page.getByTitle('tank').first().locator('.object-preview')).toHaveCSS(
@@ -225,18 +234,17 @@ test('editor disables async action buttons while exporting', async ({ page }) =>
     await route.continue()
   })
 
-  await openExportDialog(page)
-  await page.locator('#export-code').click()
+  await page.locator('#open-export-code-dialog').click()
   await expect(page.locator('#load-code')).toBeDisabled()
-  await expect(page.locator('#export-code')).toBeDisabled()
-  await expect(page.locator('#render-preview')).toBeDisabled()
-  await expect(page.locator('#status')).toContainText('正在导出战术板代码')
+  await expect(page.locator('#open-export-code-dialog')).toBeDisabled()
+  await expect(page.locator('#open-export-image-dialog')).toBeDisabled()
+  await expect(page.locator('#status')).toContainText('正在生成分享码')
 
   releaseExport()
   await expect(page.locator('#code-output')).toHaveValue(/\[stgy:/)
   await expect(page.locator('#load-code')).toBeEnabled()
-  await expect(page.locator('#export-code')).toBeEnabled()
-  await expect(page.locator('#render-preview')).toBeEnabled()
+  await expect(page.locator('#open-export-code-dialog')).toBeEnabled()
+  await expect(page.locator('#open-export-image-dialog')).toBeEnabled()
 })
 
 test('editor imports code, changes background, and edits text and line objects', async ({
@@ -279,7 +287,7 @@ test('editor imports code, changes background, and edits text and line objects',
   await expect(page.locator('#layers')).toContainText('line')
 
   const exported = await exportBoardCode(page)
-  await page.locator('#export-dialog').evaluate((dialog) => dialog.close())
+  await page.locator('#export-code-dialog').evaluate((dialog) => dialog.close())
   await openImportDialog(page)
   await page.locator('#code-input').fill(exported)
   await page.locator('#load-code').click()

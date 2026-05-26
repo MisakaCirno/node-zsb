@@ -15,7 +15,20 @@ export function bindEditorEvents({
 }) {
   elements.openLocalBoardDialog.addEventListener('click', () => openDialog(elements.localBoardDialog))
   elements.openImportDialog.addEventListener('click', () => openDialog(elements.importDialog))
-  elements.openExportDialog.addEventListener('click', () => openDialog(elements.exportDialog))
+  elements.openExportCodeDialog.addEventListener('click', () =>
+    runAction(async () => {
+      await actions.exportCode()
+      openDialog(elements.exportCodeDialog)
+    }, '已生成分享码', {
+      busyMessage: '正在生成分享码...',
+    }))
+  elements.openExportImageDialog.addEventListener('click', () =>
+    runAction(async () => {
+      await actions.renderPreview()
+      openDialog(elements.exportImageDialog)
+    }, '已生成预览图', {
+      busyMessage: '正在生成预览图...',
+    }))
   elements.assetTabBackground.addEventListener('click', () => selectAssetTab(elements, 'background'))
   elements.assetTabObjects.addEventListener('click', () => selectAssetTab(elements, 'objects'))
   bindColorPicker({
@@ -30,16 +43,11 @@ export function bindEditorEvents({
       busyMessage: '正在导入战术板...',
     }),
   )
-  elements.exportCode.addEventListener('click', () =>
-    runAction(actions.exportCode, '已导出战术板代码', {
-      busyMessage: '正在导出战术板代码...',
-    }),
-  )
-  elements.renderPreview.addEventListener('click', () =>
-    runAction(actions.renderPreview, '已渲染预览图', {
-      busyMessage: '正在渲染预览图...',
-    }),
-  )
+  elements.copyExportCode.addEventListener('click', () =>
+    runAction(actions.copyExportCode, '已复制分享码'))
+  elements.copyExportImage.addEventListener('click', () =>
+    runAction(actions.copyExportImage, '已复制图片'))
+  elements.downloadPreviewImage.addEventListener('click', actions.downloadPreviewImage)
   elements.boardName.addEventListener('change', actions.onBoardNameChange)
   elements.localBoardSelect.addEventListener('change', actions.updateLocalBoardButtons)
   elements.saveLocalBoard.addEventListener('click', actions.saveLocalBoard)

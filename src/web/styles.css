@@ -302,6 +302,12 @@ textarea {
   padding: 0 12px;
 }
 
+.stage-toolbar .icon-tool.text-tool {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
 .toolbar-group {
   align-items: center;
   gap: 4px;

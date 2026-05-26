@@ -30,7 +30,14 @@ export function createEditorFeedback({ state, getElements }) {
 
   function setAsyncActionsDisabled(disabled) {
     const elements = getElements()
-    for (const button of [elements.loadCode, elements.exportCode, elements.renderPreview]) {
+    for (const button of [
+      elements.loadCode,
+      elements.openExportCodeDialog,
+      elements.openExportImageDialog,
+      elements.copyExportCode,
+      elements.copyExportImage,
+      elements.downloadPreviewImage,
+    ]) {
       button.disabled = disabled
       button.setAttribute('aria-busy', String(disabled))
     }
