@@ -6,6 +6,8 @@ export function renderLayers({
   elements,
   onReorderLayer,
   onRenameLayerGroup,
+  onMoveLayerNodeBefore,
+  onMoveLayerNodeIntoGroup,
   onSelectGroup,
   onSelectObject,
   onToggleLayerGroup,
@@ -57,6 +59,7 @@ export function renderLayers({
   function renderGroupRow(group, depth) {
     const row = document.createElement('div')
     row.className = 'layer-row layer-group-row'
+    row.draggable = true
     row.dataset.groupId = group.id
     row.style.setProperty('--layer-depth', String(depth))
     row.classList.toggle('active', state.selectedGroupId === group.id)
@@ -110,6 +113,13 @@ export function renderLayers({
       event.stopPropagation()
       onToggleLayerGroupFlag(group.id, 'locked')
     })
+    bindLayerDrag({
+      node: { type: 'group', id: group.id },
+      onDropBefore: onMoveLayerNodeBefore,
+      onDropIntoGroup: onMoveLayerNodeIntoGroup,
+      row,
+      targetNode: { type: 'group', id: group.id },
+    })
     row.addEventListener('click', () => onSelectGroup(group.id))
     elements.layers.append(row)
   }
@@ -162,6 +172,10 @@ export function renderLayers({
     row.addEventListener('dragstart', (event) => {
       event.dataTransfer.effectAllowed = 'move'
       event.dataTransfer.setData('text/plain', String(index))
+      event.dataTransfer.setData(
+        'application/x-node-zsb-layer',
+        JSON.stringify({ type: 'object', id: object.editorId }),
+      )
       row.classList.add('dragging')
     })
     row.addEventListener('dragend', () => {
@@ -178,6 +192,11 @@ export function renderLayers({
     row.addEventListener('drop', (event) => {
       event.preventDefault()
       row.classList.remove('drop-target')
+      const dragged = getDraggedLayerNode(event)
+      if (dragged) {
+        onMoveLayerNodeBefore(dragged, { type: 'object', id: object.editorId })
+        return
+      }
       const fromIndex = Number(event.dataTransfer.getData('text/plain'))
       onReorderLayer(fromIndex, index)
     })
@@ -211,6 +230,56 @@ function createLayerText(className, text) {
   span.className = className
   span.textContent = text
   return span
+}
+
+function bindLayerDrag({
+  node,
+  onDropBefore,
+  onDropIntoGroup,
+  row,
+  targetNode,
+}) {
+  row.addEventListener('dragstart', (event) => {
+    event.dataTransfer.effectAllowed = 'move'
+    event.dataTransfer.setData('application/x-node-zsb-layer', JSON.stringify(node))
+    row.classList.add('dragging')
+  })
+  row.addEventListener('dragend', () => {
+    row.classList.remove('dragging')
+  })
+  row.addEventListener('dragover', (event) => {
+    if (!hasLayerDragData(event)) return
+    event.preventDefault()
+    event.dataTransfer.dropEffect = 'move'
+    row.classList.add('drop-target')
+  })
+  row.addEventListener('dragleave', () => {
+    row.classList.remove('drop-target')
+  })
+  row.addEventListener('drop', (event) => {
+    const dragged = getDraggedLayerNode(event)
+    if (!dragged) return
+    event.preventDefault()
+    row.classList.remove('drop-target')
+    if (targetNode.type === 'group') {
+      onDropIntoGroup(dragged, targetNode.id)
+      return
+    }
+    onDropBefore(dragged, targetNode)
+  })
+}
+
+function hasLayerDragData(event) {
+  return Array.from(event.dataTransfer.types).includes('application/x-node-zsb-layer')
+}
+
+function getDraggedLayerNode(event) {
+  try {
+    const raw = event.dataTransfer.getData('application/x-node-zsb-layer')
+    return raw ? JSON.parse(raw) : null
+  } catch {
+    return null
+  }
 }
 
 function startGroupRename(nameElement, group, onRenameLayerGroup) {

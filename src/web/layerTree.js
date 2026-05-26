@@ -74,6 +74,36 @@ export function ungroupLayer(layerTree, groupId) {
   return true
 }
 
+export function moveLayerNodeBefore(layerTree, dragged, target) {
+  if (!dragged?.id || !target?.id || dragged.id === target.id) return false
+  if (dragged.type === 'group' && containsGroup(layerTree, dragged.id, target.id)) return false
+  const removed = removeLayerNode(layerTree, dragged)
+  if (!removed) return false
+  const targetInfo = findLayerNodeParent(layerTree, target)
+  if (!targetInfo) {
+    layerTree.push(removed)
+    return false
+  }
+  targetInfo.parent.splice(targetInfo.index, 0, removed)
+  return true
+}
+
+export function moveLayerNodeIntoGroup(layerTree, dragged, groupId) {
+  if (!dragged?.id || !groupId || dragged.id === groupId) return false
+  if (dragged.type === 'group' && containsGroup(layerTree, dragged.id, groupId)) return false
+  const removed = removeLayerNode(layerTree, dragged)
+  if (!removed) return false
+  const group = findGroup(layerTree, groupId)
+  if (!group) {
+    layerTree.push(removed)
+    return false
+  }
+  group.children = group.children ?? []
+  group.children.push(removed)
+  group.collapsed = false
+  return true
+}
+
 export function syncBoardOrderFromLayerTree(state) {
   const selectedIds = (state.selectedIndexes ?? [])
     .map((index) => state.board.objects[index]?.editorId)
@@ -89,6 +119,33 @@ export function syncBoardOrderFromLayerTree(state) {
     .map((id) => indexById.get(id))
     .filter((index) => index !== undefined)
   state.selectedIndex = state.selectedIndexes.at(-1) ?? -1
+}
+
+function containsGroup(layerTree, groupId, targetGroupId) {
+  const group = findGroup(layerTree, groupId)
+  if (!group) return false
+  return Boolean(findGroup(group.children ?? [], targetGroupId))
+}
+
+function removeLayerNode(layerTree, target) {
+  const info = findLayerNodeParent(layerTree, target)
+  if (!info) return null
+  const [node] = info.parent.splice(info.index, 1)
+  return node
+}
+
+function findLayerNodeParent(nodes, target, parent = nodes) {
+  for (let index = 0; index < nodes.length; index += 1) {
+    const node = nodes[index]
+    if (node.type === target.type && node.id === target.id) {
+      return { parent, index, node }
+    }
+    if (node.type === 'group') {
+      const result = findLayerNodeParent(node.children ?? [], target, node.children)
+      if (result) return result
+    }
+  }
+  return null
 }
 
 function groupAcrossTree(layerTree, selectedIds, name) {

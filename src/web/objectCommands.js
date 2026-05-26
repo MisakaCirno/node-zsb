@@ -3,6 +3,8 @@ import { createEditorId } from './editorIds.js'
 import { getSelectedIndexes } from './editorState.js'
 import {
   groupObjectIds,
+  moveLayerNodeBefore,
+  moveLayerNodeIntoGroup,
   renameGroup,
   syncBoardOrderFromLayerTree,
   syncFlatLayerTree,
@@ -163,6 +165,22 @@ export function createObjectCommands({
       state.selectedIndex = mapMovedIndex(state.selectedIndex, fromIndex, toIndex)
       renderAll()
       showStatus('已调整图层顺序')
+    },
+
+    moveLayerNodeBefore(dragged, target) {
+      recordHistory()
+      if (!moveLayerNodeBefore(state.layerTree, dragged, target)) return
+      syncBoardOrderFromLayerTree(state)
+      renderAll()
+      showStatus('已调整图层顺序')
+    },
+
+    moveLayerNodeIntoGroup(dragged, groupId) {
+      recordHistory()
+      if (!moveLayerNodeIntoGroup(state.layerTree, dragged, groupId)) return
+      syncBoardOrderFromLayerTree(state)
+      renderAll()
+      showStatus('已移动到组内')
     },
 
     groupSelected() {

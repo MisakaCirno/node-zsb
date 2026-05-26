@@ -33,6 +33,8 @@ export function createEditorActionRegistry({
     newLocalBoard: localBoardsPanel.newLocalBoard,
     getLastLayerIndex: objectCommands.getLastLayerIndex,
     groupSelected: objectCommands.groupSelected,
+    moveLayerNodeBefore: objectCommands.moveLayerNodeBefore,
+    moveLayerNodeIntoGroup: objectCommands.moveLayerNodeIntoGroup,
     ungroupSelectedGroup: objectCommands.ungroupSelectedGroup,
     toggleLayerGroup: objectCommands.toggleLayerGroup,
     toggleLayerGroupFlag: objectCommands.toggleLayerGroupFlag,

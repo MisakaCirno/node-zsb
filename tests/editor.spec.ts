@@ -185,6 +185,11 @@ test('editor groups selected layers and exports the group in project JSON', asyn
   await page.keyboard.press('Enter')
   await expect(groupRow.locator('.layer-name')).toHaveText('第一组')
 
+  await page.locator('#layers .layer-row').filter({ hasText: 'dps' }).first().dragTo(groupRow, {
+    force: true,
+  })
+  await expect(groupRow.locator('.layer-position')).toHaveText('3 个对象')
+
   await groupRow.locator('[data-action="hidden"]').click()
   await expect(groupRow).toHaveClass(/muted/)
   await expect(page.locator('#layers .layer-row').nth(1)).toHaveClass(/muted/)
@@ -194,7 +199,7 @@ test('editor groups selected layers and exports the group in project JSON', asyn
   await groupRow.click()
   await expect(page.locator('#ungroup-layers')).toBeEnabled()
   await groupRow.locator('.layer-group-toggle').click()
-  await expect(page.locator('#layers .layer-row')).toHaveCount(3)
+  await expect(page.locator('#layers .layer-row')).toHaveCount(2)
   await groupRow.locator('.layer-group-toggle').click()
   await expect(page.locator('#layers .layer-row')).toHaveCount(5)
 
@@ -211,6 +216,7 @@ test('editor groups selected layers and exports the group in project JSON', asyn
     hidden: true,
     locked: true,
     children: [
+      { type: 'object' },
       { type: 'object' },
       { type: 'object' },
     ],
