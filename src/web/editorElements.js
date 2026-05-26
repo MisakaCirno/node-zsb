@@ -2,6 +2,12 @@ export function getEditorElements() {
   return {
     codeInput: document.querySelector('#code-input'),
     codeOutput: document.querySelector('#code-output'),
+    openImportDialog: document.querySelector('#open-import-dialog'),
+    openExportDialog: document.querySelector('#open-export-dialog'),
+    importDialog: document.querySelector('#import-dialog'),
+    exportDialog: document.querySelector('#export-dialog'),
+    closeImportDialog: document.querySelector('#close-import-dialog'),
+    closeExportDialog: document.querySelector('#close-export-dialog'),
     loadCode: document.querySelector('#load-code'),
     exportCode: document.querySelector('#export-code'),
     renderPreview: document.querySelector('#render-preview'),

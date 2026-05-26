@@ -5,8 +5,13 @@ export function bindEditorEvents({
   runAction,
   actions,
 }) {
+  elements.openImportDialog.addEventListener('click', () => openDialog(elements.importDialog))
+  elements.openExportDialog.addEventListener('click', () => openDialog(elements.exportDialog))
   elements.loadCode.addEventListener('click', () =>
-    runAction(() => actions.loadFromCode(elements.codeInput.value), '已导入战术板', {
+    runAction(async () => {
+      await actions.loadFromCode(elements.codeInput.value)
+      elements.importDialog.close()
+    }, '已导入战术板', {
       busyMessage: '正在导入战术板...',
     }),
   )
@@ -77,4 +82,13 @@ export function bindEditorEvents({
   ]) {
     input.addEventListener('input', actions.updateSelectedFromInspector)
   }
+}
+
+function openDialog(dialog) {
+  if (dialog.open) return
+  if (dialog.showModal) {
+    dialog.showModal()
+    return
+  }
+  dialog.setAttribute('open', '')
 }

@@ -11,15 +11,9 @@
     <main class="editor-shell">
       <aside class="panel sidebar">
         <section class="toolbar">
-          <button id="load-code" type="button">导入</button>
-          <button id="export-code" type="button">导出</button>
-          <button id="render-preview" type="button">渲染</button>
+          <button id="open-import-dialog" type="button">导入</button>
+          <button id="open-export-dialog" type="button">导出</button>
         </section>
-
-        <label class="field">
-          <span>战术板代码</span>
-          <textarea id="code-input" spellcheck="false"></textarea>
-        </label>
 
         <section>
           <div class="section-title">背景</div>
@@ -149,13 +143,40 @@
           <div id="layers" class="layers"></div>
         </section>
 
-        <section>
-          <div class="section-title">输出</div>
-          <textarea id="code-output" spellcheck="false" readonly></textarea>
-          <img id="preview-image" alt="" />
-        </section>
       </aside>
     </main>
+    <dialog id="import-dialog" class="editor-dialog">
+      <form method="dialog" class="dialog-panel">
+        <header class="dialog-header">
+          <h2>导入战术板代码</h2>
+          <button id="close-import-dialog" class="icon-button" type="submit" aria-label="关闭">×</button>
+        </header>
+        <label class="field">
+          <span>战术板代码</span>
+          <textarea id="code-input" spellcheck="false"></textarea>
+        </label>
+        <footer class="dialog-actions">
+          <button id="load-code" type="button">导入</button>
+        </footer>
+      </form>
+    </dialog>
+    <dialog id="export-dialog" class="editor-dialog">
+      <form method="dialog" class="dialog-panel">
+        <header class="dialog-header">
+          <h2>导出战术板</h2>
+          <button id="close-export-dialog" class="icon-button" type="submit" aria-label="关闭">×</button>
+        </header>
+        <div class="dialog-actions">
+          <button id="export-code" type="button">生成代码</button>
+          <button id="render-preview" type="button">生成预览图</button>
+        </div>
+        <label class="field">
+          <span>战术板代码</span>
+          <textarea id="code-output" spellcheck="false" readonly></textarea>
+        </label>
+        <img id="preview-image" alt="战术板预览图" />
+      </form>
+    </dialog>
     <div id="status" class="status" role="status"></div>
     <script type="module" src="/editor/app.js"></script>
   </body>

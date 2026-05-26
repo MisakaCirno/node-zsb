@@ -98,6 +98,12 @@ textarea {
   flex: 1;
 }
 
+.icon-button {
+  width: 34px;
+  min-width: 34px;
+  padding: 0;
+}
+
 .stage-wrap {
   min-width: 0;
   display: grid;
@@ -355,6 +361,55 @@ textarea {
   border: 1px solid #303b43;
   border-radius: 6px;
   margin-top: 10px;
+}
+
+.editor-dialog {
+  width: min(720px, calc(100vw - 32px));
+  border: 1px solid #303b43;
+  border-radius: 8px;
+  padding: 0;
+  background: #151a1f;
+  color: #eef2f3;
+  box-shadow: 0 24px 80px rgba(0, 0, 0, 0.55);
+}
+
+.editor-dialog::backdrop {
+  background: rgba(0, 0, 0, 0.62);
+}
+
+.dialog-panel {
+  display: grid;
+  gap: 12px;
+  padding: 16px;
+}
+
+.dialog-header,
+.dialog-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.dialog-header {
+  justify-content: space-between;
+}
+
+.dialog-header h2 {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 650;
+}
+
+.dialog-actions {
+  justify-content: flex-end;
+}
+
+.dialog-actions button {
+  min-width: 96px;
+}
+
+.editor-dialog textarea {
+  min-height: 150px;
 }
 
 .status {

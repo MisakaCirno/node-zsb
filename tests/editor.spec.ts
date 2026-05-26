@@ -1,4 +1,21 @@
-import { expect, test } from '@playwright/test'
+import { expect, test, type Page } from '@playwright/test'
+
+async function openImportDialog(page: Page) {
+  await page.locator('#open-import-dialog').click()
+  await expect(page.locator('#import-dialog')).toBeVisible()
+}
+
+async function openExportDialog(page: Page) {
+  await page.locator('#open-export-dialog').click()
+  await expect(page.locator('#export-dialog')).toBeVisible()
+}
+
+async function exportBoardCode(page: Page) {
+  await openExportDialog(page)
+  await page.locator('#export-code').click()
+  await expect(page.locator('#code-output')).toHaveValue(/\[stgy:/)
+  return page.locator('#code-output').inputValue()
+}
 
 test('editor loads, edits an object, exports code, and renders a preview', async ({
   page,
@@ -28,10 +45,11 @@ test('editor loads, edits an object, exports code, and renders a preview', async
   await page.locator('#object-y').fill('196')
   await expect(page.locator('#layers')).toContainText('tank')
 
-  await page.getByRole('button', { name: '导出' }).click()
+  await openExportDialog(page)
+  await page.locator('#export-code').click()
   await expect(page.locator('#code-output')).toHaveValue(/\[stgy:/)
 
-  await page.getByRole('button', { name: '渲染' }).click()
+  await page.locator('#render-preview').click()
   await expect(page.locator('#preview-image')).toBeVisible()
   await expect(page.locator('#preview-image')).toHaveAttribute(
     'src',
@@ -47,7 +65,8 @@ test('editor renders readable Chinese labels', async ({ page }) => {
   await expect(page).toHaveTitle('战术板编辑器')
   await expect(page.getByRole('button', { name: '导入' })).toBeVisible()
   await expect(page.getByRole('button', { name: '导出' })).toBeVisible()
-  await expect(page.getByRole('button', { name: '渲染' })).toBeVisible()
+  await openExportDialog(page)
+  await expect(page.locator('#render-preview')).toBeVisible()
   await expect(page.getByPlaceholder('名称')).toBeVisible()
   await expect(page.locator('#layers')).toContainText('tank')
   await expect(page.locator('#layer-count')).not.toHaveText('0')
@@ -60,10 +79,11 @@ test('editor renders readable Chinese labels', async ({ page }) => {
     /tab1\.webp/,
   )
   await expect(page.locator('.section-title')).toContainText([
+    '背景',
+    '本地存档',
     '对象',
     '属性',
     '图层',
-    '输出',
   ])
 })
 
@@ -79,7 +99,8 @@ test('editor disables async action buttons while exporting', async ({ page }) =>
     await route.continue()
   })
 
-  await page.getByRole('button', { name: '导出' }).click()
+  await openExportDialog(page)
+  await page.locator('#export-code').click()
   await expect(page.locator('#load-code')).toBeDisabled()
   await expect(page.locator('#export-code')).toBeDisabled()
   await expect(page.locator('#render-preview')).toBeDisabled()
@@ -98,9 +119,10 @@ test('editor imports code, changes background, and edits text and line objects',
   await page.goto('/editor')
   await expect(page.locator('#layers')).toContainText('tank')
 
+  await openImportDialog(page)
   const initialCode = await page.locator('#code-input').inputValue()
   await page.locator('#code-input').fill(initialCode)
-  await page.getByRole('button', { name: '导入' }).click()
+  await page.locator('#load-code').click()
 
   await page.locator('#background-list [data-background="grey_square"]').click()
   await expect(page.locator('#background-list [data-background="grey_square"]')).toHaveAttribute(
@@ -121,12 +143,11 @@ test('editor imports code, changes background, and edits text and line objects',
   await page.locator('#object-end-y').fill('240')
   await expect(page.locator('#layers')).toContainText('line')
 
-  await page.getByRole('button', { name: '导出' }).click()
-  await expect(page.locator('#code-output')).toHaveValue(/\[stgy:/)
-
-  const exported = await page.locator('#code-output').inputValue()
+  const exported = await exportBoardCode(page)
+  await page.locator('#export-dialog').evaluate((dialog) => dialog.close())
+  await openImportDialog(page)
   await page.locator('#code-input').fill(exported)
-  await page.getByRole('button', { name: '导入' }).click()
+  await page.locator('#load-code').click()
   await expect(page.locator('#layers')).toContainText('text')
   await expect(page.locator('#layers')).toContainText('line')
 })
@@ -189,8 +210,9 @@ test('editor reports invalid share code without replacing the board', async ({
   await expect(page.locator('#layers')).toContainText('tank')
   const before = await page.locator('#layers').textContent()
 
+  await openImportDialog(page)
   await page.locator('#code-input').fill('[invalid]')
-  await page.getByRole('button', { name: '导入' }).click()
+  await page.locator('#load-code').click()
 
   await expect(page.locator('#status')).toContainText(/share code/i)
   await expect(page.locator('#layers')).toHaveText(before ?? '')
@@ -462,9 +484,7 @@ test('editor shows inspector fields that match the selected object type', async 
   await expect(page.locator('[data-field="text"]')).toBeHidden()
 
   await page.locator('#layers .layer-row').filter({ hasText: 'tank' }).first().click()
-  await page.getByRole('button', { name: '导出' }).click()
-  await expect(page.locator('#code-output')).toHaveValue(/\[stgy:/)
-  const code = await page.locator('#code-output').inputValue()
+  const code = await exportBoardCode(page)
   const decoded = await request.post('/utils/code2json', {
     data: { code },
   })
