@@ -1,4 +1,11 @@
-export function recordHistory(state) {
+import type {
+  EditorState,
+  HistorySnapshot,
+} from './types.js'
+
+declare function structuredClone<T>(value: T): T
+
+export function recordHistory(state: EditorState) {
   state.history.push(createSnapshot(state))
   if (state.history.length > 80) {
     state.history.shift()
@@ -6,7 +13,7 @@ export function recordHistory(state) {
   state.future = []
 }
 
-export function undoHistory(state) {
+export function undoHistory(state: EditorState) {
   const snapshot = state.history.pop()
   if (!snapshot) return null
   state.future.push(createSnapshot(state))
@@ -14,7 +21,7 @@ export function undoHistory(state) {
   return snapshot
 }
 
-export function redoHistory(state) {
+export function redoHistory(state: EditorState) {
   const snapshot = state.future.pop()
   if (!snapshot) return null
   state.history.push(createSnapshot(state))
@@ -22,7 +29,7 @@ export function redoHistory(state) {
   return snapshot
 }
 
-function createSnapshot(state) {
+function createSnapshot(state: EditorState): HistorySnapshot {
   return {
     board: structuredClone(state.board),
     layerTree: structuredClone(state.layerTree ?? []),
@@ -32,7 +39,7 @@ function createSnapshot(state) {
   }
 }
 
-function restoreSnapshot(state, snapshot) {
+function restoreSnapshot(state: EditorState, snapshot: HistorySnapshot) {
   state.board = structuredClone(snapshot.board)
   state.layerTree = structuredClone(snapshot.layerTree ?? [])
   const selectedIndexes = (snapshot.selectedIndexes ?? [snapshot.selectedIndex])

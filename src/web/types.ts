@@ -84,8 +84,8 @@ export interface EditorState extends EditorStateSlice {
   zoom: number
   zoomMode: ZoomMode
   images: Map<string, Promise<unknown>>
-  history: unknown[]
-  future: unknown[]
+  history: HistorySnapshot[]
+  future: HistorySnapshot[]
   clipboard: BoardObject | null
   actionRunning: boolean
   statusTimer: number
@@ -102,6 +102,10 @@ export interface IconConfig {
   src: string
   crop: Required<RectLike>
   size: number
+}
+
+export interface HistorySnapshot extends EditorStateSlice {
+  selectedGroupId: string
 }
 
 export interface SelectionOptions {

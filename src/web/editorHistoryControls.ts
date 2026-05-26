@@ -3,13 +3,37 @@ import {
   redoHistory,
   undoHistory,
 } from './history.js'
+import type {
+  DisabledElement,
+  EditorHistoryControls,
+  EditorState,
+} from './types.js'
+
+interface EditorHistoryControlsDeps {
+  state: EditorState
+  getElements(): HistoryElements
+  restoreCurrentState(): void
+  showStatus(message: string): void
+}
+
+interface HistoryElements {
+  undo: DisabledElement
+  menuUndo: DisabledElement
+  redo: DisabledElement
+  menuRedo: DisabledElement
+}
+
+interface EditorHistoryControlsResult extends EditorHistoryControls {
+  recordHistory(): void
+  updateHistoryButtons(): void
+}
 
 export function createEditorHistoryControls({
   state,
   getElements,
   restoreCurrentState,
   showStatus,
-}) {
+}: EditorHistoryControlsDeps): EditorHistoryControlsResult {
   function recordHistory() {
     pushHistory(state)
     updateHistoryButtons()
