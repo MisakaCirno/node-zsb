@@ -27,6 +27,7 @@ export function createEditorActionRegistry({
     exportCode: boardCodeActions.exportCode,
     loadFromCode: boardCodeActions.loadFromCode,
     loadLocalBoard: localBoardsPanel.loadLocalBoard,
+    newLocalBoard: localBoardsPanel.newLocalBoard,
     getLastLayerIndex: objectCommands.getLastLayerIndex,
     moveSelected: objectCommands.moveSelected,
     moveSelectedTo: objectCommands.moveSelectedTo,

@@ -6,6 +6,7 @@ export function getEditorElements() {
     leftPanelResizer: document.querySelector('#left-panel-resizer'),
     rightPanelResizer: document.querySelector('#right-panel-resizer'),
     openLocalBoardDialog: document.querySelector('#open-local-board-dialog'),
+    newLocalBoard: document.querySelector('#new-local-board'),
     manageLocalBoards: document.querySelector('#manage-local-boards'),
     openImportDialog: document.querySelector('#open-import-dialog'),
     openExportCodeDialog: document.querySelector('#open-export-code-dialog'),

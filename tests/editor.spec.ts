@@ -177,13 +177,18 @@ test('editor renders readable Chinese labels', async ({ page }) => {
 
   await expect(page).toHaveTitle('战术板编辑器')
   await expect(page.getByRole('button', { name: '导入' })).toBeVisible()
+  await expect(page.getByRole('button', { name: '新建文件' })).toBeVisible()
   await expect(page.getByRole('button', { name: '导出分享码' })).toBeVisible()
   await expect(page.getByRole('button', { name: '导出图片' })).toBeVisible()
+  await expect(page.locator('#new-local-board')).toHaveAttribute('title', '新建文件')
   await expect(page.locator('#open-import-dialog')).toHaveAttribute('title', '导入分享码')
   await expect(page.locator('#open-export-code-dialog')).toHaveAttribute('title', '导出分享码')
   await expect(page.locator('#open-export-image-dialog')).toHaveAttribute('title', '导出图片')
+  await expect(page.locator('#new-local-board')).toHaveText('')
+  await expect(page.locator('#new-local-board svg')).toBeVisible()
   await expect(page.locator('#open-import-dialog')).toHaveText('')
   await expect(page.locator('#open-import-dialog svg')).toBeVisible()
+  await expect(page.locator('#open-import-dialog svg path')).toHaveCount(5)
   await expect(page.locator('#open-export-code-dialog svg')).toBeVisible()
   await expect(page.locator('#open-export-image-dialog svg')).toBeVisible()
   await expect(page.locator('#open-export-code-dialog')).toHaveText('')
@@ -757,6 +762,40 @@ test('editor saves, loads, and deletes local browser board slots', async ({
   await expect(page.locator('#delete-selected-local-boards')).toBeEnabled()
   await page.locator('#delete-selected-local-boards').click()
   await expect(page.locator('#local-board-list')).toContainText('暂无本地文件')
+})
+
+test('editor creates a new local file from the toolbar', async ({ page }) => {
+  await page.goto('/editor')
+  await page.evaluate(() =>
+    localStorage.removeItem('node-zsb-editor-local-files-v1'),
+  )
+  await page.evaluate(() =>
+    localStorage.removeItem('node-zsb-editor-board-v1'),
+  )
+  await page.reload()
+  await expect(page.locator('#layers')).toContainText('tank')
+
+  await page.locator('#file-name').fill('新建前草稿')
+  await page.locator('#board-name').fill('原分享名')
+  await page.locator('#board-name').dispatchEvent('change')
+  await page.locator('#save-local-board').click()
+  await expect(page.locator('#status')).toContainText('已保存本地文件')
+
+  await page.locator('#board-name').fill('未保存分享')
+  await page.locator('#board-name').dispatchEvent('change')
+  page.once('dialog', async (dialog) => {
+    expect(dialog.message()).toContain('新建文件前')
+    await dialog.dismiss()
+  })
+  await page.locator('#new-local-board').click()
+  await expect(page.locator('#status')).toContainText('已新建文件')
+  await expect(page.locator('#file-name')).toHaveValue('')
+  await expect(page.locator('#board-name')).toHaveValue('')
+  await expect(page.locator('#layer-count')).toHaveText('0')
+
+  await openLocalBoardDialog(page)
+  await expect(page.locator('#local-board-list')).toContainText('新建前草稿')
+  await expect(page.locator('#local-board-list')).toContainText('分享名：原分享名')
 })
 
 test('editor persists the board across reloads', async ({ page }) => {

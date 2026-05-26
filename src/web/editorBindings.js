@@ -56,6 +56,7 @@ export function bindEditorEvents({
     runAction(actions.copyExportImage, '已复制图片'))
   elements.downloadPreviewImage.addEventListener('click', actions.downloadPreviewImage)
   elements.boardName.addEventListener('change', actions.onBoardNameChange)
+  elements.newLocalBoard.addEventListener('click', actions.newLocalBoard)
   elements.saveLocalBoard.addEventListener('click', actions.saveLocalBoard)
   elements.saveAsLocalBoard.addEventListener('click', actions.saveLocalBoardAs)
   elements.undo.addEventListener('click', actions.undo)

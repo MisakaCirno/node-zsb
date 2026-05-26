@@ -44,6 +44,7 @@ export function createEditorFeedback({ state, getElements }) {
     for (const control of [
       elements.boardName,
       elements.fileName,
+      elements.newLocalBoard,
       elements.saveLocalBoard,
       elements.saveAsLocalBoard,
       elements.openLocalBoardDialog,

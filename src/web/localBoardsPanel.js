@@ -34,6 +34,7 @@ export function createLocalBoardsPanel({
   }
 
   function updateLocalBoardButtons() {
+    elements.newLocalBoard.disabled = false
     elements.saveLocalBoard.disabled = false
     elements.saveAsLocalBoard.disabled = false
     const selectableCount = getSelectableFilesCount()
@@ -72,6 +73,29 @@ export function createLocalBoardsPanel({
     })
     if (!fileName) return false
     return saveFile(fileName, { allowOverwrite: false })
+  }
+
+  async function newLocalBoard() {
+    if (isCurrentFileDirty()) {
+      const shouldSave = confirmAction('当前文件有未保存修改，新建文件前是否先保存当前文件？')
+      if (shouldSave && !await saveLocalBoard()) return false
+    }
+    state.board = normalizeBoard({
+      name: '',
+      boardBackground: 'checkered',
+      objects: [],
+    })
+    state.selectedIndex = -1
+    state.selectedIndexes = []
+    state.history = []
+    state.future = []
+    setCurrentFile('', cleanBoard(state.board))
+    elements.boardName.value = ''
+    renderBackgroundOptions()
+    renderLocalBoards()
+    await renderAll()
+    showStatus('已新建文件')
+    return true
   }
 
   async function loadLocalBoard(fileName) {
@@ -192,6 +216,7 @@ export function createLocalBoardsPanel({
     deleteLocalBoard,
     deleteSelectedLocalBoards,
     loadLocalBoard,
+    newLocalBoard,
     renderLocalBoards,
     renameLocalBoard,
     saveLocalBoard,
