@@ -698,3 +698,33 @@ textarea {
   border-color: #b95d5d;
   color: #ffd9d9;
 }
+
+.context-menu {
+  position: fixed;
+  z-index: 20;
+  min-width: 168px;
+  border: 1px solid #303b43;
+  border-radius: 8px;
+  padding: 5px;
+  background: #151a1f;
+  box-shadow: 0 18px 48px rgba(0, 0, 0, 0.44);
+}
+
+.context-menu button {
+  width: 100%;
+  height: 30px;
+  border: 0;
+  background: transparent;
+  text-align: left;
+  padding: 0 10px;
+}
+
+.context-menu button:hover {
+  background: #20362f;
+}
+
+.context-menu-separator {
+  height: 1px;
+  margin: 5px 4px;
+  background: #303b43;
+}

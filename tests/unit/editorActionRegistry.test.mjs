@@ -27,9 +27,11 @@ test('createEditorActionRegistry exposes the event binding action surface', () =
       'redo',
       'renderPreview',
       'saveLocalBoard',
+      'selectObject',
       'setStageZoom',
       'stepZoom',
       'toggleGrid',
+      'toggleLayerFlagForSelection',
       'toggleSnapToGrid',
       'undo',
       'updateLocalBoardButtons',
@@ -49,6 +51,7 @@ test('createEditorActionRegistry exposes the event binding action surface', () =
     },
     editorContext: {
       deselect: handlers.deselect,
+      selectObject: handlers.selectObject,
     },
     historyControls: {
       redo: handlers.redo,
@@ -73,6 +76,7 @@ test('createEditorActionRegistry exposes the event binding action surface', () =
       moveSelected: handlers.moveSelected,
       nudgeSelected: handlers.nudgeSelected,
       pasteObject: handlers.pasteObject,
+      toggleSelectedLayerFlag: handlers.toggleLayerFlagForSelection,
     },
     viewportControls: {
       applyFitZoom: handlers.applyFitZoom,

@@ -47,9 +47,6 @@
             <button id="duplicate-object" class="icon-tool" type="button" title="复制对象" aria-label="复制" disabled>
               <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="8" y="8" width="11" height="11" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v1"/></svg>
             </button>
-            <button id="center-object" class="icon-tool" type="button" title="居中对象" aria-label="居中" disabled>
-              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 4v16"/><path d="M4 12h16"/><circle cx="12" cy="12" r="4"/></svg>
-            </button>
           </div>
           <div class="stage-toolbar-row stage-toolbar-canvas">
             <div class="toolbar-group align-actions" aria-label="对齐">
@@ -256,6 +253,25 @@
         <img id="preview-image" alt="战术板预览图" />
       </form>
     </dialog>
+    <div id="context-menu" class="context-menu hidden" role="menu">
+      <button type="button" role="menuitem" data-context="canvas layer" data-action="copy">复制</button>
+      <button type="button" role="menuitem" data-context="canvas" data-action="paste">粘贴</button>
+      <button type="button" role="menuitem" data-context="canvas layer" data-action="duplicate">创建副本</button>
+      <button type="button" role="menuitem" data-context="canvas layer" data-action="delete">删除</button>
+      <button type="button" role="menuitem" data-context="canvas" data-action="center">居中对象</button>
+      <div class="context-menu-separator" data-context="canvas"></div>
+      <button type="button" role="menuitem" data-context="canvas" data-action="align-left">左对齐</button>
+      <button type="button" role="menuitem" data-context="canvas" data-action="align-center-x">水平居中对齐</button>
+      <button type="button" role="menuitem" data-context="canvas" data-action="align-right">右对齐</button>
+      <button type="button" role="menuitem" data-context="canvas" data-action="align-top">顶端对齐</button>
+      <button type="button" role="menuitem" data-context="canvas" data-action="align-center-y">垂直居中对齐</button>
+      <button type="button" role="menuitem" data-context="canvas" data-action="align-bottom">底端对齐</button>
+      <div class="context-menu-separator" data-context="layer"></div>
+      <button type="button" role="menuitem" data-context="layer" data-action="move-up">上移图层</button>
+      <button type="button" role="menuitem" data-context="layer" data-action="move-down">下移图层</button>
+      <button type="button" role="menuitem" data-context="layer" data-action="toggle-hidden">切换隐藏</button>
+      <button type="button" role="menuitem" data-context="layer" data-action="toggle-locked">切换锁定</button>
+    </div>
     <div id="status" class="status" role="status"></div>
     <script type="module" src="/editor/app.js"></script>
   </body>

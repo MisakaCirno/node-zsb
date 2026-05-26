@@ -56,9 +56,8 @@ export function bindEditorEvents({
   elements.clearBoard.addEventListener('click', actions.clearBoard)
   elements.deleteObject.addEventListener('click', actions.deleteSelected)
   elements.duplicateObject.addEventListener('click', actions.duplicateSelected)
-  elements.moveUp.addEventListener('click', () => actions.moveSelected(1))
-  elements.moveDown.addEventListener('click', () => actions.moveSelected(-1))
-  elements.centerObject.addEventListener('click', actions.centerSelected)
+  elements.moveUp.addEventListener('click', () => actions.moveSelected(-1))
+  elements.moveDown.addEventListener('click', () => actions.moveSelected(1))
   elements.alignLeft.addEventListener('click', () => actions.alignSelected('left'))
   elements.alignCenterX.addEventListener('click', () => actions.alignSelected('center-x'))
   elements.alignRight.addEventListener('click', () => actions.alignSelected('right'))
@@ -77,6 +76,7 @@ export function bindEditorEvents({
   })
   elements.snap.addEventListener('change', actions.toggleSnapToGrid)
   elements.grid.addEventListener('change', actions.toggleGrid)
+  bindContextMenu(elements, actions)
   window.addEventListener('resize', actions.applyFitZoomOnResize)
   document.addEventListener('keydown', (event) =>
     handleEditorKeyboard(event, {
@@ -108,6 +108,69 @@ export function bindEditorEvents({
   ]) {
     input.addEventListener('input', actions.updateSelectedFromInspector)
   }
+}
+
+function bindContextMenu(elements, actions) {
+  elements.stageHost.addEventListener('contextmenu', (event) => {
+    event.preventDefault()
+    openContextMenu(elements, 'canvas', event.clientX, event.clientY)
+  })
+  elements.layers.addEventListener('contextmenu', (event) => {
+    const row = event.target.closest('.layer-row')
+    if (!row) return
+    event.preventDefault()
+    actions.selectObject(Number(row.dataset.index))
+    openContextMenu(elements, 'layer', event.clientX, event.clientY)
+  })
+  elements.contextMenu.addEventListener('click', (event) => {
+    const button = event.target.closest('[data-action]')
+    if (!button) return
+    runContextAction(button.dataset.action, actions)
+    closeContextMenu(elements)
+  })
+  document.addEventListener('click', (event) => {
+    if (!elements.contextMenu.contains(event.target)) closeContextMenu(elements)
+  })
+  document.addEventListener('keydown', (event) => {
+    if (event.key === 'Escape') closeContextMenu(elements)
+  })
+}
+
+function openContextMenu(elements, context, x, y) {
+  for (const item of elements.contextMenu.querySelectorAll('[data-context]')) {
+    item.classList.toggle('hidden', !item.dataset.context.split(' ').includes(context))
+  }
+  elements.contextMenu.classList.remove('hidden')
+  const { offsetWidth, offsetHeight } = elements.contextMenu
+  const left = Math.min(x, window.innerWidth - offsetWidth - 8)
+  const top = Math.min(y, window.innerHeight - offsetHeight - 8)
+  elements.contextMenu.style.left = `${Math.max(8, left)}px`
+  elements.contextMenu.style.top = `${Math.max(8, top)}px`
+}
+
+function closeContextMenu(elements) {
+  elements.contextMenu.classList.add('hidden')
+}
+
+function runContextAction(action, actions) {
+  const map = {
+    copy: () => actions.copySelected(),
+    paste: () => actions.pasteObject(),
+    duplicate: () => actions.duplicateSelected(),
+    delete: () => actions.deleteSelected(),
+    center: () => actions.centerSelected(),
+    'align-left': () => actions.alignSelected('left'),
+    'align-center-x': () => actions.alignSelected('center-x'),
+    'align-right': () => actions.alignSelected('right'),
+    'align-top': () => actions.alignSelected('top'),
+    'align-center-y': () => actions.alignSelected('center-y'),
+    'align-bottom': () => actions.alignSelected('bottom'),
+    'move-up': () => actions.moveSelected(-1),
+    'move-down': () => actions.moveSelected(1),
+    'toggle-hidden': () => actions.toggleLayerFlagForSelection('hidden'),
+    'toggle-locked': () => actions.toggleLayerFlagForSelection('locked'),
+  }
+  map[action]?.()
 }
 
 function syncColorText(elements) {

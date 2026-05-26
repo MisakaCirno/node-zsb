@@ -42,6 +42,15 @@ export function createObjectCommands({
       renderAll()
     },
 
+    toggleSelectedLayerFlag(key) {
+      const index = state.selectedIndex
+      const object = state.board.objects[index]
+      if (!object) return
+      recordHistory()
+      object[key] = object[key] ? undefined : true
+      renderAll()
+    },
+
     deleteSelected() {
       const selectedIndexes = getSelectedIndexes(state)
       if (selectedIndexes.length === 0) return

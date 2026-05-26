@@ -59,6 +59,7 @@ export function createStageRenderer({
   transformerLayer.add(transformer)
 
   stage.on('click tap', (event) => {
+    if (event.evt?.button && event.evt.button !== 0) return
     if (event.target === stage || event.target.getLayer() === boardLayer) {
       selectObject(-1)
     }
@@ -161,6 +162,7 @@ export function createStageRenderer({
     node.draggable(!object.locked)
     node.opacity(objectOpacity(object, { hiddenOpacity: 0.15 }))
     node.on('click tap', (event) => {
+      if (event.evt?.button && event.evt.button !== 0) return
       event.cancelBubble = true
       selectObject(index, {
         toggle: Boolean(event.evt?.shiftKey || event.evt?.ctrlKey || event.evt?.metaKey),

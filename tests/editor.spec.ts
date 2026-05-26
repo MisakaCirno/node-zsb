@@ -308,6 +308,28 @@ test('editor reorders layers by dragging rows', async ({ page }) => {
   await expect(page.locator('#layers .layer-row').first()).not.toContainText('text')
 })
 
+test('editor opens custom context menus for canvas and layers', async ({ page }) => {
+  await page.goto('/editor')
+  await expect(page.locator('#layers')).toContainText('tank')
+
+  const before = await page.locator('#layers .layer-row').count()
+  await page.locator('#layers .layer-row').first().click()
+  await page.locator('#stage-host').click({ button: 'right' })
+  await expect(page.locator('#context-menu')).toBeVisible()
+  await page.getByRole('menuitem', { name: '复制' }).click()
+  await page.locator('#stage-host').click({ button: 'right' })
+  await page.getByRole('menuitem', { name: '粘贴' }).click()
+  await expect(page.locator('#layers .layer-row')).toHaveCount(before + 1)
+
+  await page.getByRole('button', { name: '形状' }).click()
+  await page.getByTitle('text').click()
+  const textRow = page.locator('#layers .layer-row').filter({ hasText: 'text' })
+  const layerCount = await page.locator('#layers .layer-row').count()
+  await textRow.click({ button: 'right' })
+  await page.getByRole('menuitem', { name: '上移图层' }).click()
+  await expect(page.locator('#layers .layer-row').nth(layerCount - 2)).toContainText('text')
+})
+
 test('editor reports invalid share code without replacing the board', async ({
   page,
 }) => {
@@ -348,7 +370,7 @@ test('editor updates object action button states from the selection', async ({
 
   await expect(page.locator('#delete-object')).toBeDisabled()
   await expect(page.locator('#duplicate-object')).toBeDisabled()
-  await expect(page.locator('#center-object')).toBeDisabled()
+  await expect(page.locator('#center-object')).toHaveCount(0)
   await expect(page.locator('#move-up')).toBeDisabled()
   await expect(page.locator('#move-down')).toBeDisabled()
   await expect(page.locator('.layer-toolbar #move-up')).toBeVisible()
@@ -357,17 +379,14 @@ test('editor updates object action button states from the selection', async ({
   await page.locator('#layers .layer-row').first().click()
   await expect(page.locator('#delete-object')).toBeEnabled()
   await expect(page.locator('#duplicate-object')).toBeEnabled()
-  await expect(page.locator('#center-object')).toBeEnabled()
-  await expect(page.locator('#move-up')).toBeEnabled()
-  await expect(page.locator('#move-down')).toBeDisabled()
+  await expect(page.locator('#move-up')).toBeDisabled()
+  await expect(page.locator('#move-down')).toBeEnabled()
 
   await page.locator('#object-locked').check()
-  await expect(page.locator('#center-object')).toBeDisabled()
 
   await page.keyboard.press('Escape')
   await expect(page.locator('#delete-object')).toBeDisabled()
   await expect(page.locator('#duplicate-object')).toBeDisabled()
-  await expect(page.locator('#center-object')).toBeDisabled()
 })
 
 test('editor clears the board with confirmation and undo support', async ({
@@ -639,7 +658,8 @@ test('editor snaps positions to the grid and centers the selected object', async
   await expect(page.locator('#object-x')).toHaveValue('304')
   await expect(page.locator('#object-y')).toHaveValue('224')
 
-  await page.locator('#center-object').click()
+  await page.locator('#stage-host').click({ button: 'right' })
+  await page.getByRole('menuitem', { name: '居中对象' }).click()
   await expect(page.locator('#object-x')).toHaveValue('256')
   await expect(page.locator('#object-y')).toHaveValue('192')
   await expect(page.locator('#status')).toContainText('已居中选中对象')
