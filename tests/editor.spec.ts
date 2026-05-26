@@ -94,8 +94,11 @@ test('editor imports code, changes background, and edits text and line objects',
   await page.locator('#code-input').fill(initialCode)
   await page.getByRole('button', { name: '导入' }).click()
 
-  await page.locator('#background-select').selectOption('grey_square')
-  await expect(page.locator('#background-select')).toHaveValue('grey_square')
+  await page.locator('#background-list [data-background="grey_square"]').click()
+  await expect(page.locator('#background-list [data-background="grey_square"]')).toHaveAttribute(
+    'aria-checked',
+    'true',
+  )
 
   await page.getByRole('button', { name: '形状' }).click()
   await page.getByTitle('text').click()
@@ -337,7 +340,10 @@ test('editor can open a board from the code query parameter', async ({
 
   await page.goto(`/editor?code=${encodeURIComponent(payload.code)}`)
 
-  await expect(page.locator('#background-select')).toHaveValue('grey_square')
+  await expect(page.locator('#background-list [data-background="grey_square"]')).toHaveAttribute(
+    'aria-checked',
+    'true',
+  )
   await expect(page.locator('#layers')).toContainText('text')
   await expect(page.locator('#status')).toContainText('已从链接导入战术板')
 })

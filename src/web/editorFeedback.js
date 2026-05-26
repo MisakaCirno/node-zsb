@@ -35,12 +35,12 @@ export function createEditorFeedback({ state, getElements }) {
       button.setAttribute('aria-busy', String(disabled))
     }
     for (const control of [
-      elements.background,
       elements.boardName,
       elements.localBoardSelect,
       elements.saveLocalBoard,
       elements.loadLocalBoard,
       elements.deleteLocalBoard,
+      ...elements.background.querySelectorAll('button'),
     ]) {
       control.disabled = disabled
     }

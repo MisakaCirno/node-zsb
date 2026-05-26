@@ -5,7 +5,7 @@ export function getEditorElements() {
     loadCode: document.querySelector('#load-code'),
     exportCode: document.querySelector('#export-code'),
     renderPreview: document.querySelector('#render-preview'),
-    background: document.querySelector('#background-select'),
+    background: document.querySelector('#background-list'),
     localBoardSelect: document.querySelector('#local-board-select'),
     saveLocalBoard: document.querySelector('#save-local-board'),
     loadLocalBoard: document.querySelector('#load-local-board'),

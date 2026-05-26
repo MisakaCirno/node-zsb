@@ -20,7 +20,6 @@ export function bindEditorEvents({
       busyMessage: '正在渲染预览图...',
     }),
   )
-  elements.background.addEventListener('change', actions.onBackgroundChange)
   elements.boardName.addEventListener('change', actions.onBoardNameChange)
   elements.localBoardSelect.addEventListener('change', actions.updateLocalBoardButtons)
   elements.saveLocalBoard.addEventListener('click', actions.saveLocalBoard)

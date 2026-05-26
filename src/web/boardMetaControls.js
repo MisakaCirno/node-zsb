@@ -6,12 +6,21 @@ export function createBoardMetaControls({
 }) {
   function renderBackgroundOptions() {
     elements.background.innerHTML = ''
-    for (const key of Object.keys(state.backgrounds)) {
-      const option = document.createElement('option')
-      option.value = key
-      option.textContent = key
-      option.selected = key === state.board.boardBackground
-      elements.background.append(option)
+    for (const [key, imageId] of Object.entries(state.backgrounds)) {
+      const button = document.createElement('button')
+      button.type = 'button'
+      button.className = 'background-option'
+      button.dataset.background = key
+      button.setAttribute('role', 'radio')
+      button.setAttribute('aria-checked', String(key === state.board.boardBackground))
+      button.classList.toggle('active', key === state.board.boardBackground)
+      button.title = key
+      button.innerHTML = `
+        <img src="/assets/background/${imageId}.webp" alt="" />
+        <span>${key}</span>
+      `
+      button.addEventListener('click', () => onBackgroundChange(key))
+      elements.background.append(button)
     }
   }
 
@@ -19,9 +28,11 @@ export function createBoardMetaControls({
     elements.boardName.value = state.board.name ?? ''
   }
 
-  function onBackgroundChange() {
+  function onBackgroundChange(background = state.board.boardBackground) {
+    if (background === state.board.boardBackground) return
     recordHistory()
-    state.board.boardBackground = elements.background.value
+    state.board.boardBackground = background
+    renderBackgroundOptions()
     renderAll()
   }
 
