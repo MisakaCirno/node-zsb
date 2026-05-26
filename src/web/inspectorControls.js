@@ -52,9 +52,15 @@ export function createInspectorControls({
     const hasMovableSelection = selectedIndexes
       .some((index) => !state.board.objects[index]?.locked)
     elements.clearBoard.disabled = state.board.objects.length === 0
+    elements.menuClearBoard.disabled = state.board.objects.length === 0
+    elements.copyObject.disabled = !hasSelection
+    elements.menuCopyObject.disabled = !hasSelection
     elements.deleteObject.disabled = !hasSelection
+    elements.menuDeleteObject.disabled = !hasSelection
     elements.duplicateObject.disabled = !hasSelection
+    elements.menuDuplicateObject.disabled = !hasSelection
     elements.pasteObject.disabled = !state.clipboard
+    elements.menuPasteObject.disabled = !state.clipboard
     elements.moveTop.disabled = !hasSelection || state.selectedIndex <= 0
     elements.moveUp.disabled = !hasSelection || state.selectedIndex <= 0
     elements.moveDown.disabled =

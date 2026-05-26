@@ -30,7 +30,9 @@ export function createEditorHistoryControls({
   function updateHistoryButtons() {
     const elements = getElements()
     elements.undo.disabled = state.history.length === 0
+    elements.menuUndo.disabled = state.history.length === 0
     elements.redo.disabled = state.future.length === 0
+    elements.menuRedo.disabled = state.future.length === 0
   }
 
   return {

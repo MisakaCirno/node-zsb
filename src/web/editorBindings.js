@@ -75,12 +75,22 @@ export function bindEditorEvents({
   elements.newLocalBoard.addEventListener('click', actions.newLocalBoard)
   elements.saveLocalBoard.addEventListener('click', actions.saveLocalBoard)
   elements.saveAsLocalBoard.addEventListener('click', actions.saveLocalBoardAs)
+  elements.quickSaveLocalBoard.addEventListener('click', actions.saveLocalBoard)
+  elements.quickSaveAsLocalBoard.addEventListener('click', actions.saveLocalBoardAs)
   elements.undo.addEventListener('click', actions.undo)
+  elements.menuUndo.addEventListener('click', actions.undo)
   elements.redo.addEventListener('click', actions.redo)
+  elements.menuRedo.addEventListener('click', actions.redo)
   elements.clearBoard.addEventListener('click', actions.clearBoard)
+  elements.menuClearBoard.addEventListener('click', actions.clearBoard)
   elements.deleteObject.addEventListener('click', actions.deleteSelected)
+  elements.menuDeleteObject.addEventListener('click', actions.deleteSelected)
+  elements.copyObject.addEventListener('click', actions.copySelected)
+  elements.menuCopyObject.addEventListener('click', actions.copySelected)
   elements.duplicateObject.addEventListener('click', actions.duplicateSelected)
+  elements.menuDuplicateObject.addEventListener('click', actions.duplicateSelected)
   elements.pasteObject.addEventListener('click', actions.pasteObject)
+  elements.menuPasteObject.addEventListener('click', actions.pasteObject)
   elements.moveTop.addEventListener('click', () => actions.moveSelectedTo(0))
   elements.moveUp.addEventListener('click', () => actions.moveSelected(-1))
   elements.moveDown.addEventListener('click', () => actions.moveSelected(1))
@@ -118,6 +128,8 @@ export function bindEditorEvents({
       nudgeSelected: actions.nudgeSelected,
       pasteObject: actions.pasteObject,
       redo: actions.redo,
+      saveLocalBoard: actions.saveLocalBoard,
+      saveLocalBoardAs: actions.saveLocalBoardAs,
       stepZoom: actions.stepZoom,
       undo: actions.undo,
     }),

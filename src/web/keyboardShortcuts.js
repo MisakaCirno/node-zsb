@@ -3,6 +3,15 @@ const DELETE_KEYS = ['Backspace', 'Delete']
 
 export function handleEditorKeyboard(event, handlers) {
   const isEditingText = isTextEditingTarget(event.target)
+  if (isShortcut(event, 's')) {
+    event.preventDefault()
+    if (event.shiftKey) {
+      handlers.saveLocalBoardAs()
+    } else {
+      handlers.saveLocalBoard()
+    }
+    return
+  }
   if (handleZoomShortcut(event, handlers)) {
     return
   }

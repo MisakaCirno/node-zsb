@@ -39,6 +39,8 @@ export function createEditorFeedback({ state, getElements }) {
       elements.copyExportCode,
       elements.copyExportImage,
       elements.downloadPreviewImage,
+      elements.quickSaveLocalBoard,
+      elements.quickSaveAsLocalBoard,
     ]) {
       button.disabled = disabled
       button.setAttribute('aria-busy', String(disabled))
@@ -57,6 +59,7 @@ export function createEditorFeedback({ state, getElements }) {
       control.disabled = disabled
     }
     elements.fileMenuButton.disabled = disabled
+    elements.editMenuButton.disabled = disabled
   }
 
   function handleError(error) {

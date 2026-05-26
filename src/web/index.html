@@ -10,6 +10,27 @@
   <body>
     <main class="editor-shell" id="editor-shell">
       <aside class="panel sidebar">
+        <div class="editor-toolrail" role="toolbar" aria-label="编辑工具">
+          <button id="align-left" class="icon-tool" type="button" title="左对齐" aria-label="左对齐" disabled>
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 4v16"/><path d="M8 7h10"/><path d="M8 12h7"/><path d="M8 17h12"/></svg>
+          </button>
+          <button id="align-center-x" class="icon-tool" type="button" title="水平居中对齐" aria-label="水平居中对齐" disabled>
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 4v16"/><path d="M7 7h10"/><path d="M9 12h6"/><path d="M5 17h14"/></svg>
+          </button>
+          <button id="align-right" class="icon-tool" type="button" title="右对齐" aria-label="右对齐" disabled>
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 4v16"/><path d="M6 7h10"/><path d="M9 12h7"/><path d="M4 17h12"/></svg>
+          </button>
+          <div class="toolrail-separator"></div>
+          <button id="align-top" class="icon-tool" type="button" title="顶端对齐" aria-label="顶端对齐" disabled>
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 4h16"/><path d="M7 8v10"/><path d="M12 8v7"/><path d="M17 8v12"/></svg>
+          </button>
+          <button id="align-center-y" class="icon-tool" type="button" title="垂直居中对齐" aria-label="垂直居中对齐" disabled>
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 12h16"/><path d="M7 7v10"/><path d="M12 9v6"/><path d="M17 5v14"/></svg>
+          </button>
+          <button id="align-bottom" class="icon-tool" type="button" title="底端对齐" aria-label="底端对齐" disabled>
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20h16"/><path d="M7 6v10"/><path d="M12 9v7"/><path d="M17 4v12"/></svg>
+          </button>
+        </div>
         <section class="sidebar-panel asset-panel">
           <div class="sidebar-tabs" role="tablist" aria-label="资源">
             <button id="asset-tab-background" type="button" role="tab" aria-selected="false" aria-controls="asset-panel-background">背景</button>
@@ -31,75 +52,68 @@
           <div class="stage-toolbar-row stage-toolbar-main">
             <div class="stage-toolbar-cluster">
               <nav class="app-menubar" role="menubar" aria-label="主菜单">
-                <button id="file-menu-button" class="app-menu-trigger" type="button" role="menuitem" aria-haspopup="menu" aria-expanded="false" aria-controls="file-menu">
+                <button id="file-menu-button" class="app-menu-trigger" type="button" role="menuitem" aria-haspopup="menu" aria-expanded="false" aria-controls="file-menu" data-menu-target="file-menu">
                   <span>文件</span>
+                  <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m7 10 5 5 5-5"/></svg>
+                </button>
+                <button id="edit-menu-button" class="app-menu-trigger" type="button" role="menuitem" aria-haspopup="menu" aria-expanded="false" aria-controls="edit-menu" data-menu-target="edit-menu">
+                  <span>编辑</span>
                   <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m7 10 5 5 5-5"/></svg>
                 </button>
               </nav>
               <div class="toolbar-group board-name-group" aria-label="画板名称">
-              <label class="board-name-field" for="file-name">
-                <span class="board-name-label">文件名</span>
-                <input id="file-name" maxlength="48" placeholder="未命名文件" />
-              </label>
+                <label class="board-name-field" for="file-name">
+                  <span class="board-name-label">文件名</span>
+                  <input id="file-name" maxlength="48" placeholder="未命名文件" />
+                </label>
               </div>
-              <label class="toolbar-toggle icon-toggle" title="吸附到网格" aria-label="吸附">
-                <input id="snap-toggle" type="checkbox" />
-                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 4v7a5 5 0 0 0 10 0V4"/><path d="M7 8h4"/><path d="M13 8h4"/><path d="M7 20h10"/></svg>
-              </label>
-              <label class="toolbar-toggle icon-toggle" title="显示网格" aria-label="网格">
-                <input id="grid-toggle" type="checkbox" />
-                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 4h16v16H4z"/><path d="M4 10h16"/><path d="M4 16h16"/><path d="M10 4v16"/><path d="M16 4v16"/></svg>
-              </label>
             </div>
-            <div class="toolbar-group zoom-actions" aria-label="缩放">
-              <input id="zoom-select" class="zoom-range" type="range" min="0.35" max="1.5" step="0.01" value="1" aria-label="缩放" />
-              <output id="zoom-value" for="zoom-select">100%</output>
-              <button id="fit-stage" class="icon-tool" type="button" title="适配画布" aria-label="适配">
-                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 3H5a2 2 0 0 0-2 2v3"/><path d="M16 3h3a2 2 0 0 1 2 2v3"/><path d="M8 21H5a2 2 0 0 1-2-2v-3"/><path d="M16 21h3a2 2 0 0 0 2-2v-3"/></svg>
+            <div class="toolbar-group top-command-icons" aria-label="常用命令">
+              <button id="quick-save-local-board" class="icon-tool" type="button" title="保存文件 Ctrl+S" aria-label="保存文件">
+                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 3h12l2 2v16H5z"/><path d="M8 3v6h8V3"/><path d="M8 21v-7h8v7"/></svg>
               </button>
-            </div>
-          </div>
-          <div class="stage-toolbar-row stage-toolbar-actions">
-            <div class="stage-toolbar-cluster stage-toolbar-edit">
+              <button id="quick-save-as-local-board" class="icon-tool" type="button" title="另存为 Ctrl+Shift+S" aria-label="另存为">
+                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 3h12l2 2v16H5z"/><path d="M8 3v6h8V3"/><path d="M8 21v-7h8v7"/><path d="M16 14h5"/><path d="M18.5 11.5 21 14l-2.5 2.5"/></svg>
+              </button>
               <button id="undo-action" class="icon-tool" type="button" title="撤销" aria-label="撤销" disabled>
                 <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 7 4 12l5 5"/><path d="M4 12h11a5 5 0 0 1 0 10h-1"/></svg>
               </button>
               <button id="redo-action" class="icon-tool" type="button" title="重做" aria-label="重做" disabled>
                 <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m15 7 5 5-5 5"/><path d="M20 12H9a5 5 0 0 0 0 10h1"/></svg>
               </button>
-              <button id="clear-board" class="icon-tool danger-tool" type="button" title="清空画板" aria-label="清空" disabled>
-                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M6 7l1 14h10l1-14"/><path d="M9 7V4h6v3"/></svg>
-              </button>
-              <button id="duplicate-object" class="icon-tool" type="button" title="复制对象" aria-label="复制" disabled>
+              <button id="copy-object" class="icon-tool" type="button" title="复制对象 Ctrl+C" aria-label="复制" disabled>
                 <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="8" y="8" width="11" height="11" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v1"/></svg>
               </button>
-              <button id="paste-object" class="icon-tool" type="button" title="粘贴对象" aria-label="粘贴" disabled>
+              <button id="duplicate-object" class="icon-tool" type="button" title="创建副本 Ctrl+D" aria-label="创建副本" disabled>
+                <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="7" y="7" width="10" height="10" rx="2"/><path d="M11 3h8a2 2 0 0 1 2 2v8"/><path d="M3 11v8a2 2 0 0 0 2 2h8"/></svg>
+              </button>
+              <button id="paste-object" class="icon-tool" type="button" title="粘贴对象 Ctrl+V" aria-label="粘贴" disabled>
                 <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 4h8l1 3H7z"/><path d="M7 7H5v14h14V7h-2"/><path d="M9 13h6"/><path d="M9 17h4"/></svg>
               </button>
-            </div>
-            <div class="toolbar-group align-actions" aria-label="对齐">
-              <button id="align-left" class="icon-tool" type="button" title="左对齐" aria-label="左对齐" disabled>
-                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 4v16"/><path d="M8 7h10"/><path d="M8 12h7"/><path d="M8 17h12"/></svg>
-              </button>
-              <button id="align-center-x" class="icon-tool" type="button" title="水平居中对齐" aria-label="水平居中对齐" disabled>
-                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 4v16"/><path d="M7 7h10"/><path d="M9 12h6"/><path d="M5 17h14"/></svg>
-              </button>
-              <button id="align-right" class="icon-tool" type="button" title="右对齐" aria-label="右对齐" disabled>
-                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 4v16"/><path d="M6 7h10"/><path d="M9 12h7"/><path d="M4 17h12"/></svg>
-              </button>
-              <button id="align-top" class="icon-tool" type="button" title="顶端对齐" aria-label="顶端对齐" disabled>
-                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 4h16"/><path d="M7 8v10"/><path d="M12 8v7"/><path d="M17 8v12"/></svg>
-              </button>
-              <button id="align-center-y" class="icon-tool" type="button" title="垂直居中对齐" aria-label="垂直居中对齐" disabled>
-                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 12h16"/><path d="M7 7v10"/><path d="M12 9v6"/><path d="M17 5v14"/></svg>
-              </button>
-              <button id="align-bottom" class="icon-tool" type="button" title="底端对齐" aria-label="底端对齐" disabled>
-                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20h16"/><path d="M7 6v10"/><path d="M12 9v7"/><path d="M17 4v12"/></svg>
+              <button id="clear-board" class="icon-tool danger-tool" type="button" title="清空画板" aria-label="清空" disabled>
+                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M6 7l1 14h10l1-14"/><path d="M9 7V4h6v3"/></svg>
               </button>
             </div>
           </div>
         </div>
         <div id="stage-host"></div>
+        <div class="stage-statusbar" aria-label="画布状态">
+          <label class="toolbar-toggle icon-toggle status-toggle" title="吸附到网格" aria-label="吸附">
+            <input id="snap-toggle" type="checkbox" />
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 4v7a5 5 0 0 0 10 0V4"/><path d="M7 8h4"/><path d="M13 8h4"/><path d="M7 20h10"/></svg>
+          </label>
+          <label class="toolbar-toggle icon-toggle status-toggle" title="显示网格" aria-label="网格">
+            <input id="grid-toggle" type="checkbox" />
+            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 4h16v16H4z"/><path d="M4 10h16"/><path d="M4 16h16"/><path d="M10 4v16"/><path d="M16 4v16"/></svg>
+          </label>
+          <div class="toolbar-group zoom-actions" aria-label="缩放">
+            <input id="zoom-select" class="zoom-range" type="range" min="0.35" max="1.5" step="0.01" value="1" aria-label="缩放" />
+            <output id="zoom-value" for="zoom-select">100%</output>
+            <button id="fit-stage" class="icon-tool" type="button" title="适配画布 Ctrl+0" aria-label="适配">
+              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 3H5a2 2 0 0 0-2 2v3"/><path d="M16 3h3a2 2 0 0 1 2 2v3"/><path d="M8 21H5a2 2 0 0 1-2-2v-3"/><path d="M16 21h3a2 2 0 0 0 2-2v-3"/></svg>
+            </button>
+          </div>
+        </div>
       </section>
       <div id="right-panel-resizer" class="panel-resizer" role="separator" aria-label="调整右侧面板宽度" aria-orientation="vertical" tabindex="0"></div>
 
@@ -262,10 +276,12 @@
         <button id="save-local-board" class="file-menu-item" type="button" title="保存文件" aria-label="保存文件" role="menuitem">
           <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 3h12l2 2v16H5z"/><path d="M8 3v6h8V3"/><path d="M8 21v-7h8v7"/></svg>
           <span>保存文件</span>
+          <kbd>Ctrl+S</kbd>
         </button>
         <button id="save-as-local-board" class="file-menu-item" type="button" title="另存为" aria-label="另存为" role="menuitem">
           <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 3h12l2 2v16H5z"/><path d="M8 3v6h8V3"/><path d="M8 21v-7h8v7"/><path d="M16 14h5"/><path d="M18.5 11.5 21 14l-2.5 2.5"/></svg>
           <span>另存为</span>
+          <kbd>Ctrl+Shift+S</kbd>
         </button>
         <button id="manage-local-boards" class="file-menu-item" type="button" title="管理文件" aria-label="管理文件" role="menuitem">
           <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16"/><path d="M4 12h16"/><path d="M4 17h10"/><path d="m17 16 2 2 3-4"/></svg>
@@ -293,6 +309,41 @@
         <button id="open-export-image-dialog" class="file-menu-item" type="button" title="导出图片" aria-label="导出图片" role="menuitem">
           <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="4" y="5" width="16" height="14" rx="2"/><circle cx="9" cy="10" r="1.5"/><path d="m7 17 4-4 3 3 2-2 3 3"/></svg>
           <span>导出图片</span>
+        </button>
+      </div>
+    </div>
+    <div id="edit-menu" class="file-menu hidden" role="menu" aria-label="编辑操作">
+      <div class="file-menu-section" aria-label="历史">
+        <button id="menu-undo-action" class="file-menu-item" type="button" role="menuitem" disabled>
+          <span>撤销</span>
+          <kbd>Ctrl+Z</kbd>
+        </button>
+        <button id="menu-redo-action" class="file-menu-item" type="button" role="menuitem" disabled>
+          <span>重做</span>
+          <kbd>Ctrl+Shift+Z</kbd>
+        </button>
+      </div>
+      <div class="file-menu-section" aria-label="剪贴板">
+        <button id="menu-copy-object" class="file-menu-item" type="button" role="menuitem" disabled>
+          <span>复制</span>
+          <kbd>Ctrl+C</kbd>
+        </button>
+        <button id="menu-paste-object" class="file-menu-item" type="button" role="menuitem" disabled>
+          <span>粘贴</span>
+          <kbd>Ctrl+V</kbd>
+        </button>
+        <button id="menu-duplicate-object" class="file-menu-item" type="button" role="menuitem" disabled>
+          <span>创建副本</span>
+          <kbd>Ctrl+D</kbd>
+        </button>
+      </div>
+      <div class="file-menu-section" aria-label="删除">
+        <button id="menu-delete-object" class="file-menu-item danger-menu-item" type="button" role="menuitem" disabled>
+          <span>删除</span>
+          <kbd>Del</kbd>
+        </button>
+        <button id="menu-clear-board" class="file-menu-item danger-menu-item" type="button" role="menuitem" disabled>
+          <span>清空画板</span>
         </button>
       </div>
     </div>
