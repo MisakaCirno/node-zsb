@@ -40,7 +40,13 @@ export function createStageRenderer({
   const transformerLayer = new Konva.Layer()
   const transformer = new Konva.Transformer({
     rotateEnabled: true,
-    enabledAnchors: [],
+    keepRatio: true,
+    enabledAnchors: [
+      'top-left',
+      'top-right',
+      'bottom-left',
+      'bottom-right',
+    ],
     borderStroke: '#66c2a5',
     anchorStroke: '#66c2a5',
   })
@@ -99,8 +105,15 @@ export function createStageRenderer({
       }
     }
     objectLayer.draw()
+    const selectedObject = state.board.objects[state.selectedIndex]
     const selectedNode = nodes.find((node) => node.getAttr('objectIndex') === state.selectedIndex)
-    transformer.nodes(selectedNode ? [selectedNode] : [])
+    transformer.enabledAnchors(selectedObject?.type === 'line' ? [] : [
+      'top-left',
+      'top-right',
+      'bottom-left',
+      'bottom-right',
+    ])
+    transformer.nodes(selectedNode && !selectedObject?.locked ? [selectedNode] : [])
     transformerLayer.draw()
   }
 
@@ -150,11 +163,41 @@ export function createStageRenderer({
     node.on('dragend', () => {
       handleDragEnd(node, object)
     })
+    node.on('transformstart', () => {
+      recordHistory()
+    })
     node.on('transformend', () => {
-      object.angle = normalizeAngle(node.rotation())
-      renderInspector()
+      commitNodeTransform(node, object)
     })
     return node
+  }
+
+  function commitNodeTransform(node, object) {
+    if (object.type !== 'line') {
+      object.size = clamp(
+        Math.round(Math.max(Math.abs(node.scaleX()), Math.abs(node.scaleY())) * 100),
+        10,
+        300,
+      )
+      node.scaleX(objectScale(object))
+      node.scaleY(objectScale(object))
+    }
+    if (object.type === 'line') {
+      node.scaleX(1)
+      node.scaleY(1)
+    }
+    if (node.x() !== undefined && node.y() !== undefined) {
+      const point = normalizePoint(
+        toLogicalCoordinate(node.x()),
+        toLogicalCoordinate(node.y()),
+      )
+      object.x = point.x
+      object.y = point.y
+    }
+    object.angle = normalizeAngle(node.rotation())
+    renderInspector()
+    renderLayers()
+    renderAll()
   }
 
   function createTextNode(object) {
@@ -168,6 +211,8 @@ export function createStageRenderer({
       offsetX: calcTextWidth(object.text ?? '', 28) / 2,
       offsetY: 14,
       rotation: object.angle ?? 0,
+      scaleX: objectScale(object),
+      scaleY: objectScale(object),
       shadowEnabled: true,
       shadowColor: 'black',
       shadowBlur: 4,

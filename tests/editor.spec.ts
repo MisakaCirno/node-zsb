@@ -204,6 +204,37 @@ test('editor drags line endpoints directly on the canvas', async ({ page }) => {
   await expect(page.locator('#object-end-y')).toHaveValue('192')
 })
 
+test('editor scales the selected object from the canvas transformer', async ({ page }) => {
+  await page.goto('/editor')
+  await expect(page.locator('#layers')).toContainText('tank')
+
+  await page.getByTitle('tank').first().click()
+  await expect(page.locator('#object-type')).toHaveValue('tank')
+  await expect(page.locator('#object-size')).toHaveValue('100')
+
+  const canvas = page.locator('#stage-host canvas').first()
+  const box = await canvas.boundingBox()
+  if (!box) throw new Error('Canvas is not visible')
+  const scale = box.width / 1024
+  const point = (x: number, y: number) => ({
+    x: box.x + x * 2 * scale,
+    y: box.y + y * 2 * scale,
+  })
+  const from = point(240, 176)
+  const to = point(216, 152)
+
+  await page.mouse.move(from.x, from.y)
+  await page.mouse.down()
+  await page.mouse.move(to.x, to.y, { steps: 8 })
+  await page.mouse.up()
+
+  await expect.poll(async () => Number(await page.locator('#object-size').inputValue()))
+    .toBeGreaterThan(100)
+
+  await page.getByRole('button', { name: '撤销' }).click()
+  await expect(page.locator('#object-size')).toHaveValue('100')
+})
+
 test('editor reports invalid share code without replacing the board', async ({
   page,
 }) => {
