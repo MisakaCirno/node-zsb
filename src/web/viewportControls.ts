@@ -13,6 +13,18 @@ import {
 } from './constants.js'
 import { clamp } from './geometry.js'
 import { loadEditorSettings, persistEditorSettings } from './storage.js'
+import type {
+  EditorElements,
+  EditorSettings,
+  EditorState,
+  GridRenderer,
+  StageLike,
+  StageZoomOptions,
+  ViewportControls,
+} from './types.js'
+
+const MIN_ZOOM = ZOOM_LEVELS[0]
+const MAX_ZOOM = ZOOM_LEVELS[ZOOM_LEVELS.length - 1] ?? 2
 
 export function createViewportControls({
   state,
@@ -20,9 +32,16 @@ export function createViewportControls({
   stage,
   stageRenderer,
   showStatus,
-}) {
-  function applyFitZoom(options = {}) {
-    const styles = getComputedStyle(elements.stageHost)
+}: {
+  state: EditorState
+  elements: EditorElements
+  stage: StageLike
+  stageRenderer: GridRenderer
+  showStatus: (message: string) => void
+}): ViewportControls {
+  function applyFitZoom(options: StageZoomOptions = {}) {
+    const styles = elements.stageHost.ownerDocument.defaultView?.getComputedStyle(elements.stageHost)
+    if (!styles) return
     const horizontalPadding =
       Number.parseFloat(styles.paddingLeft) + Number.parseFloat(styles.paddingRight)
     const verticalPadding =
@@ -33,17 +52,17 @@ export function createViewportControls({
     setStageZoom(zoom, { mode: 'fit', ...options })
   }
 
-  function stepZoom(direction) {
+  function stepZoom(direction: number) {
     const current = state.zoom
     const target =
       direction > 0
         ? ZOOM_LEVELS.find((level) => level > current + 0.01) ?? ZOOM_LEVELS.at(-1)
         : ZOOM_LEVELS.findLast((level) => level < current - 0.01) ?? ZOOM_LEVELS[0]
-    setStageZoom(target, { mode: 'manual' })
+    setStageZoom(target ?? 1, { mode: 'manual' })
   }
 
-  function setStageZoom(zoom, options = {}) {
-    const nextZoom = clamp(Number.isFinite(zoom) ? zoom : 1, ZOOM_LEVELS[0], ZOOM_LEVELS.at(-1))
+  function setStageZoom(zoom: number, options: StageZoomOptions = {}) {
+    const nextZoom = clamp(Number.isFinite(zoom) ? zoom : 1, MIN_ZOOM, MAX_ZOOM)
     state.zoom = nextZoom
     state.zoomMode = options.mode ?? 'manual'
     stage.scale({ x: nextZoom, y: nextZoom })
@@ -64,11 +83,11 @@ export function createViewportControls({
     elements.zoomSelect.value = String(state.zoom)
     elements.zoomValue.textContent =
       state.zoomMode === 'fit' ? `适配 ${formatZoom(state.zoom)}` : formatZoom(state.zoom)
-    elements.zoomOut.disabled = state.zoom <= ZOOM_LEVELS[0]
-    elements.zoomIn.disabled = state.zoom >= ZOOM_LEVELS.at(-1)
+    elements.zoomOut.disabled = state.zoom <= MIN_ZOOM
+    elements.zoomIn.disabled = state.zoom >= MAX_ZOOM
   }
 
-  function setGridDensity(gridSize, options = {}) {
+  function setGridDensity(gridSize: number, options: StageZoomOptions = {}) {
     const snapped = Math.round((Number(gridSize) || MIN_GRID_SIZE) / GRID_SIZE_STEP) * GRID_SIZE_STEP
     state.gridSize = clamp(snapped, MIN_GRID_SIZE, MAX_GRID_SIZE)
     updateGridDensityControls()
@@ -83,7 +102,7 @@ export function createViewportControls({
     }
   }
 
-  function setGridOpacity(gridOpacity, options = {}) {
+  function setGridOpacity(gridOpacity: number, options: StageZoomOptions = {}) {
     const snapped =
       Math.round((Number(gridOpacity) || DEFAULT_GRID_OPACITY) / GRID_OPACITY_STEP)
       * GRID_OPACITY_STEP
@@ -124,7 +143,7 @@ export function createViewportControls({
   }
 
   function syncControlStateFromDom() {
-    const settings = loadEditorSettings()
+    const settings = loadEditorSettings() as Partial<EditorSettings> | null
     if (settings) {
       applySettings(settings)
       return
@@ -139,7 +158,7 @@ export function createViewportControls({
     })
   }
 
-  function applyInitialZoom(options = {}) {
+  function applyInitialZoom(options: StageZoomOptions = {}) {
     if (state.zoomMode === 'manual') {
       setStageZoom(state.zoom, { mode: 'manual', persist: false, ...options })
       return
@@ -166,15 +185,15 @@ export function createViewportControls({
     toggleSnapToGrid,
   }
 
-  function applySettings(settings) {
+  function applySettings(settings: Partial<EditorSettings>) {
     state.snapToGrid = Boolean(settings.snapToGrid)
     state.showGrid = Boolean(settings.showGrid)
-    state.zoom = clamp(Number(settings.zoom) || 1, ZOOM_LEVELS[0], ZOOM_LEVELS.at(-1))
+    state.zoom = clamp(Number(settings.zoom) || 1, MIN_ZOOM, MAX_ZOOM)
     state.zoomMode = settings.zoomMode === 'manual' ? 'manual' : 'fit'
     elements.snap.checked = state.snapToGrid
     elements.grid.checked = state.showGrid
-    setGridDensity(settings.gridSize, { render: false, silent: true })
-    setGridOpacity(settings.gridOpacity, { render: false, silent: true })
+    setGridDensity(settings.gridSize ?? DEFAULT_GRID_SIZE, { render: false, silent: true })
+    setGridOpacity(settings.gridOpacity ?? DEFAULT_GRID_OPACITY, { render: false, silent: true })
   }
 
   function persistViewportSettings() {
@@ -189,10 +208,10 @@ export function createViewportControls({
   }
 }
 
-function formatZoom(zoom) {
+function formatZoom(zoom: number): string {
   return `${Math.round(zoom * 100)}%`
 }
 
-function formatPercent(value) {
+function formatPercent(value: number): string {
   return `${Math.round(value * 100)}%`
 }

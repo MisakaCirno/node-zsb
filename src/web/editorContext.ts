@@ -8,13 +8,22 @@ import {
   getSelectedObjects,
 } from './editorState.js'
 import { getGroupObjectIds } from './layerTree.js'
+import type {
+  EditorContext,
+  EditorState,
+  SelectionOptions,
+} from './types.js'
 
 export function createEditorContext({
   renderAll,
   showStatus,
   state,
-}) {
-  function selectObject(index, options = {}) {
+}: {
+  renderAll: () => void
+  showStatus: (message: string) => void
+  state: EditorState
+}): EditorContext {
+  function selectObject(index: number, options: SelectionOptions = {}) {
     if (index < 0) {
       setSelection([])
       state.selectedGroupId = ''
@@ -52,17 +61,17 @@ export function createEditorContext({
     renderAll()
   }
 
-  function selectObjects(indexes, options = {}) {
+  function selectObjects(indexes: number[], options: SelectionOptions = {}) {
     setSelection(indexes, options.primaryIndex ?? indexes.at(-1) ?? -1)
     state.selectedGroupId = ''
     state.revealSelectedLayer = Boolean(options.revealInLayers)
     renderAll()
   }
 
-  function selectLayerGroup(groupId) {
+  function selectLayerGroup(groupId: string) {
     const ids = getGroupObjectIds(state.layerTree, groupId)
     const indexById = new Map(state.board.objects.map((object, index) => [object.editorId, index]))
-    setSelection(ids.map((id) => indexById.get(id)).filter((index) => index !== undefined))
+    setSelection(ids.map((id) => indexById.get(id)).filter((index): index is number => index !== undefined))
     state.selectedGroupId = groupId
     state.revealSelectedLayer = false
     renderAll()
@@ -82,7 +91,7 @@ export function createEditorContext({
     return getSelectedObjects(state)
   }
 
-  function setSelection(indexes, primaryIndex = indexes.at(-1) ?? -1) {
+  function setSelection(indexes: number[], primaryIndex = indexes.at(-1) ?? -1) {
     const unique = [...new Set(indexes)]
       .filter((selectedIndex) =>
         selectedIndex >= 0 && selectedIndex < state.board.objects.length)
@@ -92,11 +101,11 @@ export function createEditorContext({
       : unique.at(-1) ?? -1
   }
 
-  function normalizePoint(x, y) {
+  function normalizePoint(x: number, y: number) {
     return normalizePointValue(x, y, getSnapStep())
   }
 
-  function normalizeCoordinate(value, min, max) {
+  function normalizeCoordinate(value: number, min: number, max: number) {
     return normalizeCoordinateValue(value, min, max, getSnapStep())
   }
 
@@ -117,7 +126,7 @@ export function createEditorContext({
   }
 }
 
-function createIndexRange(start, end) {
+function createIndexRange(start: number, end: number): number[] {
   const min = Math.min(start, end)
   const max = Math.max(start, end)
   return Array.from({ length: max - min + 1 }, (_, offset) => min + offset)
