@@ -7,10 +7,90 @@ const MIN_STAGE_WIDTH = 620
 const RESIZER_WIDTH = 6
 const KEYBOARD_STEP = 16
 
+declare const document: DocumentLike
+declare const window: WindowLike
+declare function getComputedStyle(element: LayoutShellElement): StyleDeclarationLike
+
+type PanelSide = 'left' | 'right'
+
+interface LayoutResizerDeps {
+  elements: LayoutElements
+  onResize(): void
+}
+
+interface LayoutElements {
+  shell: LayoutShellElement
+  leftPanelResizer: ResizerElement
+  rightPanelResizer: ResizerElement
+}
+
+interface LayoutShellElement {
+  clientWidth: number
+  style: {
+    setProperty(name: string, value: string): void
+  }
+  getBoundingClientRect(): { left: number, right: number }
+}
+
+interface ResizerElement {
+  addEventListener(
+    type: 'pointerdown' | 'pointermove' | 'pointerup',
+    listener: (event: PointerEventLike) => void,
+  ): void
+  addEventListener(type: 'keydown', listener: (event: KeyboardEventLike) => void): void
+  addEventListener(type: string, listener: () => void): void
+  hasPointerCapture(pointerId: number): boolean
+  releasePointerCapture(pointerId: number): void
+  setAttribute(name: string, value: string): void
+  setPointerCapture(pointerId: number): void
+}
+
+interface DocumentLike {
+  body: {
+    classList: {
+      add(className: string): void
+      remove(className: string): void
+    }
+  }
+}
+
+interface WindowLike {
+  innerWidth: number
+  localStorage: {
+    getItem(key: string): string | null
+    setItem(key: string, value: string): void
+  }
+}
+
+interface StyleDeclarationLike {
+  getPropertyValue(name: string): string
+}
+
+interface PointerEventLike {
+  clientX: number
+  key?: string
+  pointerId: number
+  preventDefault(): void
+}
+
+interface KeyboardEventLike {
+  key: string
+  clientX?: number
+  pointerId?: number
+  preventDefault(): void
+}
+
+interface NormalizedLayout {
+  left: number
+  right: number
+}
+
+type LayoutState = Partial<NormalizedLayout>
+
 export function bindLayoutResizers({
   elements,
   onResize,
-}) {
+}: LayoutResizerDeps) {
   const state = loadLayout()
   applyLayout(elements, state)
   bindResizer({
@@ -32,7 +112,7 @@ function bindResizer({
   onResize,
   side,
   trigger,
-}) {
+}: LayoutResizerDeps & { side: PanelSide, trigger: ResizerElement }) {
   trigger.addEventListener('pointerdown', (event) => {
     event.preventDefault()
     trigger.setPointerCapture(event.pointerId)
@@ -89,7 +169,7 @@ function updatePanelWidth({
   onResize,
   side,
   x,
-}) {
+}: LayoutResizerDeps & { side: PanelSide, x: number }) {
   const shellRect = elements.shell.getBoundingClientRect()
   const layout = getCurrentLayout(elements)
   layout[side] = side === 'left'
@@ -98,14 +178,14 @@ function updatePanelWidth({
   saveAndApplyLayout(elements, layout, onResize)
 }
 
-function saveAndApplyLayout(elements, layout, onResize) {
+function saveAndApplyLayout(elements: LayoutElements, layout: LayoutState, onResize: () => void) {
   const next = normalizeLayout(elements, layout)
   saveLayout(next)
   applyLayout(elements, next)
   onResize()
 }
 
-function applyLayout(elements, layout) {
+function applyLayout(elements: LayoutElements, layout: LayoutState) {
   const next = normalizeLayout(elements, layout)
   elements.shell.style.setProperty('--left-panel-width', `${next.left}px`)
   elements.shell.style.setProperty('--right-panel-width', `${next.right}px`)
@@ -113,7 +193,7 @@ function applyLayout(elements, layout) {
   elements.rightPanelResizer.setAttribute('aria-valuenow', String(next.right))
 }
 
-function normalizeLayout(elements, layout) {
+function normalizeLayout(elements: LayoutElements, layout: LayoutState): NormalizedLayout {
   const shellWidth = elements.shell.clientWidth || window.innerWidth
   const left = clamp(
     Number(layout.left) || DEFAULT_LEFT_WIDTH,
@@ -128,14 +208,14 @@ function normalizeLayout(elements, layout) {
   return { left, right }
 }
 
-function getMaxPanelWidth(shellWidth, oppositeWidth) {
+function getMaxPanelWidth(shellWidth: number, oppositeWidth: number) {
   return Math.max(
     MIN_LEFT_WIDTH,
     shellWidth - oppositeWidth - MIN_STAGE_WIDTH - (RESIZER_WIDTH * 2),
   )
 }
 
-function getCurrentLayout(elements) {
+function getCurrentLayout(elements: LayoutElements): NormalizedLayout {
   const styles = getComputedStyle(elements.shell)
   return {
     left: Number.parseFloat(styles.getPropertyValue('--left-panel-width')),
@@ -143,13 +223,13 @@ function getCurrentLayout(elements) {
   }
 }
 
-function getKeyboardDelta(event, side) {
+function getKeyboardDelta(event: KeyboardEventLike | PointerEventLike, side: PanelSide) {
   if (event.key === 'ArrowLeft') return side === 'left' ? -KEYBOARD_STEP : KEYBOARD_STEP
   if (event.key === 'ArrowRight') return side === 'left' ? KEYBOARD_STEP : -KEYBOARD_STEP
   return 0
 }
 
-function loadLayout() {
+function loadLayout(): LayoutState {
   try {
     const raw = window.localStorage.getItem(LAYOUT_KEY)
     return raw ? JSON.parse(raw) : {}
@@ -158,7 +238,7 @@ function loadLayout() {
   }
 }
 
-function saveLayout(layout) {
+function saveLayout(layout: NormalizedLayout) {
   try {
     window.localStorage.setItem(LAYOUT_KEY, JSON.stringify(layout))
   } catch {
@@ -166,6 +246,6 @@ function saveLayout(layout) {
   }
 }
 
-function clamp(value, min, max) {
+function clamp(value: number, min: number, max: number) {
   return Math.max(min, Math.min(max, value))
 }
