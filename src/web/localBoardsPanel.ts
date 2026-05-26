@@ -9,6 +9,129 @@ import {
 } from './project.js'
 import { syncFlatLayerTree } from './layerTree.js'
 import { loadLocalFiles, persistLocalFiles } from './storage.js'
+import type {
+  Board,
+  EditorState,
+  LayerNode,
+  LocalFile,
+} from './types.js'
+
+interface LocalBoardsPanelDeps {
+  state: EditorState
+  elements: LocalBoardsPanelElements
+  recordHistory(): void
+  renderAll(): Promise<void>
+  renderBackgroundOptions(): void
+  showStatus(message: string, options?: { type?: string }): void
+  confirmAction(message: string): boolean
+  stage: StagePreview
+}
+
+interface LocalBoardsPanelElements {
+  localBoardDialog: DialogElement
+  localBoardNameDialog: DialogElement
+  localBoardList: ListElement
+  localBoardNameInput: InputElement
+  localBoardNameError: TextElement
+  confirmLocalBoardName: DisabledElement
+  selectAllLocalBoards: ButtonElement
+  clearSelectedLocalBoards: ButtonElement
+  deleteSelectedLocalBoards: ButtonElement
+  saveLocalBoard: DisabledElement
+  saveAsLocalBoard: DisabledElement
+  newLocalBoard: DisabledElement
+  fileName: InputElement
+  boardName: InputElement
+}
+
+interface StagePreview {
+  toDataURL(options?: { pixelRatio?: number }): string
+}
+
+interface DialogElement {
+  open: boolean
+  returnValue: string
+  close(): void
+  showModal(): void
+  addEventListener(type: string, listener: () => void): void
+  querySelector(selector: 'form'): FormElement
+  querySelector(selector: 'h2'): TextElement
+  querySelector(selector: string): FormElement | TextElement | null
+}
+
+interface ListElement {
+  innerHTML: string
+  append(...nodes: unknown[]): void
+  querySelectorAll(selector: string): CheckboxElement[]
+}
+
+interface CreatedElement {
+  [key: string]: unknown
+  className: string
+  textContent: string | null
+  type: string
+  value: string
+  title: string
+  src: string
+  alt: string
+  append(...nodes: unknown[]): void
+  addEventListener(type: string, listener: (event?: unknown) => void): void
+  setAttribute(name: string, value: string): void
+}
+
+interface DocumentLike {
+  createElement(tagName: string): CreatedElement
+}
+
+interface FormElement {
+  addEventListener(type: 'submit', listener: (event: SubmitLike) => void): void
+}
+
+interface SubmitLike {
+  preventDefault(): void
+  submitter?: { value?: string } | null
+}
+
+interface InputElement {
+  value: string
+  checked?: boolean
+  addEventListener(type: string, listener: () => void): void
+  focus(): void
+  select(): void
+  setAttribute(name: string, value: string): void
+}
+
+interface CheckboxElement extends InputElement {
+  checked: boolean
+}
+
+interface TextElement {
+  textContent: string | null
+}
+
+interface DisabledElement {
+  disabled: boolean
+}
+
+interface ButtonElement extends DisabledElement {
+  addEventListener(type: 'click', listener: () => void): void
+}
+
+interface FileNameRequest {
+  currentName: string
+  title: string
+  initialError?: string
+  validate?: ((fileName: string) => string) | null
+}
+
+interface PendingNameRequest {
+  resolve(fileName: string): void
+  validate?: ((fileName: string) => string) | null
+}
+
+interface RenderPreviewResponse {
+  hash: string
+}
 
 export function createLocalBoardsPanel({
   state,
@@ -19,14 +142,15 @@ export function createLocalBoardsPanel({
   showStatus,
   confirmAction,
   stage,
-}) {
-  let pendingNameRequest = null
+}: LocalBoardsPanelDeps) {
+  let pendingNameRequest: PendingNameRequest | null = null
+  const browserDocument = getDocument()
 
   function renderLocalBoards() {
     const files = loadLocalFiles()
     elements.localBoardList.innerHTML = ''
     if (files.length === 0) {
-      const empty = document.createElement('p')
+      const empty = browserDocument.createElement('p')
       empty.className = 'empty-state local-board-empty'
       empty.textContent = '暂无本地文件'
       elements.localBoardList.append(empty)
@@ -106,7 +230,7 @@ export function createLocalBoardsPanel({
     return true
   }
 
-  async function loadLocalBoard(fileName) {
+  async function loadLocalBoard(fileName: string) {
     const files = loadLocalFiles()
     const file = files.find((entry) => entry.name === fileName)
     if (!file) return false
@@ -120,7 +244,7 @@ export function createLocalBoardsPanel({
     state.layerTree = project?.layers ?? state.board.objects.map((object) => ({
       type: 'object',
       id: object.editorId,
-    })).filter((node) => Boolean(node.id))
+    })).filter((node): node is LayerNode => Boolean(node.id))
     state.selectedIndex = -1
     state.selectedIndexes = []
     setCurrentFile(file.name, cleanBoard(state.board))
@@ -133,7 +257,7 @@ export function createLocalBoardsPanel({
     return true
   }
 
-  async function renameLocalBoard(fileName) {
+  async function renameLocalBoard(fileName: string) {
     const files = loadLocalFiles()
     const file = files.find((entry) => entry.name === fileName)
     if (!file) return false
@@ -159,7 +283,7 @@ export function createLocalBoardsPanel({
     return true
   }
 
-  function deleteLocalBoard(fileName) {
+  function deleteLocalBoard(fileName: string) {
     const files = loadLocalFiles()
     const file = files.find((entry) => entry.name === fileName)
     if (!file) return false
@@ -237,7 +361,7 @@ export function createLocalBoardsPanel({
     updateLocalBoardButtons,
   }
 
-  async function saveFile(fileName, { allowOverwrite }) {
+  async function saveFile(fileName: string, { allowOverwrite }: { allowOverwrite: boolean }) {
     const name = normalizeFileName(fileName)
     if (!name) return false
     const files = loadLocalFiles()
@@ -269,26 +393,26 @@ export function createLocalBoardsPanel({
     return true
   }
 
-  function createLocalFileRow(file) {
-    const row = document.createElement('article')
+  function createLocalFileRow(file: LocalFile) {
+    const row = browserDocument.createElement('article')
     row.className = 'local-board-row'
-    const select = document.createElement('label')
+    const select = browserDocument.createElement('label')
     select.className = 'local-board-select'
     select.title = '选择文件'
-    const checkbox = document.createElement('input')
+    const checkbox = browserDocument.createElement('input')
     checkbox.type = 'checkbox'
     checkbox.value = file.name
     checkbox.setAttribute('aria-label', `选择 ${file.name}`)
     checkbox.addEventListener('change', updateLocalBoardButtons)
     select.append(checkbox)
 
-    const preview = document.createElement('button')
+    const preview = browserDocument.createElement('button')
     preview.type = 'button'
     preview.className = 'local-board-preview'
     preview.title = `打开 ${file.name}`
     preview.addEventListener('click', () => loadLocalBoard(file.name))
     if (file.preview) {
-      const image = document.createElement('img')
+      const image = browserDocument.createElement('img')
       image.src = file.preview
       image.alt = ''
       preview.append(image)
@@ -296,17 +420,17 @@ export function createLocalBoardsPanel({
       preview.textContent = '无预览'
     }
 
-    const meta = document.createElement('div')
+    const meta = browserDocument.createElement('div')
     meta.className = 'local-board-meta'
-    const name = document.createElement('strong')
+    const name = browserDocument.createElement('strong')
     name.textContent = file.name
-    const shareName = document.createElement('span')
+    const shareName = browserDocument.createElement('span')
     shareName.textContent = `分享名：${file.project?.board?.name || file.board?.name || '未命名'}`
-    const time = document.createElement('span')
+    const time = browserDocument.createElement('span')
     time.textContent = formatLocalFileTime(file)
     meta.append(name, shareName, time)
 
-    const actions = document.createElement('div')
+    const actions = browserDocument.createElement('div')
     actions.className = 'local-board-actions'
     actions.append(
       createRowButton('打开', () => loadLocalBoard(file.name)),
@@ -317,16 +441,16 @@ export function createLocalBoardsPanel({
     return row
   }
 
-  function createRowButton(label, onClick) {
-    const button = document.createElement('button')
+  function createRowButton(label: string, onClick: () => void) {
+    const button = browserDocument.createElement('button')
     button.type = 'button'
     button.textContent = label
     button.addEventListener('click', onClick)
     return button
   }
 
-  function requestFileName({ currentName, title, initialError = '', validate = null }) {
-    return new Promise((resolve) => {
+  function requestFileName({ currentName, title, initialError = '', validate = null }: FileNameRequest) {
+    return new Promise<string>((resolve) => {
       pendingNameRequest = { resolve, validate }
       elements.localBoardNameDialog.querySelector('h2').textContent = title
       elements.localBoardNameInput.value = currentName
@@ -341,7 +465,7 @@ export function createLocalBoardsPanel({
     return normalizeFileName(elements.fileName.value || state.currentFileName)
   }
 
-  function setCurrentFile(fileName, board) {
+  function setCurrentFile(fileName: string, board: Board) {
     state.currentFileName = fileName
     state.localFileSnapshot = boardSnapshot(board)
     elements.fileName.value = fileName
@@ -351,7 +475,7 @@ export function createLocalBoardsPanel({
     return boardSnapshot(cleanBoard(state.board)) !== state.localFileSnapshot
   }
 
-  function saveLocalFiles(files) {
+  function saveLocalFiles(files: LocalFile[]) {
     if (persistLocalFiles(files)) {
       return true
     }
@@ -368,30 +492,30 @@ export function createLocalBoardsPanel({
     return elements.localBoardList.querySelectorAll('input[type="checkbox"]').length
   }
 
-  function setLocalBoardSelection(selected) {
+  function setLocalBoardSelection(selected: boolean) {
     for (const checkbox of elements.localBoardList.querySelectorAll('input[type="checkbox"]')) {
       checkbox.checked = selected
     }
     updateLocalBoardButtons()
   }
 
-  function fileExists(fileName) {
+  function fileExists(fileName: string) {
     return loadLocalFiles().some((file) => file.name === fileName)
   }
 
-  function uniqueFileNameValidator(allowedFileName) {
-    return (fileName) => {
+  function uniqueFileNameValidator(allowedFileName: string) {
+    return (fileName: string) => {
       if (!fileName) return '请输入文件名'
       if (fileName !== allowedFileName && fileExists(fileName)) return '已有同名文件，请换一个名称'
       return ''
     }
   }
 
-  function validatePendingFileName(fileName) {
+  function validatePendingFileName(fileName: string) {
     return pendingNameRequest?.validate?.(fileName) ?? ''
   }
 
-  function showFileNameError(message) {
+  function showFileNameError(message: string) {
     elements.localBoardNameError.textContent = message
     elements.localBoardNameInput.setAttribute('aria-invalid', message ? 'true' : 'false')
   }
@@ -402,10 +526,10 @@ export function createLocalBoardsPanel({
     }
   }
 
-  async function createPreview(board) {
+  async function createPreview(board: Board) {
     try {
       const code = await encodeBoardCode(board)
-      const data = await renderPreviewImage(code)
+      const data = await renderPreviewImage(code) as RenderPreviewResponse
       return `/preview/${data.hash}.webp`
     } catch (error) {
       console.warn('Failed to create local file preview', error)
@@ -419,17 +543,29 @@ export function createLocalBoardsPanel({
   }
 }
 
-function boardSnapshot(board) {
-  return JSON.stringify(cleanBoard(board))
+function boardSnapshot(board: Board) {
+  return JSON.stringify(cleanBoard(normalizeBoard(board)))
 }
 
-function formatLocalFileTime(file) {
+function formatLocalFileTime(file: LocalFile) {
   const date = new Date(file.updatedAt)
   return Number.isNaN(date.getTime())
     ? ''
     : `保存于 ${date.toLocaleString('zh-CN', { hour12: false })}`
 }
 
-function normalizeFileName(name) {
+function normalizeFileName(name: unknown) {
   return String(name ?? '').trim()
+}
+
+function getDocument(): DocumentLike {
+  const globals = globalThis as unknown as {
+    document?: DocumentLike
+    window?: { document?: DocumentLike }
+  }
+  const documentLike = globals.document ?? globals.window?.document
+  if (!documentLike) {
+    throw new Error('Document is not available')
+  }
+  return documentLike
 }
