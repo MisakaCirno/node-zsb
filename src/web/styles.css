@@ -166,12 +166,23 @@ textarea {
   display: flex;
   align-items: center;
   gap: 8px;
+  justify-content: space-between;
   min-width: max-content;
   white-space: nowrap;
 }
 
 .stage-toolbar-row > * {
   flex: 0 0 auto;
+}
+
+.stage-toolbar-cluster {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.stage-toolbar-canvas {
+  justify-content: flex-start;
 }
 
 .stage-toolbar input {
@@ -228,8 +239,12 @@ textarea {
   stroke-width: 2;
 }
 
-.zoom-actions {
-  border-left: 0;
+.stage-toolbar-main .zoom-actions {
+  margin-left: auto;
+}
+
+.stage-toolbar-canvas .align-actions {
+  margin-left: auto;
 }
 
 #zoom-in,
@@ -710,7 +725,7 @@ textarea {
   box-shadow: 0 18px 48px rgba(0, 0, 0, 0.44);
 }
 
-.context-menu button {
+.context-menu > button {
   width: 100%;
   height: 30px;
   border: 0;
@@ -727,4 +742,32 @@ textarea {
   height: 1px;
   margin: 5px 4px;
   background: #303b43;
+}
+
+.context-icon-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 34px);
+  gap: 4px;
+  padding: 2px 0;
+}
+
+.context-menu .context-icon {
+  width: 34px;
+  height: 30px;
+  min-width: 0;
+  border: 0;
+  background: transparent;
+  display: grid;
+  place-items: center;
+  padding: 0;
+}
+
+.context-icon svg {
+  width: 16px;
+  height: 16px;
+  fill: none;
+  stroke: currentColor;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-width: 2;
 }
