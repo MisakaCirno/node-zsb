@@ -25,6 +25,7 @@ export function redoHistory(state) {
 function createSnapshot(state) {
   return {
     board: structuredClone(state.board),
+    layerTree: structuredClone(state.layerTree ?? []),
     selectedIndex: state.selectedIndex,
     selectedIndexes: [...(state.selectedIndexes ?? [])],
   }
@@ -32,6 +33,7 @@ function createSnapshot(state) {
 
 function restoreSnapshot(state, snapshot) {
   state.board = structuredClone(snapshot.board)
+  state.layerTree = structuredClone(snapshot.layerTree ?? [])
   const selectedIndexes = (snapshot.selectedIndexes ?? [snapshot.selectedIndex])
     .filter((index) => index >= 0 && index < state.board.objects.length)
   state.selectedIndexes = selectedIndexes

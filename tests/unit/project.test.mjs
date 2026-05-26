@@ -50,6 +50,34 @@ test('project files keep editor metadata separate from pure boards', () => {
   assert.equal(createPureBoardFromProject(project).objects[0].editorId, undefined)
 })
 
+test('createProjectFromBoard preserves a supplied layer tree', () => {
+  const project = createProjectFromBoard({
+    name: 'Grouped',
+    boardBackground: 'checkered',
+    objects: [
+      { type: 'tank', x: 100, y: 120, editorId: 'obj_a' },
+      { type: 'healer', x: 140, y: 160, editorId: 'obj_b' },
+    ],
+  }, {
+    layerTree: [
+      {
+        type: 'group',
+        id: 'grp_1',
+        name: 'Group 1',
+        children: [
+          { type: 'object', id: 'obj_b' },
+        ],
+      },
+    ],
+  })
+
+  assert.equal(project.layers[0].type, 'group')
+  assert.deepEqual(
+    flattenProjectToBoard(project).objects.map((object) => object.editorId),
+    ['obj_b', 'obj_a'],
+  )
+})
+
 test('project normalization supports nested groups and preserves flattened order', () => {
   const project = normalizeProject({
     format: PROJECT_FORMAT,
@@ -81,4 +109,3 @@ test('project normalization supports nested groups and preserves flattened order
   )
   assert.match(projectToJson(project), /"format": "node-zsb-project"/)
 })
-

@@ -7,6 +7,7 @@ export function createEditorState() {
     },
     selectedIndex: -1,
     selectedIndexes: [],
+    layerTree: [],
     currentFileName: '',
     localFileSnapshot: '',
     revealSelectedLayer: false,
@@ -49,4 +50,8 @@ export function replaceBoard(state, board, selectedIndex = -1) {
   state.board = board
   state.selectedIndex = selectedIndex
   state.selectedIndexes = selectedIndex >= 0 ? [selectedIndex] : []
+  state.layerTree = board.objects.map((object) => ({
+    type: 'object',
+    id: object.editorId,
+  })).filter((node) => Boolean(node.id))
 }

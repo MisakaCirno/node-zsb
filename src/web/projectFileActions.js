@@ -17,7 +17,10 @@ export function createProjectFileActions({
 }) {
   function downloadProjectFile() {
     const fileName = normalizeProjectFileName(getCurrentFileName())
-    const project = createProjectFromBoard(state.board, { fileName })
+    const project = createProjectFromBoard(state.board, {
+      fileName,
+      layerTree: state.layerTree,
+    })
     const blob = new Blob([projectToJson(project)], { type: 'application/json' })
     const url = URL.createObjectURL(blob)
     const link = document.createElement('a')
@@ -35,6 +38,7 @@ export function createProjectFileActions({
     const board = flattenProjectToBoard(project)
     recordHistory()
     replaceBoard(state, board)
+    state.layerTree = project.layers
     const fileName = stripProjectFileExtension(file.name || project.fileName || '')
     state.currentFileName = fileName
     state.localFileSnapshot = JSON.stringify(cleanBoard(board))
@@ -66,4 +70,3 @@ function stripProjectFileExtension(name) {
     ? value.slice(0, -PROJECT_FILE_EXTENSION.length)
     : value
 }
-

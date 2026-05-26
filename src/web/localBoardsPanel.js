@@ -5,7 +5,9 @@ import {
   createProjectFromBoard,
   createPureBoardFromProject,
   flattenProjectToBoard,
+  normalizeProject,
 } from './project.js'
+import { syncFlatLayerTree } from './layerTree.js'
 import { loadLocalFiles, persistLocalFiles } from './storage.js'
 
 export function createLocalBoardsPanel({
@@ -90,6 +92,7 @@ export function createLocalBoardsPanel({
       boardBackground: 'checkered',
       objects: [],
     })
+    syncFlatLayerTree(state)
     state.selectedIndex = -1
     state.selectedIndexes = []
     state.history = []
@@ -112,7 +115,12 @@ export function createLocalBoardsPanel({
       if (shouldSave && !await saveLocalBoard()) return false
     }
     recordHistory()
-    state.board = normalizeBoard(file.project ? flattenProjectToBoard(file.project) : file.board)
+    const project = file.project ? normalizeProject(file.project) : null
+    state.board = normalizeBoard(project ? flattenProjectToBoard(project) : file.board)
+    state.layerTree = project?.layers ?? state.board.objects.map((object) => ({
+      type: 'object',
+      id: object.editorId,
+    })).filter((node) => Boolean(node.id))
     state.selectedIndex = -1
     state.selectedIndexes = []
     setCurrentFile(file.name, cleanBoard(state.board))
@@ -236,7 +244,10 @@ export function createLocalBoardsPanel({
     const existingIndex = files.findIndex((file) => file.name === name)
     if (existingIndex >= 0 && !allowOverwrite) return false
     const now = new Date().toISOString()
-    const project = createProjectFromBoard(state.board, { fileName: name })
+    const project = createProjectFromBoard(state.board, {
+      fileName: name,
+      layerTree: state.layerTree,
+    })
     const board = createPureBoardFromProject(project)
     const preview = await createPreview(board)
     const current = existingIndex >= 0 ? files[existingIndex] : null

@@ -1,5 +1,6 @@
 import { cleanBoard, normalizeBoard } from './board.js'
 import { loadSavedBoard } from './storage.js'
+import { syncFlatLayerTree } from './layerTree.js'
 
 const READY_STATUS = '编辑器已就绪'
 
@@ -40,6 +41,7 @@ export async function applyInitialBoardSource({
 }) {
   if (source.type === 'saved-board') {
     state.board = normalizeBoard(source.board)
+    syncFlatLayerTree(state)
     syncBoardNameInput()
     renderBackgroundOptions()
     return

@@ -1,5 +1,7 @@
 import { clamp } from './geometry.js'
+import { createEditorId } from './editorIds.js'
 import { getSelectedIndexes } from './editorState.js'
+import { syncFlatLayerTree } from './layerTree.js'
 import {
   getBoundsCenterX,
   getBoundsCenterY,
@@ -35,6 +37,7 @@ export function createObjectCommands({
       recordHistory()
       const object = createDefaultObject(type)
       state.board.objects.push(object)
+      syncFlatLayerTree(state)
       selectObject(state.board.objects.length - 1)
     },
 
@@ -42,6 +45,7 @@ export function createObjectCommands({
       recordHistory()
       const object = createDefaultObject(type, point)
       state.board.objects.push(object)
+      syncFlatLayerTree(state)
       selectObject(state.board.objects.length - 1)
     },
 
@@ -72,6 +76,7 @@ export function createObjectCommands({
       for (const index of [...selectedIndexes].sort((a, b) => b - a)) {
         state.board.objects.splice(index, 1)
       }
+      syncFlatLayerTree(state)
       state.selectedIndex = -1
       state.selectedIndexes = []
       renderAll()
@@ -85,6 +90,7 @@ export function createObjectCommands({
       if (!confirmAction('清空当前画板上的所有对象？')) return
       recordHistory()
       state.board.objects = []
+      syncFlatLayerTree(state)
       state.selectedIndex = -1
       state.selectedIndexes = []
       renderAll()
@@ -97,6 +103,7 @@ export function createObjectCommands({
       recordHistory()
       const copy = createPastedObject(object)
       state.board.objects.push(copy)
+      syncFlatLayerTree(state)
       selectObject(state.board.objects.length - 1)
     },
 
@@ -128,6 +135,7 @@ export function createObjectCommands({
       recordHistory()
       const [object] = state.board.objects.splice(fromIndex, 1)
       state.board.objects.splice(toIndex, 0, object)
+      syncFlatLayerTree(state)
       state.selectedIndexes = state.selectedIndexes.map((index) =>
         mapMovedIndex(index, fromIndex, toIndex))
       state.selectedIndex = mapMovedIndex(state.selectedIndex, fromIndex, toIndex)
@@ -186,6 +194,7 @@ export function createObjectCommands({
       recordHistory()
       const object = createPastedObject(state.clipboard)
       state.board.objects.push(object)
+      syncFlatLayerTree(state)
       selectObject(state.board.objects.length - 1)
       showStatus(`已粘贴 ${object.type}`)
     },
@@ -242,6 +251,7 @@ function moveSelectedToIndex(index, target, state, recordHistory, selectObject) 
   recordHistory()
   const [object] = state.board.objects.splice(index, 1)
   state.board.objects.splice(target, 0, object)
+  syncFlatLayerTree(state)
   selectObject(target)
 }
 
@@ -254,6 +264,7 @@ function mapMovedIndex(index, fromIndex, toIndex) {
 
 function createDefaultObject(type, point = BOARD_CENTER) {
   const base = {
+    editorId: createEditorId('obj'),
     type,
     x: point.x,
     y: point.y,
@@ -278,6 +289,7 @@ function createDefaultObject(type, point = BOARD_CENTER) {
 
 function createPastedObject(object) {
   const copy = structuredClone(object)
+  copy.editorId = createEditorId('obj')
   copy.x = clamp((copy.x ?? BOARD_CENTER.x) + PASTE_OFFSET, 0, 512)
   copy.y = clamp((copy.y ?? BOARD_CENTER.y) + PASTE_OFFSET, 0, 384)
   if (copy.type === 'line' && copy.endX !== undefined && copy.endY !== undefined) {

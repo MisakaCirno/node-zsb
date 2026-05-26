@@ -8,7 +8,7 @@ export const PROJECT_FILE_EXTENSION = '.zsb.json'
 export function createProjectFromBoard(board, options = {}) {
   const normalizedBoard = normalizeBoard(board)
   const objects = {}
-  const layers = normalizedBoard.objects.map((object) => {
+  const defaultLayers = normalizedBoard.objects.map((object) => {
     const id = object.editorId
     objects[id] = stripEditorFields(object)
     return {
@@ -16,6 +16,11 @@ export function createProjectFromBoard(board, options = {}) {
       id,
     }
   })
+  const layers = completeLayerNodes(
+    normalizeLayerNodes(options.layerTree, objects),
+    objects,
+    defaultLayers,
+  )
   return {
     format: PROJECT_FORMAT,
     version: PROJECT_VERSION,
@@ -34,14 +39,7 @@ export function normalizeProject(project) {
     throw new Error('Invalid node-zsb project')
   }
   const objects = normalizeProjectObjects(project.objects)
-  const layers = normalizeLayerNodes(project.layers, objects)
-  const usedIds = new Set()
-  collectLayerObjectIds(layers, usedIds)
-  for (const id of Object.keys(objects)) {
-    if (!usedIds.has(id)) {
-      layers.push({ type: 'object', id })
-    }
-  }
+  const layers = completeLayerNodes(normalizeLayerNodes(project.layers, objects), objects)
   return {
     format: PROJECT_FORMAT,
     version: PROJECT_VERSION,
@@ -53,6 +51,15 @@ export function normalizeProject(project) {
     objects,
     layers,
   }
+}
+
+export function normalizeLayerTreeForBoard(layerTree, board) {
+  const objects = Object.fromEntries(
+    (board.objects ?? [])
+      .filter((object) => object.editorId)
+      .map((object) => [object.editorId, stripEditorFields(object)]),
+  )
+  return completeLayerNodes(normalizeLayerNodes(layerTree, objects), objects)
 }
 
 export function isProject(value) {
@@ -127,6 +134,18 @@ function normalizeLayerNodes(nodes, objects) {
   return normalized
 }
 
+function completeLayerNodes(layers, objects, fallbackLayers = []) {
+  const completed = layers.length > 0 ? [...layers] : [...fallbackLayers]
+  const usedIds = new Set()
+  collectLayerObjectIds(completed, usedIds)
+  for (const id of Object.keys(objects)) {
+    if (!usedIds.has(id)) {
+      completed.push({ type: 'object', id })
+    }
+  }
+  return completed
+}
+
 function appendLayerObjects(nodes, objects, result, usedIds) {
   for (const node of nodes) {
     if (node.type === 'object') {
@@ -155,4 +174,3 @@ function collectLayerObjectIds(nodes, result) {
     }
   }
 }
-
