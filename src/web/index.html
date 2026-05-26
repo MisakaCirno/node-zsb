@@ -138,17 +138,24 @@
               <div class="field color-field">
                 <span>颜色</span>
                 <div class="color-control">
-                  <label class="color-picker-shell" title="选择颜色">
-                    <input id="object-color" type="color" aria-label="选择颜色" />
-                  </label>
+                  <button id="object-color-trigger" class="color-picker-trigger" type="button" title="选择颜色" aria-label="选择颜色">
+                    <span id="object-color-preview" class="color-preview"></span>
+                  </button>
+                  <input id="object-color" class="color-value-input" type="text" readonly tabindex="-1" aria-hidden="true" />
                   <input id="object-color-text" class="color-hex-input" maxlength="7" spellcheck="false" aria-label="颜色值" />
-                  <div id="object-color-swatches" class="color-swatches" aria-label="常用颜色">
-                    <button type="button" data-color="#ff8000" title="#ff8000" aria-label="#ff8000"><span style="background:#ff8000"></span></button>
-                    <button type="button" data-color="#00ffcc" title="#00ffcc" aria-label="#00ffcc"><span style="background:#00ffcc"></span></button>
-                    <button type="button" data-color="#43a8d8" title="#43a8d8" aria-label="#43a8d8"><span style="background:#43a8d8"></span></button>
-                    <button type="button" data-color="#ffffff" title="#ffffff" aria-label="#ffffff"><span style="background:#ffffff"></span></button>
-                    <button type="button" data-color="#ff4f69" title="#ff4f69" aria-label="#ff4f69"><span style="background:#ff4f69"></span></button>
-                    <button type="button" data-color="#9b7cff" title="#9b7cff" aria-label="#9b7cff"><span style="background:#9b7cff"></span></button>
+                  <div id="object-color-popover" class="color-popover hidden">
+                    <div id="object-color-saturation" class="color-saturation" role="slider" tabindex="0" aria-label="颜色明度和饱和度">
+                      <span id="object-color-saturation-handle"></span>
+                    </div>
+                    <input id="object-color-hue" class="color-hue" type="range" min="0" max="360" value="30" aria-label="色相" />
+                    <div id="object-color-swatches" class="color-swatches" aria-label="常用颜色">
+                      <button type="button" data-color="#ff8000" title="#ff8000" aria-label="#ff8000"><span style="background:#ff8000"></span></button>
+                      <button type="button" data-color="#00ffcc" title="#00ffcc" aria-label="#00ffcc"><span style="background:#00ffcc"></span></button>
+                      <button type="button" data-color="#43a8d8" title="#43a8d8" aria-label="#43a8d8"><span style="background:#43a8d8"></span></button>
+                      <button type="button" data-color="#ffffff" title="#ffffff" aria-label="#ffffff"><span style="background:#ffffff"></span></button>
+                      <button type="button" data-color="#ff4f69" title="#ff4f69" aria-label="#ff4f69"><span style="background:#ff4f69"></span></button>
+                      <button type="button" data-color="#9b7cff" title="#9b7cff" aria-label="#9b7cff"><span style="background:#9b7cff"></span></button>
+                    </div>
                   </div>
                 </div>
               </div>

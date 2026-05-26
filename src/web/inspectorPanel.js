@@ -1,4 +1,5 @@
 import { getObjectCapabilities } from './board.js'
+import { syncColorControl } from './colorPicker.js'
 
 export function renderInspector({
   object,
@@ -68,14 +69,4 @@ function syncToggleButton(input) {
   if (!button) return
   button.classList.toggle('active', input.checked)
   button.setAttribute('aria-pressed', String(input.checked))
-}
-
-function syncColorControl(elements) {
-  elements.colorText.value = elements.color.value
-  for (const swatch of elements.colorSwatches.querySelectorAll('[data-color]')) {
-    swatch.classList.toggle(
-      'active',
-      swatch.dataset.color.toLowerCase() === elements.color.value.toLowerCase(),
-    )
-  }
 }

@@ -449,14 +449,17 @@ textarea {
 }
 
 .color-control {
+  position: relative;
   display: grid;
   grid-template-columns: 44px minmax(0, 1fr);
   gap: 8px;
 }
 
-.color-picker-shell {
-  position: relative;
+.color-picker-trigger {
   height: 34px;
+  min-width: 0;
+  width: 44px;
+  padding: 3px;
   border: 1px solid #3a4650;
   border-radius: 6px;
   background:
@@ -468,19 +471,84 @@ textarea {
   background-position: 0 0, 0 6px, 6px -6px, -6px 0;
   background-size: 12px 12px;
   overflow: hidden;
-  cursor: pointer;
 }
 
-.color-picker-shell input {
+.color-preview {
+  display: block;
+  width: 100%;
+  height: 100%;
+  border-radius: 3px;
+  box-shadow: inset 0 0 0 1px rgba(238, 242, 243, 0.25);
+}
+
+.color-value-input {
   position: absolute;
-  inset: -4px;
-  width: calc(100% + 8px);
-  height: calc(100% + 8px);
+  width: 1px;
+  height: 1px;
   min-height: 0;
-  border: 0;
-  border-radius: 0;
+  opacity: 0;
+  pointer-events: none;
+}
+
+.color-popover {
+  position: absolute;
+  left: 0;
+  top: 42px;
+  z-index: 12;
+  width: 220px;
+  display: grid;
+  gap: 10px;
+  padding: 10px;
+  border: 1px solid #303b43;
+  border-radius: 8px;
+  background: #151a1f;
+  box-shadow: 0 18px 48px rgba(0, 0, 0, 0.44);
+}
+
+.color-popover.hidden {
+  display: none;
+}
+
+.color-saturation {
+  position: relative;
+  height: 128px;
+  border: 1px solid #303b43;
+  border-radius: 6px;
+  cursor: crosshair;
+  background:
+    linear-gradient(to top, #000, transparent),
+    linear-gradient(to right, #fff, transparent),
+    var(--picker-hue-color, #ff8000);
+}
+
+.color-saturation span {
+  position: absolute;
+  width: 14px;
+  height: 14px;
+  border: 2px solid #fff;
+  border-radius: 999px;
+  transform: translate(-50%, -50%);
+  box-shadow: 0 0 0 1px #111820, 0 2px 6px rgba(0, 0, 0, 0.44);
+  pointer-events: none;
+}
+
+.color-hue {
+  height: 18px;
+  min-height: 0;
   padding: 0;
-  cursor: pointer;
+  border: 0;
+  border-radius: 999px;
+  background: linear-gradient(
+    to right,
+    #ff0000,
+    #ffff00,
+    #00ff00,
+    #00ffff,
+    #0000ff,
+    #ff00ff,
+    #ff0000
+  );
+  accent-color: #66c2a5;
 }
 
 .color-hex-input {
