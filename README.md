@@ -77,6 +77,10 @@ bun run test:e2e:headed
 bun run test:e2e:ui
 ```
 
+## 架构
+
+编辑器前端模块边界、启动流程、渲染循环和测试策略见 [docs/editor-architecture.md](docs/editor-architecture.md)。
+
 ## 接口
 
 - `GET /board/:code?`：根据战术板代码渲染 webp 图片；未传 `code` 时渲染默认示例图。
