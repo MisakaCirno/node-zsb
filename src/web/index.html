@@ -23,27 +23,6 @@
             <div id="palette" class="palette" role="tabpanel"></div>
           </div>
         </section>
-        <div class="editor-toolrail" role="toolbar" aria-label="编辑工具">
-          <button id="align-left" class="icon-tool" type="button" title="左对齐" aria-label="左对齐" disabled>
-            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 4v16"/><path d="M8 7h10"/><path d="M8 12h7"/><path d="M8 17h12"/></svg>
-          </button>
-          <button id="align-center-x" class="icon-tool" type="button" title="水平居中对齐" aria-label="水平居中对齐" disabled>
-            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 4v16"/><path d="M7 7h10"/><path d="M9 12h6"/><path d="M5 17h14"/></svg>
-          </button>
-          <button id="align-right" class="icon-tool" type="button" title="右对齐" aria-label="右对齐" disabled>
-            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 4v16"/><path d="M6 7h10"/><path d="M9 12h7"/><path d="M4 17h12"/></svg>
-          </button>
-          <div class="toolrail-separator"></div>
-          <button id="align-top" class="icon-tool" type="button" title="顶端对齐" aria-label="顶端对齐" disabled>
-            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 4h16"/><path d="M7 8v10"/><path d="M12 8v7"/><path d="M17 8v12"/></svg>
-          </button>
-          <button id="align-center-y" class="icon-tool" type="button" title="垂直居中对齐" aria-label="垂直居中对齐" disabled>
-            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 12h16"/><path d="M7 7v10"/><path d="M12 9v6"/><path d="M17 5v14"/></svg>
-          </button>
-          <button id="align-bottom" class="icon-tool" type="button" title="底端对齐" aria-label="底端对齐" disabled>
-            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20h16"/><path d="M7 6v10"/><path d="M12 9v7"/><path d="M17 4v12"/></svg>
-          </button>
-        </div>
       </aside>
       <div id="left-panel-resizer" class="panel-resizer" role="separator" aria-label="调整左侧面板宽度" aria-orientation="vertical" tabindex="0"></div>
 
@@ -96,7 +75,30 @@
             </div>
           </div>
         </div>
-        <div id="stage-host"></div>
+        <div class="stage-body">
+          <div class="editor-toolrail" role="toolbar" aria-label="编辑工具">
+            <button id="align-left" class="icon-tool" type="button" title="左对齐" aria-label="左对齐" disabled>
+              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 4v16"/><path d="M8 7h10"/><path d="M8 12h7"/><path d="M8 17h12"/></svg>
+            </button>
+            <button id="align-center-x" class="icon-tool" type="button" title="水平居中对齐" aria-label="水平居中对齐" disabled>
+              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 4v16"/><path d="M7 7h10"/><path d="M9 12h6"/><path d="M5 17h14"/></svg>
+            </button>
+            <button id="align-right" class="icon-tool" type="button" title="右对齐" aria-label="右对齐" disabled>
+              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 4v16"/><path d="M6 7h10"/><path d="M9 12h7"/><path d="M4 17h12"/></svg>
+            </button>
+            <div class="toolrail-separator"></div>
+            <button id="align-top" class="icon-tool" type="button" title="顶端对齐" aria-label="顶端对齐" disabled>
+              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 4h16"/><path d="M7 8v10"/><path d="M12 8v7"/><path d="M17 8v12"/></svg>
+            </button>
+            <button id="align-center-y" class="icon-tool" type="button" title="垂直居中对齐" aria-label="垂直居中对齐" disabled>
+              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 12h16"/><path d="M7 7v10"/><path d="M12 9v6"/><path d="M17 5v14"/></svg>
+            </button>
+            <button id="align-bottom" class="icon-tool" type="button" title="底端对齐" aria-label="底端对齐" disabled>
+              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20h16"/><path d="M7 6v10"/><path d="M12 9v7"/><path d="M17 4v12"/></svg>
+            </button>
+          </div>
+          <div id="stage-host"></div>
+        </div>
         <div class="stage-statusbar" aria-label="画布状态">
           <label class="toolbar-toggle icon-toggle status-toggle" title="吸附到网格" aria-label="吸附">
             <input id="snap-toggle" type="checkbox" />

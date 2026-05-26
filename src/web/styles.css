@@ -116,8 +116,6 @@ textarea {
 
 .sidebar {
   border-right: 1px solid #27313a;
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) 46px;
   min-height: 0;
   overflow: hidden;
 }
@@ -127,8 +125,9 @@ textarea {
   align-content: start;
   gap: 6px;
   padding: 12px 6px;
-  border-left: 1px solid #27313a;
+  border-right: 1px solid #27313a;
   background: #101316;
+  overflow: auto;
 }
 
 .editor-toolrail button {
@@ -261,6 +260,13 @@ textarea {
   display: grid;
   grid-template-rows: auto 1fr auto;
   background: #0f1215;
+  overflow: hidden;
+}
+
+.stage-body {
+  min-height: 0;
+  display: grid;
+  grid-template-columns: 46px minmax(0, 1fr);
   overflow: hidden;
 }
 
