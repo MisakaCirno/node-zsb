@@ -5,6 +5,7 @@ import {
   SCENE_HEIGHT,
   SCENE_WIDTH,
 } from './constants.js'
+import { bindLayoutResizers } from './layoutResizers.js'
 
 export function bindEditorEvents({
   elements,
@@ -71,6 +72,10 @@ export function bindEditorEvents({
   })
   elements.snap.addEventListener('change', actions.toggleSnapToGrid)
   elements.grid.addEventListener('change', actions.toggleGrid)
+  bindLayoutResizers({
+    elements,
+    onResize: actions.applyFitZoomOnResize,
+  })
   bindPaletteDrop(elements, actions)
   bindContextMenu(elements, actions)
   window.addEventListener('resize', actions.applyFitZoomOnResize)

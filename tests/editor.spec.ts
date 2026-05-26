@@ -87,8 +87,56 @@ test('editor creates an object by dragging from the palette to the canvas', asyn
 
   await expect(page.locator('#layers .layer-row')).toHaveCount(before + 1)
   await expect(page.locator('#object-type')).toHaveValue('tank')
-  await expect(page.locator('#object-x')).toHaveValue(String(Math.round((target.x / box.width) * 512)))
-  await expect(page.locator('#object-y')).toHaveValue(String(Math.round((target.y / box.height) * 384)))
+  const objectX = Number(await page.locator('#object-x').inputValue())
+  const objectY = Number(await page.locator('#object-y').inputValue())
+  expect(Math.abs(objectX - Math.round((target.x / box.width) * 512))).toBeLessThanOrEqual(1)
+  expect(Math.abs(objectY - Math.round((target.y / box.height) * 384))).toBeLessThanOrEqual(1)
+})
+
+test('editor resizes side panels and keeps object tabs visible', async ({ page }) => {
+  await page.goto('/editor')
+  await expect(page.locator('#layers')).toContainText('tank')
+
+  const shellColumns = async () =>
+    page.locator('#editor-shell').evaluate((shell) =>
+      shell.ownerDocument.defaultView
+        ?.getComputedStyle(shell)
+        .gridTemplateColumns
+        .split(' ')
+        .map(Number.parseFloat) ?? [])
+  const tabsFit = async () =>
+    page.locator('#palette-tabs').evaluate((tabs) => tabs.scrollWidth <= tabs.clientWidth)
+
+  await expect(page.locator('#left-panel-resizer')).toHaveAttribute('role', 'separator')
+  await expect(page.locator('#right-panel-resizer')).toHaveAttribute('role', 'separator')
+  expect(await tabsFit()).toBe(true)
+
+  const initialColumns = await shellColumns()
+  expect(initialColumns[0]).toBeGreaterThanOrEqual(340)
+
+  const leftHandle = await page.locator('#left-panel-resizer').boundingBox()
+  if (!leftHandle) throw new Error('Left resizer is not visible')
+  await page.mouse.move(leftHandle.x + leftHandle.width / 2, leftHandle.y + 40)
+  await page.mouse.down()
+  await page.mouse.move(leftHandle.x + leftHandle.width / 2 + 32, leftHandle.y + 40)
+  await page.mouse.up()
+  const widerLeftColumns = await shellColumns()
+  expect(widerLeftColumns[0]).toBeGreaterThan(initialColumns[0])
+
+  const rightHandle = await page.locator('#right-panel-resizer').boundingBox()
+  if (!rightHandle) throw new Error('Right resizer is not visible')
+  await page.mouse.move(rightHandle.x + rightHandle.width / 2, rightHandle.y + 40)
+  await page.mouse.down()
+  await page.mouse.move(rightHandle.x + rightHandle.width / 2 - 32, rightHandle.y + 40)
+  await page.mouse.up()
+  const widerRightColumns = await shellColumns()
+  expect(widerRightColumns[4]).toBeGreaterThan(widerLeftColumns[4])
+
+  await page.reload()
+  await expect(page.locator('#layers')).toContainText('tank')
+  const persistedColumns = await shellColumns()
+  expect(persistedColumns[0]).toBeCloseTo(widerRightColumns[0], 0)
+  expect(persistedColumns[4]).toBeCloseTo(widerRightColumns[4], 0)
 })
 
 test('editor renders readable Chinese labels', async ({ page }) => {

@@ -2,6 +2,9 @@ export function getEditorElements() {
   return {
     codeInput: document.querySelector('#code-input'),
     codeOutput: document.querySelector('#code-output'),
+    shell: document.querySelector('#editor-shell'),
+    leftPanelResizer: document.querySelector('#left-panel-resizer'),
+    rightPanelResizer: document.querySelector('#right-panel-resizer'),
     openLocalBoardDialog: document.querySelector('#open-local-board-dialog'),
     openImportDialog: document.querySelector('#open-import-dialog'),
     openExportDialog: document.querySelector('#open-export-dialog'),

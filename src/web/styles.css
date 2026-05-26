@@ -12,7 +12,7 @@
 
 body {
   margin: 0;
-  min-width: 1120px;
+  min-width: 1280px;
   min-height: 100vh;
   overflow: hidden;
 }
@@ -64,8 +64,16 @@ textarea {
 }
 
 .editor-shell {
+  --left-panel-width: 340px;
+  --right-panel-width: 300px;
+
   display: grid;
-  grid-template-columns: 300px minmax(620px, 1fr) 320px;
+  grid-template-columns:
+    var(--left-panel-width)
+    6px
+    minmax(620px, 1fr)
+    6px
+    var(--right-panel-width);
   height: 100vh;
 }
 
@@ -73,6 +81,37 @@ textarea {
   overflow: auto;
   border-color: #27313a;
   background: #151a1f;
+}
+
+.panel-resizer {
+  position: relative;
+  z-index: 4;
+  background: #101316;
+  cursor: col-resize;
+}
+
+.panel-resizer::before {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 2px;
+  width: 2px;
+  border-radius: 999px;
+  background: #27313a;
+  content: "";
+  transition: background 120ms ease, width 120ms ease;
+}
+
+.panel-resizer:hover::before,
+.panel-resizer:focus-visible::before {
+  left: 1px;
+  width: 4px;
+  background: #66c2a5;
+}
+
+.resizing-panels {
+  cursor: col-resize;
+  user-select: none;
 }
 
 .sidebar {
