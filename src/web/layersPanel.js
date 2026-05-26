@@ -4,6 +4,7 @@ import { getSelectedIndexes } from './editorState.js'
 export function renderLayers({
   state,
   elements,
+  onReorderLayer,
   onSelectObject,
   onToggleLayerFlag,
 }) {
@@ -20,6 +21,8 @@ export function renderLayers({
   state.board.objects.forEach((object, index) => {
     const row = document.createElement('div')
     row.className = 'layer-row'
+    row.draggable = true
+    row.dataset.index = String(index)
     row.classList.toggle('active', selectedIndexes.includes(index))
     row.classList.toggle('primary', index === state.selectedIndex)
     row.classList.toggle('muted', Boolean(object.hidden))
@@ -57,6 +60,28 @@ export function renderLayers({
     row.querySelector('[data-action="locked"]').addEventListener('click', (event) => {
       event.stopPropagation()
       onToggleLayerFlag(index, 'locked')
+    })
+    row.addEventListener('dragstart', (event) => {
+      event.dataTransfer.effectAllowed = 'move'
+      event.dataTransfer.setData('text/plain', String(index))
+      row.classList.add('dragging')
+    })
+    row.addEventListener('dragend', () => {
+      row.classList.remove('dragging')
+    })
+    row.addEventListener('dragover', (event) => {
+      event.preventDefault()
+      event.dataTransfer.dropEffect = 'move'
+      row.classList.add('drop-target')
+    })
+    row.addEventListener('dragleave', () => {
+      row.classList.remove('drop-target')
+    })
+    row.addEventListener('drop', (event) => {
+      event.preventDefault()
+      row.classList.remove('drop-target')
+      const fromIndex = Number(event.dataTransfer.getData('text/plain'))
+      onReorderLayer(fromIndex, index)
     })
     row.addEventListener('click', (event) => onSelectObject(index, {
       toggle: event.shiftKey || event.ctrlKey || event.metaKey,

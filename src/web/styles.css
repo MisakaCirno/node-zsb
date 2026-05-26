@@ -452,6 +452,15 @@ textarea {
   gap: 6px;
 }
 
+.layer-row.dragging {
+  opacity: 0.45;
+}
+
+.layer-row.drop-target {
+  border-color: #9ed9c6;
+  background: #263c35;
+}
+
 .layer-row.active {
   border-color: #66c2a5;
   background: #20362f;

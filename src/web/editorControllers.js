@@ -90,6 +90,7 @@ export function createEditorControllers({
     renderBackgroundOptions,
     renderInspectorPanel: inspectorControls.renderInspector,
     renderLocalBoards: localBoardsPanel.renderLocalBoards,
+    reorderLayer: objectCommands.reorderLayer,
     syncBoardNameInput,
     toggleLayerFlag: objectCommands.toggleLayerFlag,
   }

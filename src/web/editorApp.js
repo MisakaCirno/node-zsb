@@ -87,6 +87,7 @@ export function createEditorApp({
     renderBackgroundOptions,
     renderInspectorPanel,
     renderLocalBoards,
+    reorderLayer,
     syncBoardNameInput,
     toggleLayerFlag,
     viewportControls,
@@ -107,6 +108,7 @@ export function createEditorApp({
     stageRenderer,
     renderInspectorPanel,
     onSelectObject: selectObject,
+    onReorderLayer: reorderLayer,
     onToggleLayerFlag: toggleLayerFlag,
   })
 

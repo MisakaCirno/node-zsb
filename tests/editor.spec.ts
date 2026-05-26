@@ -283,6 +283,23 @@ test('editor multi-selects objects on the canvas and aligns them', async ({ page
   await expect(page.locator('#object-x')).toHaveValue('320')
 })
 
+test('editor reorders layers by dragging rows', async ({ page }) => {
+  await page.goto('/editor')
+  await expect(page.locator('#layers')).toContainText('tank')
+
+  await page.getByRole('button', { name: '形状' }).click()
+  await page.getByTitle('text').click()
+  const textRow = page.locator('#layers .layer-row').filter({ hasText: 'text' })
+  await expect(textRow).toHaveCount(1)
+  await expect(page.locator('#layers .layer-row').first()).not.toContainText('text')
+
+  await textRow.dragTo(page.locator('#layers .layer-row').first())
+  await expect(page.locator('#layers .layer-row').first()).toContainText('text')
+
+  await page.getByRole('button', { name: '撤销' }).click()
+  await expect(page.locator('#layers .layer-row').first()).not.toContainText('text')
+})
+
 test('editor reports invalid share code without replacing the board', async ({
   page,
 }) => {

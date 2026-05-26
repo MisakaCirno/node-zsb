@@ -4,6 +4,7 @@ import { renderLayers as renderLayersPanel } from './layersPanel.js'
 
 export function createEditorRenderLoop({
   elements,
+  onReorderLayer,
   onSelectObject,
   onToggleLayerFlag,
   renderInspectorPanel,
@@ -51,6 +52,7 @@ export function createEditorRenderLoop({
     renderLayersPanel({
       state,
       elements,
+      onReorderLayer,
       onSelectObject,
       onToggleLayerFlag,
     })

@@ -88,6 +88,24 @@ export function createObjectCommands({
       selectObject(target)
     },
 
+    reorderLayer(fromIndex, toIndex) {
+      if (
+        fromIndex === toIndex
+        || fromIndex < 0
+        || toIndex < 0
+        || fromIndex >= state.board.objects.length
+        || toIndex >= state.board.objects.length
+      ) return
+      recordHistory()
+      const [object] = state.board.objects.splice(fromIndex, 1)
+      state.board.objects.splice(toIndex, 0, object)
+      state.selectedIndexes = state.selectedIndexes.map((index) =>
+        mapMovedIndex(index, fromIndex, toIndex))
+      state.selectedIndex = mapMovedIndex(state.selectedIndex, fromIndex, toIndex)
+      renderAll()
+      showStatus('已调整图层顺序')
+    },
+
     centerSelected() {
       const selectedIndexes = getSelectedIndexes(state)
       const selectedObjects = selectedIndexes.map((index) => state.board.objects[index])
@@ -186,6 +204,13 @@ function moveObjectBy(object, dx, dy) {
     object.endX = clamp(Math.round(object.endX + dx), 0, 512)
     object.endY = clamp(Math.round(object.endY + dy), 0, 384)
   }
+}
+
+function mapMovedIndex(index, fromIndex, toIndex) {
+  if (index === fromIndex) return toIndex
+  if (fromIndex < toIndex && index > fromIndex && index <= toIndex) return index - 1
+  if (fromIndex > toIndex && index >= toIndex && index < fromIndex) return index + 1
+  return index
 }
 
 function createDefaultObject(type) {
