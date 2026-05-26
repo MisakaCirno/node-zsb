@@ -18,6 +18,7 @@ export function createEditorApp({
   const els = getEditorElements()
   const state = createEditorState()
   let renderLoop
+  let startPromise
   const {
     runAction,
     showStatus,
@@ -107,7 +108,17 @@ export function createEditorApp({
     onToggleLayerFlag: toggleLayerFlag,
   })
 
-  async function start() {
+  function start() {
+    if (!startPromise) {
+      startPromise = runStart().catch((error) => {
+        startPromise = null
+        throw error
+      })
+    }
+    return startPromise
+  }
+
+  async function runStart() {
     const meta = await getEditorData()
     state.iconConfigs = meta.iconConfigs
     state.iconGroups = meta.iconGroups
