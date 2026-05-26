@@ -1,7 +1,43 @@
-const MOVEMENT_KEYS = ['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight']
-const DELETE_KEYS = ['Backspace', 'Delete']
+import type {
+  EditorActionRegistry,
+} from './types.js'
 
-export function handleEditorKeyboard(event, handlers) {
+declare const HTMLInputElement: any
+declare const HTMLSelectElement: any
+declare const HTMLTextAreaElement: any
+
+type MovementKey = 'ArrowUp' | 'ArrowDown' | 'ArrowLeft' | 'ArrowRight'
+type DeleteKey = 'Backspace' | 'Delete'
+
+interface KeyboardEventLike {
+  code: string
+  ctrlKey: boolean
+  key: string
+  metaKey: boolean
+  shiftKey: boolean
+  target: unknown
+  preventDefault(): void
+}
+
+interface KeyboardHandlers {
+  applyFitZoom: EditorActionRegistry['applyFitZoom']
+  copySelected: EditorActionRegistry['copySelected']
+  deleteSelected: EditorActionRegistry['deleteSelected']
+  deselect: EditorActionRegistry['deselect']
+  duplicateSelected: EditorActionRegistry['duplicateSelected']
+  nudgeSelected: EditorActionRegistry['nudgeSelected']
+  pasteObject: EditorActionRegistry['pasteObject']
+  redo: EditorActionRegistry['redo']
+  saveLocalBoard: EditorActionRegistry['saveLocalBoard']
+  saveLocalBoardAs: EditorActionRegistry['saveLocalBoardAs']
+  stepZoom: EditorActionRegistry['stepZoom']
+  undo: EditorActionRegistry['undo']
+}
+
+const MOVEMENT_KEYS: MovementKey[] = ['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight']
+const DELETE_KEYS: DeleteKey[] = ['Backspace', 'Delete']
+
+export function handleEditorKeyboard(event: KeyboardEventLike, handlers: KeyboardHandlers) {
   const isEditingText = isTextEditingTarget(event.target)
   if (isShortcut(event, 's')) {
     event.preventDefault()
@@ -30,7 +66,7 @@ export function handleEditorKeyboard(event, handlers) {
     handlers.pasteObject()
     return
   }
-  if (!isEditingText && MOVEMENT_KEYS.includes(event.key)) {
+  if (!isEditingText && isMovementKey(event.key)) {
     event.preventDefault()
     handlers.nudgeSelected(event.key, event.shiftKey ? 10 : 1)
     return
@@ -54,25 +90,34 @@ export function handleEditorKeyboard(event, handlers) {
     handlers.deselect()
     return
   }
-  if (!isEditingText && DELETE_KEYS.includes(event.key)) {
+  if (!isEditingText && isDeleteKey(event.key)) {
     event.preventDefault()
     handlers.deleteSelected()
   }
 }
 
-function isTextEditingTarget(target) {
+function isTextEditingTarget(target: unknown) {
   if (target instanceof HTMLTextAreaElement || target instanceof HTMLSelectElement) {
     return true
   }
   if (!(target instanceof HTMLInputElement)) {
     return false
   }
+  const input = target as { type?: string }
   return !['button', 'checkbox', 'color', 'file', 'radio', 'range', 'reset', 'submit'].includes(
-    target.type,
+    input.type ?? '',
   )
 }
 
-function handleZoomShortcut(event, handlers) {
+function isMovementKey(key: string): key is MovementKey {
+  return MOVEMENT_KEYS.includes(key as MovementKey)
+}
+
+function isDeleteKey(key: string): key is DeleteKey {
+  return DELETE_KEYS.includes(key as DeleteKey)
+}
+
+function handleZoomShortcut(event: KeyboardEventLike, handlers: KeyboardHandlers) {
   if (!isModifierPressed(event)) return false
 
   const key = event.key.toLowerCase()
@@ -95,10 +140,10 @@ function handleZoomShortcut(event, handlers) {
   return false
 }
 
-function isShortcut(event, key) {
+function isShortcut(event: KeyboardEventLike, key: string) {
   return isModifierPressed(event) && event.key.toLowerCase() === key
 }
 
-function isModifierPressed(event) {
+function isModifierPressed(event: KeyboardEventLike) {
   return event.ctrlKey || event.metaKey
 }
