@@ -5,6 +5,29 @@ import { createLocalBoardsPanel } from './localBoardsPanel.js'
 import { createObjectCommands } from './objectCommands.js'
 import { createProjectFileActions } from './projectFileActions.js'
 import { createViewportControls } from './viewportControls.js'
+import type {
+  BoardObject,
+  EditorState,
+  GridRenderer,
+  StageLike,
+} from './types.js'
+
+interface EditorControllersDeps {
+  confirmAction(message: string): boolean
+  elements: EditorControllerElements
+  getSelected(): BoardObject | undefined
+  getSelectedList(): BoardObject[]
+  normalizePoint(x: number, y: number): { x: number, y: number }
+  recordHistory(): void
+  renderAll(): Promise<void>
+  selectObject(index: number, options?: { range?: boolean, revealInLayers?: boolean, toggle?: boolean }): void
+  showStatus(message: string, options?: { type?: string }): void
+  stage: StageLike & { toDataURL(options?: { pixelRatio?: number }): string }
+  stageRenderer: GridRenderer
+  state: EditorState
+}
+
+type EditorControllerElements = any
 
 export function createEditorControllers({
   confirmAction,
@@ -19,7 +42,7 @@ export function createEditorControllers({
   stage,
   stageRenderer,
   state,
-}) {
+}: EditorControllersDeps) {
   const objectCommands = createObjectCommands({
     state,
     recordHistory,
@@ -30,7 +53,6 @@ export function createEditorControllers({
     normalizePoint,
     showStatus,
     confirmAction,
-    stage,
   })
 
   const boardMetaControls = createBoardMetaControls({
@@ -85,6 +107,7 @@ export function createEditorControllers({
     renderBackgroundOptions,
     showStatus,
     confirmAction,
+    stage,
   })
 
   return {
