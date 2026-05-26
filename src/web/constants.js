@@ -5,6 +5,10 @@ export const DEFAULT_GRID_SIZE = 16
 export const MIN_GRID_SIZE = 8
 export const MAX_GRID_SIZE = 64
 export const GRID_SIZE_STEP = 4
+export const DEFAULT_GRID_OPACITY = 0.55
+export const MIN_GRID_OPACITY = 0.15
+export const MAX_GRID_OPACITY = 1
+export const GRID_OPACITY_STEP = 0.05
 export const ZOOM_LEVELS = [0.25, 0.5, 0.75, 1, 1.25, 1.5, 1.75, 2]
 
 export const STORAGE_KEY = 'node-zsb-editor-board-v1'

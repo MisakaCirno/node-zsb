@@ -1,10 +1,14 @@
 import {
+  DEFAULT_GRID_OPACITY,
   DEFAULT_GRID_SIZE,
   EDITOR_SETTINGS_KEY,
+  GRID_OPACITY_STEP,
   GRID_SIZE_STEP,
   LOCAL_BOARDS_KEY,
   LOCAL_FILES_KEY,
+  MAX_GRID_OPACITY,
   MAX_GRID_SIZE,
+  MIN_GRID_OPACITY,
   MIN_GRID_SIZE,
   STORAGE_KEY,
   ZOOM_LEVELS,
@@ -114,6 +118,7 @@ function normalizeEditorSettings(settings) {
     snapToGrid: Boolean(settings?.snapToGrid),
     showGrid: Boolean(settings?.showGrid),
     gridSize: normalizeGridSize(settings?.gridSize),
+    gridOpacity: normalizeGridOpacity(settings?.gridOpacity),
     zoom: clamp(Number.isFinite(zoom) ? zoom : 1, ZOOM_LEVELS[0], ZOOM_LEVELS.at(-1)),
     zoomMode: settings?.zoomMode === 'manual' ? 'manual' : 'fit',
   }
@@ -122,6 +127,13 @@ function normalizeEditorSettings(settings) {
 function normalizeGridSize(gridSize) {
   const snapped = Math.round((Number(gridSize) || DEFAULT_GRID_SIZE) / GRID_SIZE_STEP) * GRID_SIZE_STEP
   return clamp(snapped, MIN_GRID_SIZE, MAX_GRID_SIZE)
+}
+
+function normalizeGridOpacity(gridOpacity) {
+  const snapped =
+    Math.round((Number(gridOpacity) || DEFAULT_GRID_OPACITY) / GRID_OPACITY_STEP)
+    * GRID_OPACITY_STEP
+  return Number(clamp(snapped, MIN_GRID_OPACITY, MAX_GRID_OPACITY).toFixed(2))
 }
 
 function migrateLocalBoardsToFiles() {

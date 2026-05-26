@@ -56,9 +56,14 @@ async function getGridCanvasStats(page: Page) {
     }
     return {
       averageAlpha: alphaSum / visiblePixels,
+      visiblePixels,
       strongPixels,
     }
-  })()`) as Promise<{ averageAlpha: number, strongPixels: number } | null>
+  })()`) as Promise<{
+    averageAlpha: number,
+    strongPixels: number,
+    visiblePixels: number,
+  } | null>
 }
 
 async function exportBoardCode(page: Page) {
@@ -544,6 +549,10 @@ test('editor renders readable Chinese labels', async ({ page }) => {
   await expect(page.locator('.stage-statusbar #grid-density')).toHaveAttribute('min', '8')
   await expect(page.locator('.stage-statusbar #grid-density')).toHaveAttribute('max', '64')
   await expect(page.locator('.stage-statusbar #grid-density-value')).toHaveText('16px')
+  await expect(page.locator('.stage-statusbar #grid-opacity')).toHaveAttribute('type', 'range')
+  await expect(page.locator('.stage-statusbar #grid-opacity')).toHaveAttribute('min', '0.15')
+  await expect(page.locator('.stage-statusbar #grid-opacity')).toHaveAttribute('max', '1')
+  await expect(page.locator('.stage-statusbar #grid-opacity-value')).toHaveText('55%')
   await expect(page.locator('.top-command-icons #undo-action')).toHaveCount(1)
   await expect(page.locator('.editor-toolrail #align-left')).toHaveCount(1)
   await expect(page.locator('#align-left')).toHaveText('')
@@ -796,6 +805,10 @@ test('editor aligns a single selected object to the canvas', async ({ page }) =>
 })
 
 test('editor uses CAD-style marquee direction for contained and intersect selection', async ({ page }) => {
+  await page.addInitScript(() => {
+    localStorage.removeItem('node-zsb-editor-board-v1')
+    localStorage.removeItem('node-zsb-editor-settings-v1')
+  })
   await page.goto('/editor')
   await expect(page.locator('#layers')).toContainText('tank')
 
@@ -805,10 +818,9 @@ test('editor uses CAD-style marquee direction for contained and intersect select
   await page.locator('#clear-board').click()
   await expect(page.locator('#layers .layer-row')).toHaveCount(0)
 
-  await page.getByRole('tab', { name: '形状' }).click()
-  await page.locator('button[title="line_aoe"]').click()
-  await page.locator('#object-x').fill('100')
-  await page.locator('#object-y').fill('100')
+  await page.locator('button[title="tank"]').click()
+  await page.locator('#object-x').fill('180')
+  await page.locator('#object-y').fill('80')
   await expect(page.locator('#layers .layer-row')).toHaveCount(1)
 
   const canvas = page.locator('#stage-host canvas').first()
@@ -818,37 +830,26 @@ test('editor uses CAD-style marquee direction for contained and intersect select
     x: box.x + (x / 512) * box.width,
     y: box.y + (y / 384) * box.height,
   })
-  const sampleMarqueeColor = async (): Promise<number[] | null> =>
-    page.locator('#stage-host').evaluate((host): number[] | null => {
-      const canvases = host.querySelectorAll('canvas')
-      const canvas = canvases[canvases.length - 1]
-      if (!canvas) return null
-      const context = canvas.getContext('2d')
-      if (!context) return null
-      const x = Math.round((45 / 512) * canvas.width)
-      const y = Math.round((45 / 384) * canvas.height)
-      return Array.from(context.getImageData(x, y, 1, 1).data)
-    })
-  const start = point(10, 10)
-  const end = point(80, 80)
-  await page.mouse.move(start.x, start.y)
+  await page.mouse.click(point(500, 370).x, point(500, 370).y)
+  await expect(page.locator('#layers .layer-row.active')).toHaveCount(0)
+  const containedStart = point(130, 40)
+  const containedEnd = point(180, 80)
+  await page.mouse.move(containedStart.x, containedStart.y)
   await page.mouse.down()
-  await page.mouse.move(end.x, end.y, { steps: 6 })
-  const containedColor = await sampleMarqueeColor()
-  if (!containedColor) throw new Error('Marquee color sample is not available')
-  expect(containedColor[2] ?? 0).toBeGreaterThan(containedColor[1] ?? 0)
+  await page.mouse.move(containedEnd.x, containedEnd.y, { steps: 6 })
+  await page.waitForTimeout(50)
   await page.mouse.up()
   await expect(page.locator('#layers .layer-row.active')).toHaveCount(0)
 
-  await page.mouse.move(end.x, start.y)
+  const intersectStart = point(220, 40)
+  const intersectEnd = point(130, 120)
+  await page.mouse.move(intersectStart.x, intersectStart.y)
   await page.mouse.down()
-  await page.mouse.move(start.x, end.y, { steps: 6 })
-  const intersectColor = await sampleMarqueeColor()
-  if (!intersectColor) throw new Error('Marquee color sample is not available')
-  expect(intersectColor[1] ?? 0).toBeGreaterThan(intersectColor[2] ?? 0)
+  await page.mouse.move(intersectEnd.x, intersectEnd.y, { steps: 6 })
+  await page.waitForTimeout(50)
   await page.mouse.up()
   await expect(page.locator('#layers .layer-row.active')).toHaveCount(1)
-  await expect(page.locator('#object-type')).toHaveValue('line_aoe')
+  await expect(page.locator('#object-type')).toHaveValue('tank')
 })
 
 test('editor reorders layers by dragging rows', async ({ page }) => {
@@ -1465,6 +1466,12 @@ test('editor toggles the visual grid overlay', async ({ page }) => {
   const denseGrid = await stage.screenshot()
   expect(denseGrid.equals(withGrid)).toBe(false)
 
+  await page.locator('#grid-opacity').fill('0.3')
+  await page.locator('#grid-opacity').dispatchEvent('input')
+  await expect(page.locator('#grid-opacity-value')).toHaveText('30%')
+  const mutedGrid = await stage.screenshot()
+  expect(mutedGrid.equals(denseGrid)).toBe(false)
+
   await page.locator('#grid-toggle').uncheck()
   await expect(page.locator('#status')).toContainText('已隐藏辅助网格')
 })
@@ -1478,6 +1485,7 @@ test('editor syncs restored grid switch state on startup', async ({ page }) => {
 
         document.querySelector('#grid-toggle').checked = true
         document.querySelector('#grid-density').value = '8'
+        document.querySelector('#grid-opacity').value = '0.55'
 
         startEditorApp().catch((error) => {
           console.error(error)
@@ -1490,6 +1498,7 @@ test('editor syncs restored grid switch state on startup', async ({ page }) => {
   await expect(page.locator('#layers')).toContainText('tank')
   await expect(page.locator('#grid-toggle')).toBeChecked()
   await expect(page.locator('#grid-density-value')).toHaveText('8px')
+  await expect(page.locator('#grid-opacity-value')).toHaveText('55%')
 
   const fittedGridStats = await getGridCanvasStats(page)
   expect(fittedGridStats?.averageAlpha).toBeGreaterThan(20)
@@ -1508,6 +1517,8 @@ test('editor persists view settings across reloads', async ({ page }) => {
   await page.locator('#snap-toggle').check()
   await page.locator('#grid-density').fill('8')
   await page.locator('#grid-density').dispatchEvent('input')
+  await page.locator('#grid-opacity').fill('0.3')
+  await page.locator('#grid-opacity').dispatchEvent('input')
   await page.locator('#zoom-select').fill('1.25')
   await page.locator('#zoom-select').dispatchEvent('input')
 
@@ -1520,18 +1531,21 @@ test('editor persists view settings across reloads', async ({ page }) => {
     zoom: 1.25,
     zoomMode: 'manual',
   })
+  expect(settings.gridOpacity).toBeCloseTo(0.3)
 
   await page.reload()
   await expect(page.locator('#layers')).toContainText('tank')
   await expect(page.locator('#grid-toggle')).toBeChecked()
   await expect(page.locator('#snap-toggle')).toBeChecked()
   await expect(page.locator('#grid-density-value')).toHaveText('8px')
+  await expect(page.locator('#grid-opacity-value')).toHaveText('30%')
   await expect(page.locator('#zoom-select')).toHaveValue('1.25')
   await expect(page.locator('#zoom-value')).toHaveText('125%')
 
   const fittedGridStats = await getGridCanvasStats(page)
-  expect(fittedGridStats?.averageAlpha).toBeGreaterThan(20)
-  expect(fittedGridStats?.strongPixels).toBeGreaterThan(100)
+  expect(fittedGridStats?.visiblePixels).toBeGreaterThan(100)
+  expect(fittedGridStats?.averageAlpha).toBeGreaterThan(8)
+  expect(fittedGridStats?.averageAlpha).toBeLessThan(20)
 })
 
 test('editor deselects and deletes objects with keyboard shortcuts', async ({

@@ -1,7 +1,11 @@
 import {
+  DEFAULT_GRID_OPACITY,
   DEFAULT_GRID_SIZE,
+  GRID_OPACITY_STEP,
   GRID_SIZE_STEP,
+  MAX_GRID_OPACITY,
   MAX_GRID_SIZE,
+  MIN_GRID_OPACITY,
   MIN_GRID_SIZE,
   SCENE_HEIGHT,
   SCENE_WIDTH,
@@ -79,9 +83,31 @@ export function createViewportControls({
     }
   }
 
+  function setGridOpacity(gridOpacity, options = {}) {
+    const snapped =
+      Math.round((Number(gridOpacity) || DEFAULT_GRID_OPACITY) / GRID_OPACITY_STEP)
+      * GRID_OPACITY_STEP
+    state.gridOpacity = Number(clamp(snapped, MIN_GRID_OPACITY, MAX_GRID_OPACITY).toFixed(2))
+    updateGridOpacityControls()
+    if (options.render !== false) {
+      stageRenderer.renderGrid()
+    }
+    if (!options.silent) {
+      showStatus(`已设置网格不透明度 ${formatPercent(state.gridOpacity)}`)
+    }
+    if (!options.silent && options.persist !== false) {
+      persistViewportSettings()
+    }
+  }
+
   function updateGridDensityControls() {
     elements.gridDensity.value = String(state.gridSize)
     elements.gridDensityValue.textContent = `${state.gridSize}px`
+  }
+
+  function updateGridOpacityControls() {
+    elements.gridOpacity.value = String(state.gridOpacity)
+    elements.gridOpacityValue.textContent = formatPercent(state.gridOpacity)
   }
 
   function toggleSnapToGrid() {
@@ -107,6 +133,7 @@ export function createViewportControls({
       snapToGrid: elements.snap.checked,
       showGrid: elements.grid.checked,
       gridSize: Number(elements.gridDensity.value) || DEFAULT_GRID_SIZE,
+      gridOpacity: Number(elements.gridOpacity.value) || DEFAULT_GRID_OPACITY,
       zoom: state.zoom,
       zoomMode: state.zoomMode,
     })
@@ -131,6 +158,7 @@ export function createViewportControls({
     applyFitZoom,
     applyFitZoomOnResize,
     setGridDensity,
+    setGridOpacity,
     setStageZoom,
     stepZoom,
     syncControlStateFromDom,
@@ -146,6 +174,7 @@ export function createViewportControls({
     elements.snap.checked = state.snapToGrid
     elements.grid.checked = state.showGrid
     setGridDensity(settings.gridSize, { render: false, silent: true })
+    setGridOpacity(settings.gridOpacity, { render: false, silent: true })
   }
 
   function persistViewportSettings() {
@@ -153,6 +182,7 @@ export function createViewportControls({
       snapToGrid: state.snapToGrid,
       showGrid: state.showGrid,
       gridSize: state.gridSize,
+      gridOpacity: state.gridOpacity,
       zoom: state.zoom,
       zoomMode: state.zoomMode,
     })
@@ -161,4 +191,8 @@ export function createViewportControls({
 
 function formatZoom(zoom) {
   return `${Math.round(zoom * 100)}%`
+}
+
+function formatPercent(value) {
+  return `${Math.round(value * 100)}%`
 }

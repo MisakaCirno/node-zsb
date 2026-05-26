@@ -113,6 +113,9 @@ export function bindEditorEvents({
   elements.gridDensity.addEventListener('input', () => {
     actions.setGridDensity(Number(elements.gridDensity.value))
   })
+  elements.gridOpacity.addEventListener('input', () => {
+    actions.setGridOpacity(Number(elements.gridOpacity.value))
+  })
   elements.snap.addEventListener('change', actions.toggleSnapToGrid)
   elements.grid.addEventListener('change', actions.toggleGrid)
   bindLayoutResizers({

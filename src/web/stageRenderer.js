@@ -83,6 +83,7 @@ export function createStageRenderer({
   marqueeLayer.add(marqueeRect)
 
   let marqueeStart = null
+  let marqueeCurrent = null
   let didMarqueeDrag = false
   let suppressNextStageClick = false
 
@@ -100,6 +101,7 @@ export function createStageRenderer({
     if (event.evt?.button && event.evt.button !== 0) return
     if (event.target !== stage && event.target.getLayer() !== boardLayer) return
     marqueeStart = getPointerScenePoint()
+    marqueeCurrent = marqueeStart
     didMarqueeDrag = false
     marqueeRect.visible(false)
   })
@@ -107,19 +109,20 @@ export function createStageRenderer({
     if (!marqueeStart) return
     const current = getPointerScenePoint()
     if (!current) return
+    marqueeCurrent = current
     updateMarqueeRect(marqueeStart, current)
   })
   stage.on('mouseup touchend', () => {
     if (!marqueeStart) return
-    const current = getPointerScenePoint()
+    const current = getPointerScenePoint() ?? marqueeCurrent
     if (current && didMarqueeDrag) {
-      selectObjects(getMarqueeSelectedIndexes(
-        getLogicalRect(marqueeStart, current),
-        getMarqueeMode(marqueeStart, current),
-      ))
+      const rect = getLogicalRect(marqueeStart, current)
+      const mode = getMarqueeMode(marqueeStart, current)
+      selectObjects(getMarqueeSelectedIndexes(rect, mode))
       suppressNextStageClick = true
     }
     marqueeStart = null
+    marqueeCurrent = null
     didMarqueeDrag = false
     marqueeRect.visible(false)
     marqueeLayer.batchDraw()
@@ -193,7 +196,7 @@ export function createStageRenderer({
       stroke: '#e7fbff',
       strokeScaleEnabled: false,
       strokeWidth: major ? 1.25 : 1,
-      opacity: major ? 0.42 : 0.24,
+      opacity: (major ? 0.42 : 0.24) * state.gridOpacity,
       listening: false,
     })
   }

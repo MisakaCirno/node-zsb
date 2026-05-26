@@ -530,6 +530,7 @@ textarea {
 }
 
 .grid-density-actions,
+.grid-opacity-actions,
 .zoom-actions {
   gap: 8px;
   border-left: 1px solid #303b43;
@@ -552,12 +553,17 @@ textarea {
   width: 104px;
 }
 
+.grid-opacity-actions .status-range {
+  width: 92px;
+}
+
 .status-label {
   color: #a8b4bd;
   font-size: 12px;
 }
 
-#grid-density-value {
+#grid-density-value,
+#grid-opacity-value {
   min-width: 34px;
   color: #a8b4bd;
   font-size: 12px;

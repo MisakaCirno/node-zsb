@@ -93,6 +93,8 @@ export function getEditorElements() {
     grid: document.querySelector('#grid-toggle'),
     gridDensity: document.querySelector('#grid-density'),
     gridDensityValue: document.querySelector('#grid-density-value'),
+    gridOpacity: document.querySelector('#grid-opacity'),
+    gridOpacityValue: document.querySelector('#grid-opacity-value'),
     emptyState: document.querySelector('#empty-state'),
     inspector: document.querySelector('#inspector-form'),
     type: document.querySelector('#object-type'),

@@ -1,4 +1,4 @@
-import { DEFAULT_GRID_SIZE } from './constants.js'
+import { DEFAULT_GRID_OPACITY, DEFAULT_GRID_SIZE } from './constants.js'
 
 export function createEditorState() {
   return {
@@ -21,6 +21,7 @@ export function createEditorState() {
     snapToGrid: false,
     showGrid: false,
     gridSize: DEFAULT_GRID_SIZE,
+    gridOpacity: DEFAULT_GRID_OPACITY,
     zoom: 1,
     zoomMode: 'fit',
     images: new Map(),
