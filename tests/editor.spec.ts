@@ -94,6 +94,7 @@ test('editor creates an object by dragging from the palette to the canvas', asyn
 })
 
 test('editor resizes side panels and keeps object tabs visible', async ({ page }) => {
+  await page.setViewportSize({ width: 1440, height: 900 })
   await page.goto('/editor')
   await expect(page.locator('#layers')).toContainText('tank')
 
@@ -106,10 +107,18 @@ test('editor resizes side panels and keeps object tabs visible', async ({ page }
         .map(Number.parseFloat) ?? [])
   const tabsFit = async () =>
     page.locator('#palette-tabs').evaluate((tabs) => tabs.scrollWidth <= tabs.clientWidth)
+  const paletteColumnCount = async () =>
+    page.locator('#palette').evaluate((palette) =>
+      palette.ownerDocument.defaultView
+        ?.getComputedStyle(palette)
+        .gridTemplateColumns
+        .split(' ')
+        .length ?? 0)
 
   await expect(page.locator('#left-panel-resizer')).toHaveAttribute('role', 'separator')
   await expect(page.locator('#right-panel-resizer')).toHaveAttribute('role', 'separator')
   expect(await tabsFit()).toBe(true)
+  const initialPaletteColumns = await paletteColumnCount()
 
   const initialColumns = await shellColumns()
   expect(initialColumns[0]).toBeGreaterThanOrEqual(340)
@@ -118,10 +127,11 @@ test('editor resizes side panels and keeps object tabs visible', async ({ page }
   if (!leftHandle) throw new Error('Left resizer is not visible')
   await page.mouse.move(leftHandle.x + leftHandle.width / 2, leftHandle.y + 40)
   await page.mouse.down()
-  await page.mouse.move(leftHandle.x + leftHandle.width / 2 + 32, leftHandle.y + 40)
+  await page.mouse.move(leftHandle.x + leftHandle.width / 2 + 120, leftHandle.y + 40)
   await page.mouse.up()
   const widerLeftColumns = await shellColumns()
   expect(widerLeftColumns[0]).toBeGreaterThan(initialColumns[0])
+  expect(await paletteColumnCount()).toBeGreaterThan(initialPaletteColumns)
 
   const rightHandle = await page.locator('#right-panel-resizer').boundingBox()
   if (!rightHandle) throw new Error('Right resizer is not visible')
@@ -405,21 +415,37 @@ test('editor marquee-selects objects with contained and intersect modes', async 
     x: box.x + (x / 512) * box.width,
     y: box.y + (y / 384) * box.height,
   })
-  const dragMarquee = async () => {
-    const start = point(10, 10)
-    const end = point(80, 80)
-    await page.mouse.move(start.x, start.y)
-    await page.mouse.down()
-    await page.mouse.move(end.x, end.y, { steps: 6 })
-    await page.mouse.up()
-  }
-
+  const sampleMarqueeColor = async (): Promise<number[] | null> =>
+    page.locator('#stage-host').evaluate((host): number[] | null => {
+      const canvases = host.querySelectorAll('canvas')
+      const canvas = canvases[canvases.length - 1]
+      if (!canvas) return null
+      const context = canvas.getContext('2d')
+      if (!context) return null
+      const x = Math.round((45 / 512) * canvas.width)
+      const y = Math.round((45 / 384) * canvas.height)
+      return Array.from(context.getImageData(x, y, 1, 1).data)
+    })
   await expect(page.locator('#marquee-mode')).toHaveValue('contained')
-  await dragMarquee()
+  const start = point(10, 10)
+  const end = point(80, 80)
+  await page.mouse.move(start.x, start.y)
+  await page.mouse.down()
+  await page.mouse.move(end.x, end.y, { steps: 6 })
+  const containedColor = await sampleMarqueeColor()
+  if (!containedColor) throw new Error('Marquee color sample is not available')
+  expect(containedColor[2] ?? 0).toBeGreaterThan(containedColor[1] ?? 0)
+  await page.mouse.up()
   await expect(page.locator('#layers .layer-row.active')).toHaveCount(0)
 
   await page.locator('#marquee-mode').selectOption('intersect')
-  await dragMarquee()
+  await page.mouse.move(start.x, start.y)
+  await page.mouse.down()
+  await page.mouse.move(end.x, end.y, { steps: 6 })
+  const intersectColor = await sampleMarqueeColor()
+  if (!intersectColor) throw new Error('Marquee color sample is not available')
+  expect(intersectColor[1] ?? 0).toBeGreaterThan(intersectColor[2] ?? 0)
+  await page.mouse.up()
   await expect(page.locator('#layers .layer-row.active')).toHaveCount(1)
   await expect(page.locator('#object-type')).toHaveValue('line_aoe')
 })

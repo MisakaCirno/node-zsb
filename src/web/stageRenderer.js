@@ -20,6 +20,16 @@ import { getSelectedIndexes } from './editorState.js'
 import { getObjectBounds } from './objectAlignment.js'
 
 const MARQUEE_DRAG_THRESHOLD = 4
+const MARQUEE_THEMES = {
+  contained: {
+    fill: 'rgba(85, 170, 255, 0.16)',
+    stroke: '#55aaff',
+  },
+  intersect: {
+    fill: 'rgba(102, 194, 165, 0.16)',
+    stroke: '#66c2a5',
+  },
+}
 
 export function createStageRenderer({
   container,
@@ -45,9 +55,9 @@ export function createStageRenderer({
   const transformerLayer = new Konva.Layer()
   const marqueeLayer = new Konva.Layer()
   const marqueeRect = new Konva.Rect({
-    fill: 'rgba(102, 194, 165, 0.16)',
+    fill: MARQUEE_THEMES.contained.fill,
     listening: false,
-    stroke: '#66c2a5',
+    stroke: MARQUEE_THEMES.contained.stroke,
     strokeWidth: 1.5,
     visible: false,
   })
@@ -190,8 +200,11 @@ export function createStageRenderer({
       || Math.abs(width) > MARQUEE_DRAG_THRESHOLD
       || Math.abs(height) > MARQUEE_DRAG_THRESHOLD
     if (!didMarqueeDrag) return
+    const theme = getMarqueeTheme()
     marqueeRect.setAttrs({
+      fill: theme.fill,
       height: Math.abs(height),
+      stroke: theme.stroke,
       visible: true,
       width: Math.abs(width),
       x: Math.min(start.x, current.x),
@@ -221,6 +234,10 @@ export function createStageRenderer({
       && objectBounds.right <= rect.right
       && objectBounds.top >= rect.top
       && objectBounds.bottom <= rect.bottom
+  }
+
+  function getMarqueeTheme() {
+    return MARQUEE_THEMES[state.marqueeSelectionMode] ?? MARQUEE_THEMES.contained
   }
 
   function getLogicalRect(start, current) {

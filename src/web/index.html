@@ -101,10 +101,13 @@
               <input id="grid-toggle" type="checkbox" />
               <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 4h16v16H4z"/><path d="M4 10h16"/><path d="M4 16h16"/><path d="M10 4v16"/><path d="M16 4v16"/></svg>
             </label>
-            <select id="marquee-mode" class="toolbar-select" title="框选模式" aria-label="框选模式">
-              <option value="contained">全包含</option>
-              <option value="intersect">相交</option>
-            </select>
+            <div class="toolbar-group marquee-mode-group" aria-label="框选模式">
+              <span class="toolbar-label">框选模式</span>
+              <select id="marquee-mode" class="toolbar-select" title="框选模式" aria-label="框选模式">
+                <option value="contained">全包含</option>
+                <option value="intersect">相交</option>
+              </select>
+            </div>
           </div>
         </div>
         <div id="stage-host"></div>

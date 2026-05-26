@@ -177,14 +177,16 @@ textarea {
 
 .sidebar-tabs button {
   position: relative;
-  height: 38px;
-  min-width: 76px;
+  min-width: 42px;
+  min-height: 54px;
   border: 0;
   border-radius: 0;
   border-bottom: 2px solid transparent;
   background: transparent;
   color: #9ba8b1;
-  padding: 0 14px;
+  padding: 7px 10px 8px;
+  line-height: 1.05;
+  writing-mode: vertical-rl;
 }
 
 .sidebar-tabs button.active {
@@ -305,6 +307,15 @@ textarea {
   min-width: 34px;
   width: 34px;
   padding: 0;
+}
+
+.toolbar-label {
+  color: #a8b4bd;
+  font-size: 12px;
+}
+
+.marquee-mode-group {
+  margin-left: 4px;
 }
 
 .icon-tool {
@@ -433,13 +444,16 @@ textarea {
 .segmented button {
   position: relative;
   flex: 0 0 auto;
-  height: 34px;
+  min-width: 36px;
+  min-height: 54px;
   border: 0;
   border-radius: 0;
   border-bottom: 2px solid transparent;
   background: transparent;
   color: #9ba8b1;
-  padding: 0 11px;
+  padding: 7px 8px 8px;
+  line-height: 1.05;
+  writing-mode: vertical-rl;
 }
 
 .segmented button.active {
@@ -460,7 +474,7 @@ textarea {
 
 .palette {
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
+  grid-template-columns: repeat(auto-fill, minmax(52px, 1fr));
   gap: 8px;
 }
 
@@ -529,7 +543,7 @@ textarea {
 
 .background-list {
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(112px, 1fr));
   gap: 8px;
 }
 
