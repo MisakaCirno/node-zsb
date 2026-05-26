@@ -790,6 +790,25 @@ test('editor toggles hidden and locked states from the layer list', async ({
   const firstLayer = page.locator('#layers .layer-row').first()
   await firstLayer.click()
   const beforeX = await page.locator('#object-x').inputValue()
+  const hiddenToggleMetrics = await page.locator('#object-hidden').locator('xpath=..').evaluate((toggle) => {
+    const icon = toggle.querySelector('svg:not([style*="display: none"])')
+    const toggleRect = toggle.getBoundingClientRect()
+    const iconRect = icon?.getBoundingClientRect()
+    return {
+      iconHeight: iconRect?.height ?? 0,
+      iconWidth: iconRect?.width ?? 0,
+      offsetX: iconRect ? Math.abs((toggleRect.left + toggleRect.width / 2) - (iconRect.left + iconRect.width / 2)) : 99,
+      offsetY: iconRect ? Math.abs((toggleRect.top + toggleRect.height / 2) - (iconRect.top + iconRect.height / 2)) : 99,
+      toggleHeight: toggleRect.height,
+      toggleWidth: toggleRect.width,
+    }
+  })
+  expect(hiddenToggleMetrics.toggleWidth).toBeGreaterThanOrEqual(38)
+  expect(hiddenToggleMetrics.toggleHeight).toBeGreaterThanOrEqual(38)
+  expect(hiddenToggleMetrics.iconWidth).toBeGreaterThanOrEqual(21)
+  expect(hiddenToggleMetrics.iconHeight).toBeGreaterThanOrEqual(21)
+  expect(hiddenToggleMetrics.offsetX).toBeLessThanOrEqual(1)
+  expect(hiddenToggleMetrics.offsetY).toBeLessThanOrEqual(1)
 
   await firstLayer.locator('[data-action="hidden"]').click()
   await expect(page.locator('#object-hidden')).toBeChecked()
