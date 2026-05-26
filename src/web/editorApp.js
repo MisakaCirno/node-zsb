@@ -116,6 +116,7 @@ export function createEditorApp({
     onSelectGroup: selectLayerGroup,
     onReorderLayer: reorderLayer,
     onRenameLayerGroup: objectCommands.renameLayerGroup,
+    onMoveLayerNodeAfter: objectCommands.moveLayerNodeAfter,
     onMoveLayerNodeBefore: objectCommands.moveLayerNodeBefore,
     onMoveLayerNodeIntoGroup: objectCommands.moveLayerNodeIntoGroup,
     onMoveLayerNodeToRoot: objectCommands.moveLayerNodeToRoot,

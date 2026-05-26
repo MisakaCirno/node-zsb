@@ -186,6 +186,14 @@ export function createObjectCommands({
       showStatus('已调整图层顺序')
     },
 
+    moveLayerNodeAfter(dragged, target) {
+      recordHistory()
+      if (!moveLayerNodeAfter(state.layerTree, dragged, target)) return
+      syncBoardOrderFromLayerTree(state)
+      renderAll()
+      showStatus('已调整图层顺序')
+    },
+
     moveLayerNodeIntoGroup(dragged, groupId) {
       recordHistory()
       if (!moveLayerNodeIntoGroup(state.layerTree, dragged, groupId)) return

@@ -6,6 +6,7 @@ export function renderLayers({
   elements,
   onReorderLayer,
   onRenameLayerGroup,
+  onMoveLayerNodeAfter,
   onMoveLayerNodeBefore,
   onMoveLayerNodeIntoGroup,
   onMoveLayerNodeToRoot,
@@ -123,6 +124,7 @@ export function renderLayers({
     })
     bindLayerDrag({
       node: { type: 'group', id: group.id },
+      onDropAfter: onMoveLayerNodeAfter,
       onDropBefore: onMoveLayerNodeBefore,
       onDropIntoGroup: onMoveLayerNodeIntoGroup,
       row,
@@ -220,19 +222,26 @@ export function renderLayers({
       row.classList.remove('dragging')
     })
     row.addEventListener('dragover', (event) => {
+      if (!hasLayerDragData(event)) return
       event.preventDefault()
       event.dataTransfer.dropEffect = 'move'
-      row.classList.add('drop-target')
+      setDropPlacementClass(row, getLayerDropPlacement(event, row, { type: 'object' }))
     })
     row.addEventListener('dragleave', () => {
-      row.classList.remove('drop-target')
+      clearLayerDropClasses(row)
     })
     row.addEventListener('drop', (event) => {
       event.preventDefault()
-      row.classList.remove('drop-target')
+      clearLayerDropClasses(row)
       const dragged = getDraggedLayerNode(event)
       if (dragged) {
-        onMoveLayerNodeBefore(dragged, { type: 'object', id: object.editorId })
+        const placement = getLayerDropPlacement(event, row, { type: 'object' })
+        const target = { type: 'object', id: object.editorId }
+        if (placement === 'after') {
+          onMoveLayerNodeAfter(dragged, target)
+          return
+        }
+        onMoveLayerNodeBefore(dragged, target)
         return
       }
       const fromIndex = Number(event.dataTransfer.getData('text/plain'))
@@ -273,6 +282,7 @@ function createLayerText(className, text) {
 
 function bindLayerDrag({
   node,
+  onDropAfter,
   onDropBefore,
   onDropIntoGroup,
   row,
@@ -290,22 +300,47 @@ function bindLayerDrag({
     if (!hasLayerDragData(event)) return
     event.preventDefault()
     event.dataTransfer.dropEffect = 'move'
-    row.classList.add('drop-target')
+    setDropPlacementClass(row, getLayerDropPlacement(event, row, targetNode))
   })
   row.addEventListener('dragleave', () => {
-    row.classList.remove('drop-target')
+    clearLayerDropClasses(row)
   })
   row.addEventListener('drop', (event) => {
     const dragged = getDraggedLayerNode(event)
     if (!dragged) return
     event.preventDefault()
-    row.classList.remove('drop-target')
-    if (targetNode.type === 'group') {
+    clearLayerDropClasses(row)
+    const placement = getLayerDropPlacement(event, row, targetNode)
+    if (placement === 'inside' && targetNode.type === 'group') {
       onDropIntoGroup(dragged, targetNode.id)
+      return
+    }
+    if (placement === 'after') {
+      onDropAfter(dragged, targetNode)
       return
     }
     onDropBefore(dragged, targetNode)
   })
+}
+
+function getLayerDropPlacement(event, row, targetNode) {
+  const rect = row.getBoundingClientRect()
+  const ratio = rect.height > 0 ? (event.clientY - rect.top) / rect.height : 0.5
+  if (targetNode.type === 'group') {
+    if (ratio < 0.25) return 'before'
+    if (ratio > 0.75) return 'after'
+    return 'inside'
+  }
+  return ratio < 0.5 ? 'before' : 'after'
+}
+
+function setDropPlacementClass(row, placement) {
+  clearLayerDropClasses(row)
+  row.classList.add(`drop-${placement}`)
+}
+
+function clearLayerDropClasses(row) {
+  row.classList.remove('drop-before', 'drop-after', 'drop-inside')
 }
 
 function hasLayerDragData(event) {
