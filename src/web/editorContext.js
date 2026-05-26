@@ -17,6 +17,7 @@ export function createEditorContext({
   function selectObject(index, options = {}) {
     if (index < 0) {
       setSelection([])
+      state.revealSelectedLayer = false
       renderAll()
       return
     }
@@ -26,10 +27,12 @@ export function createEditorContext({
         ? selected.filter((selectedIndex) => selectedIndex !== index)
         : [...selected, index]
       setSelection(next, index)
+      state.revealSelectedLayer = Boolean(options.revealInLayers)
       renderAll()
       return
     }
     setSelection([index], index)
+    state.revealSelectedLayer = Boolean(options.revealInLayers)
     renderAll()
   }
 

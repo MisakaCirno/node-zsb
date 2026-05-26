@@ -165,6 +165,7 @@ export function createStageRenderer({
       if (event.evt?.button && event.evt.button !== 0) return
       event.cancelBubble = true
       selectObject(index, {
+        revealInLayers: true,
         toggle: Boolean(event.evt?.shiftKey || event.evt?.ctrlKey || event.evt?.metaKey),
       })
     })

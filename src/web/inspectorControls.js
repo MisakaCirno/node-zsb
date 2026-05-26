@@ -55,8 +55,11 @@ export function createInspectorControls({
     elements.clearBoard.disabled = state.board.objects.length === 0
     elements.deleteObject.disabled = !hasSelection
     elements.duplicateObject.disabled = !hasSelection
+    elements.moveTop.disabled = !hasSelection || state.selectedIndex <= 0
     elements.moveUp.disabled = !hasSelection || state.selectedIndex <= 0
     elements.moveDown.disabled =
+      !hasSelection || state.selectedIndex >= state.board.objects.length - 1
+    elements.moveBottom.disabled =
       !hasSelection || state.selectedIndex >= state.board.objects.length - 1
     for (const button of [
       elements.alignLeft,

@@ -65,9 +65,6 @@
               <button id="clear-board" class="icon-tool" type="button" title="清空画板" aria-label="清空" disabled>
                 <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M6 7l1 14h10l1-14"/><path d="M9 7V4h6v3"/></svg>
               </button>
-              <button id="delete-object" class="icon-tool" type="button" title="删除对象" aria-label="删除" disabled>
-                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16"/><path d="M6 7l1 14h10l1-14"/><path d="M9 7V4h6v3"/></svg>
-              </button>
               <button id="duplicate-object" class="icon-tool" type="button" title="复制对象" aria-label="复制" disabled>
                 <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="8" y="8" width="11" height="11" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v1"/></svg>
               </button>
@@ -201,14 +198,23 @@
           </div>
         </section>
 
-        <section>
+        <section class="layers-section">
           <div class="section-title">图层 <span id="layer-count">0</span></div>
           <div class="layer-toolbar">
+            <button id="move-top" class="icon-tool" type="button" title="移到顶层" aria-label="移到顶层" disabled>
+              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 4h14"/><path d="m12 6-5 5"/><path d="m12 6 5 5"/><path d="M12 6v14"/></svg>
+            </button>
             <button id="move-up" class="icon-tool" type="button" title="上移图层" aria-label="上移" disabled>
               <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m12 5-5 5"/><path d="m12 5 5 5"/><path d="M12 5v14"/></svg>
             </button>
             <button id="move-down" class="icon-tool" type="button" title="下移图层" aria-label="下移" disabled>
               <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m12 19-5-5"/><path d="m12 19 5-5"/><path d="M12 5v14"/></svg>
+            </button>
+            <button id="move-bottom" class="icon-tool" type="button" title="移到底层" aria-label="移到底层" disabled>
+              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 20h14"/><path d="m12 18-5-5"/><path d="m12 18 5-5"/><path d="M12 4v14"/></svg>
+            </button>
+            <button id="delete-object" class="icon-tool danger-tool" type="button" title="删除对象" aria-label="删除" disabled>
+              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16"/><path d="M6 7l1 14h10l1-14"/><path d="M9 7V4h6v3"/></svg>
             </button>
           </div>
           <div id="layers" class="layers"></div>

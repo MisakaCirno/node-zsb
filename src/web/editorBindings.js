@@ -43,8 +43,11 @@ export function bindEditorEvents({
   elements.clearBoard.addEventListener('click', actions.clearBoard)
   elements.deleteObject.addEventListener('click', actions.deleteSelected)
   elements.duplicateObject.addEventListener('click', actions.duplicateSelected)
+  elements.moveTop.addEventListener('click', () => actions.moveSelectedTo(0))
   elements.moveUp.addEventListener('click', () => actions.moveSelected(-1))
   elements.moveDown.addEventListener('click', () => actions.moveSelected(1))
+  elements.moveBottom.addEventListener('click', () =>
+    actions.moveSelectedTo(actions.getLastLayerIndex()))
   elements.alignLeft.addEventListener('click', () => actions.alignSelected('left'))
   elements.alignCenterX.addEventListener('click', () => actions.alignSelected('center-x'))
   elements.alignRight.addEventListener('click', () => actions.alignSelected('right'))

@@ -91,10 +91,17 @@ export function createObjectCommands({
       const index = state.selectedIndex
       const target = index + delta
       if (index < 0 || target < 0 || target >= state.board.objects.length) return
-      recordHistory()
-      const [object] = state.board.objects.splice(index, 1)
-      state.board.objects.splice(target, 0, object)
-      selectObject(target)
+      moveSelectedToIndex(index, target, state, recordHistory, selectObject)
+    },
+
+    moveSelectedTo(target) {
+      const index = state.selectedIndex
+      if (index < 0 || target < 0 || target >= state.board.objects.length) return
+      moveSelectedToIndex(index, target, state, recordHistory, selectObject)
+    },
+
+    getLastLayerIndex() {
+      return state.board.objects.length - 1
     },
 
     reorderLayer(fromIndex, toIndex) {
@@ -213,6 +220,14 @@ function moveObjectBy(object, dx, dy) {
     object.endX = clamp(Math.round(object.endX + dx), 0, 512)
     object.endY = clamp(Math.round(object.endY + dy), 0, 384)
   }
+}
+
+function moveSelectedToIndex(index, target, state, recordHistory, selectObject) {
+  if (index === target) return
+  recordHistory()
+  const [object] = state.board.objects.splice(index, 1)
+  state.board.objects.splice(target, 0, object)
+  selectObject(target)
 }
 
 function mapMovedIndex(index, fromIndex, toIndex) {

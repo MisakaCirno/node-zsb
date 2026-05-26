@@ -313,11 +313,13 @@ test('editor reorders layers by dragging rows', async ({ page }) => {
   await expect(textRow).toHaveCount(1)
   await expect(page.locator('#layers .layer-row').first()).not.toContainText('text')
 
-  await textRow.dragTo(page.locator('#layers .layer-row').first())
-  await expect(page.locator('#layers .layer-row').first()).toContainText('text')
+  const layerCount = await page.locator('#layers .layer-row').count()
+  await textRow.scrollIntoViewIfNeeded()
+  await textRow.dragTo(page.locator('#layers .layer-row').nth(layerCount - 2))
+  await expect(page.locator('#layers .layer-row').nth(layerCount - 2)).toContainText('text')
 
   await page.getByRole('button', { name: '撤销' }).click()
-  await expect(page.locator('#layers .layer-row').first()).not.toContainText('text')
+  await expect(page.locator('#layers .layer-row').nth(layerCount - 1)).toContainText('text')
 })
 
 test('editor opens custom context menus for canvas and layers', async ({ page }) => {
@@ -385,22 +387,50 @@ test('editor updates object action button states from the selection', async ({
   await expect(page.locator('#delete-object')).toBeDisabled()
   await expect(page.locator('#duplicate-object')).toBeDisabled()
   await expect(page.locator('#center-object')).toHaveCount(0)
+  await expect(page.locator('#move-top')).toBeDisabled()
   await expect(page.locator('#move-up')).toBeDisabled()
   await expect(page.locator('#move-down')).toBeDisabled()
+  await expect(page.locator('#move-bottom')).toBeDisabled()
+  await expect(page.locator('.layer-toolbar #delete-object')).toBeVisible()
   await expect(page.locator('.layer-toolbar #move-up')).toBeVisible()
   await expect(page.locator('.stage-toolbar #move-up')).toHaveCount(0)
+  await expect(page.locator('.stage-toolbar #delete-object')).toHaveCount(0)
 
   await page.locator('#layers .layer-row').first().click()
   await expect(page.locator('#delete-object')).toBeEnabled()
   await expect(page.locator('#duplicate-object')).toBeEnabled()
+  await expect(page.locator('#move-top')).toBeDisabled()
   await expect(page.locator('#move-up')).toBeDisabled()
   await expect(page.locator('#move-down')).toBeEnabled()
+  await expect(page.locator('#move-bottom')).toBeEnabled()
 
   await page.locator('#object-locked').check()
 
   await page.keyboard.press('Escape')
   await expect(page.locator('#delete-object')).toBeDisabled()
   await expect(page.locator('#duplicate-object')).toBeDisabled()
+})
+
+test('editor moves layers to extremes and deletes from the layer toolbar', async ({ page }) => {
+  await page.goto('/editor')
+  await expect(page.locator('#layers')).toContainText('tank')
+
+  await page.getByRole('button', { name: '形状' }).click()
+  await page.getByTitle('text').click()
+  const layerCount = await page.locator('#layers .layer-row').count()
+  await expect(page.locator('#layers .layer-row').nth(layerCount - 1)).toContainText('text')
+
+  await page.locator('#move-top').click()
+  await expect(page.locator('#layers .layer-row').first()).toContainText('text')
+  await expect(page.locator('#move-top')).toBeDisabled()
+  await expect(page.locator('#move-bottom')).toBeEnabled()
+
+  await page.locator('#move-bottom').click()
+  await expect(page.locator('#layers .layer-row').nth(layerCount - 1)).toContainText('text')
+  await expect(page.locator('#move-bottom')).toBeDisabled()
+
+  await page.locator('#delete-object').click()
+  await expect(page.locator('#layers .layer-row')).toHaveCount(layerCount - 1)
 })
 
 test('editor clears the board with confirmation and undo support', async ({

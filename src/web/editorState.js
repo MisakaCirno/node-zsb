@@ -7,6 +7,7 @@ export function createEditorState() {
     },
     selectedIndex: -1,
     selectedIndexes: [],
+    revealSelectedLayer: false,
     iconConfigs: {},
     iconGroups: {},
     backgrounds: {},

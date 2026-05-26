@@ -18,6 +18,7 @@ export function renderLayers({
     return
   }
   const selectedIndexes = getSelectedIndexes(state)
+  let primaryRow = null
   state.board.objects.forEach((object, index) => {
     const row = document.createElement('div')
     row.className = 'layer-row'
@@ -25,6 +26,7 @@ export function renderLayers({
     row.dataset.index = String(index)
     row.classList.toggle('active', selectedIndexes.includes(index))
     row.classList.toggle('primary', index === state.selectedIndex)
+    if (index === state.selectedIndex) primaryRow = row
     row.classList.toggle('muted', Boolean(object.hidden))
     const preview = createObjectPreview({
       iconConfigs: state.iconConfigs,
@@ -88,6 +90,14 @@ export function renderLayers({
     }))
     elements.layers.append(row)
   })
+  if (primaryRow && state.revealSelectedLayer) {
+    state.revealSelectedLayer = false
+    requestAnimationFrame(() => {
+      primaryRow.scrollIntoView({
+        block: 'nearest',
+      })
+    })
+  }
 }
 
 function createLayerToggle({

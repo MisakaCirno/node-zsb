@@ -86,6 +86,14 @@ textarea {
 .inspector {
   border-left: 1px solid #27313a;
   padding: 14px;
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr);
+  gap: 14px;
+  overflow: hidden;
+}
+
+.inspector section {
+  min-width: 0;
 }
 
 .toolbar,
@@ -626,10 +634,16 @@ textarea {
 .layers {
   display: grid;
   gap: 6px;
+  min-height: 0;
+  overflow-y: auto;
+  padding-right: 4px;
+  align-content: start;
+  scrollbar-color: #3a4650 #151a1f;
 }
 
 .layer-toolbar {
   display: flex;
+  flex-wrap: wrap;
   gap: 6px;
   margin: -2px 0 8px;
 }
@@ -638,6 +652,12 @@ textarea {
   width: 34px;
   min-width: 34px;
   padding: 0;
+}
+
+.layers-section {
+  display: grid;
+  grid-template-rows: auto auto minmax(0, 1fr);
+  min-height: 0;
 }
 
 .layer-row {
