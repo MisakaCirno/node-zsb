@@ -5,7 +5,9 @@ export function renderLayers({
   state,
   elements,
   onReorderLayer,
+  onSelectGroup,
   onSelectObject,
+  onToggleLayerGroup,
   onToggleLayerFlag,
 }) {
   elements.layers.innerHTML = ''
@@ -18,12 +20,70 @@ export function renderLayers({
     return
   }
   const selectedIndexes = getSelectedIndexes(state)
+  const objectIndexById = new Map(state.board.objects.map((object, index) => [object.editorId, index]))
   let primaryRow = null
-  state.board.objects.forEach((object, index) => {
+  const layerTree = state.layerTree?.length
+    ? state.layerTree
+    : state.board.objects.map((object) => ({ type: 'object', id: object.editorId }))
+  for (const node of layerTree) {
+    renderLayerNode(node, 0)
+  }
+  if (primaryRow && state.revealSelectedLayer) {
+    state.revealSelectedLayer = false
+    requestAnimationFrame(() => {
+      primaryRow.scrollIntoView({
+        block: 'nearest',
+      })
+    })
+  }
+
+  function renderLayerNode(node, depth) {
+    if (node.type === 'group') {
+      renderGroupRow(node, depth)
+      if (!node.collapsed) {
+        for (const child of node.children ?? []) {
+          renderLayerNode(child, depth + 1)
+        }
+      }
+      return
+    }
+    const index = objectIndexById.get(node.id)
+    if (index === undefined) return
+    renderObjectRow(state.board.objects[index], index, depth)
+  }
+
+  function renderGroupRow(group, depth) {
+    const row = document.createElement('div')
+    row.className = 'layer-row layer-group-row'
+    row.dataset.groupId = group.id
+    row.style.setProperty('--layer-depth', String(depth))
+    row.classList.toggle('active', state.selectedGroupId === group.id)
+    const toggle = document.createElement('button')
+    toggle.className = 'layer-group-toggle'
+    toggle.type = 'button'
+    toggle.title = group.collapsed ? '展开组' : '折叠组'
+    toggle.setAttribute('aria-label', toggle.title)
+    toggle.innerHTML = group.collapsed ? chevronRightIcon() : chevronDownIcon()
+    toggle.addEventListener('click', (event) => {
+      event.stopPropagation()
+      onToggleLayerGroup(group.id)
+    })
+    row.append(
+      toggle,
+      createGroupIcon(),
+      createLayerText('layer-name', group.name ?? '组'),
+      createLayerText('layer-position', `${countLayerObjects(group.children)} 个对象`),
+    )
+    row.addEventListener('click', () => onSelectGroup(group.id))
+    elements.layers.append(row)
+  }
+
+  function renderObjectRow(object, index, depth) {
     const row = document.createElement('div')
     row.className = 'layer-row'
     row.draggable = true
     row.dataset.index = String(index)
+    row.style.setProperty('--layer-depth', String(depth))
     row.classList.toggle('active', selectedIndexes.includes(index))
     row.classList.toggle('primary', index === state.selectedIndex)
     if (index === state.selectedIndex) primaryRow = row
@@ -89,14 +149,6 @@ export function renderLayers({
       toggle: event.shiftKey || event.ctrlKey || event.metaKey,
     }))
     elements.layers.append(row)
-  })
-  if (primaryRow && state.revealSelectedLayer) {
-    state.revealSelectedLayer = false
-    requestAnimationFrame(() => {
-      primaryRow.scrollIntoView({
-        block: 'nearest',
-      })
-    })
   }
 }
 
@@ -123,6 +175,29 @@ function createLayerText(className, text) {
   span.className = className
   span.textContent = text
   return span
+}
+
+function countLayerObjects(nodes = []) {
+  return nodes.reduce((count, node) => {
+    if (node.type === 'object') return count + 1
+    if (node.type === 'group') return count + countLayerObjects(node.children)
+    return count
+  }, 0)
+}
+
+function createGroupIcon() {
+  const span = document.createElement('span')
+  span.className = 'layer-group-icon'
+  span.innerHTML = '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 6h7l2 3h9v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><path d="M3 9h18"/></svg>'
+  return span
+}
+
+function chevronRightIcon() {
+  return '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="m9 6 6 6-6 6"/></svg>'
+}
+
+function chevronDownIcon() {
+  return '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg>'
 }
 
 function eyeIcon() {

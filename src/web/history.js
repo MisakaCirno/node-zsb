@@ -28,6 +28,7 @@ function createSnapshot(state) {
     layerTree: structuredClone(state.layerTree ?? []),
     selectedIndex: state.selectedIndex,
     selectedIndexes: [...(state.selectedIndexes ?? [])],
+    selectedGroupId: state.selectedGroupId ?? '',
   }
 }
 
@@ -40,4 +41,5 @@ function restoreSnapshot(state, snapshot) {
   state.selectedIndex = selectedIndexes.includes(snapshot.selectedIndex)
     ? snapshot.selectedIndex
     : selectedIndexes.at(-1) ?? -1
+  state.selectedGroupId = snapshot.selectedGroupId ?? ''
 }

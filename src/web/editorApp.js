@@ -47,6 +47,7 @@ export function createEditorApp({
     normalizeCoordinate,
     normalizePoint,
     selectObject,
+    selectLayerGroup,
     selectObjects,
   } = editorContext
   const stageRenderer = createStageRenderer({
@@ -112,7 +113,9 @@ export function createEditorApp({
     stageRenderer,
     renderInspectorPanel,
     onSelectObject: selectObject,
+    onSelectGroup: selectLayerGroup,
     onReorderLayer: reorderLayer,
+    onToggleLayerGroup: objectCommands.toggleLayerGroup,
     onToggleLayerFlag: toggleLayerFlag,
   })
 

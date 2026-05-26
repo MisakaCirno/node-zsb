@@ -1,7 +1,13 @@
 import { clamp } from './geometry.js'
 import { createEditorId } from './editorIds.js'
 import { getSelectedIndexes } from './editorState.js'
-import { syncFlatLayerTree } from './layerTree.js'
+import {
+  groupObjectIds,
+  syncBoardOrderFromLayerTree,
+  syncFlatLayerTree,
+  toggleGroupCollapsed,
+  ungroupLayer,
+} from './layerTree.js'
 import {
   getBoundsCenterX,
   getBoundsCenterY,
@@ -141,6 +147,40 @@ export function createObjectCommands({
       state.selectedIndex = mapMovedIndex(state.selectedIndex, fromIndex, toIndex)
       renderAll()
       showStatus('已调整图层顺序')
+    },
+
+    groupSelected() {
+      const selectedIndexes = getSelectedIndexes(state)
+      if (selectedIndexes.length < 2) return
+      recordHistory()
+      const selectedIds = selectedIndexes
+        .map((index) => state.board.objects[index]?.editorId)
+        .filter(Boolean)
+      const group = groupObjectIds(
+        state.layerTree,
+        selectedIds,
+        `组 ${Date.now().toString(36).slice(-4)}`,
+      )
+      if (!group) return
+      state.selectedGroupId = group.id
+      syncBoardOrderFromLayerTree(state)
+      renderAll()
+      showStatus(`已创建组，包含 ${selectedIds.length} 个对象`)
+    },
+
+    ungroupSelectedGroup() {
+      if (!state.selectedGroupId) return
+      recordHistory()
+      if (!ungroupLayer(state.layerTree, state.selectedGroupId)) return
+      state.selectedGroupId = ''
+      syncBoardOrderFromLayerTree(state)
+      renderAll()
+      showStatus('已解组')
+    },
+
+    toggleLayerGroup(groupId) {
+      if (!toggleGroupCollapsed(state.layerTree, groupId)) return
+      renderAll()
     },
 
     centerSelected() {

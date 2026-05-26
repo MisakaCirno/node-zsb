@@ -964,7 +964,7 @@ textarea {
   gap: 6px;
   min-height: 0;
   overflow-y: auto;
-  padding-right: 4px;
+  padding: 2px 4px 0 0;
   align-content: start;
   scrollbar-color: #3a4650 #151a1f;
 }
@@ -973,7 +973,7 @@ textarea {
   display: flex;
   flex-wrap: wrap;
   gap: 6px;
-  margin: -2px 0 8px;
+  margin: 0 0 10px;
 }
 
 .layer-toolbar button {
@@ -992,12 +992,45 @@ textarea {
   border: 1px solid #303b43;
   background: #1b2228;
   border-radius: 6px;
-  padding: 6px;
+  padding: 6px 6px 6px calc(6px + var(--layer-depth, 0) * 16px);
   cursor: pointer;
   display: grid;
   grid-template-columns: 28px 28px 28px minmax(0, 1fr) auto;
   align-items: center;
   gap: 6px;
+}
+
+.layer-group-row {
+  grid-template-columns: 28px 28px minmax(0, 1fr) auto;
+  background: #202832;
+}
+
+.layer-group-toggle,
+.layer-group-icon {
+  width: 28px;
+  height: 26px;
+  display: grid;
+  place-items: center;
+}
+
+.layer-group-toggle {
+  min-width: 0;
+  padding: 0;
+}
+
+.layer-group-toggle svg,
+.layer-group-icon svg {
+  width: 16px;
+  height: 16px;
+  fill: none;
+  stroke: currentColor;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-width: 2;
+}
+
+.layer-group-icon {
+  color: #9ed9c6;
 }
 
 .layer-row.dragging {

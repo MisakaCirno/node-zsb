@@ -169,6 +169,42 @@ test('editor exports and imports project JSON files', async ({ page }) => {
   await expect(page.locator('#board-name')).toHaveValue('JSON')
 })
 
+test('editor groups selected layers and exports the group in project JSON', async ({ page }) => {
+  await page.goto('/editor')
+  await expect(page.locator('#layers')).toContainText('tank')
+
+  await page.locator('#layers .layer-row').nth(0).click()
+  await page.locator('#layers .layer-row').nth(1).click({ modifiers: ['Shift'] })
+  await expect(page.locator('#group-layers')).toBeEnabled()
+  await page.locator('#group-layers').click()
+
+  await expect(page.locator('#layers .layer-group-row')).toHaveCount(1)
+  await expect(page.locator('#ungroup-layers')).toBeEnabled()
+  await page.locator('#layers .layer-group-row .layer-group-toggle').click()
+  await expect(page.locator('#layers .layer-row')).toHaveCount(3)
+  await page.locator('#layers .layer-group-row .layer-group-toggle').click()
+  await expect(page.locator('#layers .layer-row')).toHaveCount(5)
+
+  await openFileMenu(page)
+  const downloadPromise = page.waitForEvent('download')
+  await page.locator('#export-project-file').click()
+  const download = await downloadPromise
+  const path = await download.path()
+  if (!path) throw new Error('Project download path is unavailable')
+  const project = JSON.parse(await readFile(path, 'utf8'))
+  expect(project.layers[0]).toMatchObject({
+    type: 'group',
+    children: [
+      { type: 'object' },
+      { type: 'object' },
+    ],
+  })
+
+  await page.locator('#layers .layer-group-row').click()
+  await page.locator('#ungroup-layers').click()
+  await expect(page.locator('#layers .layer-group-row')).toHaveCount(0)
+})
+
 test('editor resizes side panels and keeps object tabs visible', async ({ page }) => {
   await page.setViewportSize({ width: 1440, height: 900 })
   await page.goto('/editor')

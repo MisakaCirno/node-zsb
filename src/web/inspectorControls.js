@@ -60,6 +60,8 @@ export function createInspectorControls({
       !hasSelection || state.selectedIndex >= state.board.objects.length - 1
     elements.moveBottom.disabled =
       !hasSelection || state.selectedIndex >= state.board.objects.length - 1
+    elements.groupLayers.disabled = selectedIndexes.length < 2
+    elements.ungroupLayers.disabled = !state.selectedGroupId
     for (const button of [
       elements.alignLeft,
       elements.alignCenterX,

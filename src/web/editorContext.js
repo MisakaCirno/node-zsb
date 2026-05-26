@@ -8,6 +8,7 @@ import {
   getSelectedObject,
   getSelectedObjects,
 } from './editorState.js'
+import { getGroupObjectIds } from './layerTree.js'
 
 export function createEditorContext({
   renderAll,
@@ -17,6 +18,7 @@ export function createEditorContext({
   function selectObject(index, options = {}) {
     if (index < 0) {
       setSelection([])
+      state.selectedGroupId = ''
       state.revealSelectedLayer = false
       renderAll()
       return
@@ -27,18 +29,30 @@ export function createEditorContext({
         ? selected.filter((selectedIndex) => selectedIndex !== index)
         : [...selected, index]
       setSelection(next, index)
+      state.selectedGroupId = ''
       state.revealSelectedLayer = Boolean(options.revealInLayers)
       renderAll()
       return
     }
     setSelection([index], index)
+    state.selectedGroupId = ''
     state.revealSelectedLayer = Boolean(options.revealInLayers)
     renderAll()
   }
 
   function selectObjects(indexes, options = {}) {
     setSelection(indexes, options.primaryIndex ?? indexes.at(-1) ?? -1)
+    state.selectedGroupId = ''
     state.revealSelectedLayer = Boolean(options.revealInLayers)
+    renderAll()
+  }
+
+  function selectLayerGroup(groupId) {
+    const ids = getGroupObjectIds(state.layerTree, groupId)
+    const indexById = new Map(state.board.objects.map((object, index) => [object.editorId, index]))
+    setSelection(ids.map((id) => indexById.get(id)).filter((index) => index !== undefined))
+    state.selectedGroupId = groupId
+    state.revealSelectedLayer = false
     renderAll()
   }
 
@@ -90,6 +104,7 @@ export function createEditorContext({
     normalizeCoordinate,
     normalizePoint,
     selectObject,
+    selectLayerGroup,
     selectObjects,
     setMarqueeSelectionMode,
   }

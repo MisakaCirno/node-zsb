@@ -85,6 +85,8 @@ export function bindEditorEvents({
   elements.moveDown.addEventListener('click', () => actions.moveSelected(1))
   elements.moveBottom.addEventListener('click', () =>
     actions.moveSelectedTo(actions.getLastLayerIndex()))
+  elements.groupLayers.addEventListener('click', actions.groupSelected)
+  elements.ungroupLayers.addEventListener('click', actions.ungroupSelectedGroup)
   elements.alignLeft.addEventListener('click', () => actions.alignSelected('left'))
   elements.alignCenterX.addEventListener('click', () => actions.alignSelected('center-x'))
   elements.alignRight.addEventListener('click', () => actions.alignSelected('right'))

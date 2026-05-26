@@ -63,6 +63,8 @@ export function getEditorElements() {
     moveUp: document.querySelector('#move-up'),
     moveDown: document.querySelector('#move-down'),
     moveBottom: document.querySelector('#move-bottom'),
+    groupLayers: document.querySelector('#group-layers'),
+    ungroupLayers: document.querySelector('#ungroup-layers'),
     alignLeft: document.querySelector('#align-left'),
     alignCenterX: document.querySelector('#align-center-x'),
     alignRight: document.querySelector('#align-right'),
