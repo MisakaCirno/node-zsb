@@ -12,6 +12,7 @@ const webServer = process.env.PLAYWRIGHT_SKIP_WEB_SERVER
 
 export default defineConfig({
   testDir: './tests',
+  testIgnore: ['**/unit/**'],
   timeout: 30_000,
   expect: {
     timeout: 5_000,
