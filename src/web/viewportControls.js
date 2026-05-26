@@ -49,9 +49,9 @@ export function createViewportControls({
   }
 
   function updateZoomControls() {
-    elements.zoomSelect.value = state.zoomMode === 'fit' ? 'fit' : String(state.zoom)
-    elements.zoomOut.disabled = state.zoom <= ZOOM_LEVELS[0]
-    elements.zoomIn.disabled = state.zoom >= ZOOM_LEVELS.at(-1)
+    elements.zoomSelect.value = String(state.zoom)
+    elements.zoomValue.textContent =
+      state.zoomMode === 'fit' ? `适配 ${formatZoom(state.zoom)}` : formatZoom(state.zoom)
   }
 
   function toggleSnapToGrid() {

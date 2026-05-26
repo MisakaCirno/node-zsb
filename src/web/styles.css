@@ -126,13 +126,22 @@ textarea {
   border-left: 1px solid #27313a;
   padding: 14px;
   display: grid;
-  grid-template-rows: auto minmax(0, 1fr);
+  grid-template-rows: auto minmax(140px, 0.75fr) minmax(260px, 1.35fr);
   gap: 14px;
   overflow: hidden;
 }
 
-.inspector section {
+.inspector-section {
   min-width: 0;
+  border: 1px solid #27313a;
+  border-radius: 8px;
+  background: #12171b;
+  padding: 12px;
+  overflow: hidden;
+}
+
+.property-section {
+  overflow: auto;
 }
 
 .toolbar,
@@ -384,7 +393,7 @@ textarea {
 }
 
 .share-name-field {
-  margin: 0 0 12px;
+  margin: 0;
 }
 
 .field .field-error {
@@ -464,10 +473,6 @@ textarea {
   font-size: 12px;
 }
 
-.marquee-mode-group {
-  margin-left: 4px;
-}
-
 .icon-tool {
   display: grid;
   place-items: center;
@@ -488,11 +493,26 @@ textarea {
   stroke-width: 2;
 }
 
-#zoom-in,
-#zoom-out {
-  min-width: 34px;
-  width: 34px;
+.zoom-actions {
+  gap: 8px;
+}
+
+.zoom-range {
+  width: 132px;
+  min-height: 0;
+  height: 18px;
   padding: 0;
+  border: 0;
+  border-radius: 999px;
+  background: #27313a;
+  accent-color: #66c2a5;
+}
+
+#zoom-value {
+  min-width: 42px;
+  color: #a8b4bd;
+  font-size: 12px;
+  text-align: right;
 }
 
 .toolbar-toggle {
@@ -578,7 +598,7 @@ textarea {
   text-transform: uppercase;
 }
 
-.inspector section:first-child .section-title {
+.inspector-section > .section-title:first-child {
   margin-top: 0;
 }
 
@@ -978,7 +998,7 @@ textarea {
 .layer-toolbar {
   display: flex;
   flex-wrap: wrap;
-  gap: 6px;
+  gap: 8px;
   margin: 0 0 10px;
 }
 
@@ -986,6 +1006,18 @@ textarea {
   width: 34px;
   min-width: 34px;
   padding: 0;
+}
+
+.layer-toolbar-group {
+  display: flex;
+  gap: 4px;
+  border-right: 1px solid #303b43;
+  padding-right: 8px;
+}
+
+.layer-toolbar-group:last-child {
+  border-right: 0;
+  padding-right: 0;
 }
 
 .layers-section {
@@ -1197,13 +1229,15 @@ textarea {
   object-fit: contain;
 }
 
-.danger-button {
+.danger-button,
+.danger-tool {
   border-color: rgba(239, 83, 80, 0.5);
   background: rgba(239, 83, 80, 0.14);
   color: #ffb5b2;
 }
 
-.danger-button:not(:disabled):hover {
+.danger-button:not(:disabled):hover,
+.danger-tool:not(:disabled):hover {
   border-color: rgba(239, 83, 80, 0.78);
   background: rgba(239, 83, 80, 0.22);
   color: #ffd0ce;

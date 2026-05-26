@@ -113,7 +113,10 @@ export function createStageRenderer({
     if (!marqueeStart) return
     const current = getPointerScenePoint()
     if (current && didMarqueeDrag) {
-      selectObjects(getMarqueeSelectedIndexes(getLogicalRect(marqueeStart, current)))
+      selectObjects(getMarqueeSelectedIndexes(
+        getLogicalRect(marqueeStart, current),
+        getMarqueeMode(marqueeStart, current),
+      ))
       suppressNextStageClick = true
     }
     marqueeStart = null
@@ -200,7 +203,7 @@ export function createStageRenderer({
       || Math.abs(width) > MARQUEE_DRAG_THRESHOLD
       || Math.abs(height) > MARQUEE_DRAG_THRESHOLD
     if (!didMarqueeDrag) return
-    const theme = getMarqueeTheme()
+    const theme = getMarqueeTheme(start, current)
     marqueeRect.setAttrs({
       fill: theme.fill,
       height: Math.abs(height),
@@ -213,18 +216,18 @@ export function createStageRenderer({
     marqueeLayer.batchDraw()
   }
 
-  function getMarqueeSelectedIndexes(rect) {
+  function getMarqueeSelectedIndexes(rect, mode) {
     const selected = []
     state.board.objects.forEach((object, index) => {
-      if (objectMatchesMarquee(getObjectBounds(object, state), rect)) {
+      if (objectMatchesMarquee(getObjectBounds(object, state), rect, mode)) {
         selected.push(index)
       }
     })
     return selected
   }
 
-  function objectMatchesMarquee(objectBounds, rect) {
-    if (state.marqueeSelectionMode === 'intersect') {
+  function objectMatchesMarquee(objectBounds, rect, mode) {
+    if (mode === 'intersect') {
       return objectBounds.right >= rect.left
         && objectBounds.left <= rect.right
         && objectBounds.bottom >= rect.top
@@ -236,8 +239,12 @@ export function createStageRenderer({
       && objectBounds.bottom <= rect.bottom
   }
 
-  function getMarqueeTheme() {
-    return MARQUEE_THEMES[state.marqueeSelectionMode] ?? MARQUEE_THEMES.contained
+  function getMarqueeMode(start, current) {
+    return current.x >= start.x ? 'contained' : 'intersect'
+  }
+
+  function getMarqueeTheme(start, current) {
+    return MARQUEE_THEMES[getMarqueeMode(start, current)]
   }
 
   function getLogicalRect(start, current) {
@@ -546,6 +553,7 @@ export function createStageRenderer({
     }
     renderInspector()
     renderLayers()
+    renderAll()
   }
 
   function loadImage(src) {

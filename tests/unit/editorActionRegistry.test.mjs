@@ -49,7 +49,6 @@ test('createEditorActionRegistry exposes the event binding action surface', () =
       'saveLocalBoard',
       'saveLocalBoardAs',
       'selectObject',
-      'setMarqueeSelectionMode',
       'setStageZoom',
       'stepZoom',
       'toggleGrid',
@@ -77,7 +76,6 @@ test('createEditorActionRegistry exposes the event binding action surface', () =
     editorContext: {
       deselect: handlers.deselect,
       selectObject: handlers.selectObject,
-      setMarqueeSelectionMode: handlers.setMarqueeSelectionMode,
     },
     historyControls: {
       redo: handlers.redo,

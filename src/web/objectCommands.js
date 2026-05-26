@@ -57,7 +57,7 @@ export function createObjectCommands({
 
     addObjectAt(type, point) {
       recordHistory()
-      const object = createDefaultObject(type, point)
+      const object = createDefaultObject(type, normalizePoint(point.x, point.y))
       state.board.objects.push(object)
       appendObjectLayerNode(state.layerTree, object.editorId)
       selectObject(state.board.objects.length - 1)
@@ -295,6 +295,7 @@ export function createObjectCommands({
       const object = getSelected()
       if (!object) return
       state.clipboard = structuredClone(object)
+      renderAll()
       showStatus(`已复制 ${object.type}`)
     },
 

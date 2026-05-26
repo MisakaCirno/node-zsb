@@ -50,29 +50,10 @@
                 <input id="grid-toggle" type="checkbox" />
                 <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 4h16v16H4z"/><path d="M4 10h16"/><path d="M4 16h16"/><path d="M10 4v16"/><path d="M16 4v16"/></svg>
               </label>
-              <div class="toolbar-group marquee-mode-group" aria-label="框选模式">
-                <span class="toolbar-label">框选模式</span>
-                <select id="marquee-mode" class="toolbar-select" title="框选模式" aria-label="框选模式">
-                  <option value="contained">全包含</option>
-                  <option value="intersect">相交</option>
-                </select>
-              </div>
             </div>
             <div class="toolbar-group zoom-actions" aria-label="缩放">
-              <button id="zoom-out" class="icon-tool" type="button" title="缩小" aria-label="缩小">
-                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14"/></svg>
-              </button>
-              <select id="zoom-select" aria-label="缩放">
-                <option value="fit">适配</option>
-                <option value="0.5">50%</option>
-                <option value="0.75">75%</option>
-                <option value="1">100%</option>
-                <option value="1.25">125%</option>
-                <option value="1.5">150%</option>
-              </select>
-              <button id="zoom-in" class="icon-tool" type="button" title="放大" aria-label="放大">
-                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14"/><path d="M5 12h14"/></svg>
-              </button>
+              <input id="zoom-select" class="zoom-range" type="range" min="0.35" max="1.5" step="0.01" value="1" aria-label="缩放" />
+              <output id="zoom-value" for="zoom-select">100%</output>
               <button id="fit-stage" class="icon-tool" type="button" title="适配画布" aria-label="适配">
                 <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 3H5a2 2 0 0 0-2 2v3"/><path d="M16 3h3a2 2 0 0 1 2 2v3"/><path d="M8 21H5a2 2 0 0 1-2-2v-3"/><path d="M16 21h3a2 2 0 0 0 2-2v-3"/></svg>
               </button>
@@ -86,11 +67,14 @@
               <button id="redo-action" class="icon-tool" type="button" title="重做" aria-label="重做" disabled>
                 <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m15 7 5 5-5 5"/><path d="M20 12H9a5 5 0 0 0 0 10h1"/></svg>
               </button>
-              <button id="clear-board" class="icon-tool" type="button" title="清空画板" aria-label="清空" disabled>
+              <button id="clear-board" class="icon-tool danger-tool" type="button" title="清空画板" aria-label="清空" disabled>
                 <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M6 7l1 14h10l1-14"/><path d="M9 7V4h6v3"/></svg>
               </button>
               <button id="duplicate-object" class="icon-tool" type="button" title="复制对象" aria-label="复制" disabled>
                 <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="8" y="8" width="11" height="11" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v1"/></svg>
+              </button>
+              <button id="paste-object" class="icon-tool" type="button" title="粘贴对象" aria-label="粘贴" disabled>
+                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 4h8l1 3H7z"/><path d="M7 7H5v14h14V7h-2"/><path d="M9 13h6"/><path d="M9 17h4"/></svg>
               </button>
             </div>
             <div class="toolbar-group align-actions" aria-label="对齐">
@@ -120,11 +104,14 @@
       <div id="right-panel-resizer" class="panel-resizer" role="separator" aria-label="调整右侧面板宽度" aria-orientation="vertical" tabindex="0"></div>
 
       <aside class="panel inspector">
-        <section>
+        <section class="inspector-section share-section">
+          <div class="section-title">分享</div>
           <label class="field share-name-field" for="board-name">
             <span>分享名</span>
             <input id="board-name" maxlength="7" placeholder="分享名" />
           </label>
+        </section>
+        <section class="inspector-section property-section">
           <div class="section-title">属性</div>
           <div id="empty-state" class="empty-state">选择一个对象</div>
           <div id="inspector-form" class="inspector-form hidden">
@@ -227,30 +214,36 @@
           </div>
         </section>
 
-        <section class="layers-section">
+        <section class="inspector-section layers-section">
           <div class="section-title">图层 <span id="layer-count">0</span></div>
           <div class="layer-toolbar">
-            <button id="move-top" class="icon-tool" type="button" title="移到顶层" aria-label="移到顶层" disabled>
-              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 4h14"/><path d="m12 6-5 5"/><path d="m12 6 5 5"/><path d="M12 6v14"/></svg>
-            </button>
-            <button id="move-up" class="icon-tool" type="button" title="上移图层" aria-label="上移" disabled>
-              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m12 5-5 5"/><path d="m12 5 5 5"/><path d="M12 5v14"/></svg>
-            </button>
-            <button id="move-down" class="icon-tool" type="button" title="下移图层" aria-label="下移" disabled>
-              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m12 19-5-5"/><path d="m12 19 5-5"/><path d="M12 5v14"/></svg>
-            </button>
-            <button id="move-bottom" class="icon-tool" type="button" title="移到底层" aria-label="移到底层" disabled>
-              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 20h14"/><path d="m12 18-5-5"/><path d="m12 18 5-5"/><path d="M12 4v14"/></svg>
-            </button>
-            <button id="group-layers" class="icon-tool" type="button" title="创建组" aria-label="创建组" disabled>
-              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 6h7l2 3h9v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><path d="M3 9h18"/><path d="M12 13v4"/><path d="M10 15h4"/></svg>
-            </button>
-            <button id="ungroup-layers" class="icon-tool" type="button" title="解组" aria-label="解组" disabled>
-              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 6h7l2 3h9v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><path d="M3 9h18"/><path d="M10 15h4"/></svg>
-            </button>
-            <button id="delete-object" class="icon-tool danger-tool" type="button" title="删除对象" aria-label="删除" disabled>
-              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16"/><path d="M6 7l1 14h10l1-14"/><path d="M9 7V4h6v3"/></svg>
-            </button>
+            <div class="layer-toolbar-group" aria-label="图层顺序">
+              <button id="move-top" class="icon-tool" type="button" title="移到顶层" aria-label="移到顶层" disabled>
+                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 4h14"/><path d="m12 6-5 5"/><path d="m12 6 5 5"/><path d="M12 6v14"/></svg>
+              </button>
+              <button id="move-up" class="icon-tool" type="button" title="上移图层" aria-label="上移" disabled>
+                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m12 5-5 5"/><path d="m12 5 5 5"/><path d="M12 5v14"/></svg>
+              </button>
+              <button id="move-down" class="icon-tool" type="button" title="下移图层" aria-label="下移" disabled>
+                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m12 19-5-5"/><path d="m12 19 5-5"/><path d="M12 5v14"/></svg>
+              </button>
+              <button id="move-bottom" class="icon-tool" type="button" title="移到底层" aria-label="移到底层" disabled>
+                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 20h14"/><path d="m12 18-5-5"/><path d="m12 18 5-5"/><path d="M12 4v14"/></svg>
+              </button>
+            </div>
+            <div class="layer-toolbar-group" aria-label="图层分组">
+              <button id="group-layers" class="icon-tool" type="button" title="创建组" aria-label="创建组" disabled>
+                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 6h7l2 3h9v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><path d="M3 9h18"/><path d="M12 13v4"/><path d="M10 15h4"/></svg>
+              </button>
+              <button id="ungroup-layers" class="icon-tool" type="button" title="解组" aria-label="解组" disabled>
+                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 6h7l2 3h9v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><path d="M3 9h18"/><path d="M10 15h4"/></svg>
+              </button>
+            </div>
+            <div class="layer-toolbar-group danger-toolbar-group" aria-label="图层删除">
+              <button id="delete-object" class="icon-tool danger-tool" type="button" title="删除对象" aria-label="删除" disabled>
+                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16"/><path d="M6 7l1 14h10l1-14"/><path d="M9 7V4h6v3"/></svg>
+              </button>
+            </div>
           </div>
           <div id="layers" class="layers"></div>
         </section>

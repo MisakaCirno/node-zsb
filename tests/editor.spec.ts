@@ -1,4 +1,4 @@
-import { expect, test, type Page } from '@playwright/test'
+import { expect, test, type Locator, type Page } from '@playwright/test'
 import { readFile } from 'node:fs/promises'
 
 async function openImportDialog(page: Page) {
@@ -64,6 +64,18 @@ async function dragLayerRowToVerticalZone(
     targetPosition: {
       x: Math.min(24, box.width / 2),
       y: box.height * ratio,
+    },
+  })
+}
+
+async function dragLayerIntoGroup(source: Locator, target: Locator) {
+  const box = await target.boundingBox()
+  if (!box) throw new Error('Target group row is not visible')
+  await source.dragTo(target, {
+    force: true,
+    targetPosition: {
+      x: Math.min(42, box.width / 2),
+      y: box.height / 2,
     },
   })
 }
@@ -217,9 +229,7 @@ test('editor groups selected layers and exports the group in project JSON', asyn
   await page.keyboard.press('Enter')
   await expect(groupRow.locator('.layer-name')).toHaveText('第一组')
 
-  await page.locator('#layers .layer-row').filter({ hasText: 'dps' }).first().dragTo(groupRow, {
-    force: true,
-  })
+  await dragLayerIntoGroup(page.locator('#layers .layer-row').filter({ hasText: 'dps' }).first(), groupRow)
   await expect(groupRow.locator('.layer-position')).toHaveText('3 个对象')
   await page.getByTitle('tank').first().click()
   await expect(page.locator('#layers .layer-group-row')).toHaveCount(1)
@@ -278,7 +288,7 @@ test('editor drags nested groups back to the layer root', async ({ page }) => {
 
   const outerGroup = page.locator('#layers .layer-group-row').nth(0)
   const innerGroup = page.locator('#layers .layer-group-row').nth(1)
-  await innerGroup.dragTo(outerGroup, { force: true })
+  await dragLayerIntoGroup(innerGroup, outerGroup)
   await expect(page.locator('#layers .layer-group-row')).toHaveCount(2)
   const nestedProject = await exportProjectFile(page)
   expect(nestedProject.layers[0].children.some((node: { type: string }) =>
@@ -321,14 +331,18 @@ test('editor reorders layer groups by dropping above and below rows', async ({ p
 
   await dragLayerRowToVerticalZone(page, 1, 0, 0.05)
   const beforeProject = await exportProjectFile(page)
-  expect(beforeProject.layers.slice(0, 2).map((node: { id: string }) => node.id)).toEqual([
+  expect(beforeProject.layers
+    .filter((node: { type: string }) => node.type === 'group')
+    .map((node: { id: string }) => node.id)).toEqual([
     initialGroupIds[1],
     initialGroupIds[0],
   ])
 
   await dragLayerRowToVerticalZone(page, 0, 1, 0.95)
   const afterProject = await exportProjectFile(page)
-  expect(afterProject.layers.slice(0, 2).map((node: { id: string }) => node.id)).toEqual([
+  expect(afterProject.layers
+    .filter((node: { type: string }) => node.type === 'group')
+    .map((node: { id: string }) => node.id)).toEqual([
     initialGroupIds[0],
     initialGroupIds[1],
   ])
@@ -453,7 +467,10 @@ test('editor renders readable Chinese labels', async ({ page }) => {
   await expect(page.locator('.file-menu-code-actions')).toHaveCount(1)
   await expect(page.locator('.board-name-label')).toHaveText('文件名')
   await expect(page.locator('.share-name-field span')).toHaveText('分享名')
-  await expect(page.locator('.inspector section:first-of-type > :first-child')).toHaveClass(/share-name-field/)
+  await expect(page.locator('.inspector-section')).toHaveCount(3)
+  await expect(page.locator('.share-section .share-name-field')).toBeVisible()
+  await expect(page.locator('.property-section > .section-title')).toHaveText('属性')
+  await expect(page.locator('.layers-section > .section-title')).toContainText('图层')
   await openExportCodeDialog(page)
   await expect(page.locator('#copy-export-code')).toBeVisible()
   await expect(page.getByPlaceholder('分享名')).toBeVisible()
@@ -470,10 +487,14 @@ test('editor renders readable Chinese labels', async ({ page }) => {
   )
   await expect(page.locator('.stage-toolbar-row')).toHaveCount(2)
   await expect(page.locator('.stage-toolbar-main #zoom-select')).toHaveCount(1)
+  await expect(page.locator('.stage-toolbar-main #zoom-select')).toHaveAttribute('type', 'range')
+  await expect(page.locator('.stage-toolbar-main #zoom-value')).toBeVisible()
   await expect(page.locator('.stage-toolbar-main #undo-action')).toHaveCount(0)
   await expect(page.locator('.stage-toolbar-actions #undo-action')).toHaveCount(1)
   await expect(page.locator('#align-left')).toHaveText('')
   await expect(page.locator('#align-left svg')).toBeVisible()
+  await expect(page.locator('#marquee-mode')).toHaveCount(0)
+  await expect(page.locator('.layer-toolbar-group')).toHaveCount(3)
   await expect(page.locator('#asset-tab-background')).toHaveAttribute('role', 'tab')
   await expect(page.locator('#asset-tab-objects')).toHaveAttribute('aria-selected', 'true')
   await expect(page.locator('#palette-tabs')).toHaveAttribute('role', 'tablist')
@@ -719,7 +740,7 @@ test('editor aligns a single selected object to the canvas', async ({ page }) =>
   await expect(page.locator('#object-y')).toHaveValue('192')
 })
 
-test('editor marquee-selects objects with contained and intersect modes', async ({ page }) => {
+test('editor uses CAD-style marquee direction for contained and intersect selection', async ({ page }) => {
   await page.goto('/editor')
   await expect(page.locator('#layers')).toContainText('tank')
 
@@ -753,7 +774,6 @@ test('editor marquee-selects objects with contained and intersect modes', async 
       const y = Math.round((45 / 384) * canvas.height)
       return Array.from(context.getImageData(x, y, 1, 1).data)
     })
-  await expect(page.locator('#marquee-mode')).toHaveValue('contained')
   const start = point(10, 10)
   const end = point(80, 80)
   await page.mouse.move(start.x, start.y)
@@ -765,10 +785,9 @@ test('editor marquee-selects objects with contained and intersect modes', async 
   await page.mouse.up()
   await expect(page.locator('#layers .layer-row.active')).toHaveCount(0)
 
-  await page.locator('#marquee-mode').selectOption('intersect')
-  await page.mouse.move(start.x, start.y)
+  await page.mouse.move(end.x, start.y)
   await page.mouse.down()
-  await page.mouse.move(end.x, end.y, { steps: 6 })
+  await page.mouse.move(start.x, end.y, { steps: 6 })
   const intersectColor = await sampleMarqueeColor()
   if (!intersectColor) throw new Error('Marquee color sample is not available')
   expect(intersectColor[1] ?? 0).toBeGreaterThan(intersectColor[2] ?? 0)
@@ -873,6 +892,7 @@ test('editor updates object action button states from the selection', async ({
 
   await expect(page.locator('#delete-object')).toBeDisabled()
   await expect(page.locator('#duplicate-object')).toBeDisabled()
+  await expect(page.locator('#paste-object')).toBeDisabled()
   await expect(page.locator('#center-object')).toHaveCount(0)
   await expect(page.locator('#move-top')).toBeDisabled()
   await expect(page.locator('#move-up')).toBeDisabled()
@@ -886,10 +906,14 @@ test('editor updates object action button states from the selection', async ({
   await page.locator('#layers .layer-row').first().click()
   await expect(page.locator('#delete-object')).toBeEnabled()
   await expect(page.locator('#duplicate-object')).toBeEnabled()
+  await expect(page.locator('#paste-object')).toBeDisabled()
   await expect(page.locator('#move-top')).toBeDisabled()
   await expect(page.locator('#move-up')).toBeDisabled()
   await expect(page.locator('#move-down')).toBeEnabled()
   await expect(page.locator('#move-bottom')).toBeEnabled()
+
+  await page.keyboard.press('Control+C')
+  await expect(page.locator('#paste-object')).toBeEnabled()
 
   await page.locator('#object-locked').check()
 
@@ -1312,6 +1336,16 @@ test('editor snaps positions to the grid and centers the selected object', async
   await expect(page.locator('#object-x')).toHaveValue('304')
   await expect(page.locator('#object-y')).toHaveValue('224')
 
+  const canvas = page.locator('#stage-host canvas').first()
+  const box = await canvas.boundingBox()
+  if (!box) throw new Error('Canvas is not visible')
+  await page.mouse.move(box.x + (304 / 512) * box.width, box.y + (224 / 384) * box.height)
+  await page.mouse.down()
+  await page.mouse.move(box.x + (277 / 512) * box.width, box.y + (213 / 384) * box.height)
+  await page.mouse.up()
+  await expect(page.locator('#object-x')).toHaveValue('272')
+  await expect(page.locator('#object-y')).toHaveValue('208')
+
   await page.locator('#stage-host').click({ button: 'right' })
   await page.getByRole('menuitem', { name: '居中对象' }).click()
   await expect(page.locator('#object-x')).toHaveValue('256')
@@ -1364,32 +1398,30 @@ test('editor fits the stage and changes zoom levels', async ({ page }) => {
   await expect(page.locator('#layers')).toContainText('tank')
 
   const canvas = page.locator('#stage-host canvas').first()
-  await expect(page.locator('#zoom-select')).toHaveValue('fit')
+  await expect(page.locator('#zoom-select')).toHaveAttribute('type', 'range')
+  await expect(page.locator('#zoom-value')).toContainText('适配')
   const fittedBox = await canvas.boundingBox()
   expect(fittedBox?.width).toBeLessThan(900)
 
-  await page.locator('#zoom-select').selectOption('1')
+  await page.locator('#zoom-select').fill('1')
+  await page.locator('#zoom-select').dispatchEvent('input')
   await expect(page.locator('#status')).toContainText('已设置画布缩放 100%')
   const fullBox = await canvas.boundingBox()
   expect(fullBox?.width).toBeGreaterThan(1000)
 
-  await page.locator('#zoom-out').click()
-  await expect(page.locator('#zoom-select')).toHaveValue('0.75')
-  await expect(page.locator('#status')).toContainText('已设置画布缩放 75%')
-
   await page.keyboard.press('Control+=')
+  await expect(page.locator('#zoom-select')).toHaveValue('1.25')
+  await expect(page.locator('#status')).toContainText('已设置画布缩放 125%')
+
+  await page.keyboard.press('Control+-')
   await expect(page.locator('#zoom-select')).toHaveValue('1')
   await expect(page.locator('#status')).toContainText('已设置画布缩放 100%')
 
-  await page.keyboard.press('Control+-')
-  await expect(page.locator('#zoom-select')).toHaveValue('0.75')
-  await expect(page.locator('#status')).toContainText('已设置画布缩放 75%')
-
   await page.keyboard.press('Control+0')
-  await expect(page.locator('#zoom-select')).toHaveValue('fit')
+  await expect(page.locator('#zoom-value')).toContainText('适配')
   await expect(page.locator('#status')).toContainText('已适配画布视图')
 
   await page.locator('#fit-stage').click()
-  await expect(page.locator('#zoom-select')).toHaveValue('fit')
+  await expect(page.locator('#zoom-value')).toContainText('适配')
   await expect(page.locator('#status')).toContainText('已适配画布视图')
 })

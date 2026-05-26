@@ -69,10 +69,6 @@ export function createEditorContext({
     renderAll()
   }
 
-  function setMarqueeSelectionMode(mode) {
-    state.marqueeSelectionMode = mode === 'intersect' ? 'intersect' : 'contained'
-  }
-
   function deselect() {
     setSelection([])
     renderAll()
@@ -119,7 +115,6 @@ export function createEditorContext({
     selectObject,
     selectLayerGroup,
     selectObjects,
-    setMarqueeSelectionMode,
   }
 }
 

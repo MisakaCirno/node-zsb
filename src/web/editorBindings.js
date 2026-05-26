@@ -80,6 +80,7 @@ export function bindEditorEvents({
   elements.clearBoard.addEventListener('click', actions.clearBoard)
   elements.deleteObject.addEventListener('click', actions.deleteSelected)
   elements.duplicateObject.addEventListener('click', actions.duplicateSelected)
+  elements.pasteObject.addEventListener('click', actions.pasteObject)
   elements.moveTop.addEventListener('click', () => actions.moveSelectedTo(0))
   elements.moveUp.addEventListener('click', () => actions.moveSelected(-1))
   elements.moveDown.addEventListener('click', () => actions.moveSelected(1))
@@ -93,20 +94,12 @@ export function bindEditorEvents({
   elements.alignTop.addEventListener('click', () => actions.alignSelected('top'))
   elements.alignCenterY.addEventListener('click', () => actions.alignSelected('center-y'))
   elements.alignBottom.addEventListener('click', () => actions.alignSelected('bottom'))
-  elements.zoomOut.addEventListener('click', () => actions.stepZoom(-1))
-  elements.zoomIn.addEventListener('click', () => actions.stepZoom(1))
   elements.fitStage.addEventListener('click', () => actions.applyFitZoom())
-  elements.zoomSelect.addEventListener('change', () => {
-    if (elements.zoomSelect.value === 'fit') {
-      actions.applyFitZoom()
-      return
-    }
+  elements.zoomSelect.addEventListener('input', () => {
     actions.setStageZoom(Number(elements.zoomSelect.value), { mode: 'manual' })
   })
   elements.snap.addEventListener('change', actions.toggleSnapToGrid)
   elements.grid.addEventListener('change', actions.toggleGrid)
-  elements.marqueeMode.addEventListener('change', () =>
-    actions.setMarqueeSelectionMode(elements.marqueeMode.value))
   bindLayoutResizers({
     elements,
     onResize: actions.applyFitZoomOnResize,

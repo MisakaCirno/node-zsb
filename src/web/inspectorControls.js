@@ -54,6 +54,7 @@ export function createInspectorControls({
     elements.clearBoard.disabled = state.board.objects.length === 0
     elements.deleteObject.disabled = !hasSelection
     elements.duplicateObject.disabled = !hasSelection
+    elements.pasteObject.disabled = !state.clipboard
     elements.moveTop.disabled = !hasSelection || state.selectedIndex <= 0
     elements.moveUp.disabled = !hasSelection || state.selectedIndex <= 0
     elements.moveDown.disabled =
