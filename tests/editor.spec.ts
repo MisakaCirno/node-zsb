@@ -64,6 +64,33 @@ test('editor loads, edits an object, exports code, and renders a preview', async
   expect(consoleErrors).toEqual([])
 })
 
+test('editor creates an object by dragging from the palette to the canvas', async ({
+  page,
+}) => {
+  await page.goto('/editor')
+  await expect(page.locator('#layers')).toContainText('tank')
+
+  const before = await page.locator('#layers .layer-row').count()
+  const canvas = page.locator('#stage-host canvas').first()
+  const box = await canvas.boundingBox()
+  if (!box) throw new Error('Canvas is not visible')
+  const target = {
+    x: Math.round(box.width * 0.25),
+    y: Math.round(box.height * 0.4),
+  }
+
+  await expect(page.getByTitle('tank').first()).toHaveAttribute('draggable', 'true')
+  await page.getByTitle('tank').first().dragTo(canvas, {
+    force: true,
+    targetPosition: target,
+  })
+
+  await expect(page.locator('#layers .layer-row')).toHaveCount(before + 1)
+  await expect(page.locator('#object-type')).toHaveValue('tank')
+  await expect(page.locator('#object-x')).toHaveValue(String(Math.round((target.x / box.width) * 512)))
+  await expect(page.locator('#object-y')).toHaveValue(String(Math.round((target.y / box.height) * 384)))
+})
+
 test('editor renders readable Chinese labels', async ({ page }) => {
   await page.goto('/editor')
 

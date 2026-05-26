@@ -1,5 +1,10 @@
 import { handleEditorKeyboard } from './keyboardShortcuts.js'
 import { bindColorPicker } from './colorPicker.js'
+import {
+  LOGICAL_SCALE,
+  SCENE_HEIGHT,
+  SCENE_WIDTH,
+} from './constants.js'
 
 export function bindEditorEvents({
   elements,
@@ -66,6 +71,7 @@ export function bindEditorEvents({
   })
   elements.snap.addEventListener('change', actions.toggleSnapToGrid)
   elements.grid.addEventListener('change', actions.toggleGrid)
+  bindPaletteDrop(elements, actions)
   bindContextMenu(elements, actions)
   window.addEventListener('resize', actions.applyFitZoomOnResize)
   document.addEventListener('keydown', (event) =>
@@ -97,6 +103,44 @@ export function bindEditorEvents({
     elements.locked,
   ]) {
     input.addEventListener('input', actions.updateSelectedFromInspector)
+  }
+}
+
+function bindPaletteDrop(elements, actions) {
+  elements.stageHost.addEventListener('dragover', (event) => {
+    if (!Array.from(event.dataTransfer.types).includes('application/x-node-zsb-object-type')) return
+    event.preventDefault()
+    event.dataTransfer.dropEffect = 'copy'
+    elements.stageHost.classList.add('drag-target')
+  })
+  elements.stageHost.addEventListener('dragleave', (event) => {
+    if (elements.stageHost.contains(event.relatedTarget)) return
+    elements.stageHost.classList.remove('drag-target')
+  })
+  elements.stageHost.addEventListener('drop', (event) => {
+    const type = event.dataTransfer.getData('application/x-node-zsb-object-type')
+    if (!type) return
+    event.preventDefault()
+    elements.stageHost.classList.remove('drag-target')
+    const point = getStageDropPoint(elements, event)
+    if (!point) return
+    actions.addObjectAt(type, point)
+  })
+}
+
+function getStageDropPoint(elements, event) {
+  const canvas = elements.stageHost.querySelector('canvas')
+  if (!canvas) return null
+  const rect = canvas.getBoundingClientRect()
+  if (
+    event.clientX < rect.left
+    || event.clientX > rect.right
+    || event.clientY < rect.top
+    || event.clientY > rect.bottom
+  ) return null
+  return {
+    x: Math.round(((event.clientX - rect.left) / rect.width) * (SCENE_WIDTH / LOGICAL_SCALE)),
+    y: Math.round(((event.clientY - rect.top) / rect.height) * (SCENE_HEIGHT / LOGICAL_SCALE)),
   }
 }
 

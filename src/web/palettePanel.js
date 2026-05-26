@@ -44,11 +44,17 @@ function renderPalette({ state, elements, onAddObject }) {
   for (const type of [...new Set(types)]) {
     const button = document.createElement('button')
     button.type = 'button'
+    button.draggable = true
     button.title = type
     button.append(createObjectPreview({
       iconConfigs: state.iconConfigs,
       type,
     }))
+    button.addEventListener('dragstart', (event) => {
+      event.dataTransfer.effectAllowed = 'copy'
+      event.dataTransfer.setData('application/x-node-zsb-object-type', type)
+      event.dataTransfer.setData('text/plain', type)
+    })
     button.addEventListener('click', () => onAddObject(type))
     elements.palette.append(button)
   }

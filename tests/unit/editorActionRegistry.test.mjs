@@ -8,6 +8,7 @@ test('createEditorActionRegistry exposes the event binding action surface', () =
     [
       'applyFitZoom',
       'applyFitZoomOnResize',
+      'addObjectAt',
       'alignSelected',
       'centerSelected',
       'clearBoard',
@@ -75,6 +76,7 @@ test('createEditorActionRegistry exposes the event binding action surface', () =
       copySelected: handlers.copySelected,
       deleteSelected: handlers.deleteSelected,
       duplicateSelected: handlers.duplicateSelected,
+      addObjectAt: handlers.addObjectAt,
       getLastLayerIndex: handlers.getLastLayerIndex,
       moveSelected: handlers.moveSelected,
       moveSelectedTo: handlers.moveSelectedTo,

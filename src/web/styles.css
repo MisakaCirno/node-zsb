@@ -347,6 +347,10 @@ textarea {
   padding: 24px;
 }
 
+#stage-host.drag-target {
+  background: radial-gradient(circle at center, rgba(102, 194, 165, 0.12), transparent 58%);
+}
+
 #stage-host canvas {
   outline: 1px solid #3a4650;
   box-shadow: 0 18px 50px rgba(0, 0, 0, 0.4);
@@ -421,6 +425,11 @@ textarea {
   padding: 0;
   display: grid;
   place-items: center;
+  cursor: grab;
+}
+
+.palette button:active {
+  cursor: grabbing;
 }
 
 .object-preview {

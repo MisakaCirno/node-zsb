@@ -32,6 +32,13 @@ export function createObjectCommands({
       selectObject(state.board.objects.length - 1)
     },
 
+    addObjectAt(type, point) {
+      recordHistory()
+      const object = createDefaultObject(type, point)
+      state.board.objects.push(object)
+      selectObject(state.board.objects.length - 1)
+    },
+
     toggleLayerFlag(index, key) {
       const object = state.board.objects[index]
       if (!object) return
@@ -237,17 +244,24 @@ function mapMovedIndex(index, fromIndex, toIndex) {
   return index
 }
 
-function createDefaultObject(type) {
+function createDefaultObject(type, point = BOARD_CENTER) {
   const base = {
     type,
-    x: BOARD_CENTER.x,
-    y: BOARD_CENTER.y,
+    x: point.x,
+    y: point.y,
     size: 100,
     color: '#ff8000',
     transparency: 0,
   }
   if (type === 'text') return { ...base, text: '文字', color: '#ffffff' }
-  if (type === 'line') return { ...base, endX: 320, endY: BOARD_CENTER.y, height: 6 }
+  if (type === 'line') {
+    return {
+      ...base,
+      endX: clamp(point.x + 64, 0, 512),
+      endY: point.y,
+      height: 6,
+    }
+  }
   if (type === 'line_aoe') return { ...base, width: 128, height: 128 }
   if (type === 'fan_aoe') return { ...base, arcAngle: 90 }
   if (type === 'donut') return { ...base, donutRadius: 80 }
