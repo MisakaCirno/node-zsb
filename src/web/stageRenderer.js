@@ -16,6 +16,7 @@ import {
   toLogicalCoordinate,
   toSceneCoordinate,
 } from '../shared/boardGeometry.js'
+import { getSelectedIndexes } from './editorState.js'
 
 export function createStageRenderer({
   container,
@@ -105,15 +106,21 @@ export function createStageRenderer({
       }
     }
     objectLayer.draw()
-    const selectedObject = state.board.objects[state.selectedIndex]
-    const selectedNode = nodes.find((node) => node.getAttr('objectIndex') === state.selectedIndex)
-    transformer.enabledAnchors(selectedObject?.type === 'line' ? [] : [
+    const selectedIndexes = getSelectedIndexes(state)
+    const selectedObjects = selectedIndexes.map((index) => state.board.objects[index])
+    const selectedNodes = nodes.filter((node) => {
+      const index = node.getAttr('objectIndex')
+      return selectedIndexes.includes(index) && !state.board.objects[index]?.locked
+    })
+    const canScaleSelection = selectedObjects.length > 0
+      && selectedObjects.every((object) => object?.type !== 'line')
+    transformer.enabledAnchors(canScaleSelection ? [
       'top-left',
       'top-right',
       'bottom-left',
       'bottom-right',
-    ])
-    transformer.nodes(selectedNode && !selectedObject?.locked ? [selectedNode] : [])
+    ] : [])
+    transformer.nodes(selectedNodes)
     transformerLayer.draw()
   }
 
@@ -155,7 +162,9 @@ export function createStageRenderer({
     node.opacity(objectOpacity(object, { hiddenOpacity: 0.15 }))
     node.on('click tap', (event) => {
       event.cancelBubble = true
-      selectObject(index)
+      selectObject(index, {
+        toggle: Boolean(event.evt?.shiftKey || event.evt?.ctrlKey || event.evt?.metaKey),
+      })
     })
     node.on('dragstart', () => {
       recordHistory()

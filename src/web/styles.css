@@ -92,7 +92,8 @@ textarea {
 .stage-toolbar,
 .segmented,
 .field-grid,
-.checks {
+.checks,
+.toolbar-group {
   display: flex;
   gap: 8px;
 }
@@ -152,6 +153,20 @@ textarea {
 .stage-toolbar button {
   min-width: 52px;
   padding: 0 10px;
+}
+
+.toolbar-group {
+  align-items: center;
+  gap: 4px;
+  border-left: 1px solid #303b43;
+  border-right: 1px solid #303b43;
+  padding: 0 8px;
+}
+
+.toolbar-group button {
+  min-width: 34px;
+  width: 34px;
+  padding: 0;
 }
 
 #zoom-in,
@@ -308,6 +323,10 @@ textarea {
 .layer-row.active {
   border-color: #66c2a5;
   background: #20362f;
+}
+
+.layer-row.primary {
+  box-shadow: inset 3px 0 0 #66c2a5;
 }
 
 .layer-row.muted {

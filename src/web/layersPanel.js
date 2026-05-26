@@ -1,4 +1,5 @@
 import { createObjectPreview } from './iconPreview.js'
+import { getSelectedIndexes } from './editorState.js'
 
 export function renderLayers({
   state,
@@ -15,10 +16,12 @@ export function renderLayers({
     elements.layers.append(empty)
     return
   }
+  const selectedIndexes = getSelectedIndexes(state)
   state.board.objects.forEach((object, index) => {
     const row = document.createElement('div')
     row.className = 'layer-row'
-    row.classList.toggle('active', index === state.selectedIndex)
+    row.classList.toggle('active', selectedIndexes.includes(index))
+    row.classList.toggle('primary', index === state.selectedIndex)
     row.classList.toggle('muted', Boolean(object.hidden))
     const preview = createObjectPreview({
       iconConfigs: state.iconConfigs,
@@ -55,7 +58,9 @@ export function renderLayers({
       event.stopPropagation()
       onToggleLayerFlag(index, 'locked')
     })
-    row.addEventListener('click', () => onSelectObject(index))
+    row.addEventListener('click', (event) => onSelectObject(index, {
+      toggle: event.shiftKey || event.ctrlKey || event.metaKey,
+    }))
     elements.layers.append(row)
   })
 }

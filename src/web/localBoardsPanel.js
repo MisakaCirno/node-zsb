@@ -63,6 +63,7 @@ export function createLocalBoardsPanel({
     recordHistory()
     state.board = normalizeBoard(entry.board)
     state.selectedIndex = -1
+    state.selectedIndexes = []
     elements.boardName.value = state.board.name ?? ''
     renderBackgroundOptions()
     renderAll()

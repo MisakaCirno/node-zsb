@@ -235,6 +235,47 @@ test('editor scales the selected object from the canvas transformer', async ({ p
   await expect(page.locator('#object-size')).toHaveValue('100')
 })
 
+test('editor multi-selects objects on the canvas and aligns them', async ({ page }) => {
+  await page.goto('/editor')
+  await expect(page.locator('#layers')).toContainText('tank')
+
+  await page.getByTitle('tank').first().click()
+  await page.locator('#object-x').fill('220')
+  await page.locator('#object-y').fill('160')
+  await page.getByTitle('tank').first().click()
+  await page.locator('#object-x').fill('320')
+  await page.locator('#object-y').fill('220')
+
+  const canvas = page.locator('#stage-host canvas').first()
+  const box = await canvas.boundingBox()
+  if (!box) throw new Error('Canvas is not visible')
+  const scale = box.width / 1024
+  const point = (x: number, y: number) => ({
+    x: box.x + x * 2 * scale,
+    y: box.y + y * 2 * scale,
+  })
+
+  const first = point(220, 160)
+  const second = point(320, 220)
+  await page.mouse.click(first.x, first.y)
+  await page.keyboard.down('Control')
+  await page.mouse.click(second.x, second.y)
+  await page.keyboard.up('Control')
+
+  await expect(page.locator('#layers .layer-row.active')).toHaveCount(2)
+  await expect(page.locator('#align-left')).toBeEnabled()
+  await page.locator('#align-left').click()
+  await expect(page.locator('#object-x')).toHaveValue('220')
+
+  await page.locator('#align-bottom').click()
+  await expect(page.locator('#object-y')).toHaveValue('220')
+
+  await page.getByRole('button', { name: '撤销' }).click()
+  await expect(page.locator('#object-y')).toHaveValue('220')
+  await page.getByRole('button', { name: '撤销' }).click()
+  await expect(page.locator('#object-x')).toHaveValue('320')
+})
+
 test('editor reports invalid share code without replacing the board', async ({
   page,
 }) => {
@@ -550,7 +591,7 @@ test('editor snaps positions to the grid and centers the selected object', async
   await expect(page.locator('#object-x')).toHaveValue('304')
   await expect(page.locator('#object-y')).toHaveValue('224')
 
-  await page.getByRole('button', { name: '居中' }).click()
+  await page.locator('#center-object').click()
   await expect(page.locator('#object-x')).toHaveValue('256')
   await expect(page.locator('#object-y')).toHaveValue('192')
   await expect(page.locator('#status')).toContainText('已居中选中对象')

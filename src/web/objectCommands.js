@@ -1,4 +1,11 @@
 import { clamp } from './geometry.js'
+import { getSelectedIndexes } from './editorState.js'
+import {
+  getBoundsCenterX,
+  getBoundsCenterY,
+  getObjectBounds,
+  getSelectionBounds,
+} from './objectAlignment.js'
 
 const PASTE_OFFSET = 18
 const BOARD_CENTER = {
@@ -12,6 +19,7 @@ export function createObjectCommands({
   renderAll,
   selectObject,
   getSelected,
+  getSelectedList,
   normalizePoint,
   showStatus,
   confirmAction,
@@ -30,17 +38,24 @@ export function createObjectCommands({
       recordHistory()
       object[key] = object[key] ? undefined : true
       state.selectedIndex = index
+      state.selectedIndexes = [index]
       renderAll()
     },
 
     deleteSelected() {
-      if (state.selectedIndex < 0) return
+      const selectedIndexes = getSelectedIndexes(state)
+      if (selectedIndexes.length === 0) return
       recordHistory()
       const object = getSelected()
-      state.board.objects.splice(state.selectedIndex, 1)
+      for (const index of [...selectedIndexes].sort((a, b) => b - a)) {
+        state.board.objects.splice(index, 1)
+      }
       state.selectedIndex = -1
+      state.selectedIndexes = []
       renderAll()
-      showStatus(`已删除 ${object?.type ?? '对象'}`)
+      showStatus(selectedIndexes.length > 1
+        ? `已删除 ${selectedIndexes.length} 个对象`
+        : `已删除 ${object?.type ?? '对象'}`)
     },
 
     clearBoard() {
@@ -49,6 +64,7 @@ export function createObjectCommands({
       recordHistory()
       state.board.objects = []
       state.selectedIndex = -1
+      state.selectedIndexes = []
       renderAll()
       showStatus('已清空画板')
     },
@@ -73,19 +89,40 @@ export function createObjectCommands({
     },
 
     centerSelected() {
-      const object = getSelected()
-      if (!object || object.locked) return
+      const selectedIndexes = getSelectedIndexes(state)
+      const selectedObjects = selectedIndexes.map((index) => state.board.objects[index])
+      const movableObjects = selectedObjects.filter((object) => object && !object.locked)
+      if (movableObjects.length === 0) return
       recordHistory()
-      const oldX = object.x
-      const oldY = object.y
-      object.x = BOARD_CENTER.x
-      object.y = BOARD_CENTER.y
-      if (object.type === 'line' && object.endX !== undefined && object.endY !== undefined) {
-        object.endX = clamp(Math.round(object.endX + object.x - oldX), 0, 512)
-        object.endY = clamp(Math.round(object.endY + object.y - oldY), 0, 384)
+      if (movableObjects.length === 1) {
+        const object = movableObjects[0]
+        moveObjectBy(object, BOARD_CENTER.x - object.x, BOARD_CENTER.y - object.y)
+      } else {
+        const bounds = getSelectionBounds(selectedObjects, state)
+        const dx = BOARD_CENTER.x - getBoundsCenterX(bounds)
+        const dy = BOARD_CENTER.y - getBoundsCenterY(bounds)
+        for (const object of movableObjects) {
+          moveObjectBy(object, dx, dy)
+        }
       }
       renderAll()
-      showStatus('已居中选中对象')
+      showStatus(movableObjects.length > 1 ? '已居中选中对象组' : '已居中选中对象')
+    },
+
+    alignSelected(alignment) {
+      const selectedObjects = getSelectedList()
+      if (selectedObjects.length < 2) return
+      const movableObjects = selectedObjects.filter((object) => object && !object.locked)
+      if (movableObjects.length === 0) return
+      recordHistory()
+      const selectionBounds = getSelectionBounds(selectedObjects, state)
+      for (const object of movableObjects) {
+        const objectBounds = getObjectBounds(object, state)
+        const delta = getAlignmentDelta(alignment, objectBounds, selectionBounds)
+        moveObjectBy(object, delta.dx, delta.dy)
+      }
+      renderAll()
+      showStatus(`已对齐 ${movableObjects.length} 个对象`)
     },
 
     copySelected() {
@@ -117,14 +154,37 @@ export function createObjectCommands({
       recordHistory()
       const [dx, dy] = delta
       const point = normalizePoint(object.x + dx, object.y + dy)
-      object.x = point.x
-      object.y = point.y
-      if (object.type === 'line' && object.endX !== undefined && object.endY !== undefined) {
-        object.endX = clamp(Math.round(object.endX + dx), 0, 512)
-        object.endY = clamp(Math.round(object.endY + dy), 0, 384)
-      }
+      moveObjectBy(object, point.x - object.x, point.y - object.y)
       renderAll()
     },
+  }
+}
+
+function getAlignmentDelta(alignment, objectBounds, selectionBounds) {
+  switch (alignment) {
+    case 'left':
+      return { dx: selectionBounds.left - objectBounds.left, dy: 0 }
+    case 'center-x':
+      return { dx: getBoundsCenterX(selectionBounds) - getBoundsCenterX(objectBounds), dy: 0 }
+    case 'right':
+      return { dx: selectionBounds.right - objectBounds.right, dy: 0 }
+    case 'top':
+      return { dx: 0, dy: selectionBounds.top - objectBounds.top }
+    case 'center-y':
+      return { dx: 0, dy: getBoundsCenterY(selectionBounds) - getBoundsCenterY(objectBounds) }
+    case 'bottom':
+      return { dx: 0, dy: selectionBounds.bottom - objectBounds.bottom }
+    default:
+      return { dx: 0, dy: 0 }
+  }
+}
+
+function moveObjectBy(object, dx, dy) {
+  object.x = clamp(Math.round(object.x + dx), 0, 512)
+  object.y = clamp(Math.round(object.y + dy), 0, 384)
+  if (object.type === 'line' && object.endX !== undefined && object.endY !== undefined) {
+    object.endX = clamp(Math.round(object.endX + dx), 0, 512)
+    object.endY = clamp(Math.round(object.endY + dy), 0, 384)
   }
 }
 

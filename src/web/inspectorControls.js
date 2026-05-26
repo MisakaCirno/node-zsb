@@ -1,4 +1,5 @@
 import { getObjectCapabilities } from './board.js'
+import { getSelectedIndexes } from './editorState.js'
 import { numberValue } from './geometry.js'
 import { renderInspector as renderInspectorPanel } from './inspectorPanel.js'
 
@@ -47,13 +48,27 @@ export function createInspectorControls({
   function updateSelectionActions() {
     const object = getSelected()
     const hasSelection = Boolean(object)
+    const selectedIndexes = getSelectedIndexes(state)
+    const hasMultipleSelection = selectedIndexes.length > 1
+    const hasMovableSelection = selectedIndexes
+      .some((index) => !state.board.objects[index]?.locked)
     elements.clearBoard.disabled = state.board.objects.length === 0
     elements.deleteObject.disabled = !hasSelection
     elements.duplicateObject.disabled = !hasSelection
-    elements.centerObject.disabled = !hasSelection || Boolean(object?.locked)
+    elements.centerObject.disabled = !hasSelection || !hasMovableSelection
     elements.moveUp.disabled =
       !hasSelection || state.selectedIndex >= state.board.objects.length - 1
     elements.moveDown.disabled = !hasSelection || state.selectedIndex <= 0
+    for (const button of [
+      elements.alignLeft,
+      elements.alignCenterX,
+      elements.alignRight,
+      elements.alignTop,
+      elements.alignCenterY,
+      elements.alignBottom,
+    ]) {
+      button.disabled = !hasMultipleSelection || !hasMovableSelection
+    }
   }
 
   return {

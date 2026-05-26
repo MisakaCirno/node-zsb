@@ -11,6 +11,7 @@ export function createEditorActionRegistry({
   return {
     applyFitZoom: viewportControls.applyFitZoom,
     applyFitZoomOnResize: viewportControls.applyFitZoomOnResize,
+    alignSelected: objectCommands.alignSelected,
     centerSelected: objectCommands.centerSelected,
     clearBoard: objectCommands.clearBoard,
     copySelected: objectCommands.copySelected,

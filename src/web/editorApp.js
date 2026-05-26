@@ -43,6 +43,7 @@ export function createEditorApp({
   })
   const {
     getSelected,
+    getSelectedList,
     normalizeCoordinate,
     normalizePoint,
     selectObject,
@@ -64,6 +65,7 @@ export function createEditorApp({
     confirmAction,
     elements: els,
     getSelected,
+    getSelectedList,
     normalizePoint,
     recordHistory,
     renderAll,

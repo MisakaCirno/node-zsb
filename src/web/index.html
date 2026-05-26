@@ -50,6 +50,14 @@
           <button id="move-up" type="button" disabled>上移</button>
           <button id="move-down" type="button" disabled>下移</button>
           <button id="center-object" type="button" disabled>居中</button>
+          <div class="toolbar-group align-actions" aria-label="对齐">
+            <button id="align-left" type="button" title="左对齐" aria-label="左对齐" disabled>左</button>
+            <button id="align-center-x" type="button" title="水平居中对齐" aria-label="水平居中对齐" disabled>中</button>
+            <button id="align-right" type="button" title="右对齐" aria-label="右对齐" disabled>右</button>
+            <button id="align-top" type="button" title="顶端对齐" aria-label="顶端对齐" disabled>上</button>
+            <button id="align-center-y" type="button" title="垂直居中对齐" aria-label="垂直居中对齐" disabled>中</button>
+            <button id="align-bottom" type="button" title="底端对齐" aria-label="底端对齐" disabled>下</button>
+          </div>
           <button id="zoom-out" type="button">-</button>
           <select id="zoom-select" aria-label="缩放">
             <option value="fit">适配</option>
@@ -141,14 +149,13 @@
           <div class="section-title">图层 <span id="layer-count">0</span></div>
           <div id="layers" class="layers"></div>
         </section>
-
       </aside>
     </main>
     <dialog id="import-dialog" class="editor-dialog">
       <form method="dialog" class="dialog-panel">
         <header class="dialog-header">
           <h2>导入战术板代码</h2>
-          <button id="close-import-dialog" class="icon-button" type="submit" aria-label="关闭">×</button>
+          <button id="close-import-dialog" class="icon-button" type="submit" aria-label="关闭">x</button>
         </header>
         <label class="field">
           <span>战术板代码</span>
@@ -163,7 +170,7 @@
       <form method="dialog" class="dialog-panel">
         <header class="dialog-header">
           <h2>导出战术板</h2>
-          <button id="close-export-dialog" class="icon-button" type="submit" aria-label="关闭">×</button>
+          <button id="close-export-dialog" class="icon-button" type="submit" aria-label="关闭">x</button>
         </header>
         <div class="dialog-actions">
           <button id="export-code" type="button">生成代码</button>
