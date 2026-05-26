@@ -10,17 +10,7 @@
   <body>
     <main class="editor-shell">
       <aside class="panel sidebar">
-        <section class="toolbar">
-          <button id="open-import-dialog" type="button">导入</button>
-          <button id="open-export-dialog" type="button">导出</button>
-        </section>
-
-        <section>
-          <div class="section-title">背景</div>
-          <div id="background-list" class="background-list" role="radiogroup" aria-label="背景"></div>
-        </section>
-
-        <section>
+        <section class="sidebar-panel">
           <div class="section-title">本地存档</div>
           <label class="field">
             <span>存档槽</span>
@@ -31,9 +21,18 @@
             <button id="load-local-board" type="button" disabled>读取</button>
             <button id="delete-local-board" type="button" disabled>删除</button>
           </div>
+
+          <div class="section-title">导入导出</div>
+          <div class="toolbar">
+            <button id="open-import-dialog" type="button">导入</button>
+            <button id="open-export-dialog" type="button">导出</button>
+          </div>
         </section>
 
-        <section>
+        <section class="sidebar-panel">
+          <div class="section-title">背景</div>
+          <div id="background-list" class="background-list" role="radiogroup" aria-label="背景"></div>
+
           <div class="section-title">对象</div>
           <div id="palette-tabs" class="segmented"></div>
           <div id="palette" class="palette"></div>

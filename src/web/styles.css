@@ -78,6 +78,9 @@ textarea {
 .sidebar {
   border-right: 1px solid #27313a;
   padding: 14px;
+  display: grid;
+  align-content: start;
+  gap: 12px;
 }
 
 .inspector {
@@ -96,6 +99,17 @@ textarea {
 
 .toolbar button {
   flex: 1;
+}
+
+.sidebar-panel {
+  border: 1px solid #27313a;
+  border-radius: 8px;
+  padding: 12px;
+  background: #12171b;
+}
+
+.sidebar-panel .section-title:first-child {
+  margin-top: 0;
 }
 
 .icon-button {

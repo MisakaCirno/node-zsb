@@ -79,8 +79,9 @@ test('editor renders readable Chinese labels', async ({ page }) => {
     /tab1\.webp/,
   )
   await expect(page.locator('.section-title')).toContainText([
-    '背景',
     '本地存档',
+    '导入导出',
+    '背景',
     '对象',
     '属性',
     '图层',
