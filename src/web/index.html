@@ -10,6 +10,19 @@
   <body>
     <main class="editor-shell" id="editor-shell">
       <aside class="panel sidebar">
+        <section class="sidebar-panel asset-panel">
+          <div class="sidebar-tabs" role="tablist" aria-label="资源">
+            <button id="asset-tab-background" type="button" role="tab" aria-selected="false" aria-controls="asset-panel-background">背景</button>
+            <button id="asset-tab-objects" class="active" type="button" role="tab" aria-selected="true" aria-controls="asset-panel-objects">对象</button>
+          </div>
+          <div id="asset-panel-background" class="asset-tab-panel hidden" role="tabpanel" aria-labelledby="asset-tab-background">
+            <div id="background-list" class="background-list" role="radiogroup" aria-label="背景"></div>
+          </div>
+          <div id="asset-panel-objects" class="asset-tab-panel" role="tabpanel" aria-labelledby="asset-tab-objects">
+            <div id="palette-tabs" class="segmented"></div>
+            <div id="palette" class="palette" role="tabpanel"></div>
+          </div>
+        </section>
         <div class="editor-toolrail" role="toolbar" aria-label="编辑工具">
           <button id="align-left" class="icon-tool" type="button" title="左对齐" aria-label="左对齐" disabled>
             <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 4v16"/><path d="M8 7h10"/><path d="M8 12h7"/><path d="M8 17h12"/></svg>
@@ -31,19 +44,6 @@
             <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20h16"/><path d="M7 6v10"/><path d="M12 9v7"/><path d="M17 4v12"/></svg>
           </button>
         </div>
-        <section class="sidebar-panel asset-panel">
-          <div class="sidebar-tabs" role="tablist" aria-label="资源">
-            <button id="asset-tab-background" type="button" role="tab" aria-selected="false" aria-controls="asset-panel-background">背景</button>
-            <button id="asset-tab-objects" class="active" type="button" role="tab" aria-selected="true" aria-controls="asset-panel-objects">对象</button>
-          </div>
-          <div id="asset-panel-background" class="asset-tab-panel hidden" role="tabpanel" aria-labelledby="asset-tab-background">
-            <div id="background-list" class="background-list" role="radiogroup" aria-label="背景"></div>
-          </div>
-          <div id="asset-panel-objects" class="asset-tab-panel" role="tabpanel" aria-labelledby="asset-tab-objects">
-            <div id="palette-tabs" class="segmented"></div>
-            <div id="palette" class="palette" role="tabpanel"></div>
-          </div>
-        </section>
       </aside>
       <div id="left-panel-resizer" class="panel-resizer" role="separator" aria-label="调整左侧面板宽度" aria-orientation="vertical" tabindex="0"></div>
 
@@ -107,7 +107,13 @@
             <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 4h16v16H4z"/><path d="M4 10h16"/><path d="M4 16h16"/><path d="M10 4v16"/><path d="M16 4v16"/></svg>
           </label>
           <div class="toolbar-group zoom-actions" aria-label="缩放">
-            <input id="zoom-select" class="zoom-range" type="range" min="0.35" max="1.5" step="0.01" value="1" aria-label="缩放" />
+            <button id="zoom-out" class="icon-tool" type="button" title="缩小 Ctrl+-" aria-label="缩小">
+              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14"/></svg>
+            </button>
+            <input id="zoom-select" class="zoom-range" type="range" min="0.25" max="2" step="0.01" value="1" aria-label="缩放" />
+            <button id="zoom-in" class="icon-tool" type="button" title="放大 Ctrl+=" aria-label="放大">
+              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14"/><path d="M5 12h14"/></svg>
+            </button>
             <output id="zoom-value" for="zoom-select">100%</output>
             <button id="fit-stage" class="icon-tool" type="button" title="适配画布 Ctrl+0" aria-label="适配">
               <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 3H5a2 2 0 0 0-2 2v3"/><path d="M16 3h3a2 2 0 0 1 2 2v3"/><path d="M8 21H5a2 2 0 0 1-2-2v-3"/><path d="M16 21h3a2 2 0 0 0 2-2v-3"/></svg>

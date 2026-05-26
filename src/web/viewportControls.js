@@ -34,7 +34,7 @@ export function createViewportControls({
   }
 
   function setStageZoom(zoom, options = {}) {
-    const nextZoom = clamp(Number.isFinite(zoom) ? zoom : 1, 0.35, 1.5)
+    const nextZoom = clamp(Number.isFinite(zoom) ? zoom : 1, ZOOM_LEVELS[0], ZOOM_LEVELS.at(-1))
     state.zoom = nextZoom
     state.zoomMode = options.mode ?? 'manual'
     stage.scale({ x: nextZoom, y: nextZoom })
@@ -52,6 +52,8 @@ export function createViewportControls({
     elements.zoomSelect.value = String(state.zoom)
     elements.zoomValue.textContent =
       state.zoomMode === 'fit' ? `适配 ${formatZoom(state.zoom)}` : formatZoom(state.zoom)
+    elements.zoomOut.disabled = state.zoom <= ZOOM_LEVELS[0]
+    elements.zoomIn.disabled = state.zoom >= ZOOM_LEVELS.at(-1)
   }
 
   function toggleSnapToGrid() {

@@ -117,7 +117,7 @@ textarea {
 .sidebar {
   border-right: 1px solid #27313a;
   display: grid;
-  grid-template-columns: 46px minmax(0, 1fr);
+  grid-template-columns: minmax(0, 1fr) 46px;
   min-height: 0;
   overflow: hidden;
 }
@@ -127,7 +127,7 @@ textarea {
   align-content: start;
   gap: 6px;
   padding: 12px 6px;
-  border-right: 1px solid #27313a;
+  border-left: 1px solid #27313a;
   background: #101316;
 }
 
@@ -536,7 +536,7 @@ textarea {
 }
 
 .zoom-range {
-  width: 132px;
+  width: 146px;
   min-height: 0;
   height: 18px;
   padding: 0;
@@ -547,7 +547,7 @@ textarea {
 }
 
 #zoom-value {
-  min-width: 42px;
+  min-width: 62px;
   color: #a8b4bd;
   font-size: 12px;
   text-align: right;
@@ -636,7 +636,6 @@ textarea {
 
 #stage-host canvas {
   outline: 1px solid #3a4650;
-  box-shadow: 0 18px 50px rgba(0, 0, 0, 0.4);
 }
 
 .field {

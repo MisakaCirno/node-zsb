@@ -375,6 +375,12 @@ test('editor resizes side panels and keeps object tabs visible', async ({ page }
 
   await expect(page.locator('#left-panel-resizer')).toHaveAttribute('role', 'separator')
   await expect(page.locator('#right-panel-resizer')).toHaveAttribute('role', 'separator')
+  const assetBox = await page.locator('.asset-panel').boundingBox()
+  const toolrailBox = await page.locator('.editor-toolrail').boundingBox()
+  const stageBox = await page.locator('.stage-wrap').boundingBox()
+  if (!assetBox || !toolrailBox || !stageBox) throw new Error('Editor layout is not visible')
+  expect(toolrailBox.x).toBeGreaterThan(assetBox.x)
+  expect(stageBox.x).toBeGreaterThan(toolrailBox.x)
   expect(await tabsFit()).toBe(true)
   expect(await paletteTabWritingMode()).toBe('horizontal-tb')
   const initialPaletteColumns = await paletteColumnCount()
@@ -499,6 +505,10 @@ test('editor renders readable Chinese labels', async ({ page }) => {
   await expect(page.locator('.stage-toolbar-row')).toHaveCount(1)
   await expect(page.locator('.stage-statusbar #zoom-select')).toHaveCount(1)
   await expect(page.locator('.stage-statusbar #zoom-select')).toHaveAttribute('type', 'range')
+  await expect(page.locator('.stage-statusbar #zoom-select')).toHaveAttribute('min', '0.25')
+  await expect(page.locator('.stage-statusbar #zoom-select')).toHaveAttribute('max', '2')
+  await expect(page.locator('.stage-statusbar #zoom-out')).toBeVisible()
+  await expect(page.locator('.stage-statusbar #zoom-in')).toBeVisible()
   await expect(page.locator('.stage-statusbar #zoom-value')).toBeVisible()
   await expect(page.locator('.stage-statusbar #snap-toggle')).toHaveCount(1)
   await expect(page.locator('.stage-statusbar #grid-toggle')).toHaveCount(1)
@@ -1454,6 +1464,14 @@ test('editor fits the stage and changes zoom levels', async ({ page }) => {
   const fullBox = await canvas.boundingBox()
   expect(fullBox?.width).toBeGreaterThan(1000)
 
+  await page.locator('#zoom-out').click()
+  await expect(page.locator('#zoom-select')).toHaveValue('0.75')
+  await expect(page.locator('#status')).toContainText('已设置画布缩放 75%')
+
+  await page.locator('#zoom-in').click()
+  await expect(page.locator('#zoom-select')).toHaveValue('1')
+  await expect(page.locator('#status')).toContainText('已设置画布缩放 100%')
+
   await page.keyboard.press('Control+=')
   await expect(page.locator('#zoom-select')).toHaveValue('1.25')
   await expect(page.locator('#status')).toContainText('已设置画布缩放 125%')
@@ -1461,6 +1479,16 @@ test('editor fits the stage and changes zoom levels', async ({ page }) => {
   await page.keyboard.press('Control+-')
   await expect(page.locator('#zoom-select')).toHaveValue('1')
   await expect(page.locator('#status')).toContainText('已设置画布缩放 100%')
+
+  await page.locator('#zoom-select').fill('0.25')
+  await page.locator('#zoom-select').dispatchEvent('input')
+  await expect(page.locator('#zoom-select')).toHaveValue('0.25')
+  await expect(page.locator('#zoom-out')).toBeDisabled()
+
+  await page.locator('#zoom-select').fill('2')
+  await page.locator('#zoom-select').dispatchEvent('input')
+  await expect(page.locator('#zoom-select')).toHaveValue('2')
+  await expect(page.locator('#zoom-in')).toBeDisabled()
 
   await page.keyboard.press('Control+0')
   await expect(page.locator('#zoom-value')).toContainText('适配')

@@ -104,6 +104,8 @@ export function bindEditorEvents({
   elements.alignTop.addEventListener('click', () => actions.alignSelected('top'))
   elements.alignCenterY.addEventListener('click', () => actions.alignSelected('center-y'))
   elements.alignBottom.addEventListener('click', () => actions.alignSelected('bottom'))
+  elements.zoomOut.addEventListener('click', () => actions.stepZoom(-1))
+  elements.zoomIn.addEventListener('click', () => actions.stepZoom(1))
   elements.fitStage.addEventListener('click', () => actions.applyFitZoom())
   elements.zoomSelect.addEventListener('input', () => {
     actions.setStageZoom(Number(elements.zoomSelect.value), { mode: 'manual' })
