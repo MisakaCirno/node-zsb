@@ -692,6 +692,10 @@ test('editor saves, loads, and deletes local browser board slots', async ({
   await expect(page.locator('#local-board-list')).toContainText('本地草稿')
   await expect(page.locator('#local-board-list')).toContainText('分享名：分享草稿')
   await expect(page.locator('#local-board-list .local-board-preview img')).toHaveCount(1)
+  await expect(page.locator('#local-board-list .local-board-preview img').first()).toHaveCSS('object-fit', 'contain')
+  await expect(page.locator('#local-board-list .local-board-select span')).toHaveCount(0)
+  await expect(page.locator('#select-all-local-boards')).toBeEnabled()
+  await expect(page.locator('#clear-selected-local-boards')).toBeDisabled()
   await expect(page.locator('#delete-selected-local-boards')).toBeDisabled()
 
   await page.locator('#local-board-dialog').evaluate((dialog) => {
@@ -742,9 +746,14 @@ test('editor saves, loads, and deletes local browser board slots', async ({
     expect(dialog.message()).toContain('删除选中的 2 个本地文件')
     await dialog.accept()
   })
-  for (const checkbox of await page.locator('#local-board-list .local-board-row input[type="checkbox"]').all()) {
-    await checkbox.check()
-  }
+  await expect(page.locator('#select-all-local-boards')).toBeEnabled()
+  await page.locator('#select-all-local-boards').click()
+  await expect(page.locator('#local-board-list .local-board-row input[type="checkbox"]:checked')).toHaveCount(2)
+  await expect(page.locator('#select-all-local-boards')).toBeDisabled()
+  await expect(page.locator('#clear-selected-local-boards')).toBeEnabled()
+  await page.locator('#clear-selected-local-boards').click()
+  await expect(page.locator('#local-board-list .local-board-row input[type="checkbox"]:checked')).toHaveCount(0)
+  await page.locator('#select-all-local-boards').click()
   await expect(page.locator('#delete-selected-local-boards')).toBeEnabled()
   await page.locator('#delete-selected-local-boards').click()
   await expect(page.locator('#local-board-list')).toContainText('暂无本地文件')

@@ -36,7 +36,10 @@ export function createLocalBoardsPanel({
   function updateLocalBoardButtons() {
     elements.saveLocalBoard.disabled = false
     elements.saveAsLocalBoard.disabled = false
+    const selectableCount = getSelectableFilesCount()
     const selectedCount = getSelectedFileNames().length
+    elements.selectAllLocalBoards.disabled = selectableCount === 0 || selectedCount === selectableCount
+    elements.clearSelectedLocalBoards.disabled = selectedCount === 0
     elements.deleteSelectedLocalBoards.disabled = selectedCount === 0
   }
 
@@ -148,6 +151,14 @@ export function createLocalBoardsPanel({
     return true
   }
 
+  function selectAllLocalBoards() {
+    setLocalBoardSelection(true)
+  }
+
+  function clearSelectedLocalBoards() {
+    setLocalBoardSelection(false)
+  }
+
   elements.localBoardNameDialog.querySelector('form').addEventListener('submit', (event) => {
     if (!pendingNameRequest) return
     if (event.submitter?.value === 'cancel') return
@@ -174,6 +185,8 @@ export function createLocalBoardsPanel({
   })
 
   elements.deleteSelectedLocalBoards.addEventListener('click', deleteSelectedLocalBoards)
+  elements.selectAllLocalBoards.addEventListener('click', selectAllLocalBoards)
+  elements.clearSelectedLocalBoards.addEventListener('click', clearSelectedLocalBoards)
 
   return {
     deleteLocalBoard,
@@ -222,10 +235,9 @@ export function createLocalBoardsPanel({
     const checkbox = document.createElement('input')
     checkbox.type = 'checkbox'
     checkbox.value = file.name
+    checkbox.setAttribute('aria-label', `选择 ${file.name}`)
     checkbox.addEventListener('change', updateLocalBoardButtons)
-    const selectText = document.createElement('span')
-    selectText.textContent = '选择'
-    select.append(checkbox, selectText)
+    select.append(checkbox)
 
     const preview = document.createElement('button')
     preview.type = 'button'
@@ -307,6 +319,17 @@ export function createLocalBoardsPanel({
   function getSelectedFileNames() {
     return [...elements.localBoardList.querySelectorAll('input[type="checkbox"]:checked')]
       .map((input) => input.value)
+  }
+
+  function getSelectableFilesCount() {
+    return elements.localBoardList.querySelectorAll('input[type="checkbox"]').length
+  }
+
+  function setLocalBoardSelection(selected) {
+    for (const checkbox of elements.localBoardList.querySelectorAll('input[type="checkbox"]')) {
+      checkbox.checked = selected
+    }
+    updateLocalBoardButtons()
   }
 
   function fileExists(fileName) {

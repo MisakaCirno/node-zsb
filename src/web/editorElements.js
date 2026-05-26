@@ -33,6 +33,8 @@ export function getEditorElements() {
     localBoardNameInput: document.querySelector('#local-board-name-input'),
     localBoardNameError: document.querySelector('#local-board-name-error'),
     confirmLocalBoardName: document.querySelector('#confirm-local-board-name'),
+    selectAllLocalBoards: document.querySelector('#select-all-local-boards'),
+    clearSelectedLocalBoards: document.querySelector('#clear-selected-local-boards'),
     deleteSelectedLocalBoards: document.querySelector('#delete-selected-local-boards'),
     saveLocalBoard: document.querySelector('#save-local-board'),
     saveAsLocalBoard: document.querySelector('#save-as-local-board'),
