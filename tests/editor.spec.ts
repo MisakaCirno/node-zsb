@@ -218,6 +218,7 @@ test('editor renders readable Chinese labels', async ({ page }) => {
   await expect(page.locator('#open-import-dialog svg')).toBeVisible()
   await expect(page.locator('#open-import-dialog svg')).toHaveCSS('stroke', 'rgb(217, 224, 228)')
   await expect(page.locator('#open-import-dialog svg path')).toHaveCount(5)
+  await expect(page.locator('#open-import-dialog')).toHaveCSS('width', '190px')
   await expect(page.locator('#open-export-code-dialog svg')).toBeVisible()
   await expect(page.locator('#open-export-image-dialog svg')).toBeVisible()
   await expect(page.locator('#open-export-code-dialog')).toContainText('导出分享码')
@@ -244,10 +245,9 @@ test('editor renders readable Chinese labels', async ({ page }) => {
     'background-image',
     /tab1\.webp/,
   )
-  await expect(page.locator('.stage-toolbar-row')).toHaveCount(2)
+  await expect(page.locator('.stage-toolbar-row')).toHaveCount(1)
   await expect(page.locator('.stage-toolbar-main #zoom-select')).toHaveCount(1)
-  await expect(page.locator('.stage-toolbar-main #undo-action')).toHaveCount(0)
-  await expect(page.locator('.stage-toolbar-canvas #undo-action')).toHaveCount(1)
+  await expect(page.locator('.stage-toolbar-main #undo-action')).toHaveCount(1)
   await expect(page.locator('#align-left')).toHaveText('')
   await expect(page.locator('#align-left svg')).toBeVisible()
   await expect(page.locator('#asset-tab-background')).toHaveAttribute('role', 'tab')
