@@ -19,11 +19,14 @@ export function renderInspector({
   elements.color.value = object.color ?? '#ff8000'
   syncColorControl(elements)
   elements.transparency.value = object.transparency ?? 0
+  elements.transparencyRange.value = elements.transparency.value
   elements.text.value = object.text ?? ''
   elements.endX.value = object.endX ?? object.x ?? 256
   elements.endY.value = object.endY ?? object.y ?? 192
   elements.arc.value = object.arcAngle ?? (object.type === 'fan_aoe' ? 90 : 360)
+  elements.arcRange.value = elements.arc.value
   elements.donut.value = object.donutRadius ?? 80
+  elements.donutRange.value = elements.donut.value
   elements.hidden.checked = Boolean(object.hidden)
   elements.locked.checked = Boolean(object.locked)
   syncToggleButton(elements.hidden)
@@ -51,7 +54,9 @@ function updateInspectorLockState(object, elements) {
     elements.endX,
     elements.endY,
     elements.arc,
+    elements.arcRange,
     elements.donut,
+    elements.donutRange,
   ]) {
     input.disabled = locked
   }

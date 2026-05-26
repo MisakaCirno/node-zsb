@@ -152,7 +152,7 @@
                 <input id="object-angle" type="number" min="0" max="360" />
               </label>
             </div>
-            <div class="field-grid" data-field="appearance">
+            <div class="field-grid inspector-appearance" data-field="appearance">
               <div class="field color-field">
                 <span>颜色</span>
                 <div class="color-control">
@@ -177,9 +177,12 @@
                   </div>
                 </div>
               </div>
-              <label class="field">
+              <label class="field slider-field">
                 <span>透明度</span>
-                <input id="object-transparency" type="number" min="0" max="100" />
+                <div class="slider-control">
+                  <input id="object-transparency-range" type="range" min="0" max="100" step="1" aria-label="透明度滑动条" />
+                  <input id="object-transparency" type="number" min="0" max="100" />
+                </div>
               </label>
             </div>
             <label class="field" data-field="text">
@@ -196,14 +199,20 @@
                 <input id="object-end-y" type="number" min="0" max="384" />
               </label>
             </div>
-            <div class="field-grid" data-field="arc">
-              <label class="field" data-field="arc-angle">
+            <div class="field-grid parameter-field-grid" data-field="arc">
+              <label class="field slider-field" data-field="arc-angle">
                 <span>弧度</span>
-                <input id="object-arc" type="number" min="10" max="360" step="10" />
+                <div class="slider-control">
+                  <input id="object-arc-range" type="range" min="10" max="360" step="10" aria-label="弧度滑动条" />
+                  <input id="object-arc" type="number" min="10" max="360" step="10" />
+                </div>
               </label>
-              <label class="field" data-field="donut-radius">
+              <label class="field slider-field" data-field="donut-radius">
                 <span>内圈</span>
-                <input id="object-donut" type="number" min="0" max="240" />
+                <div class="slider-control">
+                  <input id="object-donut-range" type="range" min="0" max="240" step="1" aria-label="内圈滑动条" />
+                  <input id="object-donut" type="number" min="0" max="240" />
+                </div>
               </label>
             </div>
           </div>

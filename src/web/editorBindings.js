@@ -102,17 +102,28 @@ export function bindEditorEvents({
     elements.y,
     elements.size,
     elements.angle,
-    elements.transparency,
     elements.text,
     elements.endX,
     elements.endY,
-    elements.arc,
-    elements.donut,
     elements.hidden,
     elements.locked,
   ]) {
     input.addEventListener('input', actions.updateSelectedFromInspector)
   }
+  bindSyncedSlider(elements.transparency, elements.transparencyRange, actions.updateSelectedFromInspector)
+  bindSyncedSlider(elements.arc, elements.arcRange, actions.updateSelectedFromInspector)
+  bindSyncedSlider(elements.donut, elements.donutRange, actions.updateSelectedFromInspector)
+}
+
+function bindSyncedSlider(numberInput, rangeInput, onChange) {
+  numberInput.addEventListener('input', () => {
+    rangeInput.value = numberInput.value
+    onChange()
+  })
+  rangeInput.addEventListener('input', () => {
+    numberInput.value = rangeInput.value
+    onChange()
+  })
 }
 
 function bindPaletteDrop(elements, actions) {

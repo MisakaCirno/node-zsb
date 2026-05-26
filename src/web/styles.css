@@ -608,6 +608,43 @@ textarea {
   flex: 1;
 }
 
+.inspector-appearance {
+  flex-wrap: wrap;
+}
+
+.inspector-appearance .color-field,
+.inspector-appearance .slider-field {
+  flex: 0 0 100%;
+}
+
+.parameter-field-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 10px;
+}
+
+.slider-control {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 72px;
+  gap: 8px;
+  align-items: center;
+}
+
+.slider-control input[type="range"] {
+  height: 18px;
+  min-height: 0;
+  padding: 0;
+  border: 0;
+  border-radius: 999px;
+  background: #27313a;
+  accent-color: #66c2a5;
+}
+
+.slider-control input[type="number"] {
+  min-width: 0;
+  text-align: right;
+}
+
 .color-field {
   flex: 1;
 }

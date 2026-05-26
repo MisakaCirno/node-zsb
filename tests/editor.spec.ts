@@ -851,6 +851,28 @@ test('editor shows inspector fields that match the selected object type', async 
   await expect(page.locator('[data-field="line"]')).toBeVisible()
   await expect(page.locator('[data-field="text"]')).toBeHidden()
 
+  await page.locator('button[title="line_aoe"]').click()
+  await expect(page.locator('#object-transparency-range')).toBeVisible()
+  await expect(page.locator('#object-transparency-range')).toHaveValue('0')
+  await page.locator('#object-transparency-range').fill('35')
+  await expect(page.locator('#object-transparency')).toHaveValue('35')
+  await page.locator('#object-transparency').fill('55')
+  await expect(page.locator('#object-transparency-range')).toHaveValue('55')
+  await expect(page.locator('#object-transparency-range').locator('xpath=..')).toHaveCSS(
+    'grid-template-columns',
+    /.+ 72px/,
+  )
+
+  await page.locator('button[title="fan_aoe"]').click()
+  await expect(page.locator('[data-field="arc-angle"]')).toBeVisible()
+  await page.locator('#object-arc-range').fill('180')
+  await expect(page.locator('#object-arc')).toHaveValue('180')
+
+  await page.locator('button[title="donut"]').click()
+  await expect(page.locator('[data-field="donut-radius"]')).toBeVisible()
+  await page.locator('#object-donut-range').fill('120')
+  await expect(page.locator('#object-donut')).toHaveValue('120')
+
   await page.locator('#layers .layer-row').filter({ hasText: 'tank' }).first().click()
   const code = await exportBoardCode(page)
   const decoded = await request.post('/utils/code2json', {
