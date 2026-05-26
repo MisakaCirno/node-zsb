@@ -1,9 +1,8 @@
 import { getEditorData } from './api.js'
 import { createEditorState } from './editorState.js'
 import { createEditorActionRegistry } from './editorActionRegistry.js'
-import { createBoardMetaControls } from './boardMetaControls.js'
-import { createBoardCodeActions } from './boardCodeActions.js'
 import { bindEditorEvents } from './editorBindings.js'
+import { createEditorControllers } from './editorControllers.js'
 import { createEditorContext } from './editorContext.js'
 import { getEditorElements } from './editorElements.js'
 import { createEditorFeedback } from './editorFeedback.js'
@@ -11,11 +10,7 @@ import { createEditorHistoryControls } from './editorHistoryControls.js'
 import { createEditorRenderLoop } from './editorRenderLoop.js'
 import { initializeEditorBoard } from './editorStartup.js'
 import { createStageRenderer } from './stageRenderer.js'
-import { createInspectorControls } from './inspectorControls.js'
-import { createLocalBoardsPanel } from './localBoardsPanel.js'
-import { createObjectCommands } from './objectCommands.js'
 import { renderPaletteTabs as renderPaletteTabsPanel } from './palettePanel.js'
-import { createViewportControls } from './viewportControls.js'
 
 export function createEditorApp({
   confirmAction = (message) => window.confirm(message),
@@ -64,72 +59,35 @@ export function createEditorApp({
     showStatus,
   })
   const { stage } = stageRenderer
-  const objectCommands = createObjectCommands({
-    state,
+  const controllers = createEditorControllers({
+    confirmAction,
+    elements: els,
+    getSelected,
+    normalizePoint,
     recordHistory,
     renderAll,
     selectObject,
-    getSelected,
-    normalizePoint,
     showStatus,
-    confirmAction,
+    stage,
+    stageRenderer,
+    state,
   })
   const {
     addObject,
-    toggleLayerFlag,
-  } = objectCommands
-
-  const boardMetaControls = createBoardMetaControls({
-    state,
-    elements: els,
-    recordHistory,
-    renderAll,
-  })
-  const {
+    applyFitZoom,
+    boardCodeActions,
+    boardMetaControls,
+    inspectorControls,
+    loadFromCode,
+    localBoardsPanel,
+    objectCommands,
     renderBackgroundOptions,
+    renderInspectorPanel,
+    renderLocalBoards,
     syncBoardNameInput,
-  } = boardMetaControls
-
-  const inspectorControls = createInspectorControls({
-    state,
-    elements: els,
-    getSelected,
-    normalizePoint,
-    recordHistory,
-    renderAll,
-  })
-  const {
-    renderInspector: renderInspectorControl,
-  } = inspectorControls
-
-  const boardCodeActions = createBoardCodeActions({
-    state,
-    elements: els,
-    recordHistory,
-    renderAll,
-    renderBackgroundOptions,
-  })
-  const { loadFromCode } = boardCodeActions
-
-  const viewportControls = createViewportControls({
-    state,
-    elements: els,
-    stage,
-    stageRenderer,
-    showStatus,
-  })
-  const { applyFitZoom } = viewportControls
-
-  const localBoardsPanel = createLocalBoardsPanel({
-    state,
-    elements: els,
-    recordHistory,
-    renderAll,
-    renderBackgroundOptions,
-    showStatus,
-    confirmAction,
-  })
-  const { renderLocalBoards } = localBoardsPanel
+    toggleLayerFlag,
+    viewportControls,
+  } = controllers
   const eventActions = createEditorActionRegistry({
     boardCodeActions,
     boardMetaControls,
@@ -144,7 +102,7 @@ export function createEditorApp({
     state,
     elements: els,
     stageRenderer,
-    renderInspectorPanel: renderInspectorControl,
+    renderInspectorPanel,
     onSelectObject: selectObject,
     onToggleLayerFlag: toggleLayerFlag,
   })
