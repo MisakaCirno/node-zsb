@@ -22,7 +22,6 @@ export function createObjectCommands({
       const object = createDefaultObject(type)
       state.board.objects.push(object)
       selectObject(state.board.objects.length - 1)
-      renderAll()
     },
 
     toggleLayerFlag(index, key) {

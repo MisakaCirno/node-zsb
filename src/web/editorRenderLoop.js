@@ -10,7 +10,31 @@ export function createEditorRenderLoop({
   stageRenderer,
   state,
 }) {
-  async function renderAll() {
+  let isRendering = false
+  let needsRender = false
+  let currentRender = Promise.resolve()
+
+  function renderAll() {
+    needsRender = true
+    if (!isRendering) {
+      currentRender = drainRenderQueue()
+    }
+    return currentRender
+  }
+
+  async function drainRenderQueue() {
+    isRendering = true
+    try {
+      while (needsRender) {
+        needsRender = false
+        await renderOnce()
+      }
+    } finally {
+      isRendering = false
+    }
+  }
+
+  async function renderOnce() {
     await stageRenderer.renderBoard()
     stageRenderer.renderGrid()
     await stageRenderer.renderObjects()
