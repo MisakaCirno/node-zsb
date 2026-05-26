@@ -72,6 +72,8 @@ export function bindEditorEvents({
   })
   elements.snap.addEventListener('change', actions.toggleSnapToGrid)
   elements.grid.addEventListener('change', actions.toggleGrid)
+  elements.marqueeMode.addEventListener('change', () =>
+    actions.setMarqueeSelectionMode(elements.marqueeMode.value))
   bindLayoutResizers({
     elements,
     onResize: actions.applyFitZoomOnResize,

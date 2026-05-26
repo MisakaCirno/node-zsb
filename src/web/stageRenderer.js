@@ -17,6 +17,9 @@ import {
   toSceneCoordinate,
 } from '../shared/boardGeometry.js'
 import { getSelectedIndexes } from './editorState.js'
+import { getObjectBounds } from './objectAlignment.js'
+
+const MARQUEE_DRAG_THRESHOLD = 4
 
 export function createStageRenderer({
   container,
@@ -28,6 +31,7 @@ export function createStageRenderer({
   renderInspector,
   renderLayers,
   selectObject,
+  selectObjects,
   showStatus,
 }) {
   const stage = new Konva.Stage({
@@ -39,6 +43,14 @@ export function createStageRenderer({
   const gridLayer = new Konva.Layer({ listening: false })
   const objectLayer = new Konva.Layer()
   const transformerLayer = new Konva.Layer()
+  const marqueeLayer = new Konva.Layer()
+  const marqueeRect = new Konva.Rect({
+    fill: 'rgba(102, 194, 165, 0.16)',
+    listening: false,
+    stroke: '#66c2a5',
+    strokeWidth: 1.5,
+    visible: false,
+  })
   const transformer = new Konva.Transformer({
     rotateEnabled: true,
     keepRatio: true,
@@ -56,13 +68,48 @@ export function createStageRenderer({
   stage.add(gridLayer)
   stage.add(objectLayer)
   stage.add(transformerLayer)
+  stage.add(marqueeLayer)
   transformerLayer.add(transformer)
+  marqueeLayer.add(marqueeRect)
+
+  let marqueeStart = null
+  let didMarqueeDrag = false
+  let suppressNextStageClick = false
 
   stage.on('click tap', (event) => {
     if (event.evt?.button && event.evt.button !== 0) return
+    if (suppressNextStageClick) {
+      suppressNextStageClick = false
+      return
+    }
     if (event.target === stage || event.target.getLayer() === boardLayer) {
       selectObject(-1)
     }
+  })
+  stage.on('mousedown touchstart', (event) => {
+    if (event.evt?.button && event.evt.button !== 0) return
+    if (event.target !== stage && event.target.getLayer() !== boardLayer) return
+    marqueeStart = getPointerScenePoint()
+    didMarqueeDrag = false
+    marqueeRect.visible(false)
+  })
+  stage.on('mousemove touchmove', () => {
+    if (!marqueeStart) return
+    const current = getPointerScenePoint()
+    if (!current) return
+    updateMarqueeRect(marqueeStart, current)
+  })
+  stage.on('mouseup touchend', () => {
+    if (!marqueeStart) return
+    const current = getPointerScenePoint()
+    if (current && didMarqueeDrag) {
+      selectObjects(getMarqueeSelectedIndexes(getLogicalRect(marqueeStart, current)))
+      suppressNextStageClick = true
+    }
+    marqueeStart = null
+    didMarqueeDrag = false
+    marqueeRect.visible(false)
+    marqueeLayer.batchDraw()
   })
 
   async function renderBoard() {
@@ -134,6 +181,60 @@ export function createStageRenderer({
       opacity: major ? 0.28 : 0.14,
       listening: false,
     })
+  }
+
+  function updateMarqueeRect(start, current) {
+    const width = current.x - start.x
+    const height = current.y - start.y
+    didMarqueeDrag = didMarqueeDrag
+      || Math.abs(width) > MARQUEE_DRAG_THRESHOLD
+      || Math.abs(height) > MARQUEE_DRAG_THRESHOLD
+    if (!didMarqueeDrag) return
+    marqueeRect.setAttrs({
+      height: Math.abs(height),
+      visible: true,
+      width: Math.abs(width),
+      x: Math.min(start.x, current.x),
+      y: Math.min(start.y, current.y),
+    })
+    marqueeLayer.batchDraw()
+  }
+
+  function getMarqueeSelectedIndexes(rect) {
+    const selected = []
+    state.board.objects.forEach((object, index) => {
+      if (objectMatchesMarquee(getObjectBounds(object, state), rect)) {
+        selected.push(index)
+      }
+    })
+    return selected
+  }
+
+  function objectMatchesMarquee(objectBounds, rect) {
+    if (state.marqueeSelectionMode === 'intersect') {
+      return objectBounds.right >= rect.left
+        && objectBounds.left <= rect.right
+        && objectBounds.bottom >= rect.top
+        && objectBounds.top <= rect.bottom
+    }
+    return objectBounds.left >= rect.left
+      && objectBounds.right <= rect.right
+      && objectBounds.top >= rect.top
+      && objectBounds.bottom <= rect.bottom
+  }
+
+  function getLogicalRect(start, current) {
+    const left = toLogicalCoordinate(Math.min(start.x, current.x))
+    const right = toLogicalCoordinate(Math.max(start.x, current.x))
+    const top = toLogicalCoordinate(Math.min(start.y, current.y))
+    const bottom = toLogicalCoordinate(Math.max(start.y, current.y))
+    return { left, right, top, bottom }
+  }
+
+  function getPointerScenePoint() {
+    const pointer = stage.getPointerPosition()
+    if (!pointer) return null
+    return stage.getAbsoluteTransform().copy().invert().point(pointer)
   }
 
   async function createNode(object, index) {

@@ -34,6 +34,7 @@ export function createEditorActionRegistry({
     renderPreview: boardCodeActions.renderPreview,
     saveLocalBoard: localBoardsPanel.saveLocalBoard,
     selectObject: editorContext.selectObject,
+    setMarqueeSelectionMode: editorContext.setMarqueeSelectionMode,
     setStageZoom: viewportControls.setStageZoom,
     stepZoom: viewportControls.stepZoom,
     toggleGrid: viewportControls.toggleGrid,

@@ -54,6 +54,7 @@ export function getEditorElements() {
     zoomSelect: document.querySelector('#zoom-select'),
     zoomIn: document.querySelector('#zoom-in'),
     fitStage: document.querySelector('#fit-stage'),
+    marqueeMode: document.querySelector('#marquee-mode'),
     snap: document.querySelector('#snap-toggle'),
     grid: document.querySelector('#grid-toggle'),
     emptyState: document.querySelector('#empty-state'),

@@ -12,6 +12,7 @@ export function createEditorState() {
     iconGroups: {},
     backgrounds: {},
     activeGroup: 'rolesAndJobs',
+    marqueeSelectionMode: 'contained',
     snapToGrid: false,
     showGrid: false,
     zoom: 1,

@@ -382,6 +382,48 @@ test('editor multi-selects objects on the canvas and aligns them', async ({ page
   await expect(page.locator('#object-x')).toHaveValue('320')
 })
 
+test('editor marquee-selects objects with contained and intersect modes', async ({ page }) => {
+  await page.goto('/editor')
+  await expect(page.locator('#layers')).toContainText('tank')
+
+  page.once('dialog', async (dialog) => {
+    await dialog.accept()
+  })
+  await page.locator('#clear-board').click()
+  await expect(page.locator('#layers .layer-row')).toHaveCount(0)
+
+  await page.getByRole('tab', { name: '形状' }).click()
+  await page.locator('button[title="line_aoe"]').click()
+  await page.locator('#object-x').fill('100')
+  await page.locator('#object-y').fill('100')
+  await expect(page.locator('#layers .layer-row')).toHaveCount(1)
+
+  const canvas = page.locator('#stage-host canvas').first()
+  const box = await canvas.boundingBox()
+  if (!box) throw new Error('Canvas is not visible')
+  const point = (x: number, y: number) => ({
+    x: box.x + (x / 512) * box.width,
+    y: box.y + (y / 384) * box.height,
+  })
+  const dragMarquee = async () => {
+    const start = point(10, 10)
+    const end = point(80, 80)
+    await page.mouse.move(start.x, start.y)
+    await page.mouse.down()
+    await page.mouse.move(end.x, end.y, { steps: 6 })
+    await page.mouse.up()
+  }
+
+  await expect(page.locator('#marquee-mode')).toHaveValue('contained')
+  await dragMarquee()
+  await expect(page.locator('#layers .layer-row.active')).toHaveCount(0)
+
+  await page.locator('#marquee-mode').selectOption('intersect')
+  await dragMarquee()
+  await expect(page.locator('#layers .layer-row.active')).toHaveCount(1)
+  await expect(page.locator('#object-type')).toHaveValue('line_aoe')
+})
+
 test('editor reorders layers by dragging rows', async ({ page }) => {
   await page.goto('/editor')
   await expect(page.locator('#layers')).toContainText('tank')

@@ -36,6 +36,16 @@ export function createEditorContext({
     renderAll()
   }
 
+  function selectObjects(indexes, options = {}) {
+    setSelection(indexes, options.primaryIndex ?? indexes.at(-1) ?? -1)
+    state.revealSelectedLayer = Boolean(options.revealInLayers)
+    renderAll()
+  }
+
+  function setMarqueeSelectionMode(mode) {
+    state.marqueeSelectionMode = mode === 'intersect' ? 'intersect' : 'contained'
+  }
+
   function deselect() {
     setSelection([])
     renderAll()
@@ -80,5 +90,7 @@ export function createEditorContext({
     normalizeCoordinate,
     normalizePoint,
     selectObject,
+    selectObjects,
+    setMarqueeSelectionMode,
   }
 }

@@ -47,6 +47,7 @@ export function createEditorApp({
     normalizeCoordinate,
     normalizePoint,
     selectObject,
+    selectObjects,
   } = editorContext
   const stageRenderer = createStageRenderer({
     container: 'stage-host',
@@ -58,6 +59,7 @@ export function createEditorApp({
     renderInspector,
     renderLayers,
     selectObject,
+    selectObjects,
     showStatus,
   })
   const { stage } = stageRenderer

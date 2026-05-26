@@ -276,6 +276,11 @@ textarea {
   width: 88px;
 }
 
+.stage-toolbar .toolbar-select {
+  width: 92px;
+  flex: 0 0 auto;
+}
+
 .stage-toolbar button {
   min-width: 34px;
   width: 34px;
