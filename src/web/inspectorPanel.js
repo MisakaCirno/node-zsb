@@ -24,6 +24,8 @@ export function renderInspector({
   elements.donut.value = object.donutRadius ?? 80
   elements.hidden.checked = Boolean(object.hidden)
   elements.locked.checked = Boolean(object.locked)
+  syncToggleButton(elements.hidden)
+  syncToggleButton(elements.locked)
   updateInspectorLockState(object, elements)
 }
 
@@ -58,4 +60,11 @@ function setFieldVisible(elements, field, visible) {
   if (element) {
     element.classList.toggle('hidden', !visible)
   }
+}
+
+function syncToggleButton(input) {
+  const button = input.closest('.toggle-button')
+  if (!button) return
+  button.classList.toggle('active', input.checked)
+  button.setAttribute('aria-pressed', String(input.checked))
 }

@@ -139,8 +139,14 @@
               </label>
             </div>
             <div class="checks">
-              <label><input id="object-hidden" type="checkbox" /> 隐藏</label>
-              <label><input id="object-locked" type="checkbox" /> 锁定</label>
+              <label class="toggle-button" role="button" aria-pressed="false">
+                <input id="object-hidden" type="checkbox" />
+                <span>隐藏</span>
+              </label>
+              <label class="toggle-button" role="button" aria-pressed="false">
+                <input id="object-locked" type="checkbox" />
+                <span>锁定</span>
+              </label>
             </div>
           </div>
         </section>

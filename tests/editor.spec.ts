@@ -519,10 +519,12 @@ test('editor toggles hidden and locked states from the layer list', async ({
 
   await firstLayer.locator('[data-action="hidden"]').click()
   await expect(page.locator('#object-hidden')).toBeChecked()
+  await expect(page.locator('#object-hidden').locator('xpath=..')).toHaveAttribute('aria-pressed', 'true')
   await expect(firstLayer).toHaveClass(/muted/)
 
   await firstLayer.locator('[data-action="locked"]').click()
   await expect(page.locator('#object-locked')).toBeChecked()
+  await expect(page.locator('#object-locked').locator('xpath=..')).toHaveClass(/active/)
   await expect(page.locator('#object-x')).toBeDisabled()
   await expect(page.locator('#object-size')).toBeDisabled()
   await expect(page.locator('#object-color')).toBeEnabled()
