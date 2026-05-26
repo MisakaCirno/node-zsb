@@ -3,6 +3,9 @@ import { getSelectedIndexes } from './editorState.js'
 import { numberValue } from './geometry.js'
 import { renderInspector as renderInspectorPanel } from './inspectorPanel.js'
 import type {
+  InspectorPanelElements,
+} from './inspectorPanel.js'
+import type {
   BoardObject,
   CheckedElement,
   DisabledElement,
@@ -12,20 +15,16 @@ import type {
   ValueElement,
 } from './types.js'
 
-interface InspectorElements {
-  x: ValueElement
-  y: ValueElement
-  size: ValueElement
-  angle: ValueElement
-  color: ValueElement
+interface InspectorElements extends InspectorPanelElements {
+  x: ValueElement & DisabledElement
+  y: ValueElement & DisabledElement
+  size: ValueElement & DisabledElement
+  angle: ValueElement & DisabledElement
   transparency: ValueElement
-  text: ValueElement
-  endX: ValueElement
-  endY: ValueElement
-  arc: ValueElement
-  donut: ValueElement
-  hidden: CheckedElement
-  locked: CheckedElement
+  endX: ValueElement & DisabledElement
+  endY: ValueElement & DisabledElement
+  arc: ValueElement & DisabledElement
+  donut: ValueElement & DisabledElement
   clearBoard: DisabledElement
   menuClearBoard: DisabledElement
   copyObject: DisabledElement
