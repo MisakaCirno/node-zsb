@@ -74,6 +74,7 @@ test('editor renders readable Chinese labels', async ({ page }) => {
   await expect(page.locator('#open-export-dialog')).toHaveAttribute('title', '导出分享码')
   await expect(page.locator('#open-import-dialog')).toHaveText('导入分享码')
   await expect(page.locator('#open-export-dialog')).toHaveText('导出分享码')
+  await expect(page.locator('.board-name-label')).toHaveText('名称')
   await openExportDialog(page)
   await expect(page.locator('#render-preview')).toBeVisible()
   await expect(page.getByPlaceholder('名称')).toBeVisible()
