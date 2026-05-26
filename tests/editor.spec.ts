@@ -1496,6 +1496,44 @@ test('editor syncs restored grid switch state on startup', async ({ page }) => {
   expect(fittedGridStats?.strongPixels).toBeGreaterThan(100)
 })
 
+test('editor persists view settings across reloads', async ({ page }) => {
+  await page.goto('/editor')
+  await page.evaluate(() => {
+    localStorage.removeItem('node-zsb-editor-settings-v1')
+  })
+  await page.reload()
+  await expect(page.locator('#layers')).toContainText('tank')
+
+  await page.locator('#grid-toggle').check()
+  await page.locator('#snap-toggle').check()
+  await page.locator('#grid-density').fill('8')
+  await page.locator('#grid-density').dispatchEvent('input')
+  await page.locator('#zoom-select').fill('1.25')
+  await page.locator('#zoom-select').dispatchEvent('input')
+
+  const settings = await page.evaluate(() =>
+    JSON.parse(localStorage.getItem('node-zsb-editor-settings-v1') ?? '{}'))
+  expect(settings).toMatchObject({
+    gridSize: 8,
+    showGrid: true,
+    snapToGrid: true,
+    zoom: 1.25,
+    zoomMode: 'manual',
+  })
+
+  await page.reload()
+  await expect(page.locator('#layers')).toContainText('tank')
+  await expect(page.locator('#grid-toggle')).toBeChecked()
+  await expect(page.locator('#snap-toggle')).toBeChecked()
+  await expect(page.locator('#grid-density-value')).toHaveText('8px')
+  await expect(page.locator('#zoom-select')).toHaveValue('1.25')
+  await expect(page.locator('#zoom-value')).toHaveText('125%')
+
+  const fittedGridStats = await getGridCanvasStats(page)
+  expect(fittedGridStats?.averageAlpha).toBeGreaterThan(20)
+  expect(fittedGridStats?.strongPixels).toBeGreaterThan(100)
+})
+
 test('editor deselects and deletes objects with keyboard shortcuts', async ({
   page,
 }) => {

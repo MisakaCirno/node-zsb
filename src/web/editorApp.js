@@ -80,7 +80,7 @@ export function createEditorApp({
   })
   const {
     addObject,
-    applyFitZoom,
+    applyInitialZoom,
     boardCodeActions,
     boardMetaControls,
     inspectorControls,
@@ -152,8 +152,8 @@ export function createEditorApp({
     viewportControls.syncControlStateFromDom()
     renderLocalBoards()
     renderPaletteTabs()
-    renderAll()
-    applyFitZoom({ silent: true })
+    await renderAll()
+    applyInitialZoom({ silent: true })
     showStatus(initialSource.statusText)
   }
 

@@ -1,4 +1,5 @@
 import {
+  DEFAULT_GRID_SIZE,
   GRID_SIZE_STEP,
   MAX_GRID_SIZE,
   MIN_GRID_SIZE,
@@ -7,6 +8,7 @@ import {
   ZOOM_LEVELS,
 } from './constants.js'
 import { clamp } from './geometry.js'
+import { loadEditorSettings, persistEditorSettings } from './storage.js'
 
 export function createViewportControls({
   state,
@@ -49,6 +51,9 @@ export function createViewportControls({
       const action = state.zoomMode === 'fit' ? '已适配画布视图' : '已设置画布缩放'
       showStatus(`${action} ${formatZoom(nextZoom)}`)
     }
+    if (!options.silent && options.persist !== false) {
+      persistViewportSettings()
+    }
   }
 
   function updateZoomControls() {
@@ -69,6 +74,9 @@ export function createViewportControls({
     if (!options.silent) {
       showStatus(`已设置网格间距 ${state.gridSize}px`)
     }
+    if (!options.silent && options.persist !== false) {
+      persistViewportSettings()
+    }
   }
 
   function updateGridDensityControls() {
@@ -78,19 +86,38 @@ export function createViewportControls({
 
   function toggleSnapToGrid() {
     state.snapToGrid = elements.snap.checked
+    persistViewportSettings()
     showStatus(state.snapToGrid ? '已开启网格吸附' : '已关闭网格吸附')
   }
 
   function toggleGrid() {
     state.showGrid = elements.grid.checked
     stageRenderer.renderGrid()
+    persistViewportSettings()
     showStatus(state.showGrid ? '已显示辅助网格' : '已隐藏辅助网格')
   }
 
   function syncControlStateFromDom() {
-    state.snapToGrid = elements.snap.checked
-    state.showGrid = elements.grid.checked
-    setGridDensity(Number(elements.gridDensity.value), { render: false, silent: true })
+    const settings = loadEditorSettings()
+    if (settings) {
+      applySettings(settings)
+      return
+    }
+    applySettings({
+      snapToGrid: elements.snap.checked,
+      showGrid: elements.grid.checked,
+      gridSize: Number(elements.gridDensity.value) || DEFAULT_GRID_SIZE,
+      zoom: state.zoom,
+      zoomMode: state.zoomMode,
+    })
+  }
+
+  function applyInitialZoom(options = {}) {
+    if (state.zoomMode === 'manual') {
+      setStageZoom(state.zoom, { mode: 'manual', persist: false, ...options })
+      return
+    }
+    applyFitZoom({ persist: false, ...options })
   }
 
   function applyFitZoomOnResize() {
@@ -100,6 +127,7 @@ export function createViewportControls({
   }
 
   return {
+    applyInitialZoom,
     applyFitZoom,
     applyFitZoomOnResize,
     setGridDensity,
@@ -108,6 +136,26 @@ export function createViewportControls({
     syncControlStateFromDom,
     toggleGrid,
     toggleSnapToGrid,
+  }
+
+  function applySettings(settings) {
+    state.snapToGrid = Boolean(settings.snapToGrid)
+    state.showGrid = Boolean(settings.showGrid)
+    state.zoom = clamp(Number(settings.zoom) || 1, ZOOM_LEVELS[0], ZOOM_LEVELS.at(-1))
+    state.zoomMode = settings.zoomMode === 'manual' ? 'manual' : 'fit'
+    elements.snap.checked = state.snapToGrid
+    elements.grid.checked = state.showGrid
+    setGridDensity(settings.gridSize, { render: false, silent: true })
+  }
+
+  function persistViewportSettings() {
+    persistEditorSettings({
+      snapToGrid: state.snapToGrid,
+      showGrid: state.showGrid,
+      gridSize: state.gridSize,
+      zoom: state.zoom,
+      zoomMode: state.zoomMode,
+    })
   }
 }
 

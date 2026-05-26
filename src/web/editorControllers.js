@@ -96,7 +96,7 @@ export function createEditorControllers({
     projectFileActions,
     viewportControls,
     addObject: objectCommands.addObject,
-    applyFitZoom: viewportControls.applyFitZoom,
+    applyInitialZoom: viewportControls.applyInitialZoom,
     loadFromCode: boardCodeActions.loadFromCode,
     renderBackgroundOptions,
     renderInspectorPanel: inspectorControls.renderInspector,

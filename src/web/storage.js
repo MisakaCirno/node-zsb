@@ -1,4 +1,15 @@
-import { LOCAL_BOARDS_KEY, LOCAL_FILES_KEY, STORAGE_KEY } from './constants.js'
+import {
+  DEFAULT_GRID_SIZE,
+  EDITOR_SETTINGS_KEY,
+  GRID_SIZE_STEP,
+  LOCAL_BOARDS_KEY,
+  LOCAL_FILES_KEY,
+  MAX_GRID_SIZE,
+  MIN_GRID_SIZE,
+  STORAGE_KEY,
+  ZOOM_LEVELS,
+} from './constants.js'
+import { clamp } from './geometry.js'
 import {
   createProjectFromBoard,
   createPureBoardFromProject,
@@ -22,6 +33,26 @@ export function persistSavedBoard(board) {
     return true
   } catch (error) {
     console.warn('Failed to save board', error)
+    return false
+  }
+}
+
+export function loadEditorSettings() {
+  try {
+    const raw = window.localStorage.getItem(EDITOR_SETTINGS_KEY)
+    return raw ? normalizeEditorSettings(JSON.parse(raw)) : null
+  } catch (error) {
+    console.warn('Failed to load editor settings', error)
+    return null
+  }
+}
+
+export function persistEditorSettings(settings) {
+  try {
+    window.localStorage.setItem(EDITOR_SETTINGS_KEY, JSON.stringify(normalizeEditorSettings(settings)))
+    return true
+  } catch (error) {
+    console.warn('Failed to save editor settings', error)
     return false
   }
 }
@@ -75,6 +106,22 @@ export function persistLocalFiles(files) {
     console.warn('Failed to save local files', error)
     return false
   }
+}
+
+function normalizeEditorSettings(settings) {
+  const zoom = Number(settings?.zoom)
+  return {
+    snapToGrid: Boolean(settings?.snapToGrid),
+    showGrid: Boolean(settings?.showGrid),
+    gridSize: normalizeGridSize(settings?.gridSize),
+    zoom: clamp(Number.isFinite(zoom) ? zoom : 1, ZOOM_LEVELS[0], ZOOM_LEVELS.at(-1)),
+    zoomMode: settings?.zoomMode === 'manual' ? 'manual' : 'fit',
+  }
+}
+
+function normalizeGridSize(gridSize) {
+  const snapped = Math.round((Number(gridSize) || DEFAULT_GRID_SIZE) / GRID_SIZE_STEP) * GRID_SIZE_STEP
+  return clamp(snapped, MIN_GRID_SIZE, MAX_GRID_SIZE)
 }
 
 function migrateLocalBoardsToFiles() {
