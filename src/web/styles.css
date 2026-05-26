@@ -747,8 +747,7 @@ textarea {
 .context-menu {
   position: fixed;
   z-index: 20;
-  width: max-content;
-  min-width: 132px;
+  width: 132px;
   border: 1px solid #303b43;
   border-radius: 8px;
   padding: 5px;
