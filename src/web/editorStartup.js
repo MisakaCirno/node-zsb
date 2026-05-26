@@ -1,4 +1,4 @@
-import { normalizeBoard } from './board.js'
+import { cleanBoard, normalizeBoard } from './board.js'
 import { loadSavedBoard } from './storage.js'
 
 const READY_STATUS = '编辑器已就绪'
@@ -68,5 +68,8 @@ export async function initializeEditorBoard({
     state,
     syncBoardNameInput,
   })
+  state.currentFileName = ''
+  state.localFileSnapshot = JSON.stringify(cleanBoard(state.board))
+  elements.fileName.value = ''
   return source
 }

@@ -38,6 +38,7 @@ export function createEditorActionRegistry({
     renderLocalBoards: localBoardsPanel.renderLocalBoards,
     renderPreview: boardCodeActions.renderPreview,
     saveLocalBoard: localBoardsPanel.saveLocalBoard,
+    saveLocalBoardAs: localBoardsPanel.saveLocalBoardAs,
     selectObject: editorContext.selectObject,
     setMarqueeSelectionMode: editorContext.setMarqueeSelectionMode,
     setStageZoom: viewportControls.setStageZoom,

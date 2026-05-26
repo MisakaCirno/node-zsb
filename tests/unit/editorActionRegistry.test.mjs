@@ -35,6 +35,7 @@ test('createEditorActionRegistry exposes the event binding action surface', () =
       'renderLocalBoards',
       'renderPreview',
       'saveLocalBoard',
+      'saveLocalBoardAs',
       'selectObject',
       'setMarqueeSelectionMode',
       'setStageZoom',
@@ -79,6 +80,7 @@ test('createEditorActionRegistry exposes the event binding action surface', () =
       loadLocalBoard: handlers.loadLocalBoard,
       renderLocalBoards: handlers.renderLocalBoards,
       saveLocalBoard: handlers.saveLocalBoard,
+      saveLocalBoardAs: handlers.saveLocalBoardAs,
       updateLocalBoardButtons: handlers.updateLocalBoardButtons,
     },
     objectCommands: {

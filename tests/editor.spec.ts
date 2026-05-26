@@ -191,10 +191,11 @@ test('editor renders readable Chinese labels', async ({ page }) => {
   await expect(page.locator('.board-name-group')).toHaveCount(1)
   await expect(page.locator('.local-board-actions')).toHaveCount(1)
   await expect(page.locator('.board-code-actions')).toHaveCount(1)
-  await expect(page.locator('.board-name-label')).toHaveText('名称')
+  await expect(page.locator('.board-name-label')).toHaveText('文件名')
+  await expect(page.locator('.share-name-field span')).toHaveText('分享名')
   await openExportCodeDialog(page)
   await expect(page.locator('#copy-export-code')).toBeVisible()
-  await expect(page.getByPlaceholder('名称')).toBeVisible()
+  await expect(page.getByPlaceholder('分享名')).toBeVisible()
   await page.locator('#export-code-dialog').evaluate((dialog) => dialog.close())
   await expect(page.locator('#layers')).toContainText('tank')
   await expect(page.locator('#layer-count')).not.toHaveText('0')
@@ -493,7 +494,17 @@ test('editor reorders layers by dragging rows', async ({ page }) => {
 
   const layerCount = await page.locator('#layers .layer-row').count()
   await textRow.scrollIntoViewIfNeeded()
-  await textRow.dragTo(page.locator('#layers .layer-row').nth(layerCount - 2))
+  await page.locator('#layers').evaluate((layers, targetIndex) => {
+    const rows = [...layers.querySelectorAll('.layer-row')]
+    const source = rows.find((row) => row.textContent?.includes('text'))
+    const target = rows[targetIndex]
+    if (!source || !target) throw new Error('Layer rows are not available')
+    const dataTransfer = new DataTransfer()
+    source.dispatchEvent(new DragEvent('dragstart', { bubbles: true, dataTransfer }))
+    target.dispatchEvent(new DragEvent('dragover', { bubbles: true, dataTransfer }))
+    target.dispatchEvent(new DragEvent('drop', { bubbles: true, dataTransfer }))
+    source.dispatchEvent(new DragEvent('dragend', { bubbles: true, dataTransfer }))
+  }, layerCount - 2)
   await expect(page.locator('#layers .layer-row').nth(layerCount - 2)).toContainText('text')
 
   await page.getByRole('button', { name: '撤销' }).click()
@@ -655,33 +666,41 @@ test('editor saves, loads, and deletes local browser board slots', async ({
     localStorage.removeItem('node-zsb-editor-local-boards-v1'),
   )
   await page.evaluate(() =>
+    localStorage.removeItem('node-zsb-editor-local-files-v1'),
+  )
+  await page.evaluate(() =>
     localStorage.removeItem('node-zsb-editor-board-v1'),
   )
   await page.reload()
   await expect(page.locator('#layers')).toContainText('tank')
   await openLocalBoardDialog(page)
-  await expect(page.locator('#local-board-list')).toContainText('暂无本地存档')
+  await expect(page.locator('#local-board-list')).toContainText('暂无本地文件')
   await page.locator('#local-board-dialog').evaluate((dialog) => {
     if ('close' in dialog) dialog.close()
   })
 
-  await page.locator('#board-name').fill('本地草稿')
+  await page.locator('#file-name').fill('本地草稿')
+  await page.locator('#board-name').fill('分享草稿')
   await page.locator('#board-name').dispatchEvent('change')
   await page.locator('#save-local-board').click()
-  await expect(page.locator('#status')).toContainText('已保存到浏览器本地存储')
+  await expect(page.locator('#status')).toContainText('已保存本地文件')
   await openLocalBoardDialog(page)
   await expect(page.locator('#local-board-list')).toContainText('本地草稿')
+  await expect(page.locator('#local-board-list')).toContainText('分享名：分享草稿')
+  await expect(page.locator('#local-board-list .local-board-preview img')).toHaveCount(1)
   await expect(page.locator('#delete-selected-local-boards')).toBeDisabled()
 
   await page.locator('#local-board-dialog').evaluate((dialog) => {
     if ('close' in dialog) dialog.close()
   })
-  await page.locator('#save-local-board').click()
-  await expect(page.locator('#status')).toContainText('已保存到浏览器本地存储')
+  await page.locator('#save-as-local-board').click()
+  await expect(page.locator('#local-board-name-dialog')).toBeVisible()
+  await page.locator('#local-board-name-input').fill('另存草稿')
+  await page.locator('#confirm-local-board-name').click()
+  await expect(page.locator('#status')).toContainText('已保存本地文件')
   await openLocalBoardDialog(page)
   await expect(page.locator('#local-board-list .local-board-row')).toHaveCount(2)
-  await expect(page.locator('#local-board-name-dialog')).toBeHidden()
-  await page.locator('#local-board-list .local-board-row').first().getByRole('button', { name: '重命名' }).click()
+  await page.locator('#local-board-list .local-board-row').filter({ hasText: '另存草稿' }).getByRole('button', { name: '重命名' }).click()
   await expect(page.locator('#local-board-name-dialog')).toBeVisible()
   await page.locator('#local-board-name-input').fill('重命名草稿')
   await page.locator('#confirm-local-board-name').click()
@@ -697,12 +716,17 @@ test('editor saves, loads, and deletes local browser board slots', async ({
     expect(dialog.message()).toContain('未保存修改')
     await dialog.dismiss()
   })
-  await page.locator('#local-board-list .local-board-row').filter({ hasText: '本地草稿' }).getByRole('button', { name: '打开' }).click()
-  await expect(page.locator('#board-name')).toHaveValue('本地草稿')
-  await expect(page.locator('#status')).toContainText('已读取本地存档 本地草稿')
+  await page.locator('#local-board-list .local-board-row')
+    .filter({ hasText: '本地草稿' })
+    .locator('.local-board-actions')
+    .getByRole('button', { name: '打开' })
+    .click()
+  await expect(page.locator('#file-name')).toHaveValue('本地草稿')
+  await expect(page.locator('#board-name')).toHaveValue('分享草稿')
+  await expect(page.locator('#status')).toContainText('已打开文件 本地草稿')
 
   page.once('dialog', async (dialog) => {
-    expect(dialog.message()).toContain('删除选中的 2 个本地存档')
+    expect(dialog.message()).toContain('删除选中的 2 个本地文件')
     await dialog.accept()
   })
   for (const checkbox of await page.locator('#local-board-list .local-board-row input[type="checkbox"]').all()) {
@@ -710,7 +734,7 @@ test('editor saves, loads, and deletes local browser board slots', async ({
   }
   await expect(page.locator('#delete-selected-local-boards')).toBeEnabled()
   await page.locator('#delete-selected-local-boards').click()
-  await expect(page.locator('#local-board-list')).toContainText('暂无本地存档')
+  await expect(page.locator('#local-board-list')).toContainText('暂无本地文件')
 })
 
 test('editor persists the board across reloads', async ({ page }) => {

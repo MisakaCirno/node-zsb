@@ -34,6 +34,8 @@ export function getEditorElements() {
     confirmLocalBoardName: document.querySelector('#confirm-local-board-name'),
     deleteSelectedLocalBoards: document.querySelector('#delete-selected-local-boards'),
     saveLocalBoard: document.querySelector('#save-local-board'),
+    saveAsLocalBoard: document.querySelector('#save-as-local-board'),
+    fileName: document.querySelector('#file-name'),
     boardName: document.querySelector('#board-name'),
     paletteTabs: document.querySelector('#palette-tabs'),
     palette: document.querySelector('#palette'),

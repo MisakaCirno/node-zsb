@@ -31,19 +31,22 @@
           <div class="stage-toolbar-row stage-toolbar-main">
             <div class="stage-toolbar-cluster">
               <div class="toolbar-group board-name-group" aria-label="画板名称">
-              <label class="board-name-field" for="board-name">
-                <span class="board-name-label">名称</span>
-                <input id="board-name" maxlength="7" placeholder="名称" />
+              <label class="board-name-field" for="file-name">
+                <span class="board-name-label">文件名</span>
+                <input id="file-name" maxlength="48" placeholder="未命名文件" />
               </label>
               </div>
               <div class="toolbar-group local-board-actions" aria-label="本地存档">
-              <button id="open-local-board-dialog" class="icon-tool" type="button" title="打开存档" aria-label="打开存档">
+              <button id="open-local-board-dialog" class="icon-tool" type="button" title="打开文件" aria-label="打开文件">
                 <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20h16"/><path d="M5 20V6a2 2 0 0 1 2-2h7l5 5v11"/><path d="M14 4v5h5"/><path d="m9 14 3 3 4-5"/></svg>
               </button>
-              <button id="save-local-board" class="icon-tool" type="button" title="保存存档" aria-label="保存存档">
+              <button id="save-local-board" class="icon-tool" type="button" title="保存文件" aria-label="保存文件">
                 <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 3h12l2 2v16H5z"/><path d="M8 3v6h8V3"/><path d="M8 21v-7h8v7"/></svg>
               </button>
-              <button id="manage-local-boards" class="icon-tool" type="button" title="管理存档" aria-label="管理存档">
+              <button id="save-as-local-board" class="icon-tool" type="button" title="另存为" aria-label="另存为">
+                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 3h12l2 2v16H5z"/><path d="M8 3v6h8V3"/><path d="M8 21v-7h8v7"/><path d="M16 14h5"/><path d="M18.5 11.5 21 14l-2.5 2.5"/></svg>
+              </button>
+              <button id="manage-local-boards" class="icon-tool" type="button" title="管理文件" aria-label="管理文件">
                 <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16"/><path d="M4 12h16"/><path d="M4 17h10"/><path d="m17 16 2 2 3-4"/></svg>
               </button>
               </div>
@@ -139,6 +142,10 @@
         <section>
           <div class="section-title">属性</div>
           <div id="empty-state" class="empty-state">选择一个对象</div>
+          <label class="field share-name-field" for="board-name">
+            <span>分享名</span>
+            <input id="board-name" maxlength="7" placeholder="分享名" />
+          </label>
           <div id="inspector-form" class="inspector-form hidden">
             <input id="object-type" class="type-value-input" type="hidden" disabled aria-hidden="true" />
             <div class="inspector-toggles">
@@ -265,23 +272,23 @@
     <dialog id="local-board-dialog" class="editor-dialog">
       <form method="dialog" class="dialog-panel">
         <header class="dialog-header">
-          <h2>本地存档</h2>
+          <h2>本地文件</h2>
           <button id="close-local-board-dialog" class="icon-button" type="submit" aria-label="关闭">x</button>
         </header>
         <div class="local-board-bulk-actions">
           <button id="delete-selected-local-boards" type="button" disabled>删除所选</button>
         </div>
-        <div id="local-board-list" class="local-board-list" aria-label="本地存档列表"></div>
+        <div id="local-board-list" class="local-board-list" aria-label="本地文件列表"></div>
       </form>
     </dialog>
     <dialog id="local-board-name-dialog" class="editor-dialog compact-dialog">
       <form method="dialog" class="dialog-panel">
         <header class="dialog-header">
-          <h2 id="local-board-name-title">存档命名</h2>
+          <h2 id="local-board-name-title">文件命名</h2>
           <button id="close-local-board-name-dialog" class="icon-button" type="submit" value="cancel" aria-label="关闭">x</button>
         </header>
         <label class="field">
-          <span>存档名称</span>
+          <span>文件名</span>
           <input id="local-board-name-input" maxlength="48" />
         </label>
         <footer class="dialog-actions">

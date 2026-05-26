@@ -1,4 +1,4 @@
-import { LOCAL_BOARDS_KEY, STORAGE_KEY } from './constants.js'
+import { LOCAL_BOARDS_KEY, LOCAL_FILES_KEY, STORAGE_KEY } from './constants.js'
 
 export function loadSavedBoard() {
   try {
@@ -41,4 +41,74 @@ export function persistLocalBoards(boards) {
     console.warn('Failed to save local boards', error)
     return false
   }
+}
+
+export function loadLocalFiles() {
+  try {
+    const raw = window.localStorage.getItem(LOCAL_FILES_KEY)
+    const files = raw ? JSON.parse(raw) : null
+    if (Array.isArray(files)) {
+      return normalizeLocalFiles(files)
+    }
+    const migrated = migrateLocalBoardsToFiles()
+    if (migrated.length > 0) {
+      persistLocalFiles(migrated)
+    }
+    return migrated
+  } catch (error) {
+    console.warn('Failed to load local files', error)
+    return []
+  }
+}
+
+export function persistLocalFiles(files) {
+  try {
+    window.localStorage.setItem(LOCAL_FILES_KEY, JSON.stringify(normalizeLocalFiles(files)))
+    return true
+  } catch (error) {
+    console.warn('Failed to save local files', error)
+    return false
+  }
+}
+
+function migrateLocalBoardsToFiles() {
+  const boards = loadLocalBoards()
+  const usedNames = new Set()
+  return boards.map((entry) => {
+    const name = makeUniqueFileName(entry.name || entry.board?.name || '未命名', usedNames)
+    usedNames.add(name)
+    return {
+      name,
+      board: entry.board,
+      createdAt: entry.updatedAt ?? new Date().toISOString(),
+      updatedAt: entry.updatedAt ?? new Date().toISOString(),
+      preview: entry.preview ?? '',
+    }
+  }).filter((file) => file.name && file.board)
+}
+
+function normalizeLocalFiles(files) {
+  const seen = new Set()
+  return files
+    .filter((file) => file?.name && file?.board && !seen.has(file.name))
+    .map((file) => {
+      seen.add(file.name)
+      return {
+        name: file.name,
+        board: file.board,
+        createdAt: file.createdAt ?? file.updatedAt ?? new Date().toISOString(),
+        updatedAt: file.updatedAt ?? new Date().toISOString(),
+        preview: file.preview ?? '',
+      }
+    })
+}
+
+function makeUniqueFileName(name, usedNames) {
+  const baseName = String(name).trim() || '未命名'
+  if (!usedNames.has(baseName)) return baseName
+  let index = 2
+  while (usedNames.has(`${baseName} ${index}`)) {
+    index += 1
+  }
+  return `${baseName} ${index}`
 }

@@ -57,6 +57,7 @@ export function bindEditorEvents({
   elements.downloadPreviewImage.addEventListener('click', actions.downloadPreviewImage)
   elements.boardName.addEventListener('change', actions.onBoardNameChange)
   elements.saveLocalBoard.addEventListener('click', actions.saveLocalBoard)
+  elements.saveAsLocalBoard.addEventListener('click', actions.saveLocalBoardAs)
   elements.undo.addEventListener('click', actions.undo)
   elements.redo.addEventListener('click', actions.redo)
   elements.clearBoard.addEventListener('click', actions.clearBoard)

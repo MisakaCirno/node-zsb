@@ -7,6 +7,8 @@ export function createEditorState() {
     },
     selectedIndex: -1,
     selectedIndexes: [],
+    currentFileName: '',
+    localFileSnapshot: '',
     revealSelectedLayer: false,
     iconConfigs: {},
     iconGroups: {},

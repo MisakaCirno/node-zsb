@@ -29,6 +29,7 @@ export function createEditorControllers({
     normalizePoint,
     showStatus,
     confirmAction,
+    stage,
   })
 
   const boardMetaControls = createBoardMetaControls({
