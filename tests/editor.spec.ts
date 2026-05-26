@@ -395,6 +395,9 @@ test('editor resizes side panels and keeps object tabs visible', async ({ page }
         .map(Number.parseFloat) ?? [])
   const tabsFit = async () =>
     page.locator('#palette-tabs').evaluate((tabs) => tabs.scrollWidth <= tabs.clientWidth)
+  const toolrailFitsHorizontally = async () =>
+    page.locator('.editor-toolrail').evaluate((toolrail) =>
+      toolrail.scrollWidth <= toolrail.clientWidth)
   const paletteColumnCount = async () =>
     page.locator('#palette').evaluate((palette) =>
       palette.ownerDocument.defaultView
@@ -419,6 +422,7 @@ test('editor resizes side panels and keeps object tabs visible', async ({ page }
   expect(stageBox.x).toBeGreaterThan(assetBox.x + assetBox.width)
   expect(toolrailBox.y).toBeGreaterThanOrEqual(toolbarBox.y + toolbarBox.height)
   expect(stageHostBox.x).toBeGreaterThanOrEqual(toolrailBox.x + toolrailBox.width)
+  expect(await toolrailFitsHorizontally()).toBe(true)
   expect(await tabsFit()).toBe(true)
   expect(await paletteTabWritingMode()).toBe('horizontal-tb')
   const initialPaletteColumns = await paletteColumnCount()

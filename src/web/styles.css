@@ -127,7 +127,8 @@ textarea {
   padding: 12px 6px;
   border-right: 1px solid #27313a;
   background: #101316;
-  overflow: auto;
+  overflow-x: hidden;
+  overflow-y: auto;
 }
 
 .editor-toolrail button {
@@ -266,7 +267,7 @@ textarea {
 .stage-body {
   min-height: 0;
   display: grid;
-  grid-template-columns: 46px minmax(0, 1fr);
+  grid-template-columns: 48px minmax(0, 1fr);
   overflow: hidden;
 }
 
