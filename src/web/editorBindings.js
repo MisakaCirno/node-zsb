@@ -7,6 +7,8 @@ export function bindEditorEvents({
 }) {
   elements.openImportDialog.addEventListener('click', () => openDialog(elements.importDialog))
   elements.openExportDialog.addEventListener('click', () => openDialog(elements.exportDialog))
+  elements.assetTabBackground.addEventListener('click', () => selectAssetTab(elements, 'background'))
+  elements.assetTabObjects.addEventListener('click', () => selectAssetTab(elements, 'objects'))
   elements.loadCode.addEventListener('click', () =>
     runAction(async () => {
       await actions.loadFromCode(elements.codeInput.value)
@@ -88,6 +90,16 @@ export function bindEditorEvents({
   ]) {
     input.addEventListener('input', actions.updateSelectedFromInspector)
   }
+}
+
+function selectAssetTab(elements, tab) {
+  const isBackground = tab === 'background'
+  elements.assetTabBackground.classList.toggle('active', isBackground)
+  elements.assetTabObjects.classList.toggle('active', !isBackground)
+  elements.assetTabBackground.setAttribute('aria-selected', String(isBackground))
+  elements.assetTabObjects.setAttribute('aria-selected', String(!isBackground))
+  elements.assetPanelBackground.classList.toggle('hidden', !isBackground)
+  elements.assetPanelObjects.classList.toggle('hidden', isBackground)
 }
 
 function openDialog(dialog) {

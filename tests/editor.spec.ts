@@ -83,11 +83,11 @@ test('editor renders readable Chinese labels', async ({ page }) => {
   await expect(page.locator('.stage-toolbar-row')).toHaveCount(2)
   await expect(page.locator('#align-left')).toHaveText('')
   await expect(page.locator('#align-left svg')).toBeVisible()
+  await expect(page.locator('#asset-tab-background')).toHaveAttribute('role', 'tab')
+  await expect(page.locator('#asset-tab-objects')).toHaveAttribute('aria-selected', 'true')
   await expect(page.locator('.section-title')).toContainText([
     '本地存档',
     '导入导出',
-    '背景',
-    '对象',
     '属性',
     '图层',
   ])
@@ -130,12 +130,14 @@ test('editor imports code, changes background, and edits text and line objects',
   await page.locator('#code-input').fill(initialCode)
   await page.locator('#load-code').click()
 
+  await page.locator('#asset-tab-background').click()
   await page.locator('#background-list [data-background="grey_square"]').click()
   await expect(page.locator('#background-list [data-background="grey_square"]')).toHaveAttribute(
     'aria-checked',
     'true',
   )
 
+  await page.locator('#asset-tab-objects').click()
   await page.getByRole('button', { name: '形状' }).click()
   await page.getByTitle('text').click()
   await expect(page.locator('#object-type')).toHaveValue('text')

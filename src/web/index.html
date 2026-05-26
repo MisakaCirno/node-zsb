@@ -39,13 +39,18 @@
           </div>
         </section>
 
-        <section class="sidebar-panel">
-          <div class="section-title">背景</div>
-          <div id="background-list" class="background-list" role="radiogroup" aria-label="背景"></div>
-
-          <div class="section-title">对象</div>
-          <div id="palette-tabs" class="segmented"></div>
-          <div id="palette" class="palette"></div>
+        <section class="sidebar-panel asset-panel">
+          <div class="sidebar-tabs" role="tablist" aria-label="资源">
+            <button id="asset-tab-background" type="button" role="tab" aria-selected="false" aria-controls="asset-panel-background">背景</button>
+            <button id="asset-tab-objects" class="active" type="button" role="tab" aria-selected="true" aria-controls="asset-panel-objects">对象</button>
+          </div>
+          <div id="asset-panel-background" class="asset-tab-panel hidden" role="tabpanel" aria-labelledby="asset-tab-background">
+            <div id="background-list" class="background-list" role="radiogroup" aria-label="背景"></div>
+          </div>
+          <div id="asset-panel-objects" class="asset-tab-panel" role="tabpanel" aria-labelledby="asset-tab-objects">
+            <div id="palette-tabs" class="segmented"></div>
+            <div id="palette" class="palette"></div>
+          </div>
         </section>
       </aside>
 

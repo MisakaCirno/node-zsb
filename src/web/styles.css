@@ -113,6 +113,30 @@ textarea {
   margin-top: 0;
 }
 
+.asset-panel {
+  display: grid;
+  gap: 12px;
+}
+
+.sidebar-tabs {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 6px;
+}
+
+.sidebar-tabs button {
+  height: 32px;
+}
+
+.sidebar-tabs button.active {
+  border-color: #66c2a5;
+  background: #20362f;
+}
+
+.asset-tab-panel {
+  min-height: 0;
+}
+
 .icon-button {
   width: 34px;
   min-width: 34px;
