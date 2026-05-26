@@ -63,7 +63,9 @@ export function createViewportControls({
     const snapped = Math.round((Number(gridSize) || MIN_GRID_SIZE) / GRID_SIZE_STEP) * GRID_SIZE_STEP
     state.gridSize = clamp(snapped, MIN_GRID_SIZE, MAX_GRID_SIZE)
     updateGridDensityControls()
-    stageRenderer.renderGrid()
+    if (options.render !== false) {
+      stageRenderer.renderGrid()
+    }
     if (!options.silent) {
       showStatus(`已设置网格间距 ${state.gridSize}px`)
     }
@@ -85,6 +87,12 @@ export function createViewportControls({
     showStatus(state.showGrid ? '已显示辅助网格' : '已隐藏辅助网格')
   }
 
+  function syncControlStateFromDom() {
+    state.snapToGrid = elements.snap.checked
+    state.showGrid = elements.grid.checked
+    setGridDensity(Number(elements.gridDensity.value), { render: false, silent: true })
+  }
+
   function applyFitZoomOnResize() {
     if (state.zoomMode === 'fit') {
       applyFitZoom({ silent: true })
@@ -97,6 +105,7 @@ export function createViewportControls({
     setGridDensity,
     setStageZoom,
     stepZoom,
+    syncControlStateFromDom,
     toggleGrid,
     toggleSnapToGrid,
   }

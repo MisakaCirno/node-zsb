@@ -149,6 +149,7 @@ export function createEditorApp({
       syncBoardNameInput,
     })
     bindEvents()
+    viewportControls.syncControlStateFromDom()
     renderLocalBoards()
     renderPaletteTabs()
     renderAll()

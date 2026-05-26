@@ -33,6 +33,34 @@ async function clickFileMenuAction(page: Page, selector: string) {
   await page.locator(selector).click()
 }
 
+async function getGridCanvasStats(page: Page) {
+  return page.evaluate(`(() => {
+    const gridCanvas = document.querySelectorAll('#stage-host canvas')[1]
+    const data = gridCanvas
+      ?.getContext('2d')
+      ?.getImageData(0, 0, gridCanvas.width, gridCanvas.height)
+      .data
+    if (!data) return null
+    let visiblePixels = 0
+    let alphaSum = 0
+    let strongPixels = 0
+    for (let index = 0; index < data.length; index += 4) {
+      const alpha = data[index + 3]
+      if (alpha > 0) {
+        visiblePixels += 1
+        alphaSum += alpha
+      }
+      if (alpha >= 64) {
+        strongPixels += 1
+      }
+    }
+    return {
+      averageAlpha: alphaSum / visiblePixels,
+      strongPixels,
+    }
+  })()`) as Promise<{ averageAlpha: number, strongPixels: number } | null>
+}
+
 async function exportBoardCode(page: Page) {
   await openExportCodeDialog(page)
   await expect(page.locator('#code-output')).toHaveValue(/\[stgy:/)
@@ -1425,31 +1453,7 @@ test('editor toggles the visual grid overlay', async ({ page }) => {
 
   await page.locator('#grid-toggle').check()
   await expect(page.locator('#status')).toContainText('已显示辅助网格')
-  const fittedGridStats = await page.evaluate(`(() => {
-    const gridCanvas = document.querySelectorAll('#stage-host canvas')[1]
-    const data = gridCanvas
-      ?.getContext('2d')
-      ?.getImageData(0, 0, gridCanvas.width, gridCanvas.height)
-      .data
-    if (!data) return null
-    let visiblePixels = 0
-    let alphaSum = 0
-    let strongPixels = 0
-    for (let index = 0; index < data.length; index += 4) {
-      const alpha = data[index + 3]
-      if (alpha > 0) {
-        visiblePixels += 1
-        alphaSum += alpha
-      }
-      if (alpha >= 64) {
-        strongPixels += 1
-      }
-    }
-    return {
-      averageAlpha: alphaSum / visiblePixels,
-      strongPixels,
-    }
-  })()`) as { averageAlpha: number, strongPixels: number } | null
+  const fittedGridStats = await getGridCanvasStats(page)
   expect(fittedGridStats?.averageAlpha).toBeGreaterThan(20)
   expect(fittedGridStats?.strongPixels).toBeGreaterThan(100)
   const withGrid = await stage.screenshot()
@@ -1463,6 +1467,33 @@ test('editor toggles the visual grid overlay', async ({ page }) => {
 
   await page.locator('#grid-toggle').uncheck()
   await expect(page.locator('#status')).toContainText('已隐藏辅助网格')
+})
+
+test('editor syncs restored grid switch state on startup', async ({ page }) => {
+  await page.route('**/editor/app.js', async (route) => {
+    await route.fulfill({
+      contentType: 'application/javascript',
+      body: `
+        import { startEditorApp } from './editorApp.js'
+
+        document.querySelector('#grid-toggle').checked = true
+        document.querySelector('#grid-density').value = '8'
+
+        startEditorApp().catch((error) => {
+          console.error(error)
+          alert(error.message)
+        })
+      `,
+    })
+  })
+  await page.goto('/editor')
+  await expect(page.locator('#layers')).toContainText('tank')
+  await expect(page.locator('#grid-toggle')).toBeChecked()
+  await expect(page.locator('#grid-density-value')).toHaveText('8px')
+
+  const fittedGridStats = await getGridCanvasStats(page)
+  expect(fittedGridStats?.averageAlpha).toBeGreaterThan(20)
+  expect(fittedGridStats?.strongPixels).toBeGreaterThan(100)
 })
 
 test('editor deselects and deletes objects with keyboard shortcuts', async ({
