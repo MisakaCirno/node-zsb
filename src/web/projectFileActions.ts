@@ -7,6 +7,28 @@ import {
   parseProjectJson,
   projectToJson,
 } from './project.js'
+import type {
+  BrowserWindow,
+  EditorState,
+  FileLike,
+  ProjectFileActions,
+  ValueElement,
+} from './types.js'
+
+const browserWindow = (globalThis as unknown as { window: BrowserWindow }).window
+
+interface ProjectFileElements {
+  fileName: ValueElement
+  boardName: ValueElement
+}
+
+interface ProjectFileActionsDeps {
+  state: EditorState
+  elements: ProjectFileElements
+  recordHistory: () => void
+  renderAll: () => Promise<void>
+  renderBackgroundOptions: () => void
+}
 
 export function createProjectFileActions({
   state,
@@ -14,7 +36,7 @@ export function createProjectFileActions({
   recordHistory,
   renderAll,
   renderBackgroundOptions,
-}) {
+}: ProjectFileActionsDeps): ProjectFileActions {
   function downloadProjectFile() {
     const fileName = normalizeProjectFileName(getCurrentFileName())
     const project = createProjectFromBoard(state.board, {
@@ -23,16 +45,16 @@ export function createProjectFileActions({
     })
     const blob = new Blob([projectToJson(project)], { type: 'application/json' })
     const url = URL.createObjectURL(blob)
-    const link = document.createElement('a')
+    const link = browserWindow.document.createElement('a')
     link.href = url
     link.download = fileName
-    document.body.append(link)
+    browserWindow.document.body.append(link)
     link.click()
     link.remove()
     URL.revokeObjectURL(url)
   }
 
-  async function importProjectFile(file) {
+  async function importProjectFile(file?: FileLike | null) {
     if (!file) return false
     const project = parseProjectJson(await file.text())
     const board = flattenProjectToBoard(project)
@@ -54,17 +76,17 @@ export function createProjectFileActions({
     importProjectFile,
   }
 
-  function getCurrentFileName() {
+  function getCurrentFileName(): string {
     return elements.fileName.value || state.currentFileName || state.board.name || '未命名工程'
   }
 }
 
-function normalizeProjectFileName(name) {
+function normalizeProjectFileName(name: unknown): string {
   const baseName = stripProjectFileExtension(String(name ?? '').trim()) || '未命名工程'
   return `${baseName}${PROJECT_FILE_EXTENSION}`
 }
 
-function stripProjectFileExtension(name) {
+function stripProjectFileExtension(name: unknown): string {
   const value = String(name ?? '').trim()
   return value.endsWith(PROJECT_FILE_EXTENSION)
     ? value.slice(0, -PROJECT_FILE_EXTENSION.length)

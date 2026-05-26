@@ -246,6 +246,55 @@ export interface InspectorControls {
   updateSelectionActions(): void
 }
 
+export interface BoardCodeActions {
+  copyExportCode(): Promise<void>
+  copyExportImage(): Promise<void>
+  downloadPreviewImage(): void
+  exportCode(): Promise<string>
+  loadFromCode(code: string, options?: { record?: boolean }): Promise<void>
+  renderPreview(): Promise<string>
+}
+
+export interface ProjectFileActions {
+  downloadProjectFile(): void
+  importProjectFile(file?: FileLike | null): Promise<boolean>
+}
+
+export interface FileLike {
+  name?: string
+  text(): Promise<string>
+}
+
+export interface BrowserClipboard {
+  writeText(text: string): Promise<void>
+  write?(items: unknown[]): Promise<void>
+}
+
+export interface BrowserWindow {
+  ClipboardItem?: new (items: Record<string, Blob>) => unknown
+  document: {
+    body: { append(element: AnchorElement): void }
+    createElement(tagName: 'a'): AnchorElement
+  }
+  history: {
+    replaceState(data: unknown, unused: string, url?: string): void
+  }
+  location: {
+    href: string
+  }
+  localStorage: {
+    getItem(key: string): string | null
+    setItem(key: string, value: string): void
+  }
+}
+
+export interface AnchorElement {
+  href: string
+  download: string
+  click(): void
+  remove(): void
+}
+
 export interface ProjectBoardMeta {
   name: string
   boardBackground: string
@@ -258,6 +307,23 @@ export interface ProjectFile {
   board: ProjectBoardMeta
   objects: Record<string, BoardObject>
   layers: LayerNode[]
+}
+
+export interface LocalBoardSlot {
+  id?: string
+  name?: string
+  board?: Board
+  updatedAt?: string
+  preview?: string
+}
+
+export interface LocalFile {
+  name: string
+  project: ProjectFile
+  board: Board
+  createdAt: string
+  updatedAt: string
+  preview: string
 }
 
 export interface CreateProjectOptions {

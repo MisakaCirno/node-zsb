@@ -5,6 +5,39 @@ import {
   renderPreviewImage,
 } from './api.js'
 import { replaceBoard } from './editorState.js'
+import type {
+  BoardCodeActions,
+  BrowserClipboard,
+  BrowserWindow,
+  EditorState,
+  ValueElement,
+} from './types.js'
+
+interface BoardCodeElements {
+  boardName: ValueElement
+  codeOutput: ValueElement
+  codeInput: ValueElement
+  preview: {
+    src: string
+    style: { display: string }
+    dataset: { downloadUrl?: string }
+  }
+}
+
+interface BoardCodeActionsDeps {
+  state: EditorState
+  elements: BoardCodeElements
+  recordHistory: () => void
+  renderAll: () => Promise<void>
+  renderBackgroundOptions: () => void
+}
+
+interface PreviewPayload {
+  hash: string
+}
+
+const browserWindow = (globalThis as unknown as { window: BrowserWindow }).window
+const browserNavigator = (globalThis as unknown as { navigator: { clipboard?: BrowserClipboard } }).navigator
 
 export function createBoardCodeActions({
   state,
@@ -12,8 +45,8 @@ export function createBoardCodeActions({
   recordHistory,
   renderAll,
   renderBackgroundOptions,
-}) {
-  async function loadFromCode(code, options = {}) {
+}: BoardCodeActionsDeps): BoardCodeActions {
+  async function loadFromCode(code: string, options: { record?: boolean } = {}) {
     const board = await decodeBoardCode(code)
     if (options.record !== false) {
       recordHistory()
@@ -30,7 +63,7 @@ export function createBoardCodeActions({
 
   async function renderPreview() {
     const code = await exportAndReturnCode()
-    const data = await renderPreviewImage(code)
+    const data = await renderPreviewImage(code) as PreviewPayload
     const src = `/preview/${data.hash}.webp?${Date.now()}`
     elements.preview.src = src
     elements.preview.style.display = 'block'
@@ -40,33 +73,33 @@ export function createBoardCodeActions({
 
   async function copyExportCode() {
     const code = elements.codeOutput.value || await exportAndReturnCode()
-    await navigator.clipboard.writeText(code)
+    await browserNavigator.clipboard?.writeText(code)
   }
 
   async function copyExportImage() {
     const url = elements.preview.dataset.downloadUrl || await renderPreview()
     const response = await fetch(url)
     const blob = await response.blob()
-    if (!navigator.clipboard?.write || !window.ClipboardItem) {
+    if (!browserNavigator.clipboard?.write || !browserWindow.ClipboardItem) {
       throw new Error('当前浏览器不支持复制图片')
     }
-    await navigator.clipboard.write([
-      new ClipboardItem({ [blob.type || 'image/webp']: blob }),
+    await browserNavigator.clipboard.write([
+      new browserWindow.ClipboardItem({ [blob.type || 'image/webp']: blob }),
     ])
   }
 
   function downloadPreviewImage() {
     const url = elements.preview.dataset.downloadUrl
     if (!url) return
-    const link = document.createElement('a')
+    const link = browserWindow.document.createElement('a')
     link.href = url
     link.download = `${state.board.name || '战术板'}.webp`
-    document.body.append(link)
+    browserWindow.document.body.append(link)
     link.click()
     link.remove()
   }
 
-  async function exportAndReturnCode() {
+  async function exportAndReturnCode(): Promise<string> {
     const code = await encodeBoardCode(cleanBoard(state.board))
     elements.codeOutput.value = code
     elements.codeInput.value = code
@@ -84,8 +117,8 @@ export function createBoardCodeActions({
   }
 }
 
-function updateCodeUrl(code) {
-  const url = new URL(window.location.href)
+function updateCodeUrl(code: string): void {
+  const url = new URL(browserWindow.location.href)
   url.searchParams.set('code', code)
-  window.history.replaceState(null, '', url)
+  browserWindow.history.replaceState(null, '', url.toString())
 }
