@@ -10,35 +10,6 @@
   <body>
     <main class="editor-shell">
       <aside class="panel sidebar">
-        <section class="sidebar-panel">
-          <div class="section-title">本地存档</div>
-          <label class="field">
-            <span>存档槽</span>
-            <select id="local-board-select"></select>
-          </label>
-          <div class="toolbar local-board-actions">
-            <button id="save-local-board" class="icon-tool" type="button" title="保存到浏览器本地存储" aria-label="保存">
-              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 4h12l2 2v14H5z"/><path d="M8 4v6h8V4"/><path d="M8 16h8"/></svg>
-            </button>
-            <button id="load-local-board" class="icon-tool" type="button" title="读取本地存档" aria-label="读取" disabled>
-              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20h16"/><path d="M12 4v12"/><path d="m7 11 5 5 5-5"/></svg>
-            </button>
-            <button id="delete-local-board" class="icon-tool" type="button" title="删除本地存档" aria-label="删除" disabled>
-              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M6 7l1 14h10l1-14"/><path d="M9 7V4h6v3"/></svg>
-            </button>
-          </div>
-
-          <div class="section-title">导入导出</div>
-          <div class="toolbar">
-            <button id="open-import-dialog" class="icon-tool" type="button" title="导入分享码" aria-label="导入">
-              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v12"/><path d="m7 10 5 5 5-5"/><path d="M5 21h14"/></svg>
-            </button>
-            <button id="open-export-dialog" class="icon-tool" type="button" title="导出分享码" aria-label="导出">
-              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 21V9"/><path d="m7 14 5-5 5 5"/><path d="M5 3h14"/></svg>
-            </button>
-          </div>
-        </section>
-
         <section class="sidebar-panel asset-panel">
           <div class="sidebar-tabs" role="tablist" aria-label="资源">
             <button id="asset-tab-background" type="button" role="tab" aria-selected="false" aria-controls="asset-panel-background">背景</button>
@@ -58,6 +29,9 @@
         <div class="stage-toolbar">
           <div class="stage-toolbar-row stage-toolbar-main">
             <input id="board-name" maxlength="7" placeholder="名称" />
+            <button id="open-local-board-dialog" class="text-tool" type="button">本地存档</button>
+            <button id="open-import-dialog" class="text-tool" type="button" title="导入分享码">导入分享码</button>
+            <button id="open-export-dialog" class="text-tool" type="button" title="导出分享码">导出分享码</button>
             <button id="undo-action" class="icon-tool" type="button" title="撤销" aria-label="撤销" disabled>
               <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 7 4 12l5 5"/><path d="M4 12h11a5 5 0 0 1 0 10h-1"/></svg>
             </button>
@@ -231,6 +205,23 @@
         </section>
       </aside>
     </main>
+    <dialog id="local-board-dialog" class="editor-dialog">
+      <form method="dialog" class="dialog-panel">
+        <header class="dialog-header">
+          <h2>本地存档</h2>
+          <button id="close-local-board-dialog" class="icon-button" type="submit" aria-label="关闭">x</button>
+        </header>
+        <label class="field">
+          <span>存档槽</span>
+          <select id="local-board-select"></select>
+        </label>
+        <footer class="dialog-actions">
+          <button id="save-local-board" type="button">保存当前画板</button>
+          <button id="load-local-board" type="button" disabled>读取</button>
+          <button id="delete-local-board" type="button" disabled>删除</button>
+        </footer>
+      </form>
+    </dialog>
     <dialog id="import-dialog" class="editor-dialog">
       <form method="dialog" class="dialog-panel">
         <header class="dialog-header">

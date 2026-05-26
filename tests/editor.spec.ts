@@ -10,6 +10,11 @@ async function openExportDialog(page: Page) {
   await expect(page.locator('#export-dialog')).toBeVisible()
 }
 
+async function openLocalBoardDialog(page: Page) {
+  await page.locator('#open-local-board-dialog').click()
+  await expect(page.locator('#local-board-dialog')).toBeVisible()
+}
+
 async function exportBoardCode(page: Page) {
   await openExportDialog(page)
   await page.locator('#export-code').click()
@@ -67,6 +72,8 @@ test('editor renders readable Chinese labels', async ({ page }) => {
   await expect(page.getByRole('button', { name: '导出' })).toBeVisible()
   await expect(page.locator('#open-import-dialog')).toHaveAttribute('title', '导入分享码')
   await expect(page.locator('#open-export-dialog')).toHaveAttribute('title', '导出分享码')
+  await expect(page.locator('#open-import-dialog')).toHaveText('导入分享码')
+  await expect(page.locator('#open-export-dialog')).toHaveText('导出分享码')
   await openExportDialog(page)
   await expect(page.locator('#render-preview')).toBeVisible()
   await expect(page.getByPlaceholder('名称')).toBeVisible()
@@ -86,8 +93,6 @@ test('editor renders readable Chinese labels', async ({ page }) => {
   await expect(page.locator('#asset-tab-background')).toHaveAttribute('role', 'tab')
   await expect(page.locator('#asset-tab-objects')).toHaveAttribute('aria-selected', 'true')
   await expect(page.locator('.section-title')).toContainText([
-    '本地存档',
-    '导入导出',
     '属性',
     '图层',
   ])
@@ -406,22 +411,34 @@ test('editor saves, loads, and deletes local browser board slots', async ({
   await page.evaluate(() =>
     localStorage.removeItem('node-zsb-editor-local-boards-v1'),
   )
+  await page.evaluate(() =>
+    localStorage.removeItem('node-zsb-editor-board-v1'),
+  )
   await page.reload()
   await expect(page.locator('#layers')).toContainText('tank')
+  await openLocalBoardDialog(page)
   await expect(page.locator('#local-board-select')).toContainText('暂无本地存档')
   await expect(page.locator('#load-local-board')).toBeDisabled()
   await expect(page.locator('#delete-local-board')).toBeDisabled()
+  await page.locator('#local-board-dialog').evaluate((dialog) => {
+    if (dialog instanceof HTMLDialogElement) dialog.close()
+  })
 
   await page.locator('#board-name').fill('本地草稿')
   await page.locator('#board-name').dispatchEvent('change')
+  await openLocalBoardDialog(page)
   await page.locator('#save-local-board').click()
   await expect(page.locator('#status')).toContainText('已保存到浏览器本地存储')
   await expect(page.locator('#local-board-select')).toContainText('本地草稿')
   await expect(page.locator('#load-local-board')).toBeEnabled()
   await expect(page.locator('#delete-local-board')).toBeEnabled()
+  await page.locator('#local-board-dialog').evaluate((dialog) => {
+    if (dialog instanceof HTMLDialogElement) dialog.close()
+  })
 
   await page.locator('#board-name').fill('临时修改')
   await page.locator('#board-name').dispatchEvent('change')
+  await openLocalBoardDialog(page)
   await page.locator('#load-local-board').click()
   await expect(page.locator('#board-name')).toHaveValue('本地草稿')
   await expect(page.locator('#status')).toContainText('已读取本地存档 本地草稿')

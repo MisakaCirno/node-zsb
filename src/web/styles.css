@@ -188,6 +188,12 @@ textarea {
   padding: 0;
 }
 
+.stage-toolbar .text-tool {
+  width: auto;
+  min-width: 84px;
+  padding: 0 12px;
+}
+
 .toolbar-group {
   align-items: center;
   gap: 4px;

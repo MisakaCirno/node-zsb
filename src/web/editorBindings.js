@@ -5,6 +5,7 @@ export function bindEditorEvents({
   runAction,
   actions,
 }) {
+  elements.openLocalBoardDialog.addEventListener('click', () => openDialog(elements.localBoardDialog))
   elements.openImportDialog.addEventListener('click', () => openDialog(elements.importDialog))
   elements.openExportDialog.addEventListener('click', () => openDialog(elements.exportDialog))
   elements.assetTabBackground.addEventListener('click', () => selectAssetTab(elements, 'background'))

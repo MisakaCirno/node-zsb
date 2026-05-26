@@ -2,10 +2,13 @@ export function getEditorElements() {
   return {
     codeInput: document.querySelector('#code-input'),
     codeOutput: document.querySelector('#code-output'),
+    openLocalBoardDialog: document.querySelector('#open-local-board-dialog'),
     openImportDialog: document.querySelector('#open-import-dialog'),
     openExportDialog: document.querySelector('#open-export-dialog'),
+    localBoardDialog: document.querySelector('#local-board-dialog'),
     importDialog: document.querySelector('#import-dialog'),
     exportDialog: document.querySelector('#export-dialog'),
+    closeLocalBoardDialog: document.querySelector('#close-local-board-dialog'),
     closeImportDialog: document.querySelector('#close-import-dialog'),
     closeExportDialog: document.querySelector('#close-export-dialog'),
     loadCode: document.querySelector('#load-code'),
