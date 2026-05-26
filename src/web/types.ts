@@ -73,8 +73,8 @@ export interface EditorState extends EditorStateSlice {
   currentFileName: string
   localFileSnapshot: string
   revealSelectedLayer: boolean
-  iconConfigs: Record<string, { src: string, crop: RectLike, size: number }>
-  iconGroups: Record<string, Array<{ type: string, label?: string }>>
+  iconConfigs: Record<string, IconConfig>
+  iconGroups: Record<string, string[]>
   backgrounds: Record<string, string>
   activeGroup: string
   snapToGrid: boolean
@@ -96,6 +96,12 @@ export interface RectLike {
   y?: number
   width?: number
   height?: number
+}
+
+export interface IconConfig {
+  src: string
+  crop: Required<RectLike>
+  size: number
 }
 
 export interface SelectionOptions {

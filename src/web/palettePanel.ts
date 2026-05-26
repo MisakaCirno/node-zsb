@@ -1,4 +1,54 @@
-const PALETTE_LABELS = {
+import { createObjectPreview } from './iconPreview.js'
+import type {
+  EditorState,
+} from './types.js'
+
+declare const document: DocumentLike
+
+interface PalettePanelDeps {
+  state: EditorState
+  elements: PaletteElements
+  onAddObject(type: string): void
+}
+
+interface PaletteElements {
+  paletteTabs: PaletteContainer
+  palette: PaletteContainer
+}
+
+interface PaletteContainer {
+  innerHTML: string
+  append(...nodes: unknown[]): void
+  setAttribute(name: string, value: string): void
+}
+
+interface PaletteButton {
+  draggable: boolean
+  id: string
+  textContent: string | null
+  title: string
+  type: string
+  classList: {
+    toggle(className: string, force?: boolean): void
+  }
+  append(...nodes: unknown[]): void
+  addEventListener(type: 'click', listener: () => void): void
+  addEventListener(type: 'dragstart', listener: (event: DragEventLike) => void): void
+  setAttribute(name: string, value: string): void
+}
+
+interface DragEventLike {
+  dataTransfer: {
+    effectAllowed: string
+    setData(format: string, data: string): void
+  }
+}
+
+interface DocumentLike {
+  createElement(tagName: 'button'): PaletteButton
+}
+
+const PALETTE_LABELS: Record<string, string> = {
   rolesAndJobs: '职能',
   mechanics: '机制',
   enemiesAndMarkers: '标记',
@@ -15,7 +65,7 @@ const EXTRA_SHAPE_TYPES = [
   'donut',
 ]
 
-export function renderPaletteTabs({ state, elements, onAddObject }) {
+export function renderPaletteTabs({ state, elements, onAddObject }: PalettePanelDeps) {
   elements.paletteTabs.innerHTML = ''
   elements.paletteTabs.setAttribute('role', 'tablist')
   elements.paletteTabs.setAttribute('aria-label', '对象分类')
@@ -37,7 +87,7 @@ export function renderPaletteTabs({ state, elements, onAddObject }) {
   renderPalette({ state, elements, onAddObject })
 }
 
-function renderPalette({ state, elements, onAddObject }) {
+function renderPalette({ state, elements, onAddObject }: PalettePanelDeps) {
   elements.palette.innerHTML = ''
   const extras = state.activeGroup === 'shapes' ? EXTRA_SHAPE_TYPES : []
   const types = [...(state.iconGroups[state.activeGroup] ?? []), ...extras]
@@ -59,4 +109,3 @@ function renderPalette({ state, elements, onAddObject }) {
     elements.palette.append(button)
   }
 }
-import { createObjectPreview } from './iconPreview.js'
