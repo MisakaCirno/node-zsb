@@ -177,13 +177,20 @@ textarea {
 
 .sidebar-tabs button {
   position: relative;
-  min-width: 42px;
-  min-height: 54px;
+  height: 38px;
+  min-width: 76px;
   border: 0;
   border-radius: 0;
   border-bottom: 2px solid transparent;
   background: transparent;
   color: #9ba8b1;
+  padding: 0 14px;
+}
+
+.sidebar-tabs.compact-tabs button {
+  min-width: 42px;
+  min-height: 54px;
+  height: auto;
   padding: 7px 10px 8px;
   line-height: 1.05;
   writing-mode: vertical-rl;
@@ -444,13 +451,19 @@ textarea {
 .segmented button {
   position: relative;
   flex: 0 0 auto;
-  min-width: 36px;
-  min-height: 54px;
+  height: 34px;
   border: 0;
   border-radius: 0;
   border-bottom: 2px solid transparent;
   background: transparent;
   color: #9ba8b1;
+  padding: 0 11px;
+}
+
+.segmented.compact-tabs button {
+  min-width: 36px;
+  min-height: 54px;
+  height: auto;
   padding: 7px 8px 8px;
   line-height: 1.05;
   writing-mode: vertical-rl;

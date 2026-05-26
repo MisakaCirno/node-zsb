@@ -6,6 +6,7 @@ import {
   SCENE_WIDTH,
 } from './constants.js'
 import { bindLayoutResizers } from './layoutResizers.js'
+import { bindAdaptiveSidebarTabs } from './sidebarTabLayout.js'
 
 export function bindEditorEvents({
   elements,
@@ -78,6 +79,7 @@ export function bindEditorEvents({
     elements,
     onResize: actions.applyFitZoomOnResize,
   })
+  bindAdaptiveSidebarTabs({ elements })
   bindPaletteDrop(elements, actions)
   bindContextMenu(elements, actions)
   window.addEventListener('resize', actions.applyFitZoomOnResize)

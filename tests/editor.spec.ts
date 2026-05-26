@@ -114,10 +114,14 @@ test('editor resizes side panels and keeps object tabs visible', async ({ page }
         .gridTemplateColumns
         .split(' ')
         .length ?? 0)
+  const paletteTabWritingMode = async () =>
+    page.locator('#palette-tabs button').first().evaluate((tab) =>
+      tab.ownerDocument.defaultView?.getComputedStyle(tab).writingMode ?? '')
 
   await expect(page.locator('#left-panel-resizer')).toHaveAttribute('role', 'separator')
   await expect(page.locator('#right-panel-resizer')).toHaveAttribute('role', 'separator')
   expect(await tabsFit()).toBe(true)
+  expect(await paletteTabWritingMode()).toBe('horizontal-tb')
   const initialPaletteColumns = await paletteColumnCount()
 
   const initialColumns = await shellColumns()
@@ -127,7 +131,21 @@ test('editor resizes side panels and keeps object tabs visible', async ({ page }
   if (!leftHandle) throw new Error('Left resizer is not visible')
   await page.mouse.move(leftHandle.x + leftHandle.width / 2, leftHandle.y + 40)
   await page.mouse.down()
-  await page.mouse.move(leftHandle.x + leftHandle.width / 2 + 120, leftHandle.y + 40)
+  await page.mouse.move(leftHandle.x + leftHandle.width / 2 - 180, leftHandle.y + 40)
+  await page.mouse.up()
+  const narrowLeftColumns = await shellColumns()
+  expect(narrowLeftColumns[0]).toBeCloseTo(230, 0)
+  expect(await paletteColumnCount()).toBe(3)
+  expect(await tabsFit()).toBe(true)
+  expect(await paletteTabWritingMode()).toBe('vertical-rl')
+
+  await page.locator('#left-panel-resizer').dblclick()
+  await expect.poll(() => shellColumns()).toEqual(expect.arrayContaining([340]))
+  const resetLeftHandle = await page.locator('#left-panel-resizer').boundingBox()
+  if (!resetLeftHandle) throw new Error('Left resizer is not visible after reset')
+  await page.mouse.move(resetLeftHandle.x + resetLeftHandle.width / 2, resetLeftHandle.y + 40)
+  await page.mouse.down()
+  await page.mouse.move(resetLeftHandle.x + resetLeftHandle.width / 2 + 120, resetLeftHandle.y + 40)
   await page.mouse.up()
   const widerLeftColumns = await shellColumns()
   expect(widerLeftColumns[0]).toBeGreaterThan(initialColumns[0])
