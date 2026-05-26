@@ -7,7 +7,9 @@ export function createEditorRenderLoop({
   onReorderLayer,
   onSelectGroup,
   onSelectObject,
+  onRenameLayerGroup,
   onToggleLayerGroup,
+  onToggleLayerGroupFlag,
   onToggleLayerFlag,
   renderInspectorPanel,
   stageRenderer,
@@ -55,9 +57,11 @@ export function createEditorRenderLoop({
       state,
       elements,
       onReorderLayer,
+      onRenameLayerGroup,
       onSelectGroup,
       onSelectObject,
       onToggleLayerGroup,
+      onToggleLayerGroupFlag,
       onToggleLayerFlag,
     })
   }

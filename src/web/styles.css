@@ -1001,7 +1001,7 @@ textarea {
 }
 
 .layer-group-row {
-  grid-template-columns: 28px 28px minmax(0, 1fr) auto;
+  grid-template-columns: 28px 28px 28px 28px minmax(0, 1fr) auto;
   background: #202832;
 }
 
@@ -1031,6 +1031,13 @@ textarea {
 
 .layer-group-icon {
   color: #9ed9c6;
+}
+
+.layer-name-input {
+  min-width: 0;
+  width: 100%;
+  height: 28px;
+  padding: 0 8px;
 }
 
 .layer-row.dragging {

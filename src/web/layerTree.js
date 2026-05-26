@@ -19,6 +19,25 @@ export function getGroupObjectIds(layerTree, groupId) {
   return group ? collectObjectIds(group.children) : []
 }
 
+export function renameGroup(layerTree, groupId, name) {
+  const group = findGroup(layerTree, groupId)
+  if (!group) return false
+  const normalizedName = String(name ?? '').trim()
+  if (!normalizedName || normalizedName === group.name) return false
+  group.name = normalizedName
+  return true
+}
+
+export function toggleGroupFlag(layerTree, groupId, key) {
+  const group = findGroup(layerTree, groupId)
+  if (!group || !['hidden', 'locked'].includes(key)) return null
+  group[key] = group[key] ? undefined : true
+  return {
+    active: Boolean(group[key]),
+    objectIds: collectObjectIds(group.children),
+  }
+}
+
 export function toggleGroupCollapsed(layerTree, groupId) {
   const group = findGroup(layerTree, groupId)
   if (!group) return false

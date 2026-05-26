@@ -115,7 +115,9 @@ export function createEditorApp({
     onSelectObject: selectObject,
     onSelectGroup: selectLayerGroup,
     onReorderLayer: reorderLayer,
+    onRenameLayerGroup: objectCommands.renameLayerGroup,
     onToggleLayerGroup: objectCommands.toggleLayerGroup,
+    onToggleLayerGroupFlag: objectCommands.toggleLayerGroupFlag,
     onToggleLayerFlag: toggleLayerFlag,
   })
 

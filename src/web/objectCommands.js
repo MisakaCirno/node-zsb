@@ -3,8 +3,10 @@ import { createEditorId } from './editorIds.js'
 import { getSelectedIndexes } from './editorState.js'
 import {
   groupObjectIds,
+  renameGroup,
   syncBoardOrderFromLayerTree,
   syncFlatLayerTree,
+  toggleGroupFlag,
   toggleGroupCollapsed,
   ungroupLayer,
 } from './layerTree.js'
@@ -62,6 +64,20 @@ export function createObjectCommands({
       object[key] = object[key] ? undefined : true
       state.selectedIndex = index
       state.selectedIndexes = [index]
+      renderAll()
+    },
+
+    toggleLayerGroupFlag(groupId, key) {
+      recordHistory()
+      const result = toggleGroupFlag(state.layerTree, groupId, key)
+      if (!result) return
+      const affectedIds = new Set(result.objectIds)
+      for (const object of state.board.objects) {
+        if (affectedIds.has(object.editorId)) {
+          object[key] = result.active || undefined
+        }
+      }
+      state.selectedGroupId = groupId
       renderAll()
     },
 
@@ -181,6 +197,14 @@ export function createObjectCommands({
     toggleLayerGroup(groupId) {
       if (!toggleGroupCollapsed(state.layerTree, groupId)) return
       renderAll()
+    },
+
+    renameLayerGroup(groupId, name) {
+      recordHistory()
+      if (!renameGroup(state.layerTree, groupId, name)) return
+      state.selectedGroupId = groupId
+      renderAll()
+      showStatus('已重命名组')
     },
 
     centerSelected() {

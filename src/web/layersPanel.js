@@ -5,9 +5,11 @@ export function renderLayers({
   state,
   elements,
   onReorderLayer,
+  onRenameLayerGroup,
   onSelectGroup,
   onSelectObject,
   onToggleLayerGroup,
+  onToggleLayerGroupFlag,
   onToggleLayerFlag,
 }) {
   elements.layers.innerHTML = ''
@@ -58,6 +60,7 @@ export function renderLayers({
     row.dataset.groupId = group.id
     row.style.setProperty('--layer-depth', String(depth))
     row.classList.toggle('active', state.selectedGroupId === group.id)
+    row.classList.toggle('muted', Boolean(group.hidden))
     const toggle = document.createElement('button')
     toggle.className = 'layer-group-toggle'
     toggle.type = 'button'
@@ -68,12 +71,45 @@ export function renderLayers({
       event.stopPropagation()
       onToggleLayerGroup(group.id)
     })
+    const name = createLayerText('layer-name', group.name ?? '组')
+    name.title = '双击重命名'
+    name.addEventListener('click', (event) => {
+      event.stopPropagation()
+    })
+    name.addEventListener('dblclick', (event) => {
+      event.stopPropagation()
+      startGroupRename(name, group, onRenameLayerGroup)
+    })
     row.append(
       toggle,
+      createLayerToggle({
+        action: 'hidden',
+        active: Boolean(group.hidden),
+        offLabel: '隐藏组',
+        offIcon: eyeIcon(),
+        onLabel: '显示组',
+        onIcon: eyeOffIcon(),
+      }),
+      createLayerToggle({
+        action: 'locked',
+        active: Boolean(group.locked),
+        offLabel: '锁定组',
+        offIcon: unlockIcon(),
+        onLabel: '解锁组',
+        onIcon: lockIcon(),
+      }),
       createGroupIcon(),
-      createLayerText('layer-name', group.name ?? '组'),
+      name,
       createLayerText('layer-position', `${countLayerObjects(group.children)} 个对象`),
     )
+    row.querySelector('[data-action="hidden"]').addEventListener('click', (event) => {
+      event.stopPropagation()
+      onToggleLayerGroupFlag(group.id, 'hidden')
+    })
+    row.querySelector('[data-action="locked"]').addEventListener('click', (event) => {
+      event.stopPropagation()
+      onToggleLayerGroupFlag(group.id, 'locked')
+    })
     row.addEventListener('click', () => onSelectGroup(group.id))
     elements.layers.append(row)
   }
@@ -175,6 +211,38 @@ function createLayerText(className, text) {
   span.className = className
   span.textContent = text
   return span
+}
+
+function startGroupRename(nameElement, group, onRenameLayerGroup) {
+  const input = document.createElement('input')
+  input.className = 'layer-name-input'
+  input.maxLength = 32
+  input.value = group.name ?? '组'
+  nameElement.replaceWith(input)
+  input.focus()
+  input.select()
+
+  function commit() {
+    const name = input.value.trim()
+    if (!name || name === group.name) {
+      input.replaceWith(nameElement)
+      return
+    }
+    onRenameLayerGroup(group.id, name)
+  }
+
+  input.addEventListener('keydown', (event) => {
+    if (event.key === 'Enter') {
+      event.preventDefault()
+      commit()
+      return
+    }
+    if (event.key === 'Escape') {
+      event.preventDefault()
+      input.replaceWith(nameElement)
+    }
+  })
+  input.addEventListener('blur', commit)
 }
 
 function countLayerObjects(nodes = []) {

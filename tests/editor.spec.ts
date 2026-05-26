@@ -179,10 +179,23 @@ test('editor groups selected layers and exports the group in project JSON', asyn
   await page.locator('#group-layers').click()
 
   await expect(page.locator('#layers .layer-group-row')).toHaveCount(1)
+  const groupRow = page.locator('#layers .layer-group-row')
+  await groupRow.locator('.layer-name').dblclick()
+  await groupRow.locator('.layer-name-input').fill('第一组')
+  await page.keyboard.press('Enter')
+  await expect(groupRow.locator('.layer-name')).toHaveText('第一组')
+
+  await groupRow.locator('[data-action="hidden"]').click()
+  await expect(groupRow).toHaveClass(/muted/)
+  await expect(page.locator('#layers .layer-row').nth(1)).toHaveClass(/muted/)
+  await groupRow.locator('[data-action="locked"]').click()
+  await page.locator('#layers .layer-row').nth(1).click()
+  await expect(page.locator('#object-x')).toBeDisabled()
+  await groupRow.click()
   await expect(page.locator('#ungroup-layers')).toBeEnabled()
-  await page.locator('#layers .layer-group-row .layer-group-toggle').click()
+  await groupRow.locator('.layer-group-toggle').click()
   await expect(page.locator('#layers .layer-row')).toHaveCount(3)
-  await page.locator('#layers .layer-group-row .layer-group-toggle').click()
+  await groupRow.locator('.layer-group-toggle').click()
   await expect(page.locator('#layers .layer-row')).toHaveCount(5)
 
   await openFileMenu(page)
@@ -194,6 +207,9 @@ test('editor groups selected layers and exports the group in project JSON', asyn
   const project = JSON.parse(await readFile(path, 'utf8'))
   expect(project.layers[0]).toMatchObject({
     type: 'group',
+    name: '第一组',
+    hidden: true,
+    locked: true,
     children: [
       { type: 'object' },
       { type: 'object' },
