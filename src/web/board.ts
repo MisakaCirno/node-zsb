@@ -1,6 +1,12 @@
 import { ensureObjectEditorIds, stripEditorFields } from './editorIds.js'
+import type {
+  Board,
+  BoardObject,
+  NormalizedBoard,
+  ObjectCapabilities,
+} from './types.js'
 
-export function normalizeBoard(board) {
+export function normalizeBoard(board: Partial<Board>): NormalizedBoard {
   const objects = (board.objects ?? []).map((object) => ({
     size: 100,
     color: '#ff8000',
@@ -15,7 +21,7 @@ export function normalizeBoard(board) {
   }
 }
 
-export function cleanBoard(board) {
+export function cleanBoard(board: NormalizedBoard): Board {
   return {
     name: board.name || undefined,
     boardBackground: board.boardBackground,
@@ -29,7 +35,7 @@ export function cleanBoard(board) {
   }
 }
 
-export function sanitizeObject(object) {
+export function sanitizeObject(object: BoardObject): BoardObject {
   const capabilities = getObjectCapabilities(object.type)
   const copy = stripEditorFields(object)
   if (!capabilities.appearance) {
@@ -52,7 +58,7 @@ export function sanitizeObject(object) {
   return copy
 }
 
-export function getObjectCapabilities(type) {
+export function getObjectCapabilities(type: string): ObjectCapabilities {
   return {
     appearance: ['text', 'line', 'line_aoe', 'donut'].includes(type),
     text: type === 'text',

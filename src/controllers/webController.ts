@@ -1,6 +1,9 @@
 import Elysia, { file, status, t } from 'elysia'
+import { existsSync } from 'node:fs'
+import { readFile } from 'node:fs/promises'
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
+import ts from 'typescript'
 import { defaultCode } from '../utils/getCode.ts'
 import { getAllIconConfigs, iconGroups } from '../utils/iconMap.ts'
 import { getBoardUrl, getIconUrl } from '../utils/staticImage.ts'
@@ -14,7 +17,7 @@ export const webController = new Elysia()
   .get('/editor', () => file(path.join(webDir, 'index.html')))
   .get(
     '/editor/:asset',
-    ({ params }) => file(path.join(webDir, params.asset)),
+    ({ params }) => serveScriptOrFile(webDir, params.asset),
     {
       params: t.Object({
         asset: t.RegExp(/^(?:[A-Za-z][A-Za-z0-9]*\.js|styles\.css)$/),
@@ -23,7 +26,7 @@ export const webController = new Elysia()
   )
   .get(
     '/shared/:asset',
-    ({ params }) => file(path.join(sharedDir, params.asset)),
+    ({ params }) => serveScriptOrFile(sharedDir, params.asset),
     {
       params: t.Object({
         asset: t.RegExp(/^boardGeometry\.js$/),
@@ -71,3 +74,29 @@ export const webController = new Elysia()
       },
     },
   )
+
+async function serveScriptOrFile(directory: string, asset: string) {
+  const filePath = path.join(directory, asset)
+  if (!asset.endsWith('.js') || existsSync(filePath)) {
+    return file(filePath)
+  }
+
+  const sourcePath = path.join(directory, asset.replace(/\.js$/, '.ts'))
+  if (!existsSync(sourcePath)) return file(filePath)
+
+  const source = await readFile(sourcePath, 'utf8')
+  const output = ts.transpileModule(source, {
+    compilerOptions: {
+      module: ts.ModuleKind.ESNext,
+      target: ts.ScriptTarget.ESNext,
+      verbatimModuleSyntax: true,
+    },
+    fileName: sourcePath,
+  }).outputText
+
+  return new Response(output, {
+    headers: {
+      'content-type': 'application/javascript; charset=utf-8',
+    },
+  })
+}

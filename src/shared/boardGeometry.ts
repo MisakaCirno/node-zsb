@@ -1,30 +1,50 @@
+import type { BoardObject } from '../web/types.js'
+
 export const BOARD_SCALE = 2
 export const DEFAULT_TEXT_FONT_SIZE = 28
 export const AOE_RADIUS = 512
 export const AOE_CENTER = 512
 
-export function toSceneCoordinate(value) {
+interface OpacityOptions {
+  hiddenOpacity?: number
+}
+
+interface ArcOffsetOptions {
+  arcAngle?: number
+  outerRadius?: number
+  innerRadius?: number
+}
+
+interface Point {
+  x: number
+  y: number
+}
+
+export function toSceneCoordinate(value: number): number {
   return value * BOARD_SCALE
 }
 
-export function toLogicalCoordinate(value) {
+export function toLogicalCoordinate(value: number): number {
   return Math.round(value / BOARD_SCALE)
 }
 
-export function objectScale(object) {
+export function objectScale(object: Pick<BoardObject, 'size'>): number {
   return (object.size ?? 100) / 100
 }
 
-export function objectOpacity(object, options = {}) {
+export function objectOpacity(
+  object: Pick<BoardObject, 'hidden' | 'transparency'>,
+  options: OpacityOptions = {},
+): number {
   const hiddenOpacity = options.hiddenOpacity ?? 0
   return object.hidden ? hiddenOpacity : (100 - (object.transparency ?? 0)) / 100
 }
 
-export function flippedScale(scale, flipped) {
+export function flippedScale(scale: number, flipped?: boolean): number {
   return scale * (flipped ? -1 : 1)
 }
 
-export function calcTextWidth(text = '', fontSize = DEFAULT_TEXT_FONT_SIZE) {
+export function calcTextWidth(text = '', fontSize = DEFAULT_TEXT_FONT_SIZE): number {
   const asciiWidth = fontSize * 0.6
   let width = 0
   for (const char of text) {
@@ -33,7 +53,11 @@ export function calcTextWidth(text = '', fontSize = DEFAULT_TEXT_FONT_SIZE) {
   return width
 }
 
-export function calculateCircleOffset(arcAngle, radius = AOE_RADIUS, center = AOE_CENTER) {
+export function calculateCircleOffset(
+  arcAngle: number,
+  radius = AOE_RADIUS,
+  center = AOE_CENTER,
+): { offsetX: number, offsetY: number } {
   if (arcAngle === 360) {
     return { offsetX: center, offsetY: center }
   }
@@ -73,7 +97,7 @@ export function calculateDonutOffset({
   arcAngle = 360,
   outerRadius = AOE_RADIUS,
   innerRadius = 0,
-} = {}) {
+}: ArcOffsetOptions = {}): { offsetX: number, offsetY: number } {
   if (arcAngle === 360) {
     return { offsetX: 0, offsetY: 0 }
   }
@@ -110,18 +134,18 @@ export function calculateDonutOffset({
   }
 }
 
-export function degreesToRadians(degrees) {
+export function degreesToRadians(degrees: number): number {
   return (degrees * Math.PI) / 180
 }
 
-function arcPoint(radius, angle) {
+function arcPoint(radius: number, angle: number): Point {
   return {
     x: radius * Math.cos(angle),
     y: radius * Math.sin(angle),
   }
 }
 
-function isAngleWithinArc(angle, startAngle, endAngle) {
+function isAngleWithinArc(angle: number, startAngle: number, endAngle: number): boolean {
   const normalized = normalizeRadians(angle)
   const start = normalizeRadians(startAngle)
   let end = normalizeRadians(endAngle)
@@ -132,6 +156,6 @@ function isAngleWithinArc(angle, startAngle, endAngle) {
   return checked >= start && checked <= end
 }
 
-function normalizeRadians(angle) {
+function normalizeRadians(angle: number): number {
   return ((angle % (Math.PI * 2)) + Math.PI * 2) % (Math.PI * 2)
 }

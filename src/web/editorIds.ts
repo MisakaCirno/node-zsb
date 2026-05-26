@@ -1,11 +1,13 @@
+import type { BoardObject } from './types.js'
+
 const EDITOR_ID_KEY = 'editorId'
 
-export function createEditorId(prefix = 'obj') {
+export function createEditorId(prefix = 'obj'): string {
   const random = Math.random().toString(36).slice(2, 10)
   return `${prefix}_${Date.now().toString(36)}_${random}`
 }
 
-export function ensureObjectEditorIds(objects) {
+export function ensureObjectEditorIds<T extends BoardObject>(objects: T[]): T[] {
   const used = new Set()
   for (const object of objects) {
     const current = typeof object[EDITOR_ID_KEY] === 'string'
@@ -19,9 +21,8 @@ export function ensureObjectEditorIds(objects) {
   return objects
 }
 
-export function stripEditorFields(object) {
+export function stripEditorFields<T extends BoardObject>(object: T): BoardObject {
   const copy = { ...object }
   delete copy[EDITOR_ID_KEY]
   return copy
 }
-

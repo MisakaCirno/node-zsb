@@ -1,18 +1,30 @@
 import { cleanBoard, normalizeBoard } from './board.js'
 import { stripEditorFields } from './editorIds.js'
+import type {
+  Board,
+  BoardObject,
+  CreateProjectOptions,
+  LayerNode,
+  ProjectFile,
+} from './types.js'
 
 export const PROJECT_FORMAT = 'node-zsb-project'
 export const PROJECT_VERSION = 1
 export const PROJECT_FILE_EXTENSION = '.zsb.json'
 
-export function createProjectFromBoard(board, options = {}) {
+type ProjectObjects = Record<string, BoardObject>
+
+export function createProjectFromBoard(
+  board: Partial<Board>,
+  options: CreateProjectOptions = {},
+): ProjectFile {
   const normalizedBoard = normalizeBoard(board)
-  const objects = {}
+  const objects: ProjectObjects = {}
   const defaultLayers = normalizedBoard.objects.map((object) => {
-    const id = object.editorId
+    const id = object.editorId as string
     objects[id] = stripEditorFields(object)
     return {
-      type: 'object',
+      type: 'object' as const,
       id,
     }
   })
@@ -34,7 +46,7 @@ export function createProjectFromBoard(board, options = {}) {
   }
 }
 
-export function normalizeProject(project) {
+export function normalizeProject(project: unknown): ProjectFile {
   if (!isProject(project)) {
     throw new Error('Invalid node-zsb project')
   }
@@ -53,36 +65,41 @@ export function normalizeProject(project) {
   }
 }
 
-export function normalizeLayerTreeForBoard(layerTree, board) {
-  const objects = Object.fromEntries(
-    (board.objects ?? [])
-      .filter((object) => object.editorId)
-      .map((object) => [object.editorId, stripEditorFields(object)]),
-  )
+export function normalizeLayerTreeForBoard(
+  layerTree: unknown,
+  board: Partial<Board>,
+): LayerNode[] {
+  const objects: ProjectObjects = {}
+  for (const object of board.objects ?? []) {
+    if (object.editorId) {
+      objects[object.editorId] = stripEditorFields(object)
+    }
+  }
   return completeLayerNodes(normalizeLayerNodes(layerTree, objects), objects)
 }
 
-export function isProject(value) {
+export function isProject(value: unknown): value is Partial<ProjectFile> {
   return Boolean(
     value
       && typeof value === 'object'
-      && value.format === PROJECT_FORMAT
-      && Number(value.version) >= 1,
+      && !Array.isArray(value)
+      && (value as Partial<ProjectFile>).format === PROJECT_FORMAT
+      && Number((value as Partial<ProjectFile>).version) >= 1,
   )
 }
 
-export function parseProjectJson(text) {
+export function parseProjectJson(text: string): ProjectFile {
   return normalizeProject(JSON.parse(text))
 }
 
-export function projectToJson(project) {
+export function projectToJson(project: unknown): string {
   return `${JSON.stringify(normalizeProject(project), null, 2)}\n`
 }
 
-export function flattenProjectToBoard(project) {
+export function flattenProjectToBoard(project: unknown): ReturnType<typeof normalizeBoard> {
   const normalizedProject = normalizeProject(project)
-  const objects = []
-  const usedIds = new Set()
+  const objects: BoardObject[] = []
+  const usedIds = new Set<string>()
   appendLayerObjects(normalizedProject.layers, normalizedProject.objects, objects, usedIds)
   return normalizeBoard({
     name: normalizedProject.board.name,
@@ -91,28 +108,28 @@ export function flattenProjectToBoard(project) {
   })
 }
 
-export function createPureBoardFromProject(project) {
+export function createPureBoardFromProject(project: unknown): Board {
   return cleanBoard(flattenProjectToBoard(project))
 }
 
-function normalizeProjectObjects(objects) {
-  const normalized = {}
+function normalizeProjectObjects(objects: unknown): ProjectObjects {
+  const normalized: ProjectObjects = {}
   if (!objects || typeof objects !== 'object' || Array.isArray(objects)) {
     return normalized
   }
   for (const [id, object] of Object.entries(objects)) {
-    if (!id || !object || typeof object !== 'object' || Array.isArray(object)) continue
-    normalized[id] = stripEditorFields(structuredClone(object))
+    if (!id || !isRecord(object)) continue
+    normalized[id] = stripEditorFields(structuredClone(object) as BoardObject)
   }
   return normalized
 }
 
-function normalizeLayerNodes(nodes, objects) {
+function normalizeLayerNodes(nodes: unknown, objects: ProjectObjects): LayerNode[] {
   if (!Array.isArray(nodes)) return []
-  const normalized = []
+  const normalized: LayerNode[] = []
   for (const node of nodes) {
-    if (!node || typeof node !== 'object') continue
-    if (node.type === 'object' && objects[node.id]) {
+    if (!isRecord(node)) continue
+    if (node.type === 'object' && typeof node.id === 'string' && objects[node.id]) {
       normalized.push({
         type: 'object',
         id: node.id,
@@ -134,9 +151,13 @@ function normalizeLayerNodes(nodes, objects) {
   return normalized
 }
 
-function completeLayerNodes(layers, objects, fallbackLayers = []) {
+function completeLayerNodes(
+  layers: LayerNode[],
+  objects: ProjectObjects,
+  fallbackLayers: LayerNode[] = [],
+): LayerNode[] {
   const completed = layers.length > 0 ? [...layers] : [...fallbackLayers]
-  const usedIds = new Set()
+  const usedIds = new Set<string>()
   collectLayerObjectIds(completed, usedIds)
   for (const id of Object.keys(objects)) {
     if (!usedIds.has(id)) {
@@ -146,12 +167,18 @@ function completeLayerNodes(layers, objects, fallbackLayers = []) {
   return completed
 }
 
-function appendLayerObjects(nodes, objects, result, usedIds) {
+function appendLayerObjects(
+  nodes: LayerNode[],
+  objects: ProjectObjects,
+  result: BoardObject[],
+  usedIds: Set<string>,
+): void {
   for (const node of nodes) {
     if (node.type === 'object') {
-      if (usedIds.has(node.id) || !objects[node.id]) continue
+      const object = objects[node.id]
+      if (usedIds.has(node.id) || !object) continue
       result.push({
-        ...structuredClone(objects[node.id]),
+        ...structuredClone(object),
         editorId: node.id,
       })
       usedIds.add(node.id)
@@ -163,7 +190,7 @@ function appendLayerObjects(nodes, objects, result, usedIds) {
   }
 }
 
-function collectLayerObjectIds(nodes, result) {
+function collectLayerObjectIds(nodes: LayerNode[], result: Set<string>): void {
   for (const node of nodes) {
     if (node.type === 'object') {
       result.add(node.id)
@@ -173,4 +200,8 @@ function collectLayerObjectIds(nodes, result) {
       collectLayerObjectIds(node.children ?? [], result)
     }
   }
+}
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return Boolean(value && typeof value === 'object' && !Array.isArray(value))
 }

@@ -1,15 +1,43 @@
-export function createLayerTreeFromBoard(board) {
-  return (board.objects ?? []).map((object) => ({
-    type: 'object',
-    id: object.editorId,
-  })).filter((node) => Boolean(node.id))
+import type {
+  EditorStateSlice,
+  GroupLayerNode,
+  LayerNode,
+  LayerNodeRef,
+  ObjectLayerNode,
+} from './types.js'
+
+type GroupFlag = 'hidden' | 'locked'
+
+interface LayerNodeParentInfo {
+  parent: LayerNode[]
+  index: number
+  node: LayerNode
 }
 
-export function syncFlatLayerTree(state) {
+interface GroupParentInfo {
+  parent: LayerNode[]
+  index: number
+  group: GroupLayerNode
+}
+
+interface SharedParentInfo {
+  parent: LayerNode[]
+}
+
+export function createLayerTreeFromBoard(board: EditorStateSlice['board']): ObjectLayerNode[] {
+  return (board.objects ?? [])
+    .map((object) => ({
+      type: 'object' as const,
+      id: object.editorId ?? '',
+    }))
+    .filter((node): node is ObjectLayerNode => Boolean(node.id))
+}
+
+export function syncFlatLayerTree(state: EditorStateSlice): void {
   state.layerTree = createLayerTreeFromBoard(state.board)
 }
 
-export function appendObjectLayerNode(layerTree, objectId) {
+export function appendObjectLayerNode(layerTree: LayerNode[], objectId?: string): void {
   if (!objectId) return
   layerTree.push({
     type: 'object',
@@ -17,22 +45,21 @@ export function appendObjectLayerNode(layerTree, objectId) {
   })
 }
 
-export function removeObjectLayerNodes(layerTree, objectIds) {
+export function removeObjectLayerNodes(layerTree: LayerNode[], objectIds: string[]): void {
   const ids = new Set(objectIds)
   removeObjectNodes(layerTree, ids)
 }
 
-export function hasLayerGroups(layerTree) {
-  return (layerTree ?? []).some((node) =>
-    node.type === 'group' || hasLayerGroups(node.children))
+export function hasLayerGroups(layerTree: LayerNode[] = []): boolean {
+  return layerTree.some((node) => node.type === 'group')
 }
 
-export function getGroupObjectIds(layerTree, groupId) {
+export function getGroupObjectIds(layerTree: LayerNode[], groupId: string): string[] {
   const group = findGroup(layerTree, groupId)
   return group ? collectObjectIds(group.children) : []
 }
 
-export function renameGroup(layerTree, groupId, name) {
+export function renameGroup(layerTree: LayerNode[], groupId: string, name: unknown): boolean {
   const group = findGroup(layerTree, groupId)
   if (!group) return false
   const normalizedName = String(name ?? '').trim()
@@ -41,9 +68,13 @@ export function renameGroup(layerTree, groupId, name) {
   return true
 }
 
-export function toggleGroupFlag(layerTree, groupId, key) {
+export function toggleGroupFlag(
+  layerTree: LayerNode[],
+  groupId: string,
+  key: string,
+): { active: boolean, objectIds: string[] } | null {
   const group = findGroup(layerTree, groupId)
-  if (!group || !['hidden', 'locked'].includes(key)) return null
+  if (!group || !isGroupFlag(key)) return null
   group[key] = group[key] ? undefined : true
   return {
     active: Boolean(group[key]),
@@ -51,14 +82,18 @@ export function toggleGroupFlag(layerTree, groupId, key) {
   }
 }
 
-export function toggleGroupCollapsed(layerTree, groupId) {
+export function toggleGroupCollapsed(layerTree: LayerNode[], groupId: string): boolean {
   const group = findGroup(layerTree, groupId)
   if (!group) return false
   group.collapsed = !group.collapsed
   return true
 }
 
-export function groupObjectIds(layerTree, objectIds, name = '组') {
+export function groupObjectIds(
+  layerTree: LayerNode[],
+  objectIds: string[],
+  name = '组',
+): GroupLayerNode | null {
   const selectedIds = new Set(objectIds)
   if (selectedIds.size < 2) return null
   const parentInfo = findSharedParent(layerTree, selectedIds)
@@ -70,7 +105,9 @@ export function groupObjectIds(layerTree, objectIds, name = '组') {
     return groupAcrossTree(layerTree, selectedIds, name)
   }
   const firstIndex = Math.min(...selectedIndexes)
-  const groupedNodes = selectedIndexes.map((index) => parent[index])
+  const groupedNodes = selectedIndexes
+    .map((index) => parent[index])
+    .filter((node): node is LayerNode => Boolean(node))
   for (const index of [...selectedIndexes].sort((a, b) => b - a)) {
     parent.splice(index, 1)
   }
@@ -79,7 +116,7 @@ export function groupObjectIds(layerTree, objectIds, name = '组') {
   return group
 }
 
-export function ungroupLayer(layerTree, groupId) {
+export function ungroupLayer(layerTree: LayerNode[], groupId: string): boolean {
   const parentInfo = findGroupParent(layerTree, groupId)
   if (!parentInfo) return false
   const { parent, index, group } = parentInfo
@@ -87,7 +124,11 @@ export function ungroupLayer(layerTree, groupId) {
   return true
 }
 
-export function moveLayerNodeBefore(layerTree, dragged, target) {
+export function moveLayerNodeBefore(
+  layerTree: LayerNode[],
+  dragged: LayerNodeRef,
+  target: LayerNodeRef,
+): boolean {
   if (!dragged?.id || !target?.id || dragged.id === target.id) return false
   if (dragged.type === 'group' && containsGroup(layerTree, dragged.id, target.id)) return false
   const removed = removeLayerNode(layerTree, dragged)
@@ -101,7 +142,11 @@ export function moveLayerNodeBefore(layerTree, dragged, target) {
   return true
 }
 
-export function moveLayerNodeAfter(layerTree, dragged, target) {
+export function moveLayerNodeAfter(
+  layerTree: LayerNode[],
+  dragged: LayerNodeRef,
+  target: LayerNodeRef,
+): boolean {
   if (!dragged?.id || !target?.id || dragged.id === target.id) return false
   if (dragged.type === 'group' && containsGroup(layerTree, dragged.id, target.id)) return false
   const removed = removeLayerNode(layerTree, dragged)
@@ -115,7 +160,11 @@ export function moveLayerNodeAfter(layerTree, dragged, target) {
   return true
 }
 
-export function moveLayerNodeIntoGroup(layerTree, dragged, groupId) {
+export function moveLayerNodeIntoGroup(
+  layerTree: LayerNode[],
+  dragged: LayerNodeRef,
+  groupId: string,
+): boolean {
   if (!dragged?.id || !groupId || dragged.id === groupId) return false
   if (dragged.type === 'group' && containsGroup(layerTree, dragged.id, groupId)) return false
   const removed = removeLayerNode(layerTree, dragged)
@@ -131,7 +180,7 @@ export function moveLayerNodeIntoGroup(layerTree, dragged, groupId) {
   return true
 }
 
-export function moveLayerNodeToRoot(layerTree, dragged) {
+export function moveLayerNodeToRoot(layerTree: LayerNode[], dragged: LayerNodeRef): boolean {
   if (!dragged?.id) return false
   const removed = removeLayerNode(layerTree, dragged)
   if (!removed) return false
@@ -139,39 +188,54 @@ export function moveLayerNodeToRoot(layerTree, dragged) {
   return true
 }
 
-export function syncBoardOrderFromLayerTree(state) {
+export function syncBoardOrderFromLayerTree(state: EditorStateSlice): void {
   const selectedIds = (state.selectedIndexes ?? [])
     .map((index) => state.board.objects[index]?.editorId)
-    .filter(Boolean)
+    .filter((id): id is string => Boolean(id))
   const order = collectObjectIds(state.layerTree)
-  const objectById = new Map(state.board.objects.map((object) => [object.editorId, object]))
-  const ordered = order.map((id) => objectById.get(id)).filter(Boolean)
+  const objectById = new Map(
+    state.board.objects
+      .filter((object) => Boolean(object.editorId))
+      .map((object) => [object.editorId as string, object]),
+  )
+  const ordered = order
+    .map((id) => objectById.get(id))
+    .filter((object): object is EditorStateSlice['board']['objects'][number] => Boolean(object))
   const usedIds = new Set(ordered.map((object) => object.editorId))
   const orphans = state.board.objects.filter((object) => !usedIds.has(object.editorId))
   state.board.objects = [...ordered, ...orphans]
   const indexById = new Map(state.board.objects.map((object, index) => [object.editorId, index]))
   state.selectedIndexes = selectedIds
     .map((id) => indexById.get(id))
-    .filter((index) => index !== undefined)
+    .filter((index): index is number => index !== undefined)
   state.selectedIndex = state.selectedIndexes.at(-1) ?? -1
 }
 
-function containsGroup(layerTree, groupId, targetGroupId) {
+function isGroupFlag(key: string): key is GroupFlag {
+  return key === 'hidden' || key === 'locked'
+}
+
+function containsGroup(layerTree: LayerNode[], groupId: string, targetGroupId: string): boolean {
   const group = findGroup(layerTree, groupId)
   if (!group) return false
   return Boolean(findGroup(group.children ?? [], targetGroupId))
 }
 
-function removeLayerNode(layerTree, target) {
+function removeLayerNode(layerTree: LayerNode[], target: LayerNodeRef): LayerNode | null {
   const info = findLayerNodeParent(layerTree, target)
   if (!info) return null
   const [node] = info.parent.splice(info.index, 1)
-  return node
+  return node ?? null
 }
 
-function findLayerNodeParent(nodes, target, parent = nodes) {
+function findLayerNodeParent(
+  nodes: LayerNode[],
+  target: LayerNodeRef,
+  parent = nodes,
+): LayerNodeParentInfo | null {
   for (let index = 0; index < nodes.length; index += 1) {
     const node = nodes[index]
+    if (!node) continue
     if (node.type === target.type && node.id === target.id) {
       return { parent, index, node }
     }
@@ -183,8 +247,12 @@ function findLayerNodeParent(nodes, target, parent = nodes) {
   return null
 }
 
-function groupAcrossTree(layerTree, selectedIds, name) {
-  const orderedNodes = []
+function groupAcrossTree(
+  layerTree: LayerNode[],
+  selectedIds: Set<string>,
+  name: string,
+): GroupLayerNode | null {
+  const orderedNodes: LayerNode[] = []
   removeSelectedObjectNodes(layerTree, selectedIds, orderedNodes)
   if (orderedNodes.length < 2) return null
   const group = createGroupNode(name, orderedNodes)
@@ -192,9 +260,14 @@ function groupAcrossTree(layerTree, selectedIds, name) {
   return group
 }
 
-function removeSelectedObjectNodes(nodes, selectedIds, removed) {
+function removeSelectedObjectNodes(
+  nodes: LayerNode[],
+  selectedIds: Set<string>,
+  removed: LayerNode[],
+): void {
   for (let index = nodes.length - 1; index >= 0; index -= 1) {
     const node = nodes[index]
+    if (!node) continue
     if (node.type === 'object' && selectedIds.has(node.id)) {
       removed.unshift(...nodes.splice(index, 1))
       continue
@@ -205,9 +278,10 @@ function removeSelectedObjectNodes(nodes, selectedIds, removed) {
   }
 }
 
-function removeObjectNodes(nodes, objectIds) {
+function removeObjectNodes(nodes: LayerNode[], objectIds: Set<string>): void {
   for (let index = nodes.length - 1; index >= 0; index -= 1) {
     const node = nodes[index]
+    if (!node) continue
     if (node.type === 'object' && objectIds.has(node.id)) {
       nodes.splice(index, 1)
       continue
@@ -221,7 +295,11 @@ function removeObjectNodes(nodes, objectIds) {
   }
 }
 
-function findSharedParent(nodes, selectedIds, parent = nodes) {
+function findSharedParent(
+  nodes: LayerNode[],
+  selectedIds: Set<string>,
+  parent = nodes,
+): SharedParentInfo | null {
   const directMatches = nodes.filter((node) => node.type === 'object' && selectedIds.has(node.id))
   if (directMatches.length === selectedIds.size) {
     return { parent }
@@ -234,14 +312,19 @@ function findSharedParent(nodes, selectedIds, parent = nodes) {
   return null
 }
 
-function findGroup(nodes, groupId) {
+function findGroup(nodes: LayerNode[], groupId: string): GroupLayerNode | null {
   const info = findGroupParent(nodes, groupId)
   return info?.group ?? null
 }
 
-function findGroupParent(nodes, groupId, parent = nodes) {
+function findGroupParent(
+  nodes: LayerNode[],
+  groupId: string,
+  parent = nodes,
+): GroupParentInfo | null {
   for (let index = 0; index < nodes.length; index += 1) {
     const node = nodes[index]
+    if (!node) continue
     if (node.type === 'group' && node.id === groupId) {
       return { parent, index, group: node }
     }
@@ -253,8 +336,8 @@ function findGroupParent(nodes, groupId, parent = nodes) {
   return null
 }
 
-function collectObjectIds(nodes = []) {
-  const ids = []
+function collectObjectIds(nodes: LayerNode[] = []): string[] {
+  const ids: string[] = []
   for (const node of nodes) {
     if (node.type === 'object') {
       ids.push(node.id)
@@ -267,7 +350,7 @@ function collectObjectIds(nodes = []) {
   return ids
 }
 
-function createGroupNode(name, children) {
+function createGroupNode(name: string, children: LayerNode[]): GroupLayerNode {
   return {
     type: 'group',
     id: createGroupId(),
@@ -277,7 +360,7 @@ function createGroupNode(name, children) {
   }
 }
 
-function createGroupId() {
+function createGroupId(): string {
   const random = Math.random().toString(36).slice(2, 10)
   return `grp_${Date.now().toString(36)}_${random}`
 }

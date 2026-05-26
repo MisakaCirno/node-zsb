@@ -9,7 +9,7 @@ export const DEFAULT_GRID_OPACITY = 0.55
 export const MIN_GRID_OPACITY = 0.15
 export const MAX_GRID_OPACITY = 1
 export const GRID_OPACITY_STEP = 0.05
-export const ZOOM_LEVELS = [0.25, 0.5, 0.75, 1, 1.25, 1.5, 1.75, 2]
+export const ZOOM_LEVELS = [0.25, 0.5, 0.75, 1, 1.25, 1.5, 1.75, 2] as const
 
 export const STORAGE_KEY = 'node-zsb-editor-board-v1'
 export const EDITOR_SETTINGS_KEY = 'node-zsb-editor-settings-v1'
