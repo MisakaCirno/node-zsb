@@ -17,9 +17,15 @@ const EXTRA_SHAPE_TYPES = [
 
 export function renderPaletteTabs({ state, elements, onAddObject }) {
   elements.paletteTabs.innerHTML = ''
+  elements.paletteTabs.setAttribute('role', 'tablist')
+  elements.paletteTabs.setAttribute('aria-label', '对象分类')
   for (const key of Object.keys(state.iconGroups)) {
     const button = document.createElement('button')
     button.type = 'button'
+    button.id = `palette-tab-${key}`
+    button.setAttribute('role', 'tab')
+    button.setAttribute('aria-selected', String(key === state.activeGroup))
+    button.setAttribute('aria-controls', 'palette')
     button.textContent = PALETTE_LABELS[key] ?? key
     button.classList.toggle('active', key === state.activeGroup)
     button.addEventListener('click', () => {

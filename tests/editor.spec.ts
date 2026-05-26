@@ -97,7 +97,10 @@ test('editor renders readable Chinese labels', async ({ page }) => {
   await expect(page.locator('#align-left svg')).toBeVisible()
   await expect(page.locator('#asset-tab-background')).toHaveAttribute('role', 'tab')
   await expect(page.locator('#asset-tab-objects')).toHaveAttribute('aria-selected', 'true')
-  await page.getByRole('button', { name: '形状' }).click()
+  await expect(page.locator('#palette-tabs')).toHaveAttribute('role', 'tablist')
+  await expect(page.getByRole('tab', { name: '形状' })).toHaveAttribute('aria-selected', 'false')
+  await page.getByRole('tab', { name: '形状' }).click()
+  await expect(page.getByRole('tab', { name: '形状' })).toHaveAttribute('aria-selected', 'true')
   for (const shapeType of ['line', 'line_aoe', 'circle_aoe', 'fan_aoe', 'donut']) {
     await expect(page.locator(`button[title="${shapeType}"] svg`)).toBeVisible()
   }
@@ -152,7 +155,7 @@ test('editor imports code, changes background, and edits text and line objects',
   )
 
   await page.locator('#asset-tab-objects').click()
-  await page.getByRole('button', { name: '形状' }).click()
+  await page.getByRole('tab', { name: '形状' }).click()
   await page.getByTitle('text').click()
   await expect(page.locator('#object-type')).toHaveValue('text')
   await page.locator('#object-text').fill('MT')
@@ -185,7 +188,7 @@ test('editor drags line endpoints directly on the canvas', async ({ page }) => {
   await page.goto('/editor')
   await expect(page.locator('#layers')).toContainText('tank')
 
-  await page.getByRole('button', { name: '形状' }).click()
+  await page.getByRole('tab', { name: '形状' }).click()
   await page.locator('button[title="line"]').click()
   await expect(page.locator('#object-type')).toHaveValue('line')
   await expect(page.locator('#object-end-x')).toHaveValue('320')
@@ -308,7 +311,7 @@ test('editor reorders layers by dragging rows', async ({ page }) => {
   await page.goto('/editor')
   await expect(page.locator('#layers')).toContainText('tank')
 
-  await page.getByRole('button', { name: '形状' }).click()
+  await page.getByRole('tab', { name: '形状' }).click()
   await page.getByTitle('text').click()
   const textRow = page.locator('#layers .layer-row').filter({ hasText: 'text' })
   await expect(textRow).toHaveCount(1)
@@ -338,7 +341,7 @@ test('editor opens custom context menus for canvas and layers', async ({ page })
   await page.getByRole('menuitem', { name: '粘贴' }).click()
   await expect(page.locator('#layers .layer-row')).toHaveCount(before + 1)
 
-  await page.getByRole('button', { name: '形状' }).click()
+  await page.getByRole('tab', { name: '形状' }).click()
   await page.getByTitle('text').click()
   const textRow = page.locator('#layers .layer-row').filter({ hasText: 'text' })
   const layerCount = await page.locator('#layers .layer-row').count()
@@ -416,7 +419,7 @@ test('editor moves layers to extremes and deletes from the layer toolbar', async
   await page.goto('/editor')
   await expect(page.locator('#layers')).toContainText('tank')
 
-  await page.getByRole('button', { name: '形状' }).click()
+  await page.getByRole('tab', { name: '形状' }).click()
   await page.getByTitle('text').click()
   const layerCount = await page.locator('#layers .layer-row').count()
   await expect(page.locator('#layers .layer-row').nth(layerCount - 1)).toContainText('text')
@@ -659,7 +662,7 @@ test('editor shows inspector fields that match the selected object type', async 
   await expect(page.locator('[data-field="line"]')).toBeHidden()
   await expect(page.locator('[data-field="arc"]')).toBeHidden()
 
-  await page.getByRole('button', { name: '形状' }).click()
+  await page.getByRole('tab', { name: '形状' }).click()
   await page.getByTitle('text').click()
   await expect(page.locator('[data-field="text"]')).toBeVisible()
   await expect(page.locator('[data-field="line"]')).toBeHidden()

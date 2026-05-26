@@ -374,13 +374,40 @@ textarea {
 }
 
 .segmented {
-  flex-wrap: wrap;
-  margin-bottom: 10px;
+  align-items: flex-end;
+  gap: 0;
+  margin-bottom: 12px;
+  border-bottom: 1px solid #303b43;
+  overflow-x: auto;
+  scrollbar-width: thin;
 }
 
 .segmented button {
-  height: 30px;
-  padding: 0 9px;
+  position: relative;
+  flex: 0 0 auto;
+  height: 34px;
+  border: 0;
+  border-radius: 0;
+  border-bottom: 2px solid transparent;
+  background: transparent;
+  color: #9ba8b1;
+  padding: 0 11px;
+}
+
+.segmented button.active {
+  border-bottom-color: #66c2a5;
+  background: #12171b;
+  color: #eef2f3;
+}
+
+.segmented button.active::after {
+  position: absolute;
+  right: 1px;
+  bottom: -1px;
+  left: 1px;
+  height: 1px;
+  background: #12171b;
+  content: "";
 }
 
 .palette {
