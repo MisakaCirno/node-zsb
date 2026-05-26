@@ -23,6 +23,19 @@ export function createEditorContext({
       renderAll()
       return
     }
+    if (options.range) {
+      const anchor = state.selectedIndex >= 0
+        ? state.selectedIndex
+        : getSelectedIndexes(state).at(0)
+      const next = anchor === undefined
+        ? [index]
+        : createIndexRange(anchor, index)
+      setSelection(next, index)
+      state.selectedGroupId = ''
+      state.revealSelectedLayer = Boolean(options.revealInLayers)
+      renderAll()
+      return
+    }
     if (options.toggle) {
       const selected = getSelectedIndexes(state)
       const next = selected.includes(index)
@@ -108,4 +121,10 @@ export function createEditorContext({
     selectObjects,
     setMarqueeSelectionMode,
   }
+}
+
+function createIndexRange(start, end) {
+  const min = Math.min(start, end)
+  const max = Math.max(start, end)
+  return Array.from({ length: max - min + 1 }, (_, offset) => min + offset)
 }

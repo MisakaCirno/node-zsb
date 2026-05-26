@@ -201,7 +201,8 @@ export function renderLayers({
       onReorderLayer(fromIndex, index)
     })
     row.addEventListener('click', (event) => onSelectObject(index, {
-      toggle: event.shiftKey || event.ctrlKey || event.metaKey,
+      range: event.shiftKey,
+      toggle: event.ctrlKey || event.metaKey,
     }))
     elements.layers.append(row)
   }

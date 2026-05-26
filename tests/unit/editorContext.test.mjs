@@ -55,3 +55,30 @@ test('createEditorContext normalizes coordinates with the snap toggle', () => {
   assert.deepEqual(context.normalizePoint(263, 199), { x: 256, y: 192 })
   assert.equal(context.normalizeCoordinate(263, 0, 512), 256)
 })
+
+test('createEditorContext range-selects objects from the primary selection', () => {
+  const state = {
+    board: {
+      objects: [
+        { type: 'tank' },
+        { type: 'healer' },
+        { type: 'dps' },
+        { type: 'text' },
+      ],
+    },
+    selectedIndex: -1,
+    selectedIndexes: [],
+    snapToGrid: false,
+  }
+  const context = createEditorContext({
+    state,
+    renderAll: () => {},
+    showStatus: () => {},
+  })
+
+  context.selectObject(1)
+  context.selectObject(3, { range: true })
+
+  assert.deepEqual(state.selectedIndexes, [1, 2, 3])
+  assert.equal(state.selectedIndex, 3)
+})

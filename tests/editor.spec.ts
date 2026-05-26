@@ -584,6 +584,20 @@ test('editor multi-selects objects on the canvas and aligns them', async ({ page
   await expect(page.locator('#object-x')).toHaveValue('320')
 })
 
+test('editor range-selects layer rows with shift click', async ({ page }) => {
+  await page.goto('/editor')
+  await expect(page.locator('#layers')).toContainText('tank')
+
+  await page.locator('#layers .layer-row').nth(0).click()
+  await page.locator('#layers .layer-row').nth(2).click({ modifiers: ['Shift'] })
+
+  await expect(page.locator('#layers .layer-row.active')).toHaveCount(3)
+  await expect(page.locator('#layers .layer-row').nth(0)).toHaveClass(/active/)
+  await expect(page.locator('#layers .layer-row').nth(1)).toHaveClass(/active/)
+  await expect(page.locator('#layers .layer-row').nth(2)).toHaveClass(/active/)
+  await expect(page.locator('#group-layers')).toBeEnabled()
+})
+
 test('editor aligns a single selected object to the canvas', async ({ page }) => {
   await page.goto('/editor')
   await expect(page.locator('#layers')).toContainText('tank')
