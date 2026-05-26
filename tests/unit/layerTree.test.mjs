@@ -2,9 +2,12 @@ import assert from 'node:assert/strict'
 import test from 'node:test'
 
 import {
+  appendObjectLayerNode,
   getGroupObjectIds,
+  moveLayerNodeAfter,
   moveLayerNodeBefore,
   moveLayerNodeIntoGroup,
+  removeObjectLayerNodes,
 } from '../../src/web/layerTree.js'
 
 test('moveLayerNodeIntoGroup moves object nodes into groups', () => {
@@ -61,6 +64,53 @@ test('moveLayerNodeBefore reorders nested nodes without flattening groups', () =
   ])
 })
 
+test('appendObjectLayerNode and removeObjectLayerNodes preserve unrelated groups', () => {
+  const layerTree = [
+    {
+      type: 'group',
+      id: 'grp_1',
+      name: 'Group',
+      children: [
+        { type: 'object', id: 'obj_a' },
+        { type: 'object', id: 'obj_b' },
+      ],
+    },
+  ]
+
+  appendObjectLayerNode(layerTree, 'obj_c')
+  removeObjectLayerNodes(layerTree, ['obj_a'])
+
+  assert.deepEqual(layerTree, [
+    {
+      type: 'group',
+      id: 'grp_1',
+      name: 'Group',
+      children: [
+        { type: 'object', id: 'obj_b' },
+      ],
+    },
+    { type: 'object', id: 'obj_c' },
+  ])
+})
+
+test('moveLayerNodeAfter moves nodes after flat targets', () => {
+  const layerTree = [
+    { type: 'object', id: 'obj_a' },
+    { type: 'object', id: 'obj_b' },
+    { type: 'object', id: 'obj_c' },
+  ]
+
+  assert.equal(
+    moveLayerNodeAfter(layerTree, { type: 'object', id: 'obj_a' }, { type: 'object', id: 'obj_c' }),
+    true,
+  )
+  assert.deepEqual(layerTree, [
+    { type: 'object', id: 'obj_b' },
+    { type: 'object', id: 'obj_c' },
+    { type: 'object', id: 'obj_a' },
+  ])
+})
+
 test('moveLayerNodeIntoGroup rejects moving a group into itself or its descendant', () => {
   const layerTree = [
     {
@@ -76,4 +126,3 @@ test('moveLayerNodeIntoGroup rejects moving a group into itself or its descendan
   assert.equal(moveLayerNodeIntoGroup(layerTree, { type: 'group', id: 'grp_1' }, 'grp_1'), false)
   assert.equal(moveLayerNodeIntoGroup(layerTree, { type: 'group', id: 'grp_1' }, 'grp_2'), false)
 })
-

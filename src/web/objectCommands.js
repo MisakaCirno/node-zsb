@@ -2,9 +2,12 @@ import { clamp } from './geometry.js'
 import { createEditorId } from './editorIds.js'
 import { getSelectedIndexes } from './editorState.js'
 import {
+  appendObjectLayerNode,
   groupObjectIds,
+  moveLayerNodeAfter,
   moveLayerNodeBefore,
   moveLayerNodeIntoGroup,
+  removeObjectLayerNodes,
   renameGroup,
   syncBoardOrderFromLayerTree,
   syncFlatLayerTree,
@@ -47,7 +50,7 @@ export function createObjectCommands({
       recordHistory()
       const object = createDefaultObject(type)
       state.board.objects.push(object)
-      syncFlatLayerTree(state)
+      appendObjectLayerNode(state.layerTree, object.editorId)
       selectObject(state.board.objects.length - 1)
     },
 
@@ -55,7 +58,7 @@ export function createObjectCommands({
       recordHistory()
       const object = createDefaultObject(type, point)
       state.board.objects.push(object)
-      syncFlatLayerTree(state)
+      appendObjectLayerNode(state.layerTree, object.editorId)
       selectObject(state.board.objects.length - 1)
     },
 
@@ -97,12 +100,16 @@ export function createObjectCommands({
       if (selectedIndexes.length === 0) return
       recordHistory()
       const object = getSelected()
+      const selectedIds = selectedIndexes
+        .map((index) => state.board.objects[index]?.editorId)
+        .filter(Boolean)
       for (const index of [...selectedIndexes].sort((a, b) => b - a)) {
         state.board.objects.splice(index, 1)
       }
-      syncFlatLayerTree(state)
+      removeObjectLayerNodes(state.layerTree, selectedIds)
       state.selectedIndex = -1
       state.selectedIndexes = []
+      state.selectedGroupId = ''
       renderAll()
       showStatus(selectedIndexes.length > 1
         ? `已删除 ${selectedIndexes.length} 个对象`
@@ -127,7 +134,7 @@ export function createObjectCommands({
       recordHistory()
       const copy = createPastedObject(object)
       state.board.objects.push(copy)
-      syncFlatLayerTree(state)
+      appendObjectLayerNode(state.layerTree, copy.editorId)
       selectObject(state.board.objects.length - 1)
     },
 
@@ -157,12 +164,15 @@ export function createObjectCommands({
         || toIndex >= state.board.objects.length
       ) return
       recordHistory()
-      const [object] = state.board.objects.splice(fromIndex, 1)
-      state.board.objects.splice(toIndex, 0, object)
-      syncFlatLayerTree(state)
-      state.selectedIndexes = state.selectedIndexes.map((index) =>
-        mapMovedIndex(index, fromIndex, toIndex))
-      state.selectedIndex = mapMovedIndex(state.selectedIndex, fromIndex, toIndex)
+      const object = state.board.objects[fromIndex]
+      const target = state.board.objects[toIndex]
+      if (!object || !target) return
+      const moved = moveLayerNodeBefore(state.layerTree, { type: 'object', id: object.editorId }, {
+        type: 'object',
+        id: target.editorId,
+      })
+      if (!moved) return
+      syncBoardOrderFromLayerTree(state)
       renderAll()
       showStatus('已调整图层顺序')
     },
@@ -276,7 +286,7 @@ export function createObjectCommands({
       recordHistory()
       const object = createPastedObject(state.clipboard)
       state.board.objects.push(object)
-      syncFlatLayerTree(state)
+      appendObjectLayerNode(state.layerTree, object.editorId)
       selectObject(state.board.objects.length - 1)
       showStatus(`已粘贴 ${object.type}`)
     },
@@ -330,18 +340,18 @@ function moveObjectBy(object, dx, dy) {
 
 function moveSelectedToIndex(index, target, state, recordHistory, selectObject) {
   if (index === target) return
+  const object = state.board.objects[index]
+  const targetObject = state.board.objects[target]
+  if (!object || !targetObject) return
   recordHistory()
-  const [object] = state.board.objects.splice(index, 1)
-  state.board.objects.splice(target, 0, object)
-  syncFlatLayerTree(state)
-  selectObject(target)
-}
-
-function mapMovedIndex(index, fromIndex, toIndex) {
-  if (index === fromIndex) return toIndex
-  if (fromIndex < toIndex && index > fromIndex && index <= toIndex) return index - 1
-  if (fromIndex > toIndex && index >= toIndex && index < fromIndex) return index + 1
-  return index
+  const dragged = { type: 'object', id: object.editorId }
+  const targetNode = { type: 'object', id: targetObject.editorId }
+  const moved = index < target
+    ? moveLayerNodeAfter(state.layerTree, dragged, targetNode)
+    : moveLayerNodeBefore(state.layerTree, dragged, targetNode)
+  if (!moved) return
+  syncBoardOrderFromLayerTree(state)
+  selectObject(state.board.objects.findIndex((entry) => entry.editorId === object.editorId))
 }
 
 function createDefaultObject(type, point = BOARD_CENTER) {

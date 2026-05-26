@@ -9,6 +9,19 @@ export function syncFlatLayerTree(state) {
   state.layerTree = createLayerTreeFromBoard(state.board)
 }
 
+export function appendObjectLayerNode(layerTree, objectId) {
+  if (!objectId) return
+  layerTree.push({
+    type: 'object',
+    id: objectId,
+  })
+}
+
+export function removeObjectLayerNodes(layerTree, objectIds) {
+  const ids = new Set(objectIds)
+  removeObjectNodes(layerTree, ids)
+}
+
 export function hasLayerGroups(layerTree) {
   return (layerTree ?? []).some((node) =>
     node.type === 'group' || hasLayerGroups(node.children))
@@ -85,6 +98,20 @@ export function moveLayerNodeBefore(layerTree, dragged, target) {
     return false
   }
   targetInfo.parent.splice(targetInfo.index, 0, removed)
+  return true
+}
+
+export function moveLayerNodeAfter(layerTree, dragged, target) {
+  if (!dragged?.id || !target?.id || dragged.id === target.id) return false
+  if (dragged.type === 'group' && containsGroup(layerTree, dragged.id, target.id)) return false
+  const removed = removeLayerNode(layerTree, dragged)
+  if (!removed) return false
+  const targetInfo = findLayerNodeParent(layerTree, target)
+  if (!targetInfo) {
+    layerTree.push(removed)
+    return false
+  }
+  targetInfo.parent.splice(targetInfo.index + 1, 0, removed)
   return true
 }
 
@@ -166,6 +193,22 @@ function removeSelectedObjectNodes(nodes, selectedIds, removed) {
     }
     if (node.type === 'group') {
       removeSelectedObjectNodes(node.children ?? [], selectedIds, removed)
+    }
+  }
+}
+
+function removeObjectNodes(nodes, objectIds) {
+  for (let index = nodes.length - 1; index >= 0; index -= 1) {
+    const node = nodes[index]
+    if (node.type === 'object' && objectIds.has(node.id)) {
+      nodes.splice(index, 1)
+      continue
+    }
+    if (node.type === 'group') {
+      removeObjectNodes(node.children ?? [], objectIds)
+      if ((node.children ?? []).length === 0) {
+        nodes.splice(index, 1)
+      }
     }
   }
 }

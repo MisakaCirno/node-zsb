@@ -189,6 +189,9 @@ test('editor groups selected layers and exports the group in project JSON', asyn
     force: true,
   })
   await expect(groupRow.locator('.layer-position')).toHaveText('3 个对象')
+  await page.getByTitle('tank').first().click()
+  await expect(page.locator('#layers .layer-group-row')).toHaveCount(1)
+  await expect(groupRow.locator('.layer-position')).toHaveText('3 个对象')
 
   await groupRow.locator('[data-action="hidden"]').click()
   await expect(groupRow).toHaveClass(/muted/)
@@ -199,9 +202,9 @@ test('editor groups selected layers and exports the group in project JSON', asyn
   await groupRow.click()
   await expect(page.locator('#ungroup-layers')).toBeEnabled()
   await groupRow.locator('.layer-group-toggle').click()
-  await expect(page.locator('#layers .layer-row')).toHaveCount(2)
+  await expect(page.locator('#layers .layer-row')).toHaveCount(3)
   await groupRow.locator('.layer-group-toggle').click()
-  await expect(page.locator('#layers .layer-row')).toHaveCount(5)
+  await expect(page.locator('#layers .layer-row')).toHaveCount(6)
 
   await openFileMenu(page)
   const downloadPromise = page.waitForEvent('download')
