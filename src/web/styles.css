@@ -262,6 +262,77 @@ textarea {
   gap: 8px;
 }
 
+.file-menu-entry {
+  position: relative;
+}
+
+.file-menu-trigger {
+  min-width: 74px;
+  gap: 6px;
+}
+
+.file-menu-trigger svg {
+  width: 17px;
+  height: 17px;
+}
+
+.file-menu {
+  position: fixed;
+  z-index: 30;
+  width: 188px;
+  display: grid;
+  gap: 6px;
+  padding: 8px;
+  border: 1px solid #303b43;
+  border-radius: 6px;
+  background: rgba(18, 23, 27, 0.98);
+  box-shadow: 0 16px 36px rgba(0, 0, 0, 0.4);
+}
+
+.file-menu.hidden {
+  display: none;
+}
+
+.file-menu-section {
+  display: grid;
+  gap: 2px;
+}
+
+.file-menu-section + .file-menu-section {
+  padding-top: 6px;
+  border-top: 1px solid #303b43;
+}
+
+.file-menu-item {
+  width: 100%;
+  min-width: 0;
+  height: 34px;
+  display: grid;
+  grid-template-columns: 22px minmax(0, 1fr);
+  align-items: center;
+  gap: 8px;
+  padding: 0 9px;
+  border-color: transparent;
+  background: transparent;
+  color: #d9e0e4;
+  text-align: left;
+}
+
+.file-menu-item svg {
+  width: 18px;
+  height: 18px;
+}
+
+.file-menu-item span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.file-menu-item:not(:disabled):hover {
+  border-color: #303b43;
+  background: #20362f;
+}
+
 .board-name-field {
   display: inline-flex;
   align-items: center;

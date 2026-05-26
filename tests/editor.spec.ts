@@ -1,23 +1,35 @@
 import { expect, test, type Page } from '@playwright/test'
 
 async function openImportDialog(page: Page) {
-  await page.locator('#open-import-dialog').click()
+  await clickFileMenuAction(page, '#open-import-dialog')
   await expect(page.locator('#import-dialog')).toBeVisible()
 }
 
 async function openExportCodeDialog(page: Page) {
-  await page.locator('#open-export-code-dialog').click()
+  await clickFileMenuAction(page, '#open-export-code-dialog')
   await expect(page.locator('#export-code-dialog')).toBeVisible()
 }
 
 async function openExportImageDialog(page: Page) {
-  await page.locator('#open-export-image-dialog').click()
+  await clickFileMenuAction(page, '#open-export-image-dialog')
   await expect(page.locator('#export-image-dialog')).toBeVisible()
 }
 
 async function openLocalBoardDialog(page: Page) {
-  await page.locator('#open-local-board-dialog').click()
+  await clickFileMenuAction(page, '#open-local-board-dialog')
   await expect(page.locator('#local-board-dialog')).toBeVisible()
+}
+
+async function openFileMenu(page: Page) {
+  if (await page.locator('#file-menu').isHidden()) {
+    await page.locator('#file-menu-button').click()
+  }
+  await expect(page.locator('#file-menu')).toBeVisible()
+}
+
+async function clickFileMenuAction(page: Page, selector: string) {
+  await openFileMenu(page)
+  await page.locator(selector).click()
 }
 
 async function exportBoardCode(page: Page) {
@@ -40,8 +52,11 @@ test('editor loads, edits an object, exports code, and renders a preview', async
 
   await expect(page).toHaveTitle('战术板编辑器')
   await expect(page.locator('#stage-host canvas').first()).toBeVisible()
-  await expect(page.getByRole('button', { name: '导出分享码' })).toBeVisible()
-  await expect(page.getByRole('button', { name: '导出图片' })).toBeVisible()
+  await expect(page.getByRole('button', { name: '文件' })).toBeVisible()
+  await openFileMenu(page)
+  await expect(page.getByRole('menuitem', { name: '导出分享码' })).toBeVisible()
+  await expect(page.getByRole('menuitem', { name: '导出图片' })).toBeVisible()
+  await page.keyboard.press('Escape')
 
   const canvas = page.locator('#stage-host canvas').first()
   await expect(canvas).toBeVisible()
@@ -176,23 +191,35 @@ test('editor renders readable Chinese labels', async ({ page }) => {
   await page.goto('/editor')
 
   await expect(page).toHaveTitle('战术板编辑器')
-  await expect(page.getByRole('button', { name: '导入' })).toBeVisible()
-  await expect(page.getByRole('button', { name: '新建文件' })).toBeVisible()
-  await expect(page.getByRole('button', { name: '导出分享码' })).toBeVisible()
-  await expect(page.getByRole('button', { name: '导出图片' })).toBeVisible()
+  await expect(page.getByRole('button', { name: '文件' })).toBeVisible()
+  await expect(page.locator('#file-menu')).toBeHidden()
+  await expect(page.locator('#file-menu-button')).toHaveAttribute('aria-expanded', 'false')
+  await expect(page.locator('#file-menu-button')).toHaveAttribute('aria-haspopup', 'menu')
+  const menuBox = await page.locator('#file-menu-button').boundingBox()
+  const fileNameBox = await page.locator('#file-name').boundingBox()
+  if (!menuBox || !fileNameBox) throw new Error('File menu or file name input is not visible')
+  expect(fileNameBox.x).toBeGreaterThan(menuBox.x + menuBox.width)
+  await openFileMenu(page)
+  await expect(page.locator('#file-menu-button')).toHaveAttribute('aria-expanded', 'true')
+  await expect(page.getByRole('menuitem', { name: '新建文件' })).toBeVisible()
+  await expect(page.getByRole('menuitem', { name: '导入分享码' })).toBeVisible()
+  await expect(page.getByRole('menuitem', { name: '导出分享码' })).toBeVisible()
+  await expect(page.getByRole('menuitem', { name: '导出图片' })).toBeVisible()
   await expect(page.locator('#new-local-board')).toHaveAttribute('title', '新建文件')
   await expect(page.locator('#open-import-dialog')).toHaveAttribute('title', '导入分享码')
   await expect(page.locator('#open-export-code-dialog')).toHaveAttribute('title', '导出分享码')
   await expect(page.locator('#open-export-image-dialog')).toHaveAttribute('title', '导出图片')
-  await expect(page.locator('#new-local-board')).toHaveText('')
+  await expect(page.locator('#new-local-board')).toContainText('新建文件')
   await expect(page.locator('#new-local-board svg')).toBeVisible()
-  await expect(page.locator('#open-import-dialog')).toHaveText('')
+  await expect(page.locator('#open-import-dialog')).toContainText('导入分享码')
   await expect(page.locator('#open-import-dialog svg')).toBeVisible()
   await expect(page.locator('#open-import-dialog svg path')).toHaveCount(5)
   await expect(page.locator('#open-export-code-dialog svg')).toBeVisible()
   await expect(page.locator('#open-export-image-dialog svg')).toBeVisible()
-  await expect(page.locator('#open-export-code-dialog')).toHaveText('')
-  await expect(page.locator('#open-export-image-dialog')).toHaveText('')
+  await expect(page.locator('#open-export-code-dialog')).toContainText('导出分享码')
+  await expect(page.locator('#open-export-image-dialog')).toContainText('导出图片')
+  await page.keyboard.press('Escape')
+  await expect(page.locator('#file-menu')).toBeHidden()
   await expect(page.locator('.board-name-group')).toHaveCount(1)
   await expect(page.locator('.local-board-actions')).toHaveCount(1)
   await expect(page.locator('.board-code-actions')).toHaveCount(1)
@@ -246,8 +273,10 @@ test('editor disables async action buttons while exporting', async ({ page }) =>
     await route.continue()
   })
 
+  await openFileMenu(page)
   await page.locator('#open-export-code-dialog').click()
   await expect(page.locator('#load-code')).toBeDisabled()
+  await expect(page.locator('#file-menu-button')).toBeDisabled()
   await expect(page.locator('#open-export-code-dialog')).toBeDisabled()
   await expect(page.locator('#open-export-image-dialog')).toBeDisabled()
   await expect(page.locator('#status')).toContainText('正在生成分享码')
@@ -255,6 +284,7 @@ test('editor disables async action buttons while exporting', async ({ page }) =>
   releaseExport()
   await expect(page.locator('#code-output')).toHaveValue(/\[stgy:/)
   await expect(page.locator('#load-code')).toBeEnabled()
+  await expect(page.locator('#file-menu-button')).toBeEnabled()
   await expect(page.locator('#open-export-code-dialog')).toBeEnabled()
   await expect(page.locator('#open-export-image-dialog')).toBeEnabled()
 })
@@ -691,7 +721,7 @@ test('editor saves, loads, and deletes local browser board slots', async ({
   await page.locator('#file-name').fill('本地草稿')
   await page.locator('#board-name').fill('分享草稿')
   await page.locator('#board-name').dispatchEvent('change')
-  await page.locator('#save-local-board').click()
+  await clickFileMenuAction(page, '#save-local-board')
   await expect(page.locator('#status')).toContainText('已保存本地文件')
   await openLocalBoardDialog(page)
   await expect(page.locator('#local-board-list')).toContainText('本地草稿')
@@ -706,12 +736,12 @@ test('editor saves, loads, and deletes local browser board slots', async ({
   await page.locator('#local-board-dialog').evaluate((dialog) => {
     if ('close' in dialog) dialog.close()
   })
-  await page.locator('#save-as-local-board').click()
+  await clickFileMenuAction(page, '#save-as-local-board')
   await expect(page.locator('#local-board-name-dialog')).toBeVisible()
   await page.locator('#local-board-name-input').fill('另存草稿')
   await page.locator('#confirm-local-board-name').click()
   await expect(page.locator('#status')).toContainText('已保存本地文件')
-  await page.locator('#save-as-local-board').click()
+  await clickFileMenuAction(page, '#save-as-local-board')
   await expect(page.locator('#local-board-name-dialog')).toBeVisible()
   await page.locator('#local-board-name-input').fill('本地草稿')
   await page.locator('#confirm-local-board-name').click()
@@ -778,7 +808,7 @@ test('editor creates a new local file from the toolbar', async ({ page }) => {
   await page.locator('#file-name').fill('新建前草稿')
   await page.locator('#board-name').fill('原分享名')
   await page.locator('#board-name').dispatchEvent('change')
-  await page.locator('#save-local-board').click()
+  await clickFileMenuAction(page, '#save-local-board')
   await expect(page.locator('#status')).toContainText('已保存本地文件')
 
   await page.locator('#board-name').fill('未保存分享')
@@ -787,7 +817,7 @@ test('editor creates a new local file from the toolbar', async ({ page }) => {
     expect(dialog.message()).toContain('新建文件前')
     await dialog.dismiss()
   })
-  await page.locator('#new-local-board').click()
+  await clickFileMenuAction(page, '#new-local-board')
   await expect(page.locator('#status')).toContainText('已新建文件')
   await expect(page.locator('#file-name')).toHaveValue('')
   await expect(page.locator('#board-name')).toHaveValue('')

@@ -54,6 +54,7 @@ export function createEditorFeedback({ state, getElements }) {
     ].filter(Boolean)) {
       control.disabled = disabled
     }
+    elements.fileMenuButton.disabled = disabled
   }
 
   function handleError(error) {

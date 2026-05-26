@@ -5,6 +5,8 @@ export function getEditorElements() {
     shell: document.querySelector('#editor-shell'),
     leftPanelResizer: document.querySelector('#left-panel-resizer'),
     rightPanelResizer: document.querySelector('#right-panel-resizer'),
+    fileMenuButton: document.querySelector('#file-menu-button'),
+    fileMenu: document.querySelector('#file-menu'),
     openLocalBoardDialog: document.querySelector('#open-local-board-dialog'),
     newLocalBoard: document.querySelector('#new-local-board'),
     manageLocalBoards: document.querySelector('#manage-local-boards'),
