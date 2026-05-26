@@ -6,6 +6,7 @@ export function createEditorActionRegistry({
   inspectorControls,
   localBoardsPanel,
   objectCommands,
+  projectFileActions,
   viewportControls,
 }) {
   return {
@@ -24,7 +25,9 @@ export function createEditorActionRegistry({
     deselect: editorContext.deselect,
     duplicateSelected: objectCommands.duplicateSelected,
     downloadPreviewImage: boardCodeActions.downloadPreviewImage,
+    downloadProjectFile: projectFileActions.downloadProjectFile,
     exportCode: boardCodeActions.exportCode,
+    importProjectFile: projectFileActions.importProjectFile,
     loadFromCode: boardCodeActions.loadFromCode,
     loadLocalBoard: localBoardsPanel.loadLocalBoard,
     newLocalBoard: localBoardsPanel.newLocalBoard,

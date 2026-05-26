@@ -20,8 +20,10 @@ test('createEditorActionRegistry exposes the event binding action surface', () =
       'deleteSelected',
       'deselect',
       'downloadPreviewImage',
+      'downloadProjectFile',
       'duplicateSelected',
       'exportCode',
+      'importProjectFile',
       'getLastLayerIndex',
       'loadFromCode',
       'loadLocalBoard',
@@ -99,6 +101,10 @@ test('createEditorActionRegistry exposes the event binding action surface', () =
       nudgeSelected: handlers.nudgeSelected,
       pasteObject: handlers.pasteObject,
       toggleSelectedLayerFlag: handlers.toggleLayerFlagForSelection,
+    },
+    projectFileActions: {
+      downloadProjectFile: handlers.downloadProjectFile,
+      importProjectFile: handlers.importProjectFile,
     },
     viewportControls: {
       applyFitZoom: handlers.applyFitZoom,

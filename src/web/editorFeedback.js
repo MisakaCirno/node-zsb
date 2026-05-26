@@ -32,7 +32,9 @@ export function createEditorFeedback({ state, getElements }) {
     const elements = getElements()
     for (const button of [
       elements.loadCode,
+      elements.importProjectFile,
       elements.openExportCodeDialog,
+      elements.exportProjectFile,
       elements.openExportImageDialog,
       elements.copyExportCode,
       elements.copyExportImage,

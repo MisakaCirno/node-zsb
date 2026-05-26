@@ -1,13 +1,17 @@
+import { ensureObjectEditorIds, stripEditorFields } from './editorIds.js'
+
 export function normalizeBoard(board) {
+  const objects = (board.objects ?? []).map((object) => ({
+    size: 100,
+    color: '#ff8000',
+    transparency: 0,
+    ...object,
+  }))
+  ensureObjectEditorIds(objects)
   return {
     name: board.name ?? '',
     boardBackground: board.boardBackground ?? 'checkered',
-    objects: (board.objects ?? []).map((object) => ({
-      size: 100,
-      color: '#ff8000',
-      transparency: 0,
-      ...object,
-    })),
+    objects,
   }
 }
 
@@ -27,7 +31,7 @@ export function cleanBoard(board) {
 
 export function sanitizeObject(object) {
   const capabilities = getObjectCapabilities(object.type)
-  const copy = { ...object }
+  const copy = stripEditorFields(object)
   if (!capabilities.appearance) {
     delete copy.color
     delete copy.transparency

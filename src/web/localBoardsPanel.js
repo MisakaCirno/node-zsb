@@ -1,6 +1,11 @@
 import { MAX_LOCAL_BOARDS } from './constants.js'
 import { cleanBoard, normalizeBoard } from './board.js'
 import { encodeBoardCode, renderPreviewImage } from './api.js'
+import {
+  createProjectFromBoard,
+  createPureBoardFromProject,
+  flattenProjectToBoard,
+} from './project.js'
 import { loadLocalFiles, persistLocalFiles } from './storage.js'
 
 export function createLocalBoardsPanel({
@@ -107,7 +112,7 @@ export function createLocalBoardsPanel({
       if (shouldSave && !await saveLocalBoard()) return false
     }
     recordHistory()
-    state.board = normalizeBoard(file.board)
+    state.board = normalizeBoard(file.project ? flattenProjectToBoard(file.project) : file.board)
     state.selectedIndex = -1
     state.selectedIndexes = []
     setCurrentFile(file.name, cleanBoard(state.board))
@@ -231,11 +236,13 @@ export function createLocalBoardsPanel({
     const existingIndex = files.findIndex((file) => file.name === name)
     if (existingIndex >= 0 && !allowOverwrite) return false
     const now = new Date().toISOString()
-    const board = cleanBoard(state.board)
+    const project = createProjectFromBoard(state.board, { fileName: name })
+    const board = createPureBoardFromProject(project)
     const preview = await createPreview(board)
     const current = existingIndex >= 0 ? files[existingIndex] : null
     const file = {
       name,
+      project,
       board,
       createdAt: current?.createdAt ?? now,
       updatedAt: now,
@@ -283,7 +290,7 @@ export function createLocalBoardsPanel({
     const name = document.createElement('strong')
     name.textContent = file.name
     const shareName = document.createElement('span')
-    shareName.textContent = `分享名：${file.board?.name || '未命名'}`
+    shareName.textContent = `分享名：${file.project?.board?.name || file.board?.name || '未命名'}`
     const time = document.createElement('span')
     time.textContent = formatLocalFileTime(file)
     meta.append(name, shareName, time)

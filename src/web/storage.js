@@ -1,4 +1,10 @@
 import { LOCAL_BOARDS_KEY, LOCAL_FILES_KEY, STORAGE_KEY } from './constants.js'
+import {
+  createProjectFromBoard,
+  createPureBoardFromProject,
+  isProject,
+  normalizeProject,
+} from './project.js'
 
 export function loadSavedBoard() {
   try {
@@ -54,7 +60,7 @@ export function loadLocalFiles() {
     if (migrated.length > 0) {
       persistLocalFiles(migrated)
     }
-    return migrated
+    return normalizeLocalFiles(migrated)
   } catch (error) {
     console.warn('Failed to load local files', error)
     return []
@@ -90,17 +96,26 @@ function migrateLocalBoardsToFiles() {
 function normalizeLocalFiles(files) {
   const seen = new Set()
   return files
-    .filter((file) => file?.name && file?.board && !seen.has(file.name))
+    .filter((file) => file?.name && (file?.project || file?.board) && !seen.has(file.name))
     .map((file) => {
       seen.add(file.name)
+      const project = getLocalFileProject(file)
       return {
         name: file.name,
-        board: file.board,
+        project,
+        board: createPureBoardFromProject(project),
         createdAt: file.createdAt ?? file.updatedAt ?? new Date().toISOString(),
         updatedAt: file.updatedAt ?? new Date().toISOString(),
         preview: file.preview ?? '',
       }
     })
+}
+
+function getLocalFileProject(file) {
+  if (isProject(file.project)) {
+    return normalizeProject(file.project)
+  }
+  return createProjectFromBoard(file.board, { fileName: file.name })
 }
 
 function makeUniqueFileName(name, usedNames) {

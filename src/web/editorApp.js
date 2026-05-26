@@ -86,6 +86,7 @@ export function createEditorApp({
     loadFromCode,
     localBoardsPanel,
     objectCommands,
+    projectFileActions,
     renderBackgroundOptions,
     renderInspectorPanel,
     renderLocalBoards,
@@ -102,6 +103,7 @@ export function createEditorApp({
     inspectorControls,
     localBoardsPanel,
     objectCommands,
+    projectFileActions,
     viewportControls,
   })
   renderLoop = createEditorRenderLoop({

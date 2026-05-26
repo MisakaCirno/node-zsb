@@ -3,6 +3,7 @@ import { createBoardMetaControls } from './boardMetaControls.js'
 import { createInspectorControls } from './inspectorControls.js'
 import { createLocalBoardsPanel } from './localBoardsPanel.js'
 import { createObjectCommands } from './objectCommands.js'
+import { createProjectFileActions } from './projectFileActions.js'
 import { createViewportControls } from './viewportControls.js'
 
 export function createEditorControllers({
@@ -60,6 +61,14 @@ export function createEditorControllers({
     renderBackgroundOptions,
   })
 
+  const projectFileActions = createProjectFileActions({
+    state,
+    elements,
+    recordHistory,
+    renderAll,
+    renderBackgroundOptions,
+  })
+
   const viewportControls = createViewportControls({
     state,
     elements,
@@ -84,6 +93,7 @@ export function createEditorControllers({
     inspectorControls,
     localBoardsPanel,
     objectCommands,
+    projectFileActions,
     viewportControls,
     addObject: objectCommands.addObject,
     applyFitZoom: viewportControls.applyFitZoom,

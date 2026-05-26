@@ -1,4 +1,5 @@
 import { expect, test, type Page } from '@playwright/test'
+import { readFile } from 'node:fs/promises'
 
 async function openImportDialog(page: Page) {
   await clickFileMenuAction(page, '#open-import-dialog')
@@ -111,6 +112,61 @@ test('editor creates an object by dragging from the palette to the canvas', asyn
   const objectY = Number(await page.locator('#object-y').inputValue())
   expect(Math.abs(objectX - Math.round((target.x / box.width) * 512))).toBeLessThanOrEqual(1)
   expect(Math.abs(objectY - Math.round((target.y / box.height) * 384))).toBeLessThanOrEqual(1)
+})
+
+test('editor exports and imports project JSON files', async ({ page }) => {
+  await page.goto('/editor')
+  await expect(page.locator('#layers')).toContainText('tank')
+
+  await page.getByTitle('tank').first().click()
+  await page.locator('#object-x').fill('123')
+  await page.locator('#object-y').fill('234')
+
+  await openFileMenu(page)
+  const downloadPromise = page.waitForEvent('download')
+  await page.locator('#export-project-file').click()
+  const download = await downloadPromise
+  expect(download.suggestedFilename()).toMatch(/\.zsb\.json$/)
+  const path = await download.path()
+  if (!path) throw new Error('Project download path is unavailable')
+  const project = JSON.parse(await readFile(path, 'utf8'))
+  expect(project.format).toBe('node-zsb-project')
+  expect(project.layers[0]).toMatchObject({ type: 'object' })
+  expect(project.objects[project.layers[0].id].editorId).toBeUndefined()
+
+  const importedProject = {
+    format: 'node-zsb-project',
+    version: 1,
+    fileName: 'imported',
+    board: {
+      name: 'JSON',
+      boardBackground: 'checkered',
+    },
+    objects: {
+      obj_imported_text: {
+        type: 'text',
+        x: 111,
+        y: 222,
+        text: 'Project JSON',
+        color: '#ffffff',
+      },
+    },
+    layers: [
+      {
+        type: 'object',
+        id: 'obj_imported_text',
+      },
+    ],
+  }
+  await page.locator('#project-file-input').setInputFiles({
+    name: 'imported.zsb.json',
+    mimeType: 'application/json',
+    buffer: Buffer.from(JSON.stringify(importedProject)),
+  })
+
+  await expect(page.locator('#layers')).toContainText('text')
+  await expect(page.locator('#file-name')).toHaveValue('imported')
+  await expect(page.locator('#board-name')).toHaveValue('JSON')
 })
 
 test('editor resizes side panels and keeps object tabs visible', async ({ page }) => {

@@ -24,6 +24,19 @@ export function bindEditorEvents({
     openDialog(elements.localBoardDialog)
   })
   elements.openImportDialog.addEventListener('click', () => openDialog(elements.importDialog))
+  elements.importProjectFile.addEventListener('click', () => {
+    elements.projectFileInput.value = ''
+    elements.projectFileInput.click()
+  })
+  elements.projectFileInput.addEventListener('change', () => {
+    const file = elements.projectFileInput.files?.[0]
+    if (!file) return
+    runAction(async () => {
+      await actions.importProjectFile(file)
+    }, '已导入工程文件', {
+      busyMessage: '正在导入工程文件...',
+    })
+  })
   elements.openExportCodeDialog.addEventListener('click', () =>
     runAction(async () => {
       await actions.exportCode()
@@ -31,6 +44,7 @@ export function bindEditorEvents({
     }, '已生成分享码', {
       busyMessage: '正在生成分享码...',
     }))
+  elements.exportProjectFile.addEventListener('click', actions.downloadProjectFile)
   elements.openExportImageDialog.addEventListener('click', () =>
     runAction(async () => {
       await actions.renderPreview()
