@@ -63,7 +63,7 @@ bun run typecheck
 ```
 
 ```bash
-node --check src/web/app.js
+bun run test:unit
 ```
 
 ```bash
