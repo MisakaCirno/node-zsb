@@ -65,6 +65,8 @@ test('editor renders readable Chinese labels', async ({ page }) => {
   await expect(page).toHaveTitle('战术板编辑器')
   await expect(page.getByRole('button', { name: '导入' })).toBeVisible()
   await expect(page.getByRole('button', { name: '导出' })).toBeVisible()
+  await expect(page.locator('#open-import-dialog')).toHaveAttribute('title', '导入分享码')
+  await expect(page.locator('#open-export-dialog')).toHaveAttribute('title', '导出分享码')
   await openExportDialog(page)
   await expect(page.locator('#render-preview')).toBeVisible()
   await expect(page.getByPlaceholder('名称')).toBeVisible()

@@ -159,8 +159,9 @@ textarea {
 }
 
 .stage-toolbar button {
-  min-width: 52px;
-  padding: 0 10px;
+  min-width: 34px;
+  width: 34px;
+  padding: 0;
 }
 
 .toolbar-group {
@@ -180,6 +181,11 @@ textarea {
 .icon-tool {
   display: grid;
   place-items: center;
+}
+
+.icon-tool svg,
+.icon-toggle svg {
+  pointer-events: none;
 }
 
 .icon-tool svg {
@@ -214,6 +220,43 @@ textarea {
 .toolbar-toggle input {
   width: auto;
   min-height: 0;
+}
+
+.icon-toggle {
+  position: relative;
+  width: 34px;
+  height: 34px;
+  justify-content: center;
+  border: 1px solid #3a4650;
+  border-radius: 6px;
+  background: #202930;
+  cursor: pointer;
+}
+
+.icon-toggle:hover,
+.icon-toggle:has(input:checked) {
+  border-color: #66c2a5;
+  background: #20362f;
+  color: #eef2f3;
+}
+
+.icon-toggle input {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  width: 100%;
+  height: 100%;
+  cursor: pointer;
+}
+
+.icon-toggle svg {
+  width: 17px;
+  height: 17px;
+  fill: none;
+  stroke: currentColor;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-width: 2;
 }
 
 #stage-host {

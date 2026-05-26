@@ -17,15 +17,25 @@
             <select id="local-board-select"></select>
           </label>
           <div class="toolbar local-board-actions">
-            <button id="save-local-board" type="button">保存</button>
-            <button id="load-local-board" type="button" disabled>读取</button>
-            <button id="delete-local-board" type="button" disabled>删除</button>
+            <button id="save-local-board" class="icon-tool" type="button" title="保存到浏览器本地存储" aria-label="保存">
+              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 4h12l2 2v14H5z"/><path d="M8 4v6h8V4"/><path d="M8 16h8"/></svg>
+            </button>
+            <button id="load-local-board" class="icon-tool" type="button" title="读取本地存档" aria-label="读取" disabled>
+              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20h16"/><path d="M12 4v12"/><path d="m7 11 5 5 5-5"/></svg>
+            </button>
+            <button id="delete-local-board" class="icon-tool" type="button" title="删除本地存档" aria-label="删除" disabled>
+              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M6 7l1 14h10l1-14"/><path d="M9 7V4h6v3"/></svg>
+            </button>
           </div>
 
           <div class="section-title">导入导出</div>
           <div class="toolbar">
-            <button id="open-import-dialog" type="button">导入</button>
-            <button id="open-export-dialog" type="button">导出</button>
+            <button id="open-import-dialog" class="icon-tool" type="button" title="导入分享码" aria-label="导入">
+              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v12"/><path d="m7 10 5 5 5-5"/><path d="M5 21h14"/></svg>
+            </button>
+            <button id="open-export-dialog" class="icon-tool" type="button" title="导出分享码" aria-label="导出">
+              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 21V9"/><path d="m7 14 5-5 5 5"/><path d="M5 3h14"/></svg>
+            </button>
           </div>
         </section>
 
@@ -43,14 +53,30 @@
         <div class="stage-toolbar">
           <div class="stage-toolbar-row stage-toolbar-main">
             <input id="board-name" maxlength="7" placeholder="名称" />
-            <button id="undo-action" type="button" disabled>撤销</button>
-            <button id="redo-action" type="button" disabled>重做</button>
-            <button id="clear-board" type="button" disabled>清空</button>
-            <button id="delete-object" type="button" disabled>删除</button>
-            <button id="duplicate-object" type="button" disabled>复制</button>
-            <button id="move-up" type="button" disabled>上移</button>
-            <button id="move-down" type="button" disabled>下移</button>
-            <button id="center-object" type="button" disabled>居中</button>
+            <button id="undo-action" class="icon-tool" type="button" title="撤销" aria-label="撤销" disabled>
+              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9 7 4 12l5 5"/><path d="M4 12h11a5 5 0 0 1 0 10h-1"/></svg>
+            </button>
+            <button id="redo-action" class="icon-tool" type="button" title="重做" aria-label="重做" disabled>
+              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m15 7 5 5-5 5"/><path d="M20 12H9a5 5 0 0 0 0 10h1"/></svg>
+            </button>
+            <button id="clear-board" class="icon-tool" type="button" title="清空画板" aria-label="清空" disabled>
+              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16"/><path d="M10 11v6"/><path d="M14 11v6"/><path d="M6 7l1 14h10l1-14"/><path d="M9 7V4h6v3"/></svg>
+            </button>
+            <button id="delete-object" class="icon-tool" type="button" title="删除对象" aria-label="删除" disabled>
+              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16"/><path d="M6 7l1 14h10l1-14"/><path d="M9 7V4h6v3"/></svg>
+            </button>
+            <button id="duplicate-object" class="icon-tool" type="button" title="复制对象" aria-label="复制" disabled>
+              <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="8" y="8" width="11" height="11" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v1"/></svg>
+            </button>
+            <button id="move-up" class="icon-tool" type="button" title="上移图层" aria-label="上移" disabled>
+              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m12 5-5 5"/><path d="m12 5 5 5"/><path d="M12 5v14"/></svg>
+            </button>
+            <button id="move-down" class="icon-tool" type="button" title="下移图层" aria-label="下移" disabled>
+              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m12 19-5-5"/><path d="m12 19 5-5"/><path d="M12 5v14"/></svg>
+            </button>
+            <button id="center-object" class="icon-tool" type="button" title="居中对象" aria-label="居中" disabled>
+              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 4v16"/><path d="M4 12h16"/><circle cx="12" cy="12" r="4"/></svg>
+            </button>
           </div>
           <div class="stage-toolbar-row stage-toolbar-canvas">
             <div class="toolbar-group align-actions" aria-label="对齐">
@@ -74,7 +100,9 @@
               </button>
             </div>
             <div class="toolbar-group zoom-actions" aria-label="缩放">
-              <button id="zoom-out" type="button">-</button>
+              <button id="zoom-out" class="icon-tool" type="button" title="缩小" aria-label="缩小">
+                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12h14"/></svg>
+              </button>
               <select id="zoom-select" aria-label="缩放">
                 <option value="fit">适配</option>
                 <option value="0.5">50%</option>
@@ -83,11 +111,21 @@
                 <option value="1.25">125%</option>
                 <option value="1.5">150%</option>
               </select>
-              <button id="zoom-in" type="button">+</button>
-              <button id="fit-stage" type="button">适配</button>
+              <button id="zoom-in" class="icon-tool" type="button" title="放大" aria-label="放大">
+                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14"/><path d="M5 12h14"/></svg>
+              </button>
+              <button id="fit-stage" class="icon-tool" type="button" title="适配画布" aria-label="适配">
+                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 3H5a2 2 0 0 0-2 2v3"/><path d="M16 3h3a2 2 0 0 1 2 2v3"/><path d="M8 21H5a2 2 0 0 1-2-2v-3"/><path d="M16 21h3a2 2 0 0 0 2-2v-3"/></svg>
+              </button>
             </div>
-            <label class="toolbar-toggle"><input id="snap-toggle" type="checkbox" /> 吸附</label>
-            <label class="toolbar-toggle"><input id="grid-toggle" type="checkbox" /> 网格</label>
+            <label class="toolbar-toggle icon-toggle" title="吸附到网格" aria-label="吸附">
+              <input id="snap-toggle" type="checkbox" />
+              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M7 4v7a5 5 0 0 0 10 0V4"/><path d="M7 8h4"/><path d="M13 8h4"/><path d="M7 20h10"/></svg>
+            </label>
+            <label class="toolbar-toggle icon-toggle" title="显示网格" aria-label="网格">
+              <input id="grid-toggle" type="checkbox" />
+              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 4h16v16H4z"/><path d="M4 10h16"/><path d="M4 16h16"/><path d="M10 4v16"/><path d="M16 4v16"/></svg>
+            </label>
           </div>
         </div>
         <div id="stage-host"></div>
