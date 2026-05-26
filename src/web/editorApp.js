@@ -1,5 +1,6 @@
 import { getEditorData } from './api.js'
 import { createEditorState } from './editorState.js'
+import { createEditorActionRegistry } from './editorActionRegistry.js'
 import { createBoardMetaControls } from './boardMetaControls.js'
 import { createBoardCodeActions } from './boardCodeActions.js'
 import { bindEditorEvents } from './editorBindings.js'
@@ -29,28 +30,27 @@ export function createEditorApp({
     state,
     getElements: () => els,
   })
-  const {
-    recordHistory,
-    redo,
-    undo,
-    updateHistoryButtons,
-  } = createEditorHistoryControls({
+  const historyControls = createEditorHistoryControls({
     state,
     getElements: () => els,
     restoreCurrentState,
     showStatus,
   })
   const {
-    deselect,
-    getSelected,
-    normalizeCoordinate,
-    normalizePoint,
-    selectObject,
-  } = createEditorContext({
+    recordHistory,
+    updateHistoryButtons,
+  } = historyControls
+  const editorContext = createEditorContext({
     state,
     renderAll,
     showStatus,
   })
+  const {
+    getSelected,
+    normalizeCoordinate,
+    normalizePoint,
+    selectObject,
+  } = editorContext
   const stageRenderer = createStageRenderer({
     container: 'stage-host',
     state,
@@ -64,18 +64,7 @@ export function createEditorApp({
     showStatus,
   })
   const { stage } = stageRenderer
-  const {
-    addObject,
-    centerSelected,
-    clearBoard,
-    copySelected,
-    deleteSelected,
-    duplicateSelected,
-    moveSelected,
-    nudgeSelected,
-    pasteObject,
-    toggleLayerFlag,
-  } = createObjectCommands({
+  const objectCommands = createObjectCommands({
     state,
     recordHistory,
     renderAll,
@@ -85,23 +74,23 @@ export function createEditorApp({
     showStatus,
     confirmAction,
   })
-
   const {
-    onBackgroundChange,
-    onBoardNameChange,
-    renderBackgroundOptions,
-    syncBoardNameInput,
-  } = createBoardMetaControls({
+    addObject,
+    toggleLayerFlag,
+  } = objectCommands
+
+  const boardMetaControls = createBoardMetaControls({
     state,
     elements: els,
     recordHistory,
     renderAll,
   })
-
   const {
-    renderInspector: renderInspectorControl,
-    updateSelectedFromInspector,
-  } = createInspectorControls({
+    renderBackgroundOptions,
+    syncBoardNameInput,
+  } = boardMetaControls
+
+  const inspectorControls = createInspectorControls({
     state,
     elements: els,
     getSelected,
@@ -109,41 +98,29 @@ export function createEditorApp({
     recordHistory,
     renderAll,
   })
-
   const {
-    exportCode,
-    loadFromCode,
-    renderPreview,
-  } = createBoardCodeActions({
+    renderInspector: renderInspectorControl,
+  } = inspectorControls
+
+  const boardCodeActions = createBoardCodeActions({
     state,
     elements: els,
     recordHistory,
     renderAll,
     renderBackgroundOptions,
   })
+  const { loadFromCode } = boardCodeActions
 
-  const {
-    applyFitZoom,
-    applyFitZoomOnResize,
-    setStageZoom,
-    stepZoom,
-    toggleGrid,
-    toggleSnapToGrid,
-  } = createViewportControls({
+  const viewportControls = createViewportControls({
     state,
     elements: els,
     stage,
     stageRenderer,
     showStatus,
   })
+  const { applyFitZoom } = viewportControls
 
-  const {
-    deleteLocalBoard,
-    loadLocalBoard,
-    renderLocalBoards,
-    saveLocalBoard,
-    updateLocalBoardButtons,
-  } = createLocalBoardsPanel({
+  const localBoardsPanel = createLocalBoardsPanel({
     state,
     elements: els,
     recordHistory,
@@ -151,6 +128,17 @@ export function createEditorApp({
     renderBackgroundOptions,
     showStatus,
     confirmAction,
+  })
+  const { renderLocalBoards } = localBoardsPanel
+  const eventActions = createEditorActionRegistry({
+    boardCodeActions,
+    boardMetaControls,
+    editorContext,
+    historyControls,
+    inspectorControls,
+    localBoardsPanel,
+    objectCommands,
+    viewportControls,
   })
   renderLoop = createEditorRenderLoop({
     state,
@@ -186,35 +174,7 @@ export function createEditorApp({
     bindEditorEvents({
       elements: els,
       runAction,
-      actions: {
-        applyFitZoom,
-        applyFitZoomOnResize,
-        centerSelected,
-        clearBoard,
-        copySelected,
-        deleteLocalBoard,
-        deleteSelected,
-        deselect,
-        duplicateSelected,
-        exportCode,
-        loadFromCode,
-        loadLocalBoard,
-        moveSelected,
-        nudgeSelected,
-        onBackgroundChange,
-        onBoardNameChange,
-        pasteObject,
-        redo,
-        renderPreview,
-        saveLocalBoard,
-        setStageZoom,
-        stepZoom,
-        toggleGrid,
-        toggleSnapToGrid,
-        undo,
-        updateLocalBoardButtons,
-        updateSelectedFromInspector,
-      },
+      actions: eventActions,
     })
   }
 
