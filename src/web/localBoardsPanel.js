@@ -33,13 +33,13 @@ export function createLocalBoardsPanel({
 
   function updateLocalBoardButtons() {
     elements.saveLocalBoard.disabled = false
+    const selectedCount = getSelectedBoardIds().length
+    elements.deleteSelectedLocalBoards.disabled = selectedCount === 0
   }
 
-  async function saveLocalBoard(options = {}) {
+  async function saveLocalBoard() {
     const boards = loadLocalBoards()
-    const baseName = options.name ?? state.board.name ?? '未命名'
-    const name = await resolveAvailableBoardName(baseName, boards)
-    if (!name) return false
+    const name = (state.board.name ?? '').trim() || '未命名'
     const entry = {
       id: createLocalBoardId(),
       name,
@@ -116,6 +116,17 @@ export function createLocalBoardsPanel({
     return true
   }
 
+  function deleteSelectedLocalBoards() {
+    const ids = getSelectedBoardIds()
+    if (ids.length === 0) return false
+    if (!confirmAction(`删除选中的 ${ids.length} 个本地存档？`)) return false
+    const nextBoards = loadLocalBoards().filter((board) => !ids.includes(board.id))
+    if (!saveLocalBoards(nextBoards)) return false
+    renderLocalBoards()
+    showStatus(`已删除 ${ids.length} 个本地存档`)
+    return true
+  }
+
   elements.localBoardNameDialog.addEventListener('close', () => {
     if (!pendingNameRequest) return
     const name = elements.localBoardNameDialog.returnValue === 'confirm'
@@ -125,15 +136,11 @@ export function createLocalBoardsPanel({
     pendingNameRequest = null
   })
 
-  elements.useRecommendedBoardName.addEventListener('click', () => {
-    if (!pendingNameRequest) return
-    elements.localBoardNameInput.value = pendingNameRequest.recommendedName
-    elements.localBoardNameInput.focus()
-    elements.localBoardNameInput.select()
-  })
+  elements.deleteSelectedLocalBoards.addEventListener('click', deleteSelectedLocalBoards)
 
   return {
     deleteLocalBoard,
+    deleteSelectedLocalBoards,
     loadLocalBoard,
     renderLocalBoards,
     renameLocalBoard,
@@ -144,6 +151,17 @@ export function createLocalBoardsPanel({
   function createLocalBoardRow(entry) {
     const row = document.createElement('article')
     row.className = 'local-board-row'
+    const select = document.createElement('label')
+    select.className = 'local-board-select'
+    select.title = '选择存档'
+    const checkbox = document.createElement('input')
+    checkbox.type = 'checkbox'
+    checkbox.value = entry.id
+    checkbox.addEventListener('change', updateLocalBoardButtons)
+    const selectText = document.createElement('span')
+    selectText.textContent = '选择'
+    select.append(checkbox, selectText)
+
     const meta = document.createElement('div')
     meta.className = 'local-board-meta'
     const name = document.createElement('strong')
@@ -159,7 +177,7 @@ export function createLocalBoardsPanel({
       createRowButton('重命名', () => renameLocalBoard(entry.id)),
       createRowButton('删除', () => deleteLocalBoard(entry.id)),
     )
-    row.append(meta, actions)
+    row.append(select, meta, actions)
     return row
   }
 
@@ -171,21 +189,9 @@ export function createLocalBoardsPanel({
     return button
   }
 
-  async function resolveAvailableBoardName(baseName, boards) {
-    const fallbackName = (baseName || '未命名').trim() || '未命名'
-    if (!boards.some((board) => board.name === fallbackName)) {
-      return fallbackName
-    }
-    return requestBoardName({
-      currentName: fallbackName,
-      title: '存档名称已存在',
-    })
-  }
-
   function requestBoardName({ currentName, title }) {
     return new Promise((resolve) => {
       pendingNameRequest = {
-        recommendedName: createRecommendedName(currentName),
         resolve,
       }
       elements.localBoardNameDialog.querySelector('h2').textContent = title
@@ -208,6 +214,11 @@ export function createLocalBoardsPanel({
     return false
   }
 
+  function getSelectedBoardIds() {
+    return [...elements.localBoardList.querySelectorAll('input[type="checkbox"]:checked')]
+      .map((input) => input.value)
+  }
+
 }
 
 function boardSnapshot(board) {
@@ -219,19 +230,6 @@ function formatLocalBoardTime(entry) {
   return Number.isNaN(date.getTime())
     ? ''
     : date.toLocaleString('zh-CN', { hour12: false })
-}
-
-function createRecommendedName(name) {
-  const date = new Date()
-  const stamp = [
-    date.getFullYear(),
-    String(date.getMonth() + 1).padStart(2, '0'),
-    String(date.getDate()).padStart(2, '0'),
-    String(date.getHours()).padStart(2, '0'),
-    String(date.getMinutes()).padStart(2, '0'),
-    String(date.getSeconds()).padStart(2, '0'),
-  ].join('')
-  return `${name || '未命名'}-${stamp}`
 }
 
 function createLocalBoardId() {

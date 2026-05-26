@@ -19,6 +19,7 @@ export function createEditorActionRegistry({
     copyExportCode: boardCodeActions.copyExportCode,
     copyExportImage: boardCodeActions.copyExportImage,
     deleteLocalBoard: localBoardsPanel.deleteLocalBoard,
+    deleteSelectedLocalBoards: localBoardsPanel.deleteSelectedLocalBoards,
     deleteSelected: objectCommands.deleteSelected,
     deselect: editorContext.deselect,
     duplicateSelected: objectCommands.duplicateSelected,

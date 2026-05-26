@@ -308,6 +308,14 @@ textarea {
   gap: 6px;
 }
 
+.stage-toolbar-main .toolbar-group:first-child {
+  border-left: 0;
+}
+
+.stage-toolbar-main .toolbar-group {
+  border-right: 0;
+}
+
 .toolbar-group {
   align-items: center;
   gap: 4px;
@@ -955,15 +963,33 @@ textarea {
   overflow-y: auto;
 }
 
+.local-board-bulk-actions {
+  display: flex;
+  justify-content: flex-end;
+}
+
 .local-board-row {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) auto;
+  grid-template-columns: auto minmax(0, 1fr) auto;
   gap: 12px;
   align-items: center;
   padding: 10px;
   border: 1px solid #303b43;
   border-radius: 6px;
   background: #12171b;
+}
+
+.local-board-select {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: #a8b4bd;
+  font-size: 12px;
+}
+
+.local-board-select input {
+  width: auto;
+  min-height: 0;
 }
 
 .local-board-meta {

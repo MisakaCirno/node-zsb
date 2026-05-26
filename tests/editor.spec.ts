@@ -186,6 +186,11 @@ test('editor renders readable Chinese labels', async ({ page }) => {
   await expect(page.locator('#open-import-dialog svg')).toBeVisible()
   await expect(page.locator('#open-export-code-dialog svg')).toBeVisible()
   await expect(page.locator('#open-export-image-dialog svg')).toBeVisible()
+  await expect(page.locator('#open-export-code-dialog')).toHaveText('')
+  await expect(page.locator('#open-export-image-dialog')).toHaveText('')
+  await expect(page.locator('.board-name-group')).toHaveCount(1)
+  await expect(page.locator('.local-board-actions')).toHaveCount(1)
+  await expect(page.locator('.board-code-actions')).toHaveCount(1)
   await expect(page.locator('.board-name-label')).toHaveText('名称')
   await openExportCodeDialog(page)
   await expect(page.locator('#copy-export-code')).toBeVisible()
@@ -666,19 +671,17 @@ test('editor saves, loads, and deletes local browser board slots', async ({
   await expect(page.locator('#status')).toContainText('已保存到浏览器本地存储')
   await openLocalBoardDialog(page)
   await expect(page.locator('#local-board-list')).toContainText('本地草稿')
+  await expect(page.locator('#delete-selected-local-boards')).toBeDisabled()
 
   await page.locator('#local-board-dialog').evaluate((dialog) => {
     if ('close' in dialog) dialog.close()
   })
   await page.locator('#save-local-board').click()
-  await expect(page.locator('#local-board-name-dialog')).toBeVisible()
-  await page.locator('#use-recommended-board-name').click()
-  await expect(page.locator('#local-board-name-input')).toHaveValue(/本地草稿-\d{14}/)
-  await page.locator('#confirm-local-board-name').click()
   await expect(page.locator('#status')).toContainText('已保存到浏览器本地存储')
   await openLocalBoardDialog(page)
   await expect(page.locator('#local-board-list .local-board-row')).toHaveCount(2)
-  await page.locator('#local-board-list .local-board-row').filter({ hasText: '本地草稿-' }).getByRole('button', { name: '重命名' }).click()
+  await expect(page.locator('#local-board-name-dialog')).toBeHidden()
+  await page.locator('#local-board-list .local-board-row').first().getByRole('button', { name: '重命名' }).click()
   await expect(page.locator('#local-board-name-dialog')).toBeVisible()
   await page.locator('#local-board-name-input').fill('重命名草稿')
   await page.locator('#confirm-local-board-name').click()
@@ -699,17 +702,14 @@ test('editor saves, loads, and deletes local browser board slots', async ({
   await expect(page.locator('#status')).toContainText('已读取本地存档 本地草稿')
 
   page.once('dialog', async (dialog) => {
-    expect(dialog.message()).toContain('删除本地存档')
+    expect(dialog.message()).toContain('删除选中的 2 个本地存档')
     await dialog.accept()
   })
-  await page.locator('#local-board-list .local-board-row').filter({ hasText: '本地草稿' }).getByRole('button', { name: '删除' }).click()
-  await expect(page.locator('#local-board-list')).not.toContainText('本地草稿')
-
-  page.once('dialog', async (dialog) => {
-    expect(dialog.message()).toContain('删除本地存档')
-    await dialog.accept()
-  })
-  await page.locator('#local-board-list .local-board-row').filter({ hasText: '重命名草稿' }).getByRole('button', { name: '删除' }).click()
+  for (const checkbox of await page.locator('#local-board-list .local-board-row input[type="checkbox"]').all()) {
+    await checkbox.check()
+  }
+  await expect(page.locator('#delete-selected-local-boards')).toBeEnabled()
+  await page.locator('#delete-selected-local-boards').click()
   await expect(page.locator('#local-board-list')).toContainText('暂无本地存档')
 })
 

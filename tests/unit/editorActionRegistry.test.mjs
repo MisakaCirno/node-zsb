@@ -16,6 +16,7 @@ test('createEditorActionRegistry exposes the event binding action surface', () =
       'copyExportImage',
       'copySelected',
       'deleteLocalBoard',
+      'deleteSelectedLocalBoards',
       'deleteSelected',
       'deselect',
       'downloadPreviewImage',
@@ -74,6 +75,7 @@ test('createEditorActionRegistry exposes the event binding action surface', () =
     },
     localBoardsPanel: {
       deleteLocalBoard: handlers.deleteLocalBoard,
+      deleteSelectedLocalBoards: handlers.deleteSelectedLocalBoards,
       loadLocalBoard: handlers.loadLocalBoard,
       renderLocalBoards: handlers.renderLocalBoards,
       saveLocalBoard: handlers.saveLocalBoard,

@@ -46,6 +46,7 @@ export function createEditorFeedback({ state, getElements }) {
       elements.saveLocalBoard,
       elements.openLocalBoardDialog,
       elements.manageLocalBoards,
+      elements.deleteSelectedLocalBoards,
       ...elements.background.querySelectorAll('button'),
     ].filter(Boolean)) {
       control.disabled = disabled
