@@ -30,12 +30,12 @@
         <div class="stage-toolbar">
           <div class="stage-toolbar-row stage-toolbar-main">
             <div class="stage-toolbar-cluster">
-              <div class="toolbar-group file-menu-entry">
-              <button id="file-menu-button" class="text-tool file-menu-trigger" type="button" aria-haspopup="menu" aria-expanded="false" aria-controls="file-menu">
-                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 6h16"/><path d="M4 12h16"/><path d="M4 18h10"/></svg>
-                <span>文件</span>
-              </button>
-              </div>
+              <nav class="app-menubar" role="menubar" aria-label="主菜单">
+                <button id="file-menu-button" class="app-menu-trigger" type="button" role="menuitem" aria-haspopup="menu" aria-expanded="false" aria-controls="file-menu">
+                  <span>文件</span>
+                  <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m7 10 5 5 5-5"/></svg>
+                </button>
+              </nav>
               <div class="toolbar-group board-name-group" aria-label="画板名称">
               <label class="board-name-field" for="file-name">
                 <span class="board-name-label">文件名</span>

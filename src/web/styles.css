@@ -262,29 +262,54 @@ textarea {
   gap: 8px;
 }
 
-.file-menu-entry {
-  position: relative;
+.app-menubar {
+  display: flex;
+  align-items: center;
+  height: 34px;
+  border-right: 1px solid #303b43;
+  padding-right: 8px;
 }
 
-.file-menu-trigger {
-  min-width: 74px;
-  gap: 6px;
+.app-menu-trigger {
+  width: auto;
+  min-width: 58px;
+  height: 28px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 3px;
+  border-color: transparent;
+  background: transparent;
+  color: #d9e0e4;
+  padding: 0 9px;
 }
 
-.file-menu-trigger svg {
-  width: 17px;
-  height: 17px;
+.app-menu-trigger svg {
+  width: 14px;
+  height: 14px;
+  fill: none;
+  stroke: currentColor;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-width: 2;
+}
+
+.app-menu-trigger[aria-expanded="true"],
+.app-menu-trigger:not(:disabled):hover {
+  border-color: #303b43;
+  background: #20362f;
+  color: #eef2f3;
 }
 
 .file-menu {
   position: fixed;
   z-index: 30;
-  width: 188px;
+  width: 204px;
   display: grid;
-  gap: 6px;
-  padding: 8px;
+  gap: 4px;
+  padding: 6px;
   border: 1px solid #303b43;
-  border-radius: 6px;
+  border-radius: 4px;
   background: rgba(18, 23, 27, 0.98);
   box-shadow: 0 16px 36px rgba(0, 0, 0, 0.4);
 }
@@ -299,19 +324,20 @@ textarea {
 }
 
 .file-menu-section + .file-menu-section {
-  padding-top: 6px;
+  padding-top: 4px;
   border-top: 1px solid #303b43;
 }
 
 .file-menu-item {
   width: 100%;
   min-width: 0;
-  height: 34px;
+  height: 32px;
   display: grid;
   grid-template-columns: 22px minmax(0, 1fr);
   align-items: center;
   gap: 8px;
-  padding: 0 9px;
+  border-radius: 4px;
+  padding: 0 8px;
   border-color: transparent;
   background: transparent;
   color: #d9e0e4;
@@ -319,8 +345,13 @@ textarea {
 }
 
 .file-menu-item svg {
-  width: 18px;
-  height: 18px;
+  width: 17px;
+  height: 17px;
+  fill: none;
+  stroke: currentColor;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-width: 2;
 }
 
 .file-menu-item span {
@@ -409,6 +440,19 @@ textarea {
   min-width: 34px;
   width: 34px;
   padding: 0;
+}
+
+.stage-toolbar .app-menu-trigger {
+  width: auto;
+  min-width: 58px;
+  height: 28px;
+  display: inline-flex;
+  padding: 0 9px;
+}
+
+.stage-toolbar .app-menu-trigger svg {
+  width: 14px;
+  height: 14px;
 }
 
 .toolbar-label {
