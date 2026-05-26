@@ -8,12 +8,35 @@ import {
 import { bindLayoutResizers } from './layoutResizers.js'
 import { bindAdaptiveSidebarTabs } from './sidebarTabLayout.js'
 import { bindMenuBar } from './menuBar.js'
+import type {
+  EditorActionRegistry,
+} from './types.js'
+
+declare const document: any
+declare const window: any
+
+interface EditorBindingsDeps {
+  elements: any
+  runAction: RunAction
+  actions: EditorActionRegistry
+}
+
+type RunAction = (
+  action: () => unknown | Promise<unknown>,
+  successMessage?: string,
+  options?: { busyMessage?: string },
+) => Promise<void> | void
+
+interface Point {
+  x: number
+  y: number
+}
 
 export function bindEditorEvents({
   elements,
   runAction,
   actions,
-}) {
+}: EditorBindingsDeps) {
   bindMenuBar(elements)
   elements.openLocalBoardDialog.addEventListener('click', () => {
     actions.renderLocalBoards()
@@ -126,7 +149,7 @@ export function bindEditorEvents({
   bindPaletteDrop(elements, actions)
   bindContextMenu(elements, actions)
   window.addEventListener('resize', actions.applyFitZoomOnResize)
-  document.addEventListener('keydown', (event) =>
+  document.addEventListener('keydown', (event: any) =>
     handleEditorKeyboard(event, {
       applyFitZoom: actions.applyFitZoom,
       copySelected: actions.copySelected,
@@ -160,7 +183,7 @@ export function bindEditorEvents({
   bindSyncedSlider(elements.donut, elements.donutRange, actions.updateSelectedFromInspector)
 }
 
-function bindSyncedSlider(numberInput, rangeInput, onChange) {
+function bindSyncedSlider(numberInput: any, rangeInput: any, onChange: () => void) {
   numberInput.addEventListener('input', () => {
     rangeInput.value = numberInput.value
     onChange()
@@ -171,18 +194,18 @@ function bindSyncedSlider(numberInput, rangeInput, onChange) {
   })
 }
 
-function bindPaletteDrop(elements, actions) {
-  elements.stageHost.addEventListener('dragover', (event) => {
+function bindPaletteDrop(elements: any, actions: EditorActionRegistry) {
+  elements.stageHost.addEventListener('dragover', (event: any) => {
     if (!Array.from(event.dataTransfer.types).includes('application/x-node-zsb-object-type')) return
     event.preventDefault()
     event.dataTransfer.dropEffect = 'copy'
     elements.stageHost.classList.add('drag-target')
   })
-  elements.stageHost.addEventListener('dragleave', (event) => {
+  elements.stageHost.addEventListener('dragleave', (event: any) => {
     if (elements.stageHost.contains(event.relatedTarget)) return
     elements.stageHost.classList.remove('drag-target')
   })
-  elements.stageHost.addEventListener('drop', (event) => {
+  elements.stageHost.addEventListener('drop', (event: any) => {
     const type = event.dataTransfer.getData('application/x-node-zsb-object-type')
     if (!type) return
     event.preventDefault()
@@ -193,7 +216,7 @@ function bindPaletteDrop(elements, actions) {
   })
 }
 
-function getStageDropPoint(elements, event) {
+function getStageDropPoint(elements: any, event: any): Point | null {
   const canvas = elements.stageHost.querySelector('canvas')
   if (!canvas) return null
   const rect = canvas.getBoundingClientRect()
@@ -209,33 +232,33 @@ function getStageDropPoint(elements, event) {
   }
 }
 
-function bindContextMenu(elements, actions) {
-  elements.stageHost.addEventListener('contextmenu', (event) => {
+function bindContextMenu(elements: any, actions: EditorActionRegistry) {
+  elements.stageHost.addEventListener('contextmenu', (event: any) => {
     event.preventDefault()
     openContextMenu(elements, 'canvas', event.clientX, event.clientY)
   })
-  elements.layers.addEventListener('contextmenu', (event) => {
+  elements.layers.addEventListener('contextmenu', (event: any) => {
     const row = event.target.closest('.layer-row')
     if (!row) return
     event.preventDefault()
     actions.selectObject(Number(row.dataset.index))
     openContextMenu(elements, 'layer', event.clientX, event.clientY)
   })
-  elements.contextMenu.addEventListener('click', (event) => {
+  elements.contextMenu.addEventListener('click', (event: any) => {
     const button = event.target.closest('[data-action]')
     if (!button) return
     runContextAction(button.dataset.action, actions)
     closeContextMenu(elements)
   })
-  document.addEventListener('click', (event) => {
+  document.addEventListener('click', (event: any) => {
     if (!elements.contextMenu.contains(event.target)) closeContextMenu(elements)
   })
-  document.addEventListener('keydown', (event) => {
+  document.addEventListener('keydown', (event: any) => {
     if (event.key === 'Escape') closeContextMenu(elements)
   })
 }
 
-function openContextMenu(elements, context, x, y) {
+function openContextMenu(elements: any, context: 'canvas' | 'layer', x: number, y: number) {
   for (const item of elements.contextMenu.querySelectorAll('[data-context]')) {
     item.classList.toggle('hidden', !item.dataset.context.split(' ').includes(context))
   }
@@ -247,12 +270,12 @@ function openContextMenu(elements, context, x, y) {
   elements.contextMenu.style.top = `${Math.max(8, top)}px`
 }
 
-function closeContextMenu(elements) {
+function closeContextMenu(elements: any) {
   elements.contextMenu.classList.add('hidden')
 }
 
-function runContextAction(action, actions) {
-  const map = {
+function runContextAction(action: string, actions: EditorActionRegistry) {
+  const map: Record<string, () => void> = {
     copy: () => actions.copySelected(),
     paste: () => actions.pasteObject(),
     duplicate: () => actions.duplicateSelected(),
@@ -271,7 +294,7 @@ function runContextAction(action, actions) {
   map[action]?.()
 }
 
-function selectAssetTab(elements, tab) {
+function selectAssetTab(elements: any, tab: 'background' | 'objects') {
   const isBackground = tab === 'background'
   elements.assetTabBackground.classList.toggle('active', isBackground)
   elements.assetTabObjects.classList.toggle('active', !isBackground)
@@ -281,7 +304,7 @@ function selectAssetTab(elements, tab) {
   elements.assetPanelObjects.classList.toggle('hidden', isBackground)
 }
 
-function openDialog(dialog) {
+function openDialog(dialog: any) {
   if (dialog.open) return
   if (dialog.showModal) {
     dialog.showModal()
