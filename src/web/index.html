@@ -34,7 +34,15 @@
                 <span class="board-name-label">名称</span>
                 <input id="board-name" maxlength="7" placeholder="名称" />
               </label>
-              <button id="open-local-board-dialog" class="text-tool" type="button">本地存档</button>
+              <button id="open-local-board-dialog" class="icon-tool" type="button" title="打开存档" aria-label="打开存档">
+                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20h16"/><path d="M5 20V6a2 2 0 0 1 2-2h7l5 5v11"/><path d="M14 4v5h5"/><path d="m9 14 3 3 4-5"/></svg>
+              </button>
+              <button id="save-local-board" class="icon-tool" type="button" title="保存存档" aria-label="保存存档">
+                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 3h12l2 2v16H5z"/><path d="M8 3v6h8V3"/><path d="M8 21v-7h8v7"/></svg>
+              </button>
+              <button id="manage-local-boards" class="icon-tool" type="button" title="管理存档" aria-label="管理存档">
+                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16"/><path d="M4 12h16"/><path d="M4 17h10"/><path d="m17 16 2 2 3-4"/></svg>
+              </button>
               <button id="open-import-dialog" class="icon-tool" type="button" title="导入分享码" aria-label="导入分享码">
                 <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 3v12"/><path d="m7 10 5 5 5-5"/><path d="M5 21h14"/></svg>
               </button>
@@ -256,14 +264,22 @@
           <h2>本地存档</h2>
           <button id="close-local-board-dialog" class="icon-button" type="submit" aria-label="关闭">x</button>
         </header>
+        <div id="local-board-list" class="local-board-list" aria-label="本地存档列表"></div>
+      </form>
+    </dialog>
+    <dialog id="local-board-name-dialog" class="editor-dialog compact-dialog">
+      <form method="dialog" class="dialog-panel">
+        <header class="dialog-header">
+          <h2 id="local-board-name-title">存档命名</h2>
+          <button id="close-local-board-name-dialog" class="icon-button" type="submit" value="cancel" aria-label="关闭">x</button>
+        </header>
         <label class="field">
-          <span>存档槽</span>
-          <select id="local-board-select"></select>
+          <span>存档名称</span>
+          <input id="local-board-name-input" maxlength="48" />
         </label>
         <footer class="dialog-actions">
-          <button id="save-local-board" type="button">保存当前画板</button>
-          <button id="load-local-board" type="button" disabled>读取</button>
-          <button id="delete-local-board" type="button" disabled>删除</button>
+          <button id="use-recommended-board-name" type="button">使用推荐名称</button>
+          <button id="confirm-local-board-name" type="submit" value="confirm">确定</button>
         </footer>
       </form>
     </dialog>

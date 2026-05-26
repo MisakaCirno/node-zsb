@@ -948,6 +948,60 @@ textarea {
   margin-top: 10px;
 }
 
+.local-board-list {
+  display: grid;
+  gap: 8px;
+  max-height: 420px;
+  overflow-y: auto;
+}
+
+.local-board-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 12px;
+  align-items: center;
+  padding: 10px;
+  border: 1px solid #303b43;
+  border-radius: 6px;
+  background: #12171b;
+}
+
+.local-board-meta {
+  min-width: 0;
+  display: grid;
+  gap: 4px;
+}
+
+.local-board-meta strong,
+.local-board-meta span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.local-board-meta span {
+  color: #a8b4bd;
+  font-size: 12px;
+}
+
+.local-board-actions {
+  display: flex;
+  gap: 6px;
+}
+
+.local-board-actions button {
+  height: 30px;
+  padding: 0 9px;
+}
+
+.local-board-empty {
+  margin: 0;
+}
+
+.compact-dialog {
+  width: min(420px, calc(100vw - 32px));
+}
+
 .editor-dialog {
   width: min(720px, calc(100vw - 32px));
   border: 1px solid #303b43;

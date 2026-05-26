@@ -13,7 +13,14 @@ export function bindEditorEvents({
   runAction,
   actions,
 }) {
-  elements.openLocalBoardDialog.addEventListener('click', () => openDialog(elements.localBoardDialog))
+  elements.openLocalBoardDialog.addEventListener('click', () => {
+    actions.renderLocalBoards()
+    openDialog(elements.localBoardDialog)
+  })
+  elements.manageLocalBoards.addEventListener('click', () => {
+    actions.renderLocalBoards()
+    openDialog(elements.localBoardDialog)
+  })
   elements.openImportDialog.addEventListener('click', () => openDialog(elements.importDialog))
   elements.openExportCodeDialog.addEventListener('click', () =>
     runAction(async () => {
@@ -49,10 +56,7 @@ export function bindEditorEvents({
     runAction(actions.copyExportImage, '已复制图片'))
   elements.downloadPreviewImage.addEventListener('click', actions.downloadPreviewImage)
   elements.boardName.addEventListener('change', actions.onBoardNameChange)
-  elements.localBoardSelect.addEventListener('change', actions.updateLocalBoardButtons)
   elements.saveLocalBoard.addEventListener('click', actions.saveLocalBoard)
-  elements.loadLocalBoard.addEventListener('click', actions.loadLocalBoard)
-  elements.deleteLocalBoard.addEventListener('click', actions.deleteLocalBoard)
   elements.undo.addEventListener('click', actions.undo)
   elements.redo.addEventListener('click', actions.redo)
   elements.clearBoard.addEventListener('click', actions.clearBoard)

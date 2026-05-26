@@ -43,12 +43,11 @@ export function createEditorFeedback({ state, getElements }) {
     }
     for (const control of [
       elements.boardName,
-      elements.localBoardSelect,
       elements.saveLocalBoard,
-      elements.loadLocalBoard,
-      elements.deleteLocalBoard,
+      elements.openLocalBoardDialog,
+      elements.manageLocalBoards,
       ...elements.background.querySelectorAll('button'),
-    ]) {
+    ].filter(Boolean)) {
       control.disabled = disabled
     }
   }

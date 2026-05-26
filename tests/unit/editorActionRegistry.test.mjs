@@ -31,6 +31,7 @@ test('createEditorActionRegistry exposes the event binding action surface', () =
       'onBoardNameChange',
       'pasteObject',
       'redo',
+      'renderLocalBoards',
       'renderPreview',
       'saveLocalBoard',
       'selectObject',
@@ -74,6 +75,7 @@ test('createEditorActionRegistry exposes the event binding action surface', () =
     localBoardsPanel: {
       deleteLocalBoard: handlers.deleteLocalBoard,
       loadLocalBoard: handlers.loadLocalBoard,
+      renderLocalBoards: handlers.renderLocalBoards,
       saveLocalBoard: handlers.saveLocalBoard,
       updateLocalBoardButtons: handlers.updateLocalBoardButtons,
     },

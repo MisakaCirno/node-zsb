@@ -34,6 +34,7 @@ export function createEditorActionRegistry({
     onBoardNameChange: boardMetaControls.onBoardNameChange,
     pasteObject: objectCommands.pasteObject,
     redo: historyControls.redo,
+    renderLocalBoards: localBoardsPanel.renderLocalBoards,
     renderPreview: boardCodeActions.renderPreview,
     saveLocalBoard: localBoardsPanel.saveLocalBoard,
     selectObject: editorContext.selectObject,
