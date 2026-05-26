@@ -190,9 +190,10 @@ export function createStageRenderer({
     const major = index % 4 === 0
     return new Konva.Line({
       points,
-      stroke: '#d9f3ff',
-      strokeWidth: major ? 1.1 : 0.7,
-      opacity: major ? 0.28 : 0.14,
+      stroke: '#e7fbff',
+      strokeScaleEnabled: false,
+      strokeWidth: major ? 1.25 : 1,
+      opacity: major ? 0.42 : 0.24,
       listening: false,
     })
   }
