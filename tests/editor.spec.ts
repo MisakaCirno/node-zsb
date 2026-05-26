@@ -78,6 +78,9 @@ test('editor renders readable Chinese labels', async ({ page }) => {
     'background-image',
     /tab1\.webp/,
   )
+  await expect(page.locator('.stage-toolbar-row')).toHaveCount(2)
+  await expect(page.locator('#align-left')).toHaveText('')
+  await expect(page.locator('#align-left svg')).toBeVisible()
   await expect(page.locator('.section-title')).toContainText([
     '本地存档',
     '导入导出',

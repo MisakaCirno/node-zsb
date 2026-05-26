@@ -41,36 +41,54 @@
 
       <section class="stage-wrap">
         <div class="stage-toolbar">
-          <input id="board-name" maxlength="7" placeholder="名称" />
-          <button id="undo-action" type="button" disabled>撤销</button>
-          <button id="redo-action" type="button" disabled>重做</button>
-          <button id="clear-board" type="button" disabled>清空</button>
-          <button id="delete-object" type="button" disabled>删除</button>
-          <button id="duplicate-object" type="button" disabled>复制</button>
-          <button id="move-up" type="button" disabled>上移</button>
-          <button id="move-down" type="button" disabled>下移</button>
-          <button id="center-object" type="button" disabled>居中</button>
-          <div class="toolbar-group align-actions" aria-label="对齐">
-            <button id="align-left" type="button" title="左对齐" aria-label="左对齐" disabled>左</button>
-            <button id="align-center-x" type="button" title="水平居中对齐" aria-label="水平居中对齐" disabled>中</button>
-            <button id="align-right" type="button" title="右对齐" aria-label="右对齐" disabled>右</button>
-            <button id="align-top" type="button" title="顶端对齐" aria-label="顶端对齐" disabled>上</button>
-            <button id="align-center-y" type="button" title="垂直居中对齐" aria-label="垂直居中对齐" disabled>中</button>
-            <button id="align-bottom" type="button" title="底端对齐" aria-label="底端对齐" disabled>下</button>
+          <div class="stage-toolbar-row stage-toolbar-main">
+            <input id="board-name" maxlength="7" placeholder="名称" />
+            <button id="undo-action" type="button" disabled>撤销</button>
+            <button id="redo-action" type="button" disabled>重做</button>
+            <button id="clear-board" type="button" disabled>清空</button>
+            <button id="delete-object" type="button" disabled>删除</button>
+            <button id="duplicate-object" type="button" disabled>复制</button>
+            <button id="move-up" type="button" disabled>上移</button>
+            <button id="move-down" type="button" disabled>下移</button>
+            <button id="center-object" type="button" disabled>居中</button>
           </div>
-          <button id="zoom-out" type="button">-</button>
-          <select id="zoom-select" aria-label="缩放">
-            <option value="fit">适配</option>
-            <option value="0.5">50%</option>
-            <option value="0.75">75%</option>
-            <option value="1">100%</option>
-            <option value="1.25">125%</option>
-            <option value="1.5">150%</option>
-          </select>
-          <button id="zoom-in" type="button">+</button>
-          <button id="fit-stage" type="button">适配</button>
-          <label class="toolbar-toggle"><input id="snap-toggle" type="checkbox" /> 吸附</label>
-          <label class="toolbar-toggle"><input id="grid-toggle" type="checkbox" /> 网格</label>
+          <div class="stage-toolbar-row stage-toolbar-canvas">
+            <div class="toolbar-group align-actions" aria-label="对齐">
+              <button id="align-left" class="icon-tool" type="button" title="左对齐" aria-label="左对齐" disabled>
+                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 4v16"/><path d="M8 7h10"/><path d="M8 12h7"/><path d="M8 17h12"/></svg>
+              </button>
+              <button id="align-center-x" class="icon-tool" type="button" title="水平居中对齐" aria-label="水平居中对齐" disabled>
+                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 4v16"/><path d="M7 7h10"/><path d="M9 12h6"/><path d="M5 17h14"/></svg>
+              </button>
+              <button id="align-right" class="icon-tool" type="button" title="右对齐" aria-label="右对齐" disabled>
+                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M20 4v16"/><path d="M6 7h10"/><path d="M9 12h7"/><path d="M4 17h12"/></svg>
+              </button>
+              <button id="align-top" class="icon-tool" type="button" title="顶端对齐" aria-label="顶端对齐" disabled>
+                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 4h16"/><path d="M7 8v10"/><path d="M12 8v7"/><path d="M17 8v12"/></svg>
+              </button>
+              <button id="align-center-y" class="icon-tool" type="button" title="垂直居中对齐" aria-label="垂直居中对齐" disabled>
+                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 12h16"/><path d="M7 7v10"/><path d="M12 9v6"/><path d="M17 5v14"/></svg>
+              </button>
+              <button id="align-bottom" class="icon-tool" type="button" title="底端对齐" aria-label="底端对齐" disabled>
+                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 20h16"/><path d="M7 6v10"/><path d="M12 9v7"/><path d="M17 4v12"/></svg>
+              </button>
+            </div>
+            <div class="toolbar-group zoom-actions" aria-label="缩放">
+              <button id="zoom-out" type="button">-</button>
+              <select id="zoom-select" aria-label="缩放">
+                <option value="fit">适配</option>
+                <option value="0.5">50%</option>
+                <option value="0.75">75%</option>
+                <option value="1">100%</option>
+                <option value="1.25">125%</option>
+                <option value="1.5">150%</option>
+              </select>
+              <button id="zoom-in" type="button">+</button>
+              <button id="fit-stage" type="button">适配</button>
+            </div>
+            <label class="toolbar-toggle"><input id="snap-toggle" type="checkbox" /> 吸附</label>
+            <label class="toolbar-toggle"><input id="grid-toggle" type="checkbox" /> 网格</label>
+          </div>
         </div>
         <div id="stage-host"></div>
       </section>
