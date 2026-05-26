@@ -28,6 +28,7 @@ export function createBoardMetaControls({
   function onBoardNameChange() {
     recordHistory()
     state.board.name = elements.boardName.value
+    renderAll()
   }
 
   return {

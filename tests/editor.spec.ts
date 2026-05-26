@@ -308,10 +308,13 @@ test('editor persists the board across reloads', async ({ page }) => {
   await expect(page.locator('#layers')).toContainText('tank')
 
   const before = await page.locator('#layers .layer-row').count()
+  await page.locator('#board-name').fill('自动保存')
+  await page.locator('#board-name').dispatchEvent('change')
   await page.getByTitle('tank').first().click()
   await expect(page.locator('#layers .layer-row')).toHaveCount(before + 1)
 
   await page.reload()
+  await expect(page.locator('#board-name')).toHaveValue('自动保存')
   await expect(page.locator('#layers .layer-row')).toHaveCount(before + 1)
 })
 
