@@ -193,6 +193,7 @@ test('editor renders readable Chinese labels', async ({ page }) => {
   await expect(page.locator('.board-code-actions')).toHaveCount(1)
   await expect(page.locator('.board-name-label')).toHaveText('文件名')
   await expect(page.locator('.share-name-field span')).toHaveText('分享名')
+  await expect(page.locator('.inspector section:first-of-type > :first-child')).toHaveClass(/share-name-field/)
   await openExportCodeDialog(page)
   await expect(page.locator('#copy-export-code')).toBeVisible()
   await expect(page.getByPlaceholder('分享名')).toBeVisible()
@@ -499,11 +500,14 @@ test('editor reorders layers by dragging rows', async ({ page }) => {
     const source = rows.find((row) => row.textContent?.includes('text'))
     const target = rows[targetIndex]
     if (!source || !target) throw new Error('Layer rows are not available')
-    const dataTransfer = new DataTransfer()
-    source.dispatchEvent(new DragEvent('dragstart', { bubbles: true, dataTransfer }))
-    target.dispatchEvent(new DragEvent('dragover', { bubbles: true, dataTransfer }))
-    target.dispatchEvent(new DragEvent('drop', { bubbles: true, dataTransfer }))
-    source.dispatchEvent(new DragEvent('dragend', { bubbles: true, dataTransfer }))
+    const browserWindow = globalThis as any
+    const DataTransferCtor = browserWindow.DataTransfer
+    const DragEventCtor = browserWindow.DragEvent
+    const dataTransfer = new DataTransferCtor()
+    source.dispatchEvent(new DragEventCtor('dragstart', { bubbles: true, dataTransfer }))
+    target.dispatchEvent(new DragEventCtor('dragover', { bubbles: true, dataTransfer }))
+    target.dispatchEvent(new DragEventCtor('drop', { bubbles: true, dataTransfer }))
+    source.dispatchEvent(new DragEventCtor('dragend', { bubbles: true, dataTransfer }))
   }, layerCount - 2)
   await expect(page.locator('#layers .layer-row').nth(layerCount - 2)).toContainText('text')
 
@@ -698,6 +702,13 @@ test('editor saves, loads, and deletes local browser board slots', async ({
   await page.locator('#local-board-name-input').fill('另存草稿')
   await page.locator('#confirm-local-board-name').click()
   await expect(page.locator('#status')).toContainText('已保存本地文件')
+  await page.locator('#save-as-local-board').click()
+  await expect(page.locator('#local-board-name-dialog')).toBeVisible()
+  await page.locator('#local-board-name-input').fill('本地草稿')
+  await page.locator('#confirm-local-board-name').click()
+  await expect(page.locator('#local-board-name-dialog')).toBeVisible()
+  await expect(page.locator('#local-board-name-error')).toContainText('已有同名文件')
+  await page.locator('#close-local-board-name-dialog').click()
   await openLocalBoardDialog(page)
   await expect(page.locator('#local-board-list .local-board-row')).toHaveCount(2)
   await page.locator('#local-board-list .local-board-row').filter({ hasText: '另存草稿' }).getByRole('button', { name: '重命名' }).click()
@@ -724,6 +735,8 @@ test('editor saves, loads, and deletes local browser board slots', async ({
   await expect(page.locator('#file-name')).toHaveValue('本地草稿')
   await expect(page.locator('#board-name')).toHaveValue('分享草稿')
   await expect(page.locator('#status')).toContainText('已打开文件 本地草稿')
+  await expect(page.locator('#local-board-dialog')).toBeHidden()
+  await openLocalBoardDialog(page)
 
   page.once('dialog', async (dialog) => {
     expect(dialog.message()).toContain('删除选中的 2 个本地文件')

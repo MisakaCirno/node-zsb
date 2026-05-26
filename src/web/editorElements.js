@@ -31,6 +31,7 @@ export function getEditorElements() {
     assetPanelObjects: document.querySelector('#asset-panel-objects'),
     localBoardList: document.querySelector('#local-board-list'),
     localBoardNameInput: document.querySelector('#local-board-name-input'),
+    localBoardNameError: document.querySelector('#local-board-name-error'),
     confirmLocalBoardName: document.querySelector('#confirm-local-board-name'),
     deleteSelectedLocalBoards: document.querySelector('#delete-selected-local-boards'),
     saveLocalBoard: document.querySelector('#save-local-board'),

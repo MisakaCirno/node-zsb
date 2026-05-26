@@ -140,12 +140,12 @@
 
       <aside class="panel inspector">
         <section>
-          <div class="section-title">属性</div>
-          <div id="empty-state" class="empty-state">选择一个对象</div>
           <label class="field share-name-field" for="board-name">
             <span>分享名</span>
             <input id="board-name" maxlength="7" placeholder="分享名" />
           </label>
+          <div class="section-title">属性</div>
+          <div id="empty-state" class="empty-state">选择一个对象</div>
           <div id="inspector-form" class="inspector-form hidden">
             <input id="object-type" class="type-value-input" type="hidden" disabled aria-hidden="true" />
             <div class="inspector-toggles">
@@ -290,6 +290,7 @@
         <label class="field">
           <span>文件名</span>
           <input id="local-board-name-input" maxlength="48" />
+          <span id="local-board-name-error" class="field-error" aria-live="polite"></span>
         </label>
         <footer class="dialog-actions">
           <button id="confirm-local-board-name" type="submit" value="confirm">确定</button>

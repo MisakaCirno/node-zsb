@@ -45,8 +45,19 @@ export function createLocalBoardsPanel({
     const fileName = rawName || await requestFileName({
       currentName: state.currentFileName || state.board.name || '未命名文件',
       title: '保存文件',
+      validate: uniqueFileNameValidator(state.currentFileName),
     })
     if (!fileName) return false
+    if (fileExists(fileName) && fileName !== state.currentFileName) {
+      const nextName = await requestFileName({
+        currentName: fileName,
+        title: '保存文件',
+        initialError: '已有同名文件，请换一个名称',
+        validate: uniqueFileNameValidator(state.currentFileName),
+      })
+      if (!nextName) return false
+      return saveFile(nextName, { allowOverwrite: false })
+    }
     return saveFile(fileName, { allowOverwrite: true })
   }
 
@@ -54,9 +65,10 @@ export function createLocalBoardsPanel({
     const fileName = await requestFileName({
       currentName: getCurrentFileName() || state.board.name || '未命名文件',
       title: '另存为',
+      validate: uniqueFileNameValidator(''),
     })
     if (!fileName) return false
-    return saveFile(fileName, { allowOverwrite: confirmOverwrite(fileName) })
+    return saveFile(fileName, { allowOverwrite: false })
   }
 
   async function loadLocalBoard(fileName) {
@@ -76,6 +88,7 @@ export function createLocalBoardsPanel({
     renderBackgroundOptions()
     renderLocalBoards()
     await renderAll()
+    closeLocalBoardDialog()
     showStatus(`已打开文件 ${file.name}`)
     return true
   }
@@ -87,6 +100,7 @@ export function createLocalBoardsPanel({
     const name = await requestFileName({
       currentName: file.name,
       title: '重命名文件',
+      validate: uniqueFileNameValidator(file.name),
     })
     if (!name || name === file.name) return false
     if (files.some((entry) => entry.name === name)) {
@@ -134,6 +148,21 @@ export function createLocalBoardsPanel({
     return true
   }
 
+  elements.localBoardNameDialog.querySelector('form').addEventListener('submit', (event) => {
+    if (!pendingNameRequest) return
+    if (event.submitter?.value === 'cancel') return
+    const name = normalizeFileName(elements.localBoardNameInput.value)
+    const error = validatePendingFileName(name)
+    if (!error) return
+    event.preventDefault()
+    showFileNameError(error)
+  })
+
+  elements.localBoardNameInput.addEventListener('input', () => {
+    if (!pendingNameRequest) return
+    showFileNameError(validatePendingFileName(normalizeFileName(elements.localBoardNameInput.value)))
+  })
+
   elements.localBoardNameDialog.addEventListener('close', () => {
     if (!pendingNameRequest) return
     const name = elements.localBoardNameDialog.returnValue === 'confirm'
@@ -141,6 +170,7 @@ export function createLocalBoardsPanel({
       : ''
     pendingNameRequest.resolve(name)
     pendingNameRequest = null
+    showFileNameError('')
   })
 
   elements.deleteSelectedLocalBoards.addEventListener('click', deleteSelectedLocalBoards)
@@ -240,20 +270,16 @@ export function createLocalBoardsPanel({
     return button
   }
 
-  function requestFileName({ currentName, title }) {
+  function requestFileName({ currentName, title, initialError = '', validate = null }) {
     return new Promise((resolve) => {
-      pendingNameRequest = { resolve }
+      pendingNameRequest = { resolve, validate }
       elements.localBoardNameDialog.querySelector('h2').textContent = title
       elements.localBoardNameInput.value = currentName
+      showFileNameError(initialError)
       elements.localBoardNameDialog.showModal()
       elements.localBoardNameInput.focus()
       elements.localBoardNameInput.select()
     })
-  }
-
-  function confirmOverwrite(fileName) {
-    return !loadLocalFiles().some((file) => file.name === fileName)
-      || confirmAction(`本地文件“${fileName}”已存在，是否覆盖？`)
   }
 
   function getCurrentFileName() {
@@ -281,6 +307,33 @@ export function createLocalBoardsPanel({
   function getSelectedFileNames() {
     return [...elements.localBoardList.querySelectorAll('input[type="checkbox"]:checked')]
       .map((input) => input.value)
+  }
+
+  function fileExists(fileName) {
+    return loadLocalFiles().some((file) => file.name === fileName)
+  }
+
+  function uniqueFileNameValidator(allowedFileName) {
+    return (fileName) => {
+      if (!fileName) return '请输入文件名'
+      if (fileName !== allowedFileName && fileExists(fileName)) return '已有同名文件，请换一个名称'
+      return ''
+    }
+  }
+
+  function validatePendingFileName(fileName) {
+    return pendingNameRequest?.validate?.(fileName) ?? ''
+  }
+
+  function showFileNameError(message) {
+    elements.localBoardNameError.textContent = message
+    elements.localBoardNameInput.setAttribute('aria-invalid', message ? 'true' : 'false')
+  }
+
+  function closeLocalBoardDialog() {
+    if (elements.localBoardDialog.open) {
+      elements.localBoardDialog.close()
+    }
   }
 
   async function createPreview(board) {

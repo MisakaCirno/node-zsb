@@ -277,6 +277,12 @@ textarea {
   margin: 0 0 12px;
 }
 
+.field .field-error {
+  min-height: 16px;
+  color: #f18b8b;
+  font-size: 12px;
+}
+
 .stage-toolbar-canvas {
   justify-content: flex-start;
 }
