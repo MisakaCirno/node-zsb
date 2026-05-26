@@ -2,6 +2,62 @@ import { getObjectCapabilities } from './board.js'
 import { getSelectedIndexes } from './editorState.js'
 import { numberValue } from './geometry.js'
 import { renderInspector as renderInspectorPanel } from './inspectorPanel.js'
+import type {
+  BoardObject,
+  CheckedElement,
+  DisabledElement,
+  EditorContext,
+  EditorState,
+  InspectorControls,
+  ValueElement,
+} from './types.js'
+
+interface InspectorElements {
+  x: ValueElement
+  y: ValueElement
+  size: ValueElement
+  angle: ValueElement
+  color: ValueElement
+  transparency: ValueElement
+  text: ValueElement
+  endX: ValueElement
+  endY: ValueElement
+  arc: ValueElement
+  donut: ValueElement
+  hidden: CheckedElement
+  locked: CheckedElement
+  clearBoard: DisabledElement
+  menuClearBoard: DisabledElement
+  copyObject: DisabledElement
+  menuCopyObject: DisabledElement
+  deleteObject: DisabledElement
+  menuDeleteObject: DisabledElement
+  duplicateObject: DisabledElement
+  menuDuplicateObject: DisabledElement
+  pasteObject: DisabledElement
+  menuPasteObject: DisabledElement
+  moveTop: DisabledElement
+  moveUp: DisabledElement
+  moveDown: DisabledElement
+  moveBottom: DisabledElement
+  groupLayers: DisabledElement
+  ungroupLayers: DisabledElement
+  alignLeft: DisabledElement
+  alignCenterX: DisabledElement
+  alignRight: DisabledElement
+  alignTop: DisabledElement
+  alignCenterY: DisabledElement
+  alignBottom: DisabledElement
+}
+
+interface InspectorControlsDeps {
+  state: EditorState
+  elements: InspectorElements
+  getSelected: () => BoardObject | undefined
+  normalizePoint: EditorContext['normalizePoint']
+  recordHistory: () => void
+  renderAll: () => void
+}
 
 export function createInspectorControls({
   state,
@@ -10,7 +66,7 @@ export function createInspectorControls({
   normalizePoint,
   recordHistory,
   renderAll,
-}) {
+}: InspectorControlsDeps): InspectorControls {
   function renderInspector() {
     renderInspectorPanel({
       object: getSelected(),

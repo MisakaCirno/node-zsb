@@ -22,6 +22,30 @@ import {
   getObjectBounds,
   getSelectionBounds,
 } from './objectAlignment.js'
+import type {
+  Alignment,
+  BoardObject,
+  Bounds,
+  EditorContext,
+  EditorState,
+  LayerFlag,
+  LayerNodeRef,
+  ObjectCommands,
+} from './types.js'
+
+interface ObjectCommandsDeps {
+  state: EditorState
+  recordHistory: () => void
+  renderAll: () => void
+  selectObject: EditorContext['selectObject']
+  getSelected: () => BoardObject | undefined
+  getSelectedList: () => BoardObject[]
+  normalizePoint: EditorContext['normalizePoint']
+  showStatus: (message: string) => void
+  confirmAction: (message: string) => boolean
+}
+
+type ArrowKey = 'ArrowUp' | 'ArrowDown' | 'ArrowLeft' | 'ArrowRight'
 
 const PASTE_OFFSET = 18
 const BOARD_CENTER = {
@@ -45,9 +69,9 @@ export function createObjectCommands({
   normalizePoint,
   showStatus,
   confirmAction,
-}) {
+}: ObjectCommandsDeps): ObjectCommands {
   return {
-    addObject(type) {
+    addObject(type: string) {
       recordHistory()
       const object = createDefaultObject(type)
       state.board.objects.push(object)
@@ -55,7 +79,7 @@ export function createObjectCommands({
       selectObject(state.board.objects.length - 1)
     },
 
-    addObjectAt(type, point) {
+    addObjectAt(type: string, point: { x: number, y: number }) {
       recordHistory()
       const object = createDefaultObject(type, normalizePoint(point.x, point.y))
       state.board.objects.push(object)
@@ -63,7 +87,7 @@ export function createObjectCommands({
       selectObject(state.board.objects.length - 1)
     },
 
-    toggleLayerFlag(index, key) {
+    toggleLayerFlag(index: number, key: LayerFlag) {
       const object = state.board.objects[index]
       if (!object) return
       recordHistory()
@@ -73,13 +97,13 @@ export function createObjectCommands({
       renderAll()
     },
 
-    toggleLayerGroupFlag(groupId, key) {
+    toggleLayerGroupFlag(groupId: string, key: LayerFlag) {
       recordHistory()
       const result = toggleGroupFlag(state.layerTree, groupId, key)
       if (!result) return
       const affectedIds = new Set(result.objectIds)
       for (const object of state.board.objects) {
-        if (affectedIds.has(object.editorId)) {
+        if (object.editorId && affectedIds.has(object.editorId)) {
           object[key] = result.active || undefined
         }
       }
@@ -87,7 +111,7 @@ export function createObjectCommands({
       renderAll()
     },
 
-    toggleSelectedLayerFlag(key) {
+    toggleSelectedLayerFlag(key: LayerFlag) {
       const index = state.selectedIndex
       const object = state.board.objects[index]
       if (!object) return
@@ -103,7 +127,7 @@ export function createObjectCommands({
       const object = getSelected()
       const selectedIds = selectedIndexes
         .map((index) => state.board.objects[index]?.editorId)
-        .filter(Boolean)
+        .filter((id): id is string => Boolean(id))
       for (const index of [...selectedIndexes].sort((a, b) => b - a)) {
         state.board.objects.splice(index, 1)
       }
@@ -139,14 +163,14 @@ export function createObjectCommands({
       selectObject(state.board.objects.length - 1)
     },
 
-    moveSelected(delta) {
+    moveSelected(delta: number) {
       const index = state.selectedIndex
       const target = index + delta
       if (index < 0 || target < 0 || target >= state.board.objects.length) return
       moveSelectedToIndex(index, target, state, recordHistory, selectObject)
     },
 
-    moveSelectedTo(target) {
+    moveSelectedTo(target: number) {
       const index = state.selectedIndex
       if (index < 0 || target < 0 || target >= state.board.objects.length) return
       moveSelectedToIndex(index, target, state, recordHistory, selectObject)
@@ -156,7 +180,7 @@ export function createObjectCommands({
       return state.board.objects.length - 1
     },
 
-    reorderLayer(fromIndex, toIndex) {
+    reorderLayer(fromIndex: number, toIndex: number) {
       if (
         fromIndex === toIndex
         || fromIndex < 0
@@ -168,6 +192,7 @@ export function createObjectCommands({
       const object = state.board.objects[fromIndex]
       const target = state.board.objects[toIndex]
       if (!object || !target) return
+      if (!object.editorId || !target.editorId) return
       const moved = moveLayerNodeBefore(state.layerTree, { type: 'object', id: object.editorId }, {
         type: 'object',
         id: target.editorId,
@@ -178,7 +203,7 @@ export function createObjectCommands({
       showStatus('已调整图层顺序')
     },
 
-    moveLayerNodeBefore(dragged, target) {
+    moveLayerNodeBefore(dragged: LayerNodeRef, target: LayerNodeRef) {
       recordHistory()
       if (!moveLayerNodeBefore(state.layerTree, dragged, target)) return
       syncBoardOrderFromLayerTree(state)
@@ -186,7 +211,7 @@ export function createObjectCommands({
       showStatus('已调整图层顺序')
     },
 
-    moveLayerNodeAfter(dragged, target) {
+    moveLayerNodeAfter(dragged: LayerNodeRef, target: LayerNodeRef) {
       recordHistory()
       if (!moveLayerNodeAfter(state.layerTree, dragged, target)) return
       syncBoardOrderFromLayerTree(state)
@@ -194,7 +219,7 @@ export function createObjectCommands({
       showStatus('已调整图层顺序')
     },
 
-    moveLayerNodeIntoGroup(dragged, groupId) {
+    moveLayerNodeIntoGroup(dragged: LayerNodeRef, groupId: string) {
       recordHistory()
       if (!moveLayerNodeIntoGroup(state.layerTree, dragged, groupId)) return
       syncBoardOrderFromLayerTree(state)
@@ -202,7 +227,7 @@ export function createObjectCommands({
       showStatus('已移动到组内')
     },
 
-    moveLayerNodeToRoot(dragged) {
+    moveLayerNodeToRoot(dragged: LayerNodeRef) {
       recordHistory()
       if (!moveLayerNodeToRoot(state.layerTree, dragged)) return
       syncBoardOrderFromLayerTree(state)
@@ -216,7 +241,7 @@ export function createObjectCommands({
       recordHistory()
       const selectedIds = selectedIndexes
         .map((index) => state.board.objects[index]?.editorId)
-        .filter(Boolean)
+        .filter((id): id is string => Boolean(id))
       const group = groupObjectIds(
         state.layerTree,
         selectedIds,
@@ -239,12 +264,12 @@ export function createObjectCommands({
       showStatus('已解组')
     },
 
-    toggleLayerGroup(groupId) {
+    toggleLayerGroup(groupId: string) {
       if (!toggleGroupCollapsed(state.layerTree, groupId)) return
       renderAll()
     },
 
-    renameLayerGroup(groupId, name) {
+    renameLayerGroup(groupId: string, name: string) {
       recordHistory()
       if (!renameGroup(state.layerTree, groupId, name)) return
       state.selectedGroupId = groupId
@@ -252,7 +277,7 @@ export function createObjectCommands({
       showStatus('已重命名组')
     },
 
-    alignSelected(alignment) {
+    alignSelected(alignment: Alignment) {
       const selectedObjects = getSelectedList()
       if (selectedObjects.length === 0) return
       const movableObjects = selectedObjects.filter((object) => object && !object.locked)
@@ -288,15 +313,16 @@ export function createObjectCommands({
       showStatus(`已粘贴 ${object.type}`)
     },
 
-    nudgeSelected(key, step) {
+    nudgeSelected(key: string, step: number) {
       const object = getSelected()
       if (!object || object.locked) return
-      const delta = {
+      const deltas: Record<ArrowKey, [number, number]> = {
         ArrowUp: [0, -step],
         ArrowDown: [0, step],
         ArrowLeft: [-step, 0],
         ArrowRight: [step, 0],
-      }[key]
+      }
+      const delta = deltas[key as ArrowKey]
       if (!delta) return
       recordHistory()
       const [dx, dy] = delta
@@ -307,7 +333,7 @@ export function createObjectCommands({
   }
 }
 
-function getAlignmentDelta(alignment, objectBounds, selectionBounds) {
+function getAlignmentDelta(alignment: Alignment, objectBounds: Bounds, selectionBounds: Bounds) {
   switch (alignment) {
     case 'left':
       return { dx: selectionBounds.left - objectBounds.left, dy: 0 }
@@ -326,7 +352,7 @@ function getAlignmentDelta(alignment, objectBounds, selectionBounds) {
   }
 }
 
-function moveObjectBy(object, dx, dy) {
+function moveObjectBy(object: BoardObject, dx: number, dy: number): void {
   object.x = clamp(Math.round(object.x + dx), 0, 512)
   object.y = clamp(Math.round(object.y + dy), 0, 384)
   if (object.type === 'line' && object.endX !== undefined && object.endY !== undefined) {
@@ -335,14 +361,21 @@ function moveObjectBy(object, dx, dy) {
   }
 }
 
-function moveSelectedToIndex(index, target, state, recordHistory, selectObject) {
+function moveSelectedToIndex(
+  index: number,
+  target: number,
+  state: EditorState,
+  recordHistory: () => void,
+  selectObject: EditorContext['selectObject'],
+): void {
   if (index === target) return
   const object = state.board.objects[index]
   const targetObject = state.board.objects[target]
   if (!object || !targetObject) return
   recordHistory()
-  const dragged = { type: 'object', id: object.editorId }
-  const targetNode = { type: 'object', id: targetObject.editorId }
+  if (!object.editorId || !targetObject.editorId) return
+  const dragged = { type: 'object' as const, id: object.editorId }
+  const targetNode = { type: 'object' as const, id: targetObject.editorId }
   const moved = index < target
     ? moveLayerNodeAfter(state.layerTree, dragged, targetNode)
     : moveLayerNodeBefore(state.layerTree, dragged, targetNode)
@@ -351,7 +384,7 @@ function moveSelectedToIndex(index, target, state, recordHistory, selectObject) 
   selectObject(state.board.objects.findIndex((entry) => entry.editorId === object.editorId))
 }
 
-function createDefaultObject(type, point = BOARD_CENTER) {
+function createDefaultObject(type: string, point = BOARD_CENTER): BoardObject {
   const base = {
     editorId: createEditorId('obj'),
     type,
@@ -376,7 +409,7 @@ function createDefaultObject(type, point = BOARD_CENTER) {
   return base
 }
 
-function createPastedObject(object) {
+function createPastedObject(object: BoardObject): BoardObject {
   const copy = structuredClone(object)
   copy.editorId = createEditorId('obj')
   copy.x = clamp((copy.x ?? BOARD_CENTER.x) + PASTE_OFFSET, 0, 512)

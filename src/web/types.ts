@@ -195,6 +195,57 @@ export interface ViewportControls {
   toggleSnapToGrid(): void
 }
 
+export type LayerFlag = 'hidden' | 'locked'
+
+export type Alignment =
+  | 'left'
+  | 'center-x'
+  | 'right'
+  | 'top'
+  | 'center-y'
+  | 'bottom'
+
+export interface Bounds {
+  left: number
+  right: number
+  top: number
+  bottom: number
+}
+
+export interface ObjectCommands {
+  addObject(type: string): void
+  addObjectAt(type: string, point: { x: number, y: number }): void
+  alignSelected(alignment: Alignment): void
+  clearBoard(): void
+  copySelected(): void
+  deleteSelected(): void
+  duplicateSelected(): void
+  getLastLayerIndex(): number
+  groupSelected(): void
+  moveLayerNodeAfter(dragged: LayerNodeRef, target: LayerNodeRef): void
+  moveLayerNodeBefore(dragged: LayerNodeRef, target: LayerNodeRef): void
+  moveLayerNodeIntoGroup(dragged: LayerNodeRef, groupId: string): void
+  moveLayerNodeToRoot(dragged: LayerNodeRef): void
+  moveSelected(delta: number): void
+  moveSelectedTo(target: number): void
+  nudgeSelected(key: string, step: number): void
+  pasteObject(): void
+  renameLayerGroup(groupId: string, name: string): void
+  reorderLayer(fromIndex: number, toIndex: number): void
+  toggleLayerFlag(index: number, key: LayerFlag): void
+  toggleLayerFlagForSelection?: (key: LayerFlag) => void
+  toggleLayerGroup(groupId: string): void
+  toggleLayerGroupFlag(groupId: string, key: LayerFlag): void
+  toggleSelectedLayerFlag(key: LayerFlag): void
+  ungroupSelectedGroup(): void
+}
+
+export interface InspectorControls {
+  renderInspector(): void
+  updateSelectedFromInspector(): void
+  updateSelectionActions(): void
+}
+
 export interface ProjectBoardMeta {
   name: string
   boardBackground: string
