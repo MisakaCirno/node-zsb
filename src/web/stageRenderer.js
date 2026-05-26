@@ -1,5 +1,5 @@
 import {
-  GRID_STEP,
+  LOGICAL_SCALE,
   SCENE_HEIGHT,
   SCENE_WIDTH,
 } from './constants.js'
@@ -146,10 +146,11 @@ export function createStageRenderer({
       return
     }
 
-    for (let x = 0, index = 0; x <= SCENE_WIDTH; x += GRID_STEP, index++) {
+    const gridStep = state.gridSize * LOGICAL_SCALE
+    for (let x = 0, index = 0; x <= SCENE_WIDTH; x += gridStep, index++) {
       gridLayer.add(createGridLine([x, 0, x, SCENE_HEIGHT], index))
     }
-    for (let y = 0, index = 0; y <= SCENE_HEIGHT; y += GRID_STEP, index++) {
+    for (let y = 0, index = 0; y <= SCENE_HEIGHT; y += gridStep, index++) {
       gridLayer.add(createGridLine([0, y, SCENE_WIDTH, y], index))
     }
     gridLayer.draw()

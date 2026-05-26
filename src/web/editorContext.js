@@ -1,4 +1,3 @@
-import { SNAP_STEP } from './constants.js'
 import {
   normalizeCoordinate as normalizeCoordinateValue,
   normalizePoint as normalizePointValue,
@@ -102,7 +101,7 @@ export function createEditorContext({
   }
 
   function getSnapStep() {
-    return state.snapToGrid ? SNAP_STEP : 0
+    return state.snapToGrid ? state.gridSize : 0
   }
 
   return {

@@ -13,6 +13,7 @@ test('createEditorContext selects, deselects, and reads the current object', () 
     },
     selectedIndex: -1,
     snapToGrid: false,
+    gridSize: 16,
   }
   const statuses = []
   let renderCount = 0
@@ -41,6 +42,7 @@ test('createEditorContext normalizes coordinates with the snap toggle', () => {
     board: { objects: [] },
     selectedIndex: -1,
     snapToGrid: false,
+    gridSize: 16,
   }
   const context = createEditorContext({
     state,
@@ -54,6 +56,10 @@ test('createEditorContext normalizes coordinates with the snap toggle', () => {
   state.snapToGrid = true
   assert.deepEqual(context.normalizePoint(263, 199), { x: 256, y: 192 })
   assert.equal(context.normalizeCoordinate(263, 0, 512), 256)
+
+  state.gridSize = 8
+  assert.deepEqual(context.normalizePoint(263, 199), { x: 264, y: 200 })
+  assert.equal(context.normalizeCoordinate(263, 0, 512), 264)
 })
 
 test('createEditorContext range-selects objects from the primary selection', () => {
@@ -69,6 +75,7 @@ test('createEditorContext range-selects objects from the primary selection', () 
     selectedIndex: -1,
     selectedIndexes: [],
     snapToGrid: false,
+    gridSize: 16,
   }
   const context = createEditorContext({
     state,

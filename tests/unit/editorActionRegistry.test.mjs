@@ -49,6 +49,7 @@ test('createEditorActionRegistry exposes the event binding action surface', () =
       'saveLocalBoard',
       'saveLocalBoardAs',
       'selectObject',
+      'setGridDensity',
       'setStageZoom',
       'stepZoom',
       'toggleGrid',
@@ -125,6 +126,7 @@ test('createEditorActionRegistry exposes the event binding action surface', () =
     viewportControls: {
       applyFitZoom: handlers.applyFitZoom,
       applyFitZoomOnResize: handlers.applyFitZoomOnResize,
+      setGridDensity: handlers.setGridDensity,
       setStageZoom: handlers.setStageZoom,
       stepZoom: handlers.stepZoom,
       toggleGrid: handlers.toggleGrid,

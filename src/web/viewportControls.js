@@ -1,4 +1,7 @@
 import {
+  GRID_SIZE_STEP,
+  MAX_GRID_SIZE,
+  MIN_GRID_SIZE,
   SCENE_HEIGHT,
   SCENE_WIDTH,
   ZOOM_LEVELS,
@@ -56,6 +59,21 @@ export function createViewportControls({
     elements.zoomIn.disabled = state.zoom >= ZOOM_LEVELS.at(-1)
   }
 
+  function setGridDensity(gridSize, options = {}) {
+    const snapped = Math.round((Number(gridSize) || MIN_GRID_SIZE) / GRID_SIZE_STEP) * GRID_SIZE_STEP
+    state.gridSize = clamp(snapped, MIN_GRID_SIZE, MAX_GRID_SIZE)
+    updateGridDensityControls()
+    stageRenderer.renderGrid()
+    if (!options.silent) {
+      showStatus(`已设置网格间距 ${state.gridSize}px`)
+    }
+  }
+
+  function updateGridDensityControls() {
+    elements.gridDensity.value = String(state.gridSize)
+    elements.gridDensityValue.textContent = `${state.gridSize}px`
+  }
+
   function toggleSnapToGrid() {
     state.snapToGrid = elements.snap.checked
     showStatus(state.snapToGrid ? '已开启网格吸附' : '已关闭网格吸附')
@@ -76,6 +94,7 @@ export function createViewportControls({
   return {
     applyFitZoom,
     applyFitZoomOnResize,
+    setGridDensity,
     setStageZoom,
     stepZoom,
     toggleGrid,

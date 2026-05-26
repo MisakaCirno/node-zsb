@@ -529,12 +529,14 @@ textarea {
   stroke-width: 2;
 }
 
+.grid-density-actions,
 .zoom-actions {
   gap: 8px;
   border-left: 1px solid #303b43;
   border-right: 0;
 }
 
+.status-range,
 .zoom-range {
   width: 146px;
   min-height: 0;
@@ -544,6 +546,22 @@ textarea {
   border-radius: 999px;
   background: #27313a;
   accent-color: #66c2a5;
+}
+
+.grid-density-actions .status-range {
+  width: 104px;
+}
+
+.status-label {
+  color: #a8b4bd;
+  font-size: 12px;
+}
+
+#grid-density-value {
+  min-width: 34px;
+  color: #a8b4bd;
+  font-size: 12px;
+  text-align: right;
 }
 
 #zoom-value {

@@ -53,6 +53,7 @@ export function createEditorActionRegistry({
     saveLocalBoard: localBoardsPanel.saveLocalBoard,
     saveLocalBoardAs: localBoardsPanel.saveLocalBoardAs,
     selectObject: editorContext.selectObject,
+    setGridDensity: viewportControls.setGridDensity,
     setStageZoom: viewportControls.setStageZoom,
     stepZoom: viewportControls.stepZoom,
     toggleGrid: viewportControls.toggleGrid,

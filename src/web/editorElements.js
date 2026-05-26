@@ -91,6 +91,8 @@ export function getEditorElements() {
     fitStage: document.querySelector('#fit-stage'),
     snap: document.querySelector('#snap-toggle'),
     grid: document.querySelector('#grid-toggle'),
+    gridDensity: document.querySelector('#grid-density'),
+    gridDensityValue: document.querySelector('#grid-density-value'),
     emptyState: document.querySelector('#empty-state'),
     inspector: document.querySelector('#inspector-form'),
     type: document.querySelector('#object-type'),

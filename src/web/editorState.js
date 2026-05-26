@@ -1,3 +1,5 @@
+import { DEFAULT_GRID_SIZE } from './constants.js'
+
 export function createEditorState() {
   return {
     board: {
@@ -18,6 +20,7 @@ export function createEditorState() {
     activeGroup: 'rolesAndJobs',
     snapToGrid: false,
     showGrid: false,
+    gridSize: DEFAULT_GRID_SIZE,
     zoom: 1,
     zoomMode: 'fit',
     images: new Map(),
