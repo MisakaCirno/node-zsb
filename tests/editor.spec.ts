@@ -143,6 +143,9 @@ test('editor imports code, changes background, and edits text and line objects',
   await expect(page.locator('#object-type')).toHaveValue('text')
   await page.locator('#object-text').fill('MT')
   await page.locator('#object-color').fill('#00ffcc')
+  await expect(page.locator('#object-color-text')).toHaveValue('#00ffcc')
+  await page.locator('#object-color-swatches [data-color="#43a8d8"]').click()
+  await expect(page.locator('#object-color')).toHaveValue('#43a8d8')
   await expect(page.locator('#layers')).toContainText('text')
 
   await page.locator('button[title="line"]').click()

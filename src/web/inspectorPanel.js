@@ -16,6 +16,7 @@ export function renderInspector({
   elements.size.value = object.size ?? 100
   elements.angle.value = object.angle ?? 0
   elements.color.value = object.color ?? '#ff8000'
+  syncColorControl(elements)
   elements.transparency.value = object.transparency ?? 0
   elements.text.value = object.text ?? ''
   elements.endX.value = object.endX ?? object.x ?? 256
@@ -67,4 +68,14 @@ function syncToggleButton(input) {
   if (!button) return
   button.classList.toggle('active', input.checked)
   button.setAttribute('aria-pressed', String(input.checked))
+}
+
+function syncColorControl(elements) {
+  elements.colorText.value = elements.color.value
+  for (const swatch of elements.colorSwatches.querySelectorAll('[data-color]')) {
+    swatch.classList.toggle(
+      'active',
+      swatch.dataset.color.toLowerCase() === elements.color.value.toLowerCase(),
+    )
+  }
 }

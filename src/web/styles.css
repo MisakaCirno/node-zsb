@@ -393,6 +393,75 @@ textarea {
   flex: 1;
 }
 
+.color-field {
+  flex: 1;
+}
+
+.color-control {
+  display: grid;
+  grid-template-columns: 44px minmax(0, 1fr);
+  gap: 8px;
+}
+
+.color-picker-shell {
+  position: relative;
+  height: 34px;
+  border: 1px solid #3a4650;
+  border-radius: 6px;
+  background:
+    linear-gradient(45deg, #263039 25%, transparent 25%),
+    linear-gradient(-45deg, #263039 25%, transparent 25%),
+    linear-gradient(45deg, transparent 75%, #263039 75%),
+    linear-gradient(-45deg, transparent 75%, #263039 75%);
+  background-color: #151b20;
+  background-position: 0 0, 0 6px, 6px -6px, -6px 0;
+  background-size: 12px 12px;
+  overflow: hidden;
+  cursor: pointer;
+}
+
+.color-picker-shell input {
+  position: absolute;
+  inset: -4px;
+  width: calc(100% + 8px);
+  height: calc(100% + 8px);
+  min-height: 0;
+  border: 0;
+  border-radius: 0;
+  padding: 0;
+  cursor: pointer;
+}
+
+.color-hex-input {
+  font-family: "Cascadia Mono", "Consolas", monospace;
+  text-transform: uppercase;
+}
+
+.color-swatches {
+  grid-column: 1 / -1;
+  display: grid;
+  grid-template-columns: repeat(6, 1fr);
+  gap: 6px;
+}
+
+.color-swatches button {
+  height: 26px;
+  min-width: 0;
+  padding: 3px;
+}
+
+.color-swatches button.active {
+  border-color: #66c2a5;
+  background: #20362f;
+}
+
+.color-swatches span {
+  display: block;
+  width: 100%;
+  height: 100%;
+  border-radius: 3px;
+}
+
 .checks {
   margin: 12px 0;
 }

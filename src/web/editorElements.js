@@ -56,6 +56,8 @@ export function getEditorElements() {
     size: document.querySelector('#object-size'),
     angle: document.querySelector('#object-angle'),
     color: document.querySelector('#object-color'),
+    colorText: document.querySelector('#object-color-text'),
+    colorSwatches: document.querySelector('#object-color-swatches'),
     transparency: document.querySelector('#object-transparency'),
     text: document.querySelector('#object-text'),
     endX: document.querySelector('#object-end-x'),

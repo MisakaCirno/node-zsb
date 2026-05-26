@@ -9,6 +9,24 @@ export function bindEditorEvents({
   elements.openExportDialog.addEventListener('click', () => openDialog(elements.exportDialog))
   elements.assetTabBackground.addEventListener('click', () => selectAssetTab(elements, 'background'))
   elements.assetTabObjects.addEventListener('click', () => selectAssetTab(elements, 'objects'))
+  elements.color.addEventListener('input', () => {
+    syncColorText(elements)
+    actions.updateSelectedFromInspector()
+  })
+  elements.colorText.addEventListener('input', () => {
+    const color = normalizeHexColor(elements.colorText.value)
+    if (!color) return
+    elements.color.value = color
+    syncColorText(elements)
+    actions.updateSelectedFromInspector()
+  })
+  elements.colorSwatches.addEventListener('click', (event) => {
+    const button = event.target.closest('[data-color]')
+    if (!button) return
+    elements.color.value = button.dataset.color
+    syncColorText(elements)
+    actions.updateSelectedFromInspector()
+  })
   elements.loadCode.addEventListener('click', () =>
     runAction(async () => {
       await actions.loadFromCode(elements.codeInput.value)
@@ -78,7 +96,6 @@ export function bindEditorEvents({
     elements.y,
     elements.size,
     elements.angle,
-    elements.color,
     elements.transparency,
     elements.text,
     elements.endX,
@@ -90,6 +107,23 @@ export function bindEditorEvents({
   ]) {
     input.addEventListener('input', actions.updateSelectedFromInspector)
   }
+}
+
+function syncColorText(elements) {
+  elements.colorText.value = elements.color.value
+  for (const swatch of elements.colorSwatches.querySelectorAll('[data-color]')) {
+    swatch.classList.toggle(
+      'active',
+      swatch.dataset.color.toLowerCase() === elements.color.value.toLowerCase(),
+    )
+  }
+}
+
+function normalizeHexColor(value) {
+  const trimmed = value.trim()
+  if (/^#[0-9a-fA-F]{6}$/.test(trimmed)) return trimmed.toLowerCase()
+  if (/^[0-9a-fA-F]{6}$/.test(trimmed)) return `#${trimmed.toLowerCase()}`
+  return ''
 }
 
 function selectAssetTab(elements, tab) {
