@@ -10,7 +10,6 @@ test('createEditorActionRegistry exposes the event binding action surface', () =
       'applyFitZoomOnResize',
       'addObjectAt',
       'alignSelected',
-      'centerSelected',
       'clearBoard',
       'copyExportCode',
       'copyExportImage',
@@ -97,7 +96,6 @@ test('createEditorActionRegistry exposes the event binding action surface', () =
     },
     objectCommands: {
       alignSelected: handlers.alignSelected,
-      centerSelected: handlers.centerSelected,
       clearBoard: handlers.clearBoard,
       copySelected: handlers.copySelected,
       deleteSelected: handlers.deleteSelected,

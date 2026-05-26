@@ -252,27 +252,6 @@ export function createObjectCommands({
       showStatus('已重命名组')
     },
 
-    centerSelected() {
-      const selectedIndexes = getSelectedIndexes(state)
-      const selectedObjects = selectedIndexes.map((index) => state.board.objects[index])
-      const movableObjects = selectedObjects.filter((object) => object && !object.locked)
-      if (movableObjects.length === 0) return
-      recordHistory()
-      if (movableObjects.length === 1) {
-        const object = movableObjects[0]
-        moveObjectBy(object, BOARD_CENTER.x - object.x, BOARD_CENTER.y - object.y)
-      } else {
-        const bounds = getSelectionBounds(selectedObjects, state)
-        const dx = BOARD_CENTER.x - getBoundsCenterX(bounds)
-        const dy = BOARD_CENTER.y - getBoundsCenterY(bounds)
-        for (const object of movableObjects) {
-          moveObjectBy(object, dx, dy)
-        }
-      }
-      renderAll()
-      showStatus(movableObjects.length > 1 ? '已居中选中对象组' : '已居中选中对象')
-    },
-
     alignSelected(alignment) {
       const selectedObjects = getSelectedList()
       if (selectedObjects.length === 0) return

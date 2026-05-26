@@ -1375,7 +1375,7 @@ test('editor shows inspector fields that match the selected object type', async 
   expect(tank.arcAngle).toBeUndefined()
 })
 
-test('editor snaps positions to the grid and centers the selected object', async ({
+test('editor snaps positions to the grid', async ({
   page,
 }) => {
   await page.goto('/editor')
@@ -1414,12 +1414,6 @@ test('editor snaps positions to the grid and centers the selected object', async
   await page.mouse.up()
   await expect(page.locator('#object-x')).toHaveValue('280')
   await expect(page.locator('#object-y')).toHaveValue('216')
-
-  await page.locator('#stage-host').click({ button: 'right' })
-  await page.getByRole('menuitem', { name: '居中对象' }).click()
-  await expect(page.locator('#object-x')).toHaveValue('256')
-  await expect(page.locator('#object-y')).toHaveValue('192')
-  await expect(page.locator('#status')).toContainText('已居中选中对象')
 })
 
 test('editor toggles the visual grid overlay', async ({ page }) => {

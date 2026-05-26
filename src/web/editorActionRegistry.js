@@ -14,7 +14,6 @@ export function createEditorActionRegistry({
     applyFitZoomOnResize: viewportControls.applyFitZoomOnResize,
     addObjectAt: objectCommands.addObjectAt,
     alignSelected: objectCommands.alignSelected,
-    centerSelected: objectCommands.centerSelected,
     clearBoard: objectCommands.clearBoard,
     copySelected: objectCommands.copySelected,
     copyExportCode: boardCodeActions.copyExportCode,

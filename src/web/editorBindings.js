@@ -254,7 +254,6 @@ function runContextAction(action, actions) {
     paste: () => actions.pasteObject(),
     duplicate: () => actions.duplicateSelected(),
     delete: () => actions.deleteSelected(),
-    center: () => actions.centerSelected(),
     'align-left': () => actions.alignSelected('left'),
     'align-center-x': () => actions.alignSelected('center-x'),
     'align-right': () => actions.alignSelected('right'),
