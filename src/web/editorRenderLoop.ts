@@ -10,17 +10,17 @@ import type {
 
 interface EditorRenderLoopDeps {
   elements: LayerPanelElements
-  onReorderLayer?: (fromIndex: number, toIndex: number) => void
-  onSelectGroup?: (groupId: string) => void
-  onSelectObject?: (index: number, options?: { range?: boolean, toggle?: boolean }) => void
-  onRenameLayerGroup?: (groupId: string, name: string) => void
-  onToggleLayerGroup?: (groupId: string) => void
-  onToggleLayerGroupFlag?: (groupId: string, key: LayerFlag) => void
-  onToggleLayerFlag?: (index: number, key: LayerFlag) => void
-  onMoveLayerNodeAfter?: (dragged: LayerNodeRef, target: LayerNodeRef) => void
-  onMoveLayerNodeBefore?: (dragged: LayerNodeRef, target: LayerNodeRef) => void
-  onMoveLayerNodeIntoGroup?: (dragged: LayerNodeRef, groupId: string) => void
-  onMoveLayerNodeToRoot?: (dragged: LayerNodeRef) => void
+  onReorderLayer: (fromIndex: number, toIndex: number) => void
+  onSelectGroup: (groupId: string) => void
+  onSelectObject: (index: number, options?: { range?: boolean, toggle?: boolean }) => void
+  onRenameLayerGroup: (groupId: string, name: string) => void
+  onToggleLayerGroup: (groupId: string) => void
+  onToggleLayerGroupFlag: (groupId: string, key: LayerFlag) => void
+  onToggleLayerFlag: (index: number, key: LayerFlag) => void
+  onMoveLayerNodeAfter: (dragged: LayerNodeRef, target: LayerNodeRef) => void
+  onMoveLayerNodeBefore: (dragged: LayerNodeRef, target: LayerNodeRef) => void
+  onMoveLayerNodeIntoGroup: (dragged: LayerNodeRef, groupId: string) => void
+  onMoveLayerNodeToRoot: (dragged: LayerNodeRef) => void
   renderInspectorPanel(): void
   stageRenderer: StageRenderer
   state: EditorState
