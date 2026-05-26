@@ -964,9 +964,15 @@ textarea {
   gap: 6px;
   min-height: 0;
   overflow-y: auto;
-  padding: 2px 4px 0 0;
+  padding: 2px 4px 28px 0;
   align-content: start;
   scrollbar-color: #3a4650 #151a1f;
+}
+
+.layers.root-drop-target {
+  background: linear-gradient(to bottom, transparent calc(100% - 28px), rgb(158 217 198 / 12%));
+  outline: 1px dashed #9ed9c6;
+  outline-offset: -2px;
 }
 
 .layer-toolbar {
@@ -974,22 +980,6 @@ textarea {
   flex-wrap: wrap;
   gap: 6px;
   margin: 0 0 10px;
-}
-
-.layer-root-drop {
-  border: 1px dashed #303b43;
-  border-radius: 6px;
-  color: #81909a;
-  font-size: 12px;
-  min-height: 42px;
-  padding: 12px 8px;
-  text-align: center;
-}
-
-.layer-root-drop.drop-target {
-  border-color: #9ed9c6;
-  background: #263c35;
-  color: #eef2f3;
 }
 
 .layer-toolbar button {
@@ -1058,11 +1048,6 @@ textarea {
 
 .layer-row.dragging {
   opacity: 0.45;
-}
-
-.layer-row.drop-target {
-  border-color: #9ed9c6;
-  background: #263c35;
 }
 
 .layer-row.drop-before {

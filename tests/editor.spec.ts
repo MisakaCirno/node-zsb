@@ -284,7 +284,16 @@ test('editor drags nested groups back to the layer root', async ({ page }) => {
   expect(nestedProject.layers[0].children.some((node: { type: string }) =>
     node.type === 'group')).toBe(true)
 
-  await innerGroup.dragTo(page.locator('#layer-root-drop'), { force: true })
+  await expect(page.locator('#layer-root-drop')).toHaveCount(0)
+  const layersBox = await page.locator('#layers').boundingBox()
+  if (!layersBox) throw new Error('Layer list is not visible')
+  await innerGroup.dragTo(page.locator('#layers'), {
+    force: true,
+    targetPosition: {
+      x: 16,
+      y: layersBox.height - 8,
+    },
+  })
   await expect(page.locator('#layers .layer-group-row')).toHaveCount(2)
   const project = await exportProjectFile(page)
   expect(project.layers.filter((node: { type: string }) => node.type === 'group')).toHaveLength(2)

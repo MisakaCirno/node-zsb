@@ -31,7 +31,7 @@ export function renderLayers({
   const layerTree = state.layerTree?.length
     ? state.layerTree
     : state.board.objects.map((object) => ({ type: 'object', id: object.editorId }))
-  renderRootDropTarget()
+  bindRootLayerDropTarget()
   for (const node of layerTree) {
     renderLayerNode(node, 0)
   }
@@ -134,34 +134,33 @@ export function renderLayers({
     elements.layers.append(row)
   }
 
-  function renderRootDropTarget() {
-    const target = document.createElement('div')
-    target.id = 'layer-root-drop'
-    target.className = 'layer-root-drop'
-    target.textContent = '拖到这里移到根层级'
-    target.addEventListener('dragenter', (event) => {
+  function bindRootLayerDropTarget() {
+    elements.layers.ondragenter = (event) => {
+      if (!isLayerRootDropEvent(event, elements.layers)) return
       event.preventDefault()
-      target.classList.add('drop-target')
-    })
-    target.addEventListener('dragover', (event) => {
+      elements.layers.classList.add('root-drop-target')
+    }
+    elements.layers.ondragover = (event) => {
+      if (!isLayerRootDropEvent(event, elements.layers)) return
       event.preventDefault()
       event.dataTransfer.dropEffect = 'move'
-      target.classList.add('drop-target')
-    })
-    target.addEventListener('dragleave', () => {
-      target.classList.remove('drop-target')
-    })
-    target.addEventListener('drop', (event) => {
+      elements.layers.classList.add('root-drop-target')
+    }
+    elements.layers.ondragleave = (event) => {
+      if (elements.layers.contains(event.relatedTarget)) return
+      elements.layers.classList.remove('root-drop-target')
+    }
+    elements.layers.ondrop = (event) => {
+      if (!isLayerRootDropEvent(event, elements.layers)) return
       const dragged = getDraggedLayerNode(event)
       if (!dragged) return
       event.preventDefault()
-      target.classList.remove('drop-target')
+      elements.layers.classList.remove('root-drop-target')
       const selectedGroup = state.selectedGroupId && state.selectedGroupId !== dragged.id
         ? { type: 'group', id: state.selectedGroupId }
         : null
       onMoveLayerNodeToRoot(selectedGroup ?? dragged)
-    })
-    elements.layers.append(target)
+    }
   }
 
   function renderObjectRow(object, index, depth) {
@@ -341,6 +340,10 @@ function setDropPlacementClass(row, placement) {
 
 function clearLayerDropClasses(row) {
   row.classList.remove('drop-before', 'drop-after', 'drop-inside')
+}
+
+function isLayerRootDropEvent(event, root) {
+  return event.target === root && hasLayerDragData(event)
 }
 
 function hasLayerDragData(event) {
