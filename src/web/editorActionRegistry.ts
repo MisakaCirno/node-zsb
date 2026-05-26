@@ -1,3 +1,28 @@
+import type {
+  BoardCodeActions,
+  BoardMetaControls,
+  EditorActionRegistry,
+  EditorContext,
+  EditorHistoryControls,
+  InspectorControls,
+  LocalBoardsPanel,
+  ObjectCommands,
+  ProjectFileActions,
+  ViewportControls,
+} from './types.js'
+
+interface EditorActionRegistryDeps {
+  boardCodeActions: BoardCodeActions
+  boardMetaControls: BoardMetaControls
+  editorContext: EditorContext
+  historyControls: EditorHistoryControls
+  inspectorControls: InspectorControls
+  localBoardsPanel: LocalBoardsPanel
+  objectCommands: ObjectCommands
+  projectFileActions: ProjectFileActions
+  viewportControls: ViewportControls
+}
+
 export function createEditorActionRegistry({
   boardCodeActions,
   boardMetaControls,
@@ -8,7 +33,7 @@ export function createEditorActionRegistry({
   objectCommands,
   projectFileActions,
   viewportControls,
-}) {
+}: EditorActionRegistryDeps): EditorActionRegistry {
   return {
     applyFitZoom: viewportControls.applyFitZoom,
     applyFitZoomOnResize: viewportControls.applyFitZoomOnResize,

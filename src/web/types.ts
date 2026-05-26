@@ -260,6 +260,85 @@ export interface ProjectFileActions {
   importProjectFile(file?: FileLike | null): Promise<boolean>
 }
 
+export interface BoardMetaControls {
+  onBackgroundChange(background?: string): void
+  onBoardNameChange(): void
+  renderBackgroundOptions(): void
+  syncBoardNameInput(): void
+}
+
+export interface LocalBoardsPanel {
+  deleteLocalBoard(fileName: string): boolean
+  deleteSelectedLocalBoards(): boolean
+  loadLocalBoard(fileName: string): Promise<boolean>
+  newLocalBoard(): Promise<boolean>
+  renderLocalBoards(): void
+  renameLocalBoard(fileName: string): Promise<boolean>
+  saveLocalBoard(): Promise<boolean>
+  saveLocalBoardAs(): Promise<boolean>
+  updateLocalBoardButtons(): void
+}
+
+export interface EditorHistoryControls {
+  redo(): void
+  undo(): void
+}
+
+export interface EditorActionRegistry {
+  applyFitZoom: ViewportControls['applyFitZoom']
+  applyFitZoomOnResize: ViewportControls['applyFitZoomOnResize']
+  addObjectAt: ObjectCommands['addObjectAt']
+  alignSelected: ObjectCommands['alignSelected']
+  clearBoard: ObjectCommands['clearBoard']
+  copyExportCode: BoardCodeActions['copyExportCode']
+  copyExportImage: BoardCodeActions['copyExportImage']
+  copySelected: ObjectCommands['copySelected']
+  deleteLocalBoard: LocalBoardsPanel['deleteLocalBoard']
+  deleteSelectedLocalBoards: LocalBoardsPanel['deleteSelectedLocalBoards']
+  deleteSelected: ObjectCommands['deleteSelected']
+  deselect: EditorContext['deselect']
+  downloadPreviewImage: BoardCodeActions['downloadPreviewImage']
+  downloadProjectFile: ProjectFileActions['downloadProjectFile']
+  duplicateSelected: ObjectCommands['duplicateSelected']
+  exportCode: BoardCodeActions['exportCode']
+  getLastLayerIndex: ObjectCommands['getLastLayerIndex']
+  groupSelected: ObjectCommands['groupSelected']
+  importProjectFile: ProjectFileActions['importProjectFile']
+  loadFromCode: BoardCodeActions['loadFromCode']
+  loadLocalBoard: LocalBoardsPanel['loadLocalBoard']
+  moveLayerNodeAfter: ObjectCommands['moveLayerNodeAfter']
+  moveLayerNodeBefore: ObjectCommands['moveLayerNodeBefore']
+  moveLayerNodeIntoGroup: ObjectCommands['moveLayerNodeIntoGroup']
+  moveLayerNodeToRoot: ObjectCommands['moveLayerNodeToRoot']
+  moveSelected: ObjectCommands['moveSelected']
+  moveSelectedTo: ObjectCommands['moveSelectedTo']
+  newLocalBoard: LocalBoardsPanel['newLocalBoard']
+  nudgeSelected: ObjectCommands['nudgeSelected']
+  onBackgroundChange: BoardMetaControls['onBackgroundChange']
+  onBoardNameChange: BoardMetaControls['onBoardNameChange']
+  pasteObject: ObjectCommands['pasteObject']
+  redo: EditorHistoryControls['redo']
+  renderLocalBoards: LocalBoardsPanel['renderLocalBoards']
+  renderPreview: BoardCodeActions['renderPreview']
+  renameLayerGroup: ObjectCommands['renameLayerGroup']
+  saveLocalBoard: LocalBoardsPanel['saveLocalBoard']
+  saveLocalBoardAs: LocalBoardsPanel['saveLocalBoardAs']
+  selectObject: EditorContext['selectObject']
+  setGridDensity: ViewportControls['setGridDensity']
+  setGridOpacity: ViewportControls['setGridOpacity']
+  setStageZoom: ViewportControls['setStageZoom']
+  stepZoom: ViewportControls['stepZoom']
+  toggleGrid: ViewportControls['toggleGrid']
+  toggleLayerFlagForSelection: NonNullable<ObjectCommands['toggleLayerFlagForSelection']>
+  toggleLayerGroup: ObjectCommands['toggleLayerGroup']
+  toggleLayerGroupFlag: ObjectCommands['toggleLayerGroupFlag']
+  toggleSnapToGrid: ViewportControls['toggleSnapToGrid']
+  undo: EditorHistoryControls['undo']
+  ungroupSelectedGroup: ObjectCommands['ungroupSelectedGroup']
+  updateLocalBoardButtons: LocalBoardsPanel['updateLocalBoardButtons']
+  updateSelectedFromInspector: InspectorControls['updateSelectedFromInspector']
+}
+
 export interface FileLike {
   name?: string
   text(): Promise<string>
