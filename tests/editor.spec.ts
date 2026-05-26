@@ -351,6 +351,8 @@ test('editor updates object action button states from the selection', async ({
   await expect(page.locator('#center-object')).toBeDisabled()
   await expect(page.locator('#move-up')).toBeDisabled()
   await expect(page.locator('#move-down')).toBeDisabled()
+  await expect(page.locator('.layer-toolbar #move-up')).toBeVisible()
+  await expect(page.locator('.stage-toolbar #move-up')).toHaveCount(0)
 
   await page.locator('#layers .layer-row').first().click()
   await expect(page.locator('#delete-object')).toBeEnabled()
@@ -421,7 +423,7 @@ test('editor saves, loads, and deletes local browser board slots', async ({
   await expect(page.locator('#load-local-board')).toBeDisabled()
   await expect(page.locator('#delete-local-board')).toBeDisabled()
   await page.locator('#local-board-dialog').evaluate((dialog) => {
-    if (dialog instanceof HTMLDialogElement) dialog.close()
+    if ('close' in dialog) dialog.close()
   })
 
   await page.locator('#board-name').fill('本地草稿')
@@ -433,7 +435,7 @@ test('editor saves, loads, and deletes local browser board slots', async ({
   await expect(page.locator('#load-local-board')).toBeEnabled()
   await expect(page.locator('#delete-local-board')).toBeEnabled()
   await page.locator('#local-board-dialog').evaluate((dialog) => {
-    if (dialog instanceof HTMLDialogElement) dialog.close()
+    if ('close' in dialog) dialog.close()
   })
 
   await page.locator('#board-name').fill('临时修改')

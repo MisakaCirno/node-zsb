@@ -47,12 +47,6 @@
             <button id="duplicate-object" class="icon-tool" type="button" title="复制对象" aria-label="复制" disabled>
               <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="8" y="8" width="11" height="11" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v1"/></svg>
             </button>
-            <button id="move-up" class="icon-tool" type="button" title="上移图层" aria-label="上移" disabled>
-              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m12 5-5 5"/><path d="m12 5 5 5"/><path d="M12 5v14"/></svg>
-            </button>
-            <button id="move-down" class="icon-tool" type="button" title="下移图层" aria-label="下移" disabled>
-              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m12 19-5-5"/><path d="m12 19 5-5"/><path d="M12 5v14"/></svg>
-            </button>
             <button id="center-object" class="icon-tool" type="button" title="居中对象" aria-label="居中" disabled>
               <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 4v16"/><path d="M4 12h16"/><circle cx="12" cy="12" r="4"/></svg>
             </button>
@@ -201,6 +195,14 @@
 
         <section>
           <div class="section-title">图层 <span id="layer-count">0</span></div>
+          <div class="layer-toolbar">
+            <button id="move-up" class="icon-tool" type="button" title="上移图层" aria-label="上移" disabled>
+              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m12 5-5 5"/><path d="m12 5 5 5"/><path d="M12 5v14"/></svg>
+            </button>
+            <button id="move-down" class="icon-tool" type="button" title="下移图层" aria-label="下移" disabled>
+              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m12 19-5-5"/><path d="m12 19 5-5"/><path d="M12 5v14"/></svg>
+            </button>
+          </div>
           <div id="layers" class="layers"></div>
         </section>
       </aside>

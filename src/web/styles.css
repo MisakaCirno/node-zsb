@@ -515,6 +515,18 @@ textarea {
   gap: 6px;
 }
 
+.layer-toolbar {
+  display: flex;
+  gap: 6px;
+  margin: -2px 0 8px;
+}
+
+.layer-toolbar button {
+  width: 34px;
+  min-width: 34px;
+  padding: 0;
+}
+
 .layer-row {
   border: 1px solid #303b43;
   background: #1b2228;
