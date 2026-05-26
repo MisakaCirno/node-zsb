@@ -1,6 +1,9 @@
 import { getObjectCapabilities } from './board.js'
 import { syncColorControl } from './colorPicker.js'
 import type {
+  ColorPickerElements,
+} from './colorPicker.js'
+import type {
   BoardObject,
   CheckedElement,
   DisabledElement,
@@ -13,7 +16,7 @@ export interface RenderInspectorDeps {
   updateSelectionActions(): void
 }
 
-export interface InspectorPanelElements {
+export interface InspectorPanelElements extends ColorPickerElements {
   emptyState: ClassListElement
   inspector: QueryElement
   type: ValueElement
@@ -21,7 +24,6 @@ export interface InspectorPanelElements {
   y: ValueElement & DisabledElement
   size: ValueElement & DisabledElement
   angle: ValueElement & DisabledElement
-  color: ValueElement
   transparency: ValueElement
   transparencyRange: ValueElement
   text: ValueElement

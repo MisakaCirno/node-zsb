@@ -1,7 +1,104 @@
+declare const document: DocumentLike
+
+interface ColorPickerDeps {
+  elements: ColorPickerElements
+  onChange?: () => void
+}
+
+export interface ColorPickerElements {
+  color: ValueElement
+  colorTrigger: EventElement
+  colorText: ValueElement & EventElement
+  colorHue: ValueElement & EventElement
+  colorPopover: ClassListElement
+  colorPreview: {
+    style: {
+      background: string
+    }
+  }
+  colorSaturation: SaturationElement
+  colorSaturationHandle: {
+    style: {
+      left: string
+      top: string
+    }
+  }
+  colorSwatches: QueryElement
+}
+
+interface ValueElement {
+  value: string
+}
+
+interface EventElement {
+  addEventListener(type: string, listener: (event: EventLike) => void): void
+}
+
+interface ClassListElement {
+  classList: {
+    add(className: string): void
+    contains(className: string): boolean
+    remove(className: string): void
+    toggle(className: string, force?: boolean): void
+  }
+}
+
+interface SaturationElement extends EventElement {
+  style: {
+    setProperty(name: string, value: string): void
+  }
+  getBoundingClientRect(): RectLike
+  hasPointerCapture(pointerId: number): boolean
+  querySelectorAll?(selector: string): SwatchElement[]
+  setAttribute(name: string, value: string): void
+  setPointerCapture(pointerId: number): void
+}
+
+interface QueryElement {
+  addEventListener(type: string, listener: (event: EventLike) => void): void
+  querySelectorAll(selector: string): SwatchElement[]
+}
+
+interface SwatchElement {
+  dataset: { color?: string }
+  classList: {
+    toggle(className: string, force?: boolean): void
+  }
+}
+
+interface EventLike {
+  clientX: number
+  clientY: number
+  key: string
+  pointerId: number
+  target: {
+    closest(selector: string): (SwatchElement & { dataset: { color?: string } }) | null
+  }
+  preventDefault(): void
+  stopPropagation(): void
+}
+
+interface DocumentLike {
+  addEventListener(type: string, listener: (event: EventLike) => void): void
+}
+
+interface RectLike {
+  height: number
+  left: number
+  top: number
+  width: number
+}
+
+interface HsvColor {
+  h: number
+  s: number
+  v: number
+}
+
 export function bindColorPicker({
   elements,
   onChange,
-}) {
+}: ColorPickerDeps) {
   elements.colorTrigger.addEventListener('click', (event) => {
     event.stopPropagation()
     elements.colorPopover.classList.toggle('hidden')
@@ -53,7 +150,11 @@ export function bindColorPicker({
   })
 }
 
-export function setColorValue(elements, value, onChange) {
+export function setColorValue(
+  elements: ColorPickerElements,
+  value: string | undefined,
+  onChange?: () => void,
+) {
   const color = normalizeHexColor(value)
   if (!color) return
   elements.color.value = color
@@ -61,7 +162,7 @@ export function setColorValue(elements, value, onChange) {
   onChange?.()
 }
 
-export function syncColorControl(elements) {
+export function syncColorControl(elements: ColorPickerElements) {
   const color = normalizeHexColor(elements.color.value) || '#ff8000'
   const hsv = hexToHsv(color)
   elements.color.value = color
@@ -79,19 +180,23 @@ export function syncColorControl(elements) {
   for (const swatch of elements.colorSwatches.querySelectorAll('[data-color]')) {
     swatch.classList.toggle(
       'active',
-      swatch.dataset.color.toLowerCase() === color,
+      swatch.dataset.color?.toLowerCase() === color,
     )
   }
 }
 
-export function normalizeHexColor(value) {
-  const trimmed = value.trim()
+export function normalizeHexColor(value: string | undefined) {
+  const trimmed = value?.trim() ?? ''
   if (/^#[0-9a-fA-F]{6}$/.test(trimmed)) return trimmed.toLowerCase()
   if (/^[0-9a-fA-F]{6}$/.test(trimmed)) return `#${trimmed.toLowerCase()}`
   return ''
 }
 
-function updateSaturationFromPointer(elements, event, onChange) {
+function updateSaturationFromPointer(
+  elements: ColorPickerElements,
+  event: EventLike,
+  onChange?: () => void,
+) {
   const rect = elements.colorSaturation.getBoundingClientRect()
   const hsv = hexToHsv(elements.color.value)
   setColorValue(elements, hsvToHex({
@@ -101,7 +206,7 @@ function updateSaturationFromPointer(elements, event, onChange) {
   }), onChange)
 }
 
-function hexToHsv(hex) {
+function hexToHsv(hex: string | undefined): HsvColor {
   const normalized = normalizeHexColor(hex) || '#ff8000'
   const r = Number.parseInt(normalized.slice(1, 3), 16) / 255
   const g = Number.parseInt(normalized.slice(3, 5), 16) / 255
@@ -128,16 +233,17 @@ function hsvToHex({
   h,
   s,
   v,
-}) {
+}: HsvColor) {
   const c = v * s
   const x = c * (1 - Math.abs(((h / 60) % 2) - 1))
   const m = v - c
-  const [r, g, b] = getRgbPrime(h, c, x).map((value) =>
+  const rgb = getRgbPrime(h, c, x).map((value) =>
     Math.round((value + m) * 255))
+  const [r = 0, g = 0, b = 0] = rgb
   return `#${toHex(r)}${toHex(g)}${toHex(b)}`
 }
 
-function getRgbPrime(h, c, x) {
+function getRgbPrime(h: number, c: number, x: number): [number, number, number] {
   if (h < 60) return [c, x, 0]
   if (h < 120) return [x, c, 0]
   if (h < 180) return [0, c, x]
@@ -146,10 +252,10 @@ function getRgbPrime(h, c, x) {
   return [c, 0, x]
 }
 
-function toHex(value) {
+function toHex(value: number) {
   return value.toString(16).padStart(2, '0')
 }
 
-function clamp01(value) {
+function clamp01(value: number) {
   return Math.max(0, Math.min(1, value))
 }
