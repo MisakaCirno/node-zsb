@@ -5,6 +5,7 @@ import {
   createPresetFromSelection,
   insertPresetIntoBoard,
 } from './localPresets.js'
+import { createNameDialogController } from './nameDialog.js'
 import { getPresetPreviewUrl } from './presetPreviewCache.js'
 import { renderPresetPreviewBlob } from './presetPreviewRenderer.js'
 import { loadLocalPresets, persistLocalPresets } from './storage.js'
@@ -68,10 +69,6 @@ interface ButtonElement {
   disabled: boolean
 }
 
-interface PendingNameRequest {
-  resolve(name: string): void
-}
-
 const PRESET_DRAG_TYPE = 'application/x-node-zsb-preset-id'
 const INSERT_CENTER = {
   x: 256,
@@ -87,7 +84,14 @@ export function createLocalPresetsPanel({
   confirmAction,
 }: LocalPresetsPanelDeps) {
   const browserDocument = getBrowserDocument()
-  let pendingNameRequest: PendingNameRequest | null = null
+  const presetNameDialog = createNameDialogController({
+    elements: {
+      dialog: elements.presetNameDialog,
+      input: elements.presetNameInput,
+      error: elements.presetNameError,
+    },
+    normalizeName: normalizePresetName,
+  })
 
   function renderLocalPresets() {
     const presets = loadLocalPresets()
@@ -160,30 +164,6 @@ export function createLocalPresetsPanel({
     return true
   }
 
-  elements.presetNameDialog.querySelector('form').addEventListener('submit', (event) => {
-    if (!pendingNameRequest) return
-    if (event.submitter?.value === 'cancel') return
-    const error = validatePresetName(elements.presetNameInput.value)
-    if (!error) return
-    event.preventDefault()
-    showPresetNameError(error)
-  })
-
-  elements.presetNameInput.addEventListener('input', () => {
-    if (!pendingNameRequest) return
-    showPresetNameError(validatePresetName(elements.presetNameInput.value))
-  })
-
-  elements.presetNameDialog.addEventListener('close', () => {
-    if (!pendingNameRequest) return
-    const name = elements.presetNameDialog.returnValue === 'confirm'
-      ? normalizePresetName(elements.presetNameInput.value)
-      : ''
-    pendingNameRequest.resolve(name)
-    pendingNameRequest = null
-    showPresetNameError('')
-  })
-
   return {
     deletePreset,
     insertPresetAt,
@@ -251,13 +231,9 @@ export function createLocalPresetsPanel({
   }
 
   function requestPresetName() {
-    return new Promise<string>((resolve) => {
-      pendingNameRequest = { resolve }
-      elements.presetNameInput.value = createDefaultPresetName()
-      showPresetNameError('')
-      elements.presetNameDialog.showModal()
-      elements.presetNameInput.focus()
-      elements.presetNameInput.select()
+    return presetNameDialog.requestName({
+      currentName: createDefaultPresetName(),
+      validate: validatePresetName,
     })
   }
 
@@ -271,10 +247,6 @@ export function createLocalPresetsPanel({
     return normalizePresetName(name) ? '' : '请输入预设名称'
   }
 
-  function showPresetNameError(message: string) {
-    elements.presetNameError.textContent = message
-    elements.presetNameInput.setAttribute('aria-invalid', message ? 'true' : 'false')
-  }
 }
 
 export function getPresetDragType(): string {

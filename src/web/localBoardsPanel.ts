@@ -10,6 +10,7 @@ import {
 } from './project.js'
 import { getBrowserDocument } from './browser.js'
 import { syncFlatLayerTree } from './layerTree.js'
+import { createNameDialogController } from './nameDialog.js'
 import { loadLocalFiles, persistLocalFiles } from './storage.js'
 import type {
   Board,
@@ -108,11 +109,6 @@ interface FileNameRequest {
   validate?: ((fileName: string) => string) | null
 }
 
-interface PendingNameRequest {
-  resolve(fileName: string): void
-  validate?: ((fileName: string) => string) | null
-}
-
 interface RenderPreviewResponse {
   hash: string
 }
@@ -127,8 +123,16 @@ export function createLocalBoardsPanel({
   confirmAction,
   stage,
 }: LocalBoardsPanelDeps) {
-  let pendingNameRequest: PendingNameRequest | null = null
   const browserDocument = getBrowserDocument()
+  const fileNameDialog = createNameDialogController({
+    elements: {
+      dialog: elements.localBoardNameDialog,
+      input: elements.localBoardNameInput,
+      error: elements.localBoardNameError,
+      title: elements.localBoardNameDialog.querySelector('h2'),
+    },
+    normalizeName: normalizeFileName,
+  })
 
   function renderLocalBoards() {
     const files = loadLocalFiles()
@@ -303,31 +307,6 @@ export function createLocalBoardsPanel({
     setLocalBoardSelection(false)
   }
 
-  elements.localBoardNameDialog.querySelector('form').addEventListener('submit', (event) => {
-    if (!pendingNameRequest) return
-    if (event.submitter?.value === 'cancel') return
-    const name = normalizeFileName(elements.localBoardNameInput.value)
-    const error = validatePendingFileName(name)
-    if (!error) return
-    event.preventDefault()
-    showFileNameError(error)
-  })
-
-  elements.localBoardNameInput.addEventListener('input', () => {
-    if (!pendingNameRequest) return
-    showFileNameError(validatePendingFileName(normalizeFileName(elements.localBoardNameInput.value)))
-  })
-
-  elements.localBoardNameDialog.addEventListener('close', () => {
-    if (!pendingNameRequest) return
-    const name = elements.localBoardNameDialog.returnValue === 'confirm'
-      ? normalizeFileName(elements.localBoardNameInput.value)
-      : ''
-    pendingNameRequest.resolve(name)
-    pendingNameRequest = null
-    showFileNameError('')
-  })
-
   elements.deleteSelectedLocalBoards.addEventListener('click', deleteSelectedLocalBoards)
   elements.selectAllLocalBoards.addEventListener('click', selectAllLocalBoards)
   elements.clearSelectedLocalBoards.addEventListener('click', clearSelectedLocalBoards)
@@ -433,14 +412,11 @@ export function createLocalBoardsPanel({
   }
 
   function requestFileName({ currentName, title, initialError = '', validate = null }: FileNameRequest) {
-    return new Promise<string>((resolve) => {
-      pendingNameRequest = { resolve, validate }
-      elements.localBoardNameDialog.querySelector('h2').textContent = title
-      elements.localBoardNameInput.value = currentName
-      showFileNameError(initialError)
-      elements.localBoardNameDialog.showModal()
-      elements.localBoardNameInput.focus()
-      elements.localBoardNameInput.select()
+    return fileNameDialog.requestName({
+      currentName,
+      title,
+      initialError,
+      validate,
     })
   }
 
@@ -499,15 +475,6 @@ export function createLocalBoardsPanel({
       if (fileName !== allowedFileName && fileExists(fileName)) return '已有同名文件，请换一个名称'
       return ''
     }
-  }
-
-  function validatePendingFileName(fileName: string) {
-    return pendingNameRequest?.validate?.(fileName) ?? ''
-  }
-
-  function showFileNameError(message: string) {
-    elements.localBoardNameError.textContent = message
-    elements.localBoardNameInput.setAttribute('aria-invalid', message ? 'true' : 'false')
   }
 
   function closeLocalBoardDialog() {
