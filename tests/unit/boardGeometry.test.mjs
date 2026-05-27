@@ -5,6 +5,8 @@ import {
   calculateCircleOffset,
   calculateDonutOffset,
   flippedScale,
+  normalizeTransparency,
+  objectOpacity,
 } from '../../src/shared/boardGeometry.js'
 
 test('calculateCircleOffset follows strategy board sector crop center', () => {
@@ -29,4 +31,12 @@ test('calculateDonutOffset returns crop center relative to the donut origin', ()
 test('flippedScale mirrors a rendered object without changing its stored size', () => {
   assert.equal(flippedScale(1.5, false), 1.5)
   assert.equal(flippedScale(1.5, true), -1.5)
+})
+
+test('objectOpacity follows the game 0-100 transparency scale', () => {
+  assert.equal(objectOpacity({ transparency: 0 }), 1)
+  assert.equal(objectOpacity({ transparency: 40 }), 0.6)
+  assert.equal(objectOpacity({ transparency: 100 }), 0)
+  assert.equal(objectOpacity({ transparency: 150 }), 0)
+  assert.equal(normalizeTransparency(150), 100)
 })

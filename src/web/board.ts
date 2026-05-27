@@ -1,4 +1,5 @@
 import { ensureObjectEditorIds, stripEditorFields } from './editorIds.js'
+import { normalizeTransparency } from '../shared/boardGeometry.js'
 import type {
   Board,
   BoardObject,
@@ -46,6 +47,8 @@ export function sanitizeObject(object: BoardObject): BoardObject {
   if (!capabilities.appearance) {
     delete copy.color
     delete copy.transparency
+  } else {
+    copy.transparency = normalizeTransparency(Number(copy.transparency ?? 0))
   }
   if (!capabilities.text) {
     delete copy.text

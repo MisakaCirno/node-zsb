@@ -6,6 +6,7 @@ export const STRATEGY_TEXT_FONT_FAMILY = 'AlibabaPuHuiTi'
 export const STRATEGY_TEXT_STROKE_WIDTH = 0.75
 export const STRATEGY_TEXT_SHADOW_BLUR = 2
 export const STRATEGY_TEXT_SHADOW_OFFSET = 1
+export const MAX_GAME_TRANSPARENCY = 100
 export const AOE_RADIUS = 512
 export const AOE_CENTER = 512
 
@@ -36,7 +37,13 @@ export function objectOpacity(
   options: OpacityOptions = {},
 ): number {
   const hiddenOpacity = options.hiddenOpacity ?? 0
-  return object.hidden ? hiddenOpacity : (100 - (object.transparency ?? 0)) / 100
+  return object.hidden
+    ? hiddenOpacity
+    : (MAX_GAME_TRANSPARENCY - clampTransparency(object.transparency ?? 0)) / MAX_GAME_TRANSPARENCY
+}
+
+export function normalizeTransparency(value = 0): number {
+  return clampTransparency(Math.round(value))
 }
 
 export function flippedScale(scale: number, flipped?: boolean): number {
@@ -119,4 +126,8 @@ function getAbsoluteSectorCropCenter(
     offsetX: (radius * 2 + crop.left - crop.right) / 2,
     offsetY: (radius * 2 - crop.bottom) / 2,
   }
+}
+
+function clampTransparency(value: number): number {
+  return Math.min(MAX_GAME_TRANSPARENCY, Math.max(0, value))
 }
