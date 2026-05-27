@@ -77,6 +77,8 @@ export interface EditorElements {
   moveBottom: HTMLButtonElement
   groupLayers: HTMLButtonElement
   ungroupLayers: HTMLButtonElement
+  toolGroupLayers: HTMLButtonElement
+  toolUngroupLayers: HTMLButtonElement
   alignLeft: HTMLButtonElement
   alignCenterX: HTMLButtonElement
   alignRight: HTMLButtonElement
@@ -207,6 +209,8 @@ export function getEditorElements(): EditorElements {
     moveBottom: queryElement('#move-bottom', HTMLButtonElement),
     groupLayers: queryElement('#group-layers', HTMLButtonElement),
     ungroupLayers: queryElement('#ungroup-layers', HTMLButtonElement),
+    toolGroupLayers: queryElement('#tool-group-layers', HTMLButtonElement),
+    toolUngroupLayers: queryElement('#tool-ungroup-layers', HTMLButtonElement),
     alignLeft: queryElement('#align-left', HTMLButtonElement),
     alignCenterX: queryElement('#align-center-x', HTMLButtonElement),
     alignRight: queryElement('#align-right', HTMLButtonElement),

@@ -305,6 +305,25 @@ test('editor groups selected layers and exports the group in project JSON', asyn
   await expect(page.locator('#layers .layer-group-row')).toHaveCount(0)
 })
 
+test('editor groups and ungroups layers from the left toolrail', async ({ page }) => {
+  await page.goto('/editor')
+  await expect(page.locator('#layers')).toContainText('tank')
+
+  await expect(page.locator('#tool-group-layers')).toBeDisabled()
+  await expect(page.locator('#tool-ungroup-layers')).toBeDisabled()
+  await page.locator('#layers .layer-row').nth(0).click()
+  await page.locator('#layers .layer-row').nth(1).click({ modifiers: ['Shift'] })
+  await expect(page.locator('#tool-group-layers')).toBeEnabled()
+  await page.locator('#tool-group-layers').click()
+
+  const groupRow = page.locator('#layers .layer-group-row')
+  await expect(groupRow).toHaveCount(1)
+  await expect(groupRow).toHaveClass(/active/)
+  await expect(page.locator('#tool-ungroup-layers')).toBeEnabled()
+  await page.locator('#tool-ungroup-layers').click()
+  await expect(page.locator('#layers .layer-group-row')).toHaveCount(0)
+})
+
 test('editor preserves layer groups across autosave reloads', async ({ page }) => {
   await page.goto('/editor')
   await expect(page.locator('#layers')).toContainText('tank')
