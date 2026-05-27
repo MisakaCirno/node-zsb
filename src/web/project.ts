@@ -14,6 +14,11 @@ export const PROJECT_FILE_EXTENSION = '.zsb.json'
 
 type ProjectObjects = Record<string, BoardObject>
 
+interface NormalizeLayerContext {
+  usedGroupIds: Set<string>
+  usedObjectIds: Set<string>
+}
+
 export function createProjectFromBoard(
   board: Partial<Board>,
   options: CreateProjectOptions = {},
@@ -132,11 +137,25 @@ function normalizeProjectObjects(objects: unknown): ProjectObjects {
 }
 
 function normalizeLayerNodes(nodes: unknown, objects: ProjectObjects): LayerNode[] {
+  return normalizeLayerNodesWithContext(nodes, objects, createNormalizeLayerContext())
+}
+
+function normalizeLayerNodesWithContext(
+  nodes: unknown,
+  objects: ProjectObjects,
+  context: NormalizeLayerContext,
+): LayerNode[] {
   if (!Array.isArray(nodes)) return []
   const normalized: LayerNode[] = []
   for (const node of nodes) {
     if (!isRecord(node)) continue
-    if (node.type === 'object' && typeof node.id === 'string' && objects[node.id]) {
+    if (
+      node.type === 'object'
+      && typeof node.id === 'string'
+      && objects[node.id]
+      && !context.usedObjectIds.has(node.id)
+    ) {
+      context.usedObjectIds.add(node.id)
       normalized.push({
         type: 'object',
         id: node.id,
@@ -144,18 +163,38 @@ function normalizeLayerNodes(nodes: unknown, objects: ProjectObjects): LayerNode
       continue
     }
     if (node.type === 'group') {
+      const id = createUniqueGroupId(node.id, context)
       normalized.push({
         type: 'group',
-        id: typeof node.id === 'string' && node.id ? node.id : `grp_${normalized.length + 1}`,
+        id,
         name: String(node.name ?? 'Group'),
         collapsed: Boolean(node.collapsed),
         hidden: Boolean(node.hidden),
         locked: Boolean(node.locked),
-        children: normalizeLayerNodes(node.children, objects),
+        children: normalizeLayerNodesWithContext(node.children, objects, context),
       })
     }
   }
   return normalized
+}
+
+function createNormalizeLayerContext(): NormalizeLayerContext {
+  return {
+    usedGroupIds: new Set(),
+    usedObjectIds: new Set(),
+  }
+}
+
+function createUniqueGroupId(value: unknown, context: NormalizeLayerContext): string {
+  const base = typeof value === 'string' && value ? value : `grp_${context.usedGroupIds.size + 1}`
+  let id = base
+  let index = 2
+  while (context.usedGroupIds.has(id)) {
+    id = `${base}_${index}`
+    index += 1
+  }
+  context.usedGroupIds.add(id)
+  return id
 }
 
 function completeLayerNodes(

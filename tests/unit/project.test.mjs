@@ -109,3 +109,59 @@ test('project normalization supports nested groups and preserves flattened order
   )
   assert.match(projectToJson(project), /"format": "node-zsb-project"/)
 })
+
+test('project normalization deduplicates object references and group ids', () => {
+  const project = normalizeProject({
+    format: PROJECT_FORMAT,
+    version: 1,
+    board: { name: 'Duplicated', boardBackground: 'checkered' },
+    objects: {
+      obj_a: { type: 'tank', x: 1, y: 2 },
+      obj_b: { type: 'healer', x: 3, y: 4 },
+    },
+    layers: [
+      {
+        type: 'group',
+        id: 'grp_dup',
+        name: 'First',
+        children: [
+          { type: 'object', id: 'obj_a' },
+          { type: 'object', id: 'obj_a' },
+          {
+            type: 'group',
+            id: 'grp_dup',
+            name: 'Nested',
+            children: [
+              { type: 'object', id: 'obj_b' },
+            ],
+          },
+        ],
+      },
+      {
+        type: 'group',
+        id: 'grp_dup',
+        name: 'Second',
+        children: [
+          { type: 'object', id: 'obj_b' },
+        ],
+      },
+    ],
+  })
+
+  assert.deepEqual(collectGroupIds(project.layers), [
+    'grp_dup',
+    'grp_dup_2',
+    'grp_dup_3',
+  ])
+  assert.deepEqual(
+    flattenProjectToBoard(project).objects.map((object) => object.editorId),
+    ['obj_a', 'obj_b'],
+  )
+})
+
+function collectGroupIds(nodes) {
+  return nodes.flatMap((node) =>
+    node.type === 'group'
+      ? [node.id, ...collectGroupIds(node.children)]
+      : [])
+}
