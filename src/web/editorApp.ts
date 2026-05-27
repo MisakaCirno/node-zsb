@@ -11,14 +11,37 @@ import { createEditorRenderLoop } from './editorRenderLoop.js'
 import { initializeEditorBoard } from './editorStartup.js'
 import { createStageRenderer } from './stageRenderer.js'
 import { renderPaletteTabs as renderPaletteTabsPanel } from './palettePanel.js'
+import type {
+  EditorState,
+} from './types.js'
+
+declare const window: {
+  confirm(message: string): boolean
+}
+
+interface CreateEditorAppOptions {
+  confirmAction?: (message: string) => boolean
+}
+
+interface EditorApp {
+  elements: any
+  start(): Promise<void>
+  state: EditorState
+}
+
+interface RenderLoop {
+  renderAll(): Promise<void>
+  renderInspector(): void
+  renderLayers(): void
+}
 
 export function createEditorApp({
   confirmAction = (message) => window.confirm(message),
-} = {}) {
+}: CreateEditorAppOptions = {}): EditorApp {
   const els = getEditorElements()
   const state = createEditorState()
-  let renderLoop
-  let startPromise
+  let renderLoop: RenderLoop
+  let startPromise: Promise<void> | null = null
   const {
     runAction,
     showStatus,
@@ -125,7 +148,7 @@ export function createEditorApp({
     onToggleLayerFlag: toggleLayerFlag,
   })
 
-  function start() {
+  function start(): Promise<void> {
     if (!startPromise) {
       startPromise = runStart().catch((error) => {
         startPromise = null
@@ -135,7 +158,7 @@ export function createEditorApp({
     return startPromise
   }
 
-  async function runStart() {
+  async function runStart(): Promise<void> {
     const meta = await getEditorData()
     state.iconConfigs = meta.iconConfigs
     state.iconGroups = meta.iconGroups
@@ -157,7 +180,7 @@ export function createEditorApp({
     showStatus(initialSource.statusText)
   }
 
-  function bindEvents() {
+  function bindEvents(): void {
     bindEditorEvents({
       elements: els,
       runAction,
@@ -165,7 +188,7 @@ export function createEditorApp({
     })
   }
 
-  function renderPaletteTabs() {
+  function renderPaletteTabs(): void {
     renderPaletteTabsPanel({
       state,
       elements: els,
@@ -173,19 +196,19 @@ export function createEditorApp({
     })
   }
 
-  async function renderAll() {
+  async function renderAll(): Promise<void> {
     await renderLoop.renderAll()
   }
 
-  function renderInspector() {
+  function renderInspector(): void {
     renderLoop.renderInspector()
   }
 
-  function renderLayers() {
+  function renderLayers(): void {
     renderLoop.renderLayers()
   }
 
-  function restoreCurrentState() {
+  function restoreCurrentState(): void {
     syncBoardNameInput()
     renderBackgroundOptions()
     renderAll()
@@ -199,7 +222,7 @@ export function createEditorApp({
   }
 }
 
-export async function startEditorApp(options) {
+export async function startEditorApp(options?: CreateEditorAppOptions): Promise<EditorApp> {
   const app = createEditorApp(options)
   await app.start()
   return app
