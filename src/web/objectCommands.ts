@@ -2,6 +2,11 @@ import { clamp } from './geometry.js'
 import { createEditorId } from './editorIds.js'
 import { getSelectedIndexes } from './editorState.js'
 import {
+  BOARD_BOUNDS,
+  getConstrainedMoveDelta,
+  moveObjectBy,
+} from './objectMovement.js'
+import {
   appendObjectLayerNode,
   groupObjectIds,
   moveLayerNodeAfter,
@@ -52,12 +57,6 @@ const PASTE_OFFSET = 18
 const BOARD_CENTER = {
   x: 256,
   y: 192,
-}
-const BOARD_BOUNDS = {
-  left: 0,
-  right: 512,
-  top: 0,
-  bottom: 384,
 }
 
 export function createObjectCommands({
@@ -383,26 +382,6 @@ function getAlignmentDelta(alignment: Alignment, objectBounds: Bounds, selection
     default:
       return { dx: 0, dy: 0 }
   }
-}
-
-function moveObjectBy(object: BoardObject, dx: number, dy: number): void {
-  object.x = clamp(Math.round(object.x + dx), 0, 512)
-  object.y = clamp(Math.round(object.y + dy), 0, 384)
-  if (object.type === 'line' && object.endX !== undefined && object.endY !== undefined) {
-    object.endX = clamp(Math.round(object.endX + dx), 0, 512)
-    object.endY = clamp(Math.round(object.endY + dy), 0, 384)
-  }
-}
-
-function getConstrainedMoveDelta(bounds: Bounds, dx: number, dy: number) {
-  return {
-    dx: clampDelta(dx, BOARD_BOUNDS.left - bounds.left, BOARD_BOUNDS.right - bounds.right),
-    dy: clampDelta(dy, BOARD_BOUNDS.top - bounds.top, BOARD_BOUNDS.bottom - bounds.bottom),
-  }
-}
-
-function clampDelta(delta: number, min: number, max: number) {
-  return clamp(Math.round(delta), Math.ceil(min), Math.floor(max))
 }
 
 function moveSelectedToIndex(

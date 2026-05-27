@@ -6,6 +6,7 @@
   },
   "include": [
     "playwright.config.ts",
-    "tests/editor.spec.ts"
+    "tests/editor.spec.ts",
+    "tests/unit/**/*.ts"
   ]
 }
