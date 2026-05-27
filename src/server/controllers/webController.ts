@@ -9,7 +9,7 @@ import { getAllIconConfigs, iconGroups } from '../utils/iconMap.ts'
 import { getBoardUrl, getIconUrl } from '../utils/staticImage.ts'
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
-const rootDir = path.resolve(__dirname, '..', '..')
+const rootDir = path.resolve(__dirname, '..', '..', '..')
 const webDir = path.join(rootDir, 'src', 'web')
 const sharedDir = path.join(rootDir, 'src', 'shared')
 

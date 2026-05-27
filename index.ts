@@ -1,9 +1,9 @@
 import Elysia from 'elysia'
 import openapi, { fromTypes } from '@elysiajs/openapi'
 import { node } from '@elysiajs/node'
-import { boardController } from './src/controllers/imageController.ts'
-import { utilsController } from './src/controllers/utilsController.ts'
-import { webController } from './src/controllers/webController.ts'
+import { boardController } from './src/server/controllers/imageController.ts'
+import { utilsController } from './src/server/controllers/utilsController.ts'
+import { webController } from './src/server/controllers/webController.ts'
 
 const serverInfo = {
   hostname: 'localhost',

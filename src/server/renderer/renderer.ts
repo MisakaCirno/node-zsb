@@ -22,11 +22,12 @@ import {
   objectOpacity,
   objectScale,
   toSceneCoordinate,
-} from '../shared/boardGeometry.js'
+} from '../../shared/boardGeometry.js'
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
 const FONT_PATH = path.resolve(
   __dirname,
+  '..',
   '..',
   'assets',
   'fonts',

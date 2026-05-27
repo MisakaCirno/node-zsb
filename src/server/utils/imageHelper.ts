@@ -1,7 +1,7 @@
 import { file } from 'elysia'
 import { existsSync, mkdirSync } from 'fs'
 import sharp, { type Sharp } from 'sharp'
-import { renderBoard } from '../standalone/renderer.ts'
+import { renderBoard } from '../renderer/renderer.ts'
 import { createHash } from 'crypto'
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
@@ -10,7 +10,7 @@ import type { DecodeResult } from 'xiv-strat-board'
 import { rgbaToThumbHash } from 'thumbhash'
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
-const cacheDir = path.resolve(__dirname, '..', '..', 'cache')
+const cacheDir = path.resolve(__dirname, '..', '..', '..', 'cache')
 const rendererCache = new Map<string, Promise<Buffer>>()
 
 // 外部调用接口

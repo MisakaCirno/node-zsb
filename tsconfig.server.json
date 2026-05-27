@@ -6,9 +6,7 @@
   },
   "include": [
     "index.ts",
-    "src/controllers/**/*.ts",
-    "src/standalone/**/*.ts",
-    "src/utils/**/*.ts",
+    "src/server/**/*.ts",
     "src/shared/**/*.ts"
   ]
 }
