@@ -29,6 +29,7 @@ import type {
   EditorContext,
   EditorState,
   LayerFlag,
+  LayerNode,
   LayerNodeRef,
   ObjectCommands,
 } from './types.js'
@@ -98,6 +99,7 @@ export function createObjectCommands({
     },
 
     toggleLayerGroupFlag(groupId: string, key: LayerFlag) {
+      if (!canMutateLayerTree(state, (layerTree) => toggleGroupFlag(layerTree, groupId, key))) return
       recordHistory()
       const result = toggleGroupFlag(state.layerTree, groupId, key)
       if (!result) return
@@ -188,15 +190,19 @@ export function createObjectCommands({
         || fromIndex >= state.board.objects.length
         || toIndex >= state.board.objects.length
       ) return
-      recordHistory()
       const object = state.board.objects[fromIndex]
       const target = state.board.objects[toIndex]
       if (!object || !target) return
       if (!object.editorId || !target.editorId) return
-      const moved = moveLayerNodeBefore(state.layerTree, { type: 'object', id: object.editorId }, {
+      const dragged = { type: 'object' as const, id: object.editorId }
+      const targetNode = {
         type: 'object',
         id: target.editorId,
-      })
+      } as const
+      if (!canMutateLayerTree(state, (layerTree) =>
+        moveLayerNodeBefore(layerTree, dragged, targetNode))) return
+      recordHistory()
+      const moved = moveLayerNodeBefore(state.layerTree, dragged, targetNode)
       if (!moved) return
       syncBoardOrderFromLayerTree(state)
       renderAll()
@@ -204,6 +210,8 @@ export function createObjectCommands({
     },
 
     moveLayerNodeBefore(dragged: LayerNodeRef, target: LayerNodeRef) {
+      if (!canMutateLayerTree(state, (layerTree) =>
+        moveLayerNodeBefore(layerTree, dragged, target))) return
       recordHistory()
       if (!moveLayerNodeBefore(state.layerTree, dragged, target)) return
       syncBoardOrderFromLayerTree(state)
@@ -212,6 +220,8 @@ export function createObjectCommands({
     },
 
     moveLayerNodeAfter(dragged: LayerNodeRef, target: LayerNodeRef) {
+      if (!canMutateLayerTree(state, (layerTree) =>
+        moveLayerNodeAfter(layerTree, dragged, target))) return
       recordHistory()
       if (!moveLayerNodeAfter(state.layerTree, dragged, target)) return
       syncBoardOrderFromLayerTree(state)
@@ -220,6 +230,8 @@ export function createObjectCommands({
     },
 
     moveLayerNodeIntoGroup(dragged: LayerNodeRef, groupId: string) {
+      if (!canMutateLayerTree(state, (layerTree) =>
+        moveLayerNodeIntoGroup(layerTree, dragged, groupId))) return
       recordHistory()
       if (!moveLayerNodeIntoGroup(state.layerTree, dragged, groupId)) return
       syncBoardOrderFromLayerTree(state)
@@ -228,6 +240,8 @@ export function createObjectCommands({
     },
 
     moveLayerNodeToRoot(dragged: LayerNodeRef) {
+      if (!canMutateLayerTree(state, (layerTree) =>
+        moveLayerNodeToRoot(layerTree, dragged))) return
       recordHistory()
       if (!moveLayerNodeToRoot(state.layerTree, dragged)) return
       syncBoardOrderFromLayerTree(state)
@@ -238,14 +252,16 @@ export function createObjectCommands({
     groupSelected() {
       const selectedIndexes = getSelectedIndexes(state)
       if (selectedIndexes.length < 2) return
-      recordHistory()
       const selectedIds = selectedIndexes
         .map((index) => state.board.objects[index]?.editorId)
         .filter((id): id is string => Boolean(id))
+      const groupName = `组 ${Date.now().toString(36).slice(-4)}`
+      if (!canMutateLayerTree(state, (layerTree) =>
+        groupObjectIds(layerTree, selectedIds, groupName))) return
       const group = groupObjectIds(
         state.layerTree,
         selectedIds,
-        `组 ${Date.now().toString(36).slice(-4)}`,
+        groupName,
       )
       if (!group) return
       state.selectedGroupId = group.id
@@ -256,6 +272,8 @@ export function createObjectCommands({
 
     ungroupSelectedGroup() {
       if (!state.selectedGroupId) return
+      if (!canMutateLayerTree(state, (layerTree) =>
+        ungroupLayer(layerTree, state.selectedGroupId))) return
       recordHistory()
       if (!ungroupLayer(state.layerTree, state.selectedGroupId)) return
       state.selectedGroupId = ''
@@ -270,6 +288,8 @@ export function createObjectCommands({
     },
 
     renameLayerGroup(groupId: string, name: string) {
+      if (!canMutateLayerTree(state, (layerTree) =>
+        renameGroup(layerTree, groupId, name))) return
       recordHistory()
       if (!renameGroup(state.layerTree, groupId, name)) return
       state.selectedGroupId = groupId
@@ -372,16 +392,28 @@ function moveSelectedToIndex(
   const object = state.board.objects[index]
   const targetObject = state.board.objects[target]
   if (!object || !targetObject) return
-  recordHistory()
   if (!object.editorId || !targetObject.editorId) return
   const dragged = { type: 'object' as const, id: object.editorId }
   const targetNode = { type: 'object' as const, id: targetObject.editorId }
+  const canMove = canMutateLayerTree(state, (layerTree) =>
+    index < target
+      ? moveLayerNodeAfter(layerTree, dragged, targetNode)
+      : moveLayerNodeBefore(layerTree, dragged, targetNode))
+  if (!canMove) return
+  recordHistory()
   const moved = index < target
     ? moveLayerNodeAfter(state.layerTree, dragged, targetNode)
     : moveLayerNodeBefore(state.layerTree, dragged, targetNode)
   if (!moved) return
   syncBoardOrderFromLayerTree(state)
   selectObject(state.board.objects.findIndex((entry) => entry.editorId === object.editorId))
+}
+
+function canMutateLayerTree(
+  state: EditorState,
+  mutate: (layerTree: LayerNode[]) => unknown,
+): boolean {
+  return Boolean(mutate(structuredClone(state.layerTree)))
 }
 
 function createDefaultObject(type: string, point = BOARD_CENTER): BoardObject {
