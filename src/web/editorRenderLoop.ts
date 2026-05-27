@@ -27,7 +27,7 @@ interface EditorRenderLoopDeps {
 }
 
 interface LayerPanelElements {
-  layers: unknown
+  layers: HTMLElement
   layerCount: TextElement
 }
 

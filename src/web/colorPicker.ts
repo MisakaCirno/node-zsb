@@ -1,92 +1,18 @@
-declare const document: DocumentLike
-
 interface ColorPickerDeps {
   elements: ColorPickerElements
   onChange?: () => void
 }
 
 export interface ColorPickerElements {
-  color: ValueElement
-  colorTrigger: EventElement
-  colorText: ValueElement & EventElement
-  colorHue: ValueElement & EventElement
-  colorPopover: ClassListElement
-  colorPreview: {
-    style: {
-      background: string
-    }
-  }
-  colorSaturation: SaturationElement
-  colorSaturationHandle: {
-    style: {
-      left: string
-      top: string
-    }
-  }
-  colorSwatches: QueryElement
-}
-
-interface ValueElement {
-  value: string
-}
-
-interface EventElement {
-  addEventListener(type: string, listener: (event: EventLike) => void): void
-}
-
-interface ClassListElement {
-  classList: {
-    add(className: string): void
-    contains(className: string): boolean
-    remove(className: string): void
-    toggle(className: string, force?: boolean): void
-  }
-}
-
-interface SaturationElement extends EventElement {
-  style: {
-    setProperty(name: string, value: string): void
-  }
-  getBoundingClientRect(): RectLike
-  hasPointerCapture(pointerId: number): boolean
-  querySelectorAll?(selector: string): SwatchElement[]
-  setAttribute(name: string, value: string): void
-  setPointerCapture(pointerId: number): void
-}
-
-interface QueryElement {
-  addEventListener(type: string, listener: (event: EventLike) => void): void
-  querySelectorAll(selector: string): SwatchElement[]
-}
-
-interface SwatchElement {
-  dataset: { color?: string }
-  classList: {
-    toggle(className: string, force?: boolean): void
-  }
-}
-
-interface EventLike {
-  clientX: number
-  clientY: number
-  key: string
-  pointerId: number
-  target: {
-    closest(selector: string): (SwatchElement & { dataset: { color?: string } }) | null
-  }
-  preventDefault(): void
-  stopPropagation(): void
-}
-
-interface DocumentLike {
-  addEventListener(type: string, listener: (event: EventLike) => void): void
-}
-
-interface RectLike {
-  height: number
-  left: number
-  top: number
-  width: number
+  color: HTMLInputElement
+  colorTrigger: HTMLButtonElement
+  colorText: HTMLInputElement
+  colorHue: HTMLInputElement
+  colorPopover: HTMLElement
+  colorPreview: HTMLElement
+  colorSaturation: HTMLElement
+  colorSaturationHandle: HTMLElement
+  colorSwatches: HTMLElement
 }
 
 interface HsvColor {
@@ -139,13 +65,13 @@ export function bindColorPicker({
     }), onChange)
   })
   elements.colorSwatches.addEventListener('click', (event) => {
-    const button = event.target.closest('[data-color]')
+    const button = getClosestHTMLElement(event.target, '[data-color]')
     if (!button) return
     setColorValue(elements, button.dataset.color, onChange)
   })
   document.addEventListener('click', (event) => {
     if (elements.colorPopover.classList.contains('hidden')) return
-    if (event.target.closest('.color-control')) return
+    if (getClosestHTMLElement(event.target, '.color-control')) return
     elements.colorPopover.classList.add('hidden')
   })
 }
@@ -177,7 +103,7 @@ export function syncColorControl(elements: ColorPickerElements) {
   elements.colorSaturationHandle.style.left = `${hsv.s * 100}%`
   elements.colorSaturationHandle.style.top = `${(1 - hsv.v) * 100}%`
   elements.colorSaturation.setAttribute('aria-valuetext', color)
-  for (const swatch of elements.colorSwatches.querySelectorAll('[data-color]')) {
+  for (const swatch of elements.colorSwatches.querySelectorAll<HTMLElement>('[data-color]')) {
     swatch.classList.toggle(
       'active',
       swatch.dataset.color?.toLowerCase() === color,
@@ -194,7 +120,7 @@ export function normalizeHexColor(value: string | undefined) {
 
 function updateSaturationFromPointer(
   elements: ColorPickerElements,
-  event: EventLike,
+  event: PointerEvent,
   onChange?: () => void,
 ) {
   const rect = elements.colorSaturation.getBoundingClientRect()
@@ -258,4 +184,9 @@ function toHex(value: number) {
 
 function clamp01(value: number) {
   return Math.max(0, Math.min(1, value))
+}
+
+function getClosestHTMLElement(target: EventTarget | null, selector: string): HTMLElement | null {
+  const element = target instanceof Element ? target.closest(selector) : null
+  return element instanceof HTMLElement ? element : null
 }

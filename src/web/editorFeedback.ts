@@ -40,7 +40,7 @@ interface FeedbackElements {
   manageLocalBoards: DisabledElement
   deleteSelectedLocalBoards: DisabledElement
   background: {
-    querySelectorAll(selector: string): DisabledElement[]
+    querySelectorAll<E extends Element = Element>(selector: string): NodeListOf<E>
   }
   fileMenuButton: DisabledElement
   editMenuButton: DisabledElement
@@ -74,7 +74,7 @@ export function createEditorFeedback({ state, getElements }: EditorFeedbackDeps)
       await action()
       showStatus(successMessage)
     } catch (error) {
-      handleError(error)
+      handleError(error instanceof Error ? error : {})
     } finally {
       state.actionRunning = false
       setAsyncActionsDisabled(false)
@@ -118,7 +118,7 @@ export function createEditorFeedback({ state, getElements }: EditorFeedbackDeps)
       elements.openLocalBoardDialog,
       elements.manageLocalBoards,
       elements.deleteSelectedLocalBoards,
-      ...elements.background.querySelectorAll('button'),
+      ...elements.background.querySelectorAll<HTMLButtonElement>('button'),
     ].filter(Boolean)) {
       control.disabled = disabled
     }
@@ -126,7 +126,7 @@ export function createEditorFeedback({ state, getElements }: EditorFeedbackDeps)
     elements.editMenuButton.disabled = disabled
   }
 
-  function handleError(error: any) {
+  function handleError(error: Error | { message?: string }) {
     console.error(error)
     showStatus(error.message ?? '操作失败', { type: 'error' })
   }

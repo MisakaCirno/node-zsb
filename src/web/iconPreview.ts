@@ -2,8 +2,6 @@ import type {
   IconConfig,
 } from './types.js'
 
-declare const document: DocumentLike
-
 type ShapePreviewTag = 'circle' | 'path' | 'rect'
 type ShapePreviewEntry = [ShapePreviewTag, Record<string, string>]
 
@@ -11,34 +9,6 @@ interface ObjectPreviewOptions {
   iconConfigs: Record<string, IconConfig>
   size?: number
   type: string
-}
-
-interface PreviewElement {
-  className: string
-  textContent: string | null
-  classList: {
-    add(className: string): void
-    remove(className: string): void
-  }
-  style: {
-    backgroundImage: string
-    backgroundPosition: string
-    backgroundSize: string
-    height: string
-    width: string
-  }
-  append(...nodes: unknown[]): void
-  setAttribute(name: string, value: string): void
-}
-
-interface SvgElement {
-  append(...nodes: unknown[]): void
-  setAttribute(name: string, value: string): void
-}
-
-interface DocumentLike {
-  createElement(tagName: 'span'): PreviewElement
-  createElementNS(namespace: string, tagName: ShapePreviewTag | 'svg'): SvgElement
 }
 
 const SHAPE_PREVIEWS: Record<string, ShapePreviewEntry[]> = {

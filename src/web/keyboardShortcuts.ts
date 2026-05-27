@@ -2,10 +2,6 @@ import type {
   EditorActionRegistry,
 } from './types.js'
 
-declare const HTMLInputElement: any
-declare const HTMLSelectElement: any
-declare const HTMLTextAreaElement: any
-
 type MovementKey = 'ArrowUp' | 'ArrowDown' | 'ArrowLeft' | 'ArrowRight'
 type DeleteKey = 'Backspace' | 'Delete'
 

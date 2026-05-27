@@ -26,12 +26,7 @@ import type {
   StageLike,
 } from './types.js'
 
-declare const Konva: any
-declare const Image: new () => {
-  onerror: ((error: unknown) => void) | null
-  onload: (() => void) | null
-  src: string
-}
+declare const Konva: KonvaFactory
 
 const MARQUEE_DRAG_THRESHOLD = 4
 const MARQUEE_THEMES = {
@@ -65,18 +60,55 @@ interface KonvaEvent {
 
 interface KonvaNode {
   add(...nodes: KonvaNode[]): void
+  batchDraw(): void
+  clipFunc(callback: (context: ClipContext) => void): void
+  destroyChildren(): void
+  draw(): void
   draggable(value: boolean): void
+  enabledAnchors(anchors: string[]): void
+  getAbsoluteTransform(): KonvaTransform
   getAttr(name: string): unknown
   getLayer(): unknown
+  getPointerPosition(): Point | null
+  nodes(nodes: KonvaNode[]): void
   on(eventName: string, handler: (event: KonvaEvent) => void): void
   opacity(value: number): void
   points(points: number[]): void
   rotation(): number
+  scale(value: { x: number, y: number }): void
   scaleX(value?: number): number
   scaleY(value?: number): number
   setAttr(name: string, value: unknown): void
+  setAttrs(attrs: Record<string, unknown>): void
+  toDataURL(options?: { pixelRatio?: number }): string
+  visible(value: boolean): void
+  width(value: number): void
+  height(value: number): void
   x(): number
   y(): number
+}
+
+interface KonvaFactory {
+  Circle: KonvaConstructor
+  Group: KonvaConstructor
+  Image: KonvaConstructor
+  Layer: KonvaConstructor
+  Line: KonvaConstructor
+  Rect: KonvaConstructor
+  Ring: KonvaConstructor
+  Stage: KonvaConstructor
+  Text: KonvaConstructor
+  Transformer: KonvaConstructor
+}
+
+interface KonvaConstructor {
+  new (options?: Record<string, unknown>): KonvaNode
+}
+
+interface KonvaTransform {
+  copy(): KonvaTransform
+  invert(): KonvaTransform
+  point(point: Point): Point
 }
 
 interface ClipContext {

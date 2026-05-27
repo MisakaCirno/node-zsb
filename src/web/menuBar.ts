@@ -1,6 +1,3 @@
-declare const document: any
-declare const window: any
-
 type MenuKey = 'ArrowDown' | 'ArrowUp' | 'Home' | 'End'
 
 export function bindMenuBar(elements: unknown) {
@@ -8,7 +5,7 @@ export function bindMenuBar(elements: unknown) {
   const menus = getMenus()
 
   for (const trigger of triggers) {
-    trigger.addEventListener('click', (event: any) => {
+    trigger.addEventListener('click', (event: MouseEvent) => {
       event.stopPropagation()
       if (isMenuOpen(trigger)) {
         closeAllMenus(elements)
@@ -16,7 +13,7 @@ export function bindMenuBar(elements: unknown) {
       }
       openMenu(trigger, elements)
     })
-    trigger.addEventListener('keydown', (event: any) => {
+    trigger.addEventListener('keydown', (event: KeyboardEvent) => {
       if (event.key !== 'ArrowDown') return
       event.preventDefault()
       openMenu(trigger, elements)
@@ -25,11 +22,11 @@ export function bindMenuBar(elements: unknown) {
   }
 
   for (const menu of menus) {
-    menu.addEventListener('click', (event: any) => {
-      const button = event.target.closest('button')
+    menu.addEventListener('click', (event: MouseEvent) => {
+      const button = getClosestElement(event.target, 'button')
       if (button && !button.disabled) closeAllMenus(elements)
     })
-    menu.addEventListener('keydown', (event: any) => {
+    menu.addEventListener('keydown', (event: KeyboardEvent) => {
       if (event.key === 'Escape') {
         closeAllMenus(elements)
         getOpenTrigger()?.focus()
@@ -41,12 +38,13 @@ export function bindMenuBar(elements: unknown) {
     })
   }
 
-  document.addEventListener('click', (event: any) => {
-    const clickedMenu = menus.some((menu) => menu.contains(event.target))
-    const clickedTrigger = triggers.some((trigger) => trigger.contains(event.target))
+  document.addEventListener('click', (event: MouseEvent) => {
+    if (!(event.target instanceof Node)) return
+    const clickedMenu = menus.some((menu) => menu.contains(event.target as Node))
+    const clickedTrigger = triggers.some((trigger) => trigger.contains(event.target as Node))
     if (!clickedMenu && !clickedTrigger) closeAllMenus(elements)
   })
-  document.addEventListener('keydown', (event: any) => {
+  document.addEventListener('keydown', (event: KeyboardEvent) => {
     if (event.key === 'Escape') closeAllMenus(elements)
   })
   window.addEventListener('resize', () => {
@@ -55,17 +53,17 @@ export function bindMenuBar(elements: unknown) {
   })
 }
 
-function getMenuTriggers(): any[] {
-  return [...document.querySelectorAll('[data-menu-target]')]
+function getMenuTriggers(): HTMLElement[] {
+  return [...document.querySelectorAll<HTMLElement>('[data-menu-target]')]
 }
 
-function getMenus(): any[] {
+function getMenus(): HTMLElement[] {
   return getMenuTriggers()
     .map((trigger) => getControlledMenu(trigger))
-    .filter(Boolean)
+    .filter((menu): menu is HTMLElement => Boolean(menu))
 }
 
-function openMenu(trigger: any, elements: unknown) {
+function openMenu(trigger: HTMLElement, elements: unknown) {
   closeAllMenus(elements)
   const menu = getControlledMenu(trigger)
   if (!menu) return
@@ -83,19 +81,20 @@ function closeAllMenus(elements: unknown) {
   }
 }
 
-function isMenuOpen(trigger: any) {
+function isMenuOpen(trigger: HTMLElement) {
   return !getControlledMenu(trigger)?.classList.contains('hidden')
 }
 
-function getControlledMenu(trigger: any) {
-  return document.querySelector(`#${trigger.dataset.menuTarget}`)
+function getControlledMenu(trigger: HTMLElement): HTMLElement | null {
+  const target = trigger.dataset.menuTarget
+  return target ? document.querySelector<HTMLElement>(`#${target}`) : null
 }
 
 function getOpenTrigger() {
   return getMenuTriggers().find((trigger) => isMenuOpen(trigger))
 }
 
-function positionMenu(trigger: any) {
+function positionMenu(trigger: HTMLElement) {
   const menu = getControlledMenu(trigger)
   if (!menu) return
   const rect = trigger.getBoundingClientRect()
@@ -106,29 +105,37 @@ function positionMenu(trigger: any) {
   menu.style.top = `${Math.max(8, top)}px`
 }
 
-function focusFirstMenuItem(menu: any) {
-  menu?.querySelector('.file-menu-item:not(:disabled)')?.focus()
+function focusFirstMenuItem(menu: HTMLElement | null) {
+  menu?.querySelector<HTMLElement>('.file-menu-item:not(:disabled)')?.focus()
 }
 
-function focusMenuItem(menu: any, key: MenuKey) {
-  const items = [...menu.querySelectorAll('.file-menu-item:not(:disabled)')]
+function focusMenuItem(menu: HTMLElement, key: MenuKey) {
+  const items = [...menu.querySelectorAll<HTMLElement>('.file-menu-item:not(:disabled)')]
   if (items.length === 0) return
-  const currentIndex = items.indexOf(document.activeElement)
+  const currentElement = document.activeElement instanceof HTMLElement
+    ? document.activeElement
+    : null
+  const currentIndex = currentElement ? items.indexOf(currentElement) : -1
   if (key === 'Home') {
-    items[0].focus()
+    items[0]?.focus()
     return
   }
   if (key === 'End') {
-    items.at(-1).focus()
+    items.at(-1)?.focus()
     return
   }
   const delta = key === 'ArrowUp' ? -1 : 1
   const nextIndex = currentIndex < 0
     ? 0
     : (currentIndex + delta + items.length) % items.length
-  items[nextIndex].focus()
+  items[nextIndex]?.focus()
 }
 
 function isMenuKey(key: string): key is MenuKey {
   return ['ArrowDown', 'ArrowUp', 'Home', 'End'].includes(key)
+}
+
+function getClosestElement(target: EventTarget | null, selector: string): HTMLButtonElement | null {
+  const element = target instanceof Element ? target.closest(selector) : null
+  return element instanceof HTMLButtonElement ? element : null
 }

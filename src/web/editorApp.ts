@@ -14,6 +14,9 @@ import { renderPaletteTabs as renderPaletteTabsPanel } from './palettePanel.js'
 import type {
   EditorState,
 } from './types.js'
+import type {
+  EditorElements,
+} from './editorElements.js'
 
 declare const window: {
   confirm(message: string): boolean
@@ -24,7 +27,7 @@ interface CreateEditorAppOptions {
 }
 
 interface EditorApp {
-  elements: any
+  elements: EditorElements
   start(): Promise<void>
   state: EditorState
 }

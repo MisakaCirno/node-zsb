@@ -11,10 +11,13 @@ import type {
   GridRenderer,
   StageLike,
 } from './types.js'
+import type {
+  EditorElements,
+} from './editorElements.js'
 
 interface EditorControllersDeps {
   confirmAction(message: string): boolean
-  elements: EditorControllerElements
+  elements: EditorElements
   getSelected(): BoardObject | undefined
   getSelectedList(): BoardObject[]
   normalizePoint(x: number, y: number): { x: number, y: number }
@@ -26,8 +29,6 @@ interface EditorControllersDeps {
   stageRenderer: GridRenderer
   state: EditorState
 }
-
-type EditorControllerElements = any
 
 export function createEditorControllers({
   confirmAction,

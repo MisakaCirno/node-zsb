@@ -63,7 +63,7 @@ interface DialogElement {
 interface ListElement {
   innerHTML: string
   append(...nodes: unknown[]): void
-  querySelectorAll(selector: string): CheckboxElement[]
+  querySelectorAll<E extends Element = Element>(selector: string): NodeListOf<E>
 }
 
 interface CreatedElement {
@@ -492,16 +492,16 @@ export function createLocalBoardsPanel({
   }
 
   function getSelectedFileNames() {
-    return [...elements.localBoardList.querySelectorAll('input[type="checkbox"]:checked')]
+    return [...elements.localBoardList.querySelectorAll<HTMLInputElement>('input[type="checkbox"]:checked')]
       .map((input) => input.value)
   }
 
   function getSelectableFilesCount() {
-    return elements.localBoardList.querySelectorAll('input[type="checkbox"]').length
+    return elements.localBoardList.querySelectorAll<HTMLInputElement>('input[type="checkbox"]').length
   }
 
   function setLocalBoardSelection(selected: boolean) {
-    for (const checkbox of elements.localBoardList.querySelectorAll('input[type="checkbox"]')) {
+    for (const checkbox of elements.localBoardList.querySelectorAll<HTMLInputElement>('input[type="checkbox"]')) {
       checkbox.checked = selected
     }
     updateLocalBoardButtons()

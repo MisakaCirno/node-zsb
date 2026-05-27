@@ -9,10 +9,6 @@ import type {
   LayerNodeRef,
 } from './types.js'
 
-declare const document: any
-declare const window: any
-declare function requestAnimationFrame(callback: () => void): number
-
 type DropPlacement = 'after' | 'before' | 'inside'
 
 interface RenderLayersDeps {
@@ -32,7 +28,7 @@ interface RenderLayersDeps {
 }
 
 interface LayerElements {
-  layers: any
+  layers: HTMLElement
   layerCount: { textContent: string | null }
 }
 
@@ -52,27 +48,8 @@ interface LayerDragOptions {
   onDropBefore(dragged: LayerNodeRef, target: LayerNodeRef): void
   onDropIntoGroup(dragged: LayerNodeRef, groupId: string): void
   onDropToRoot(dragged: LayerNodeRef): void
-  row: any
+  row: HTMLElement
   targetNode: LayerNodeRef
-}
-
-interface DragEventLike {
-  clientX: number
-  clientY: number
-  dataTransfer: {
-    dropEffect: string
-    effectAllowed: string
-    getData(format: string): string
-    setData(format: string, data: string): void
-    types: Iterable<string>
-  }
-  metaKey?: boolean
-  ctrlKey?: boolean
-  relatedTarget?: unknown
-  shiftKey?: boolean
-  target?: unknown
-  preventDefault(): void
-  stopPropagation(): void
 }
 
 export function renderLayers({
@@ -101,7 +78,7 @@ export function renderLayers({
   }
   const selectedIndexes = getSelectedIndexes(state)
   const objectIndexById = new Map(state.board.objects.map((object, index) => [object.editorId, index]))
-  let primaryRow: any = null
+  let primaryRow: HTMLElement | null = null
   const layerTree = state.layerTree?.length
     ? state.layerTree
     : state.board.objects.map((object) => ({ type: 'object' as const, id: object.editorId ?? '' }))
@@ -110,10 +87,11 @@ export function renderLayers({
   for (const node of layerTree) {
     renderLayerNode(node, 0)
   }
-  if (primaryRow && state.revealSelectedLayer) {
+  const rowToReveal = primaryRow as HTMLElement | null
+  if (rowToReveal && state.revealSelectedLayer) {
     state.revealSelectedLayer = false
     requestAnimationFrame(() => {
-      primaryRow.scrollIntoView({
+      rowToReveal.scrollIntoView({
         block: 'nearest',
       })
     })
@@ -150,21 +128,21 @@ export function renderLayers({
     toggle.title = group.collapsed ? '展开组' : '折叠组'
     toggle.setAttribute('aria-label', toggle.title)
     toggle.innerHTML = group.collapsed ? chevronRightIcon() : chevronDownIcon()
-    toggle.addEventListener('click', (event: DragEventLike) => {
+    toggle.addEventListener('click', (event: MouseEvent) => {
       event.stopPropagation()
       onToggleLayerGroup(group.id)
     })
     const name = createLayerText('layer-name', group.name ?? '组')
     name.title = '双击重命名'
     let selectTimer = 0
-    name.addEventListener('click', (event: DragEventLike) => {
+    name.addEventListener('click', (event: MouseEvent) => {
       event.stopPropagation()
       window.clearTimeout(selectTimer)
       selectTimer = window.setTimeout(() => {
         onSelectGroup(group.id)
       }, 180)
     })
-    name.addEventListener('dblclick', (event: DragEventLike) => {
+    name.addEventListener('dblclick', (event: MouseEvent) => {
       event.stopPropagation()
       window.clearTimeout(selectTimer)
       startGroupRename(name, group, onRenameLayerGroup)
@@ -191,11 +169,11 @@ export function renderLayers({
       name,
       createLayerText('layer-position', `${countLayerObjects(group.children)} 个对象`),
     )
-    row.querySelector('[data-action="hidden"]').addEventListener('click', (event: DragEventLike) => {
+    getRequiredLayerAction(row, 'hidden').addEventListener('click', (event: MouseEvent) => {
       event.stopPropagation()
       onToggleLayerGroupFlag(group.id, 'hidden')
     })
-    row.querySelector('[data-action="locked"]').addEventListener('click', (event: DragEventLike) => {
+    getRequiredLayerAction(row, 'locked').addEventListener('click', (event: MouseEvent) => {
       event.stopPropagation()
       onToggleLayerGroupFlag(group.id, 'locked')
     })
@@ -214,22 +192,22 @@ export function renderLayers({
   }
 
   function bindRootLayerDropTarget() {
-    elements.layers.ondragenter = (event: DragEventLike) => {
+    elements.layers.ondragenter = (event: DragEvent) => {
       if (!isLayerRootDropEvent(event, elements.layers)) return
       event.preventDefault()
       elements.layers.classList.add('root-drop-target')
     }
-    elements.layers.ondragover = (event: DragEventLike) => {
+    elements.layers.ondragover = (event: DragEvent) => {
       if (!isLayerRootDropEvent(event, elements.layers)) return
       event.preventDefault()
-      event.dataTransfer.dropEffect = 'move'
+      if (event.dataTransfer) event.dataTransfer.dropEffect = 'move'
       elements.layers.classList.add('root-drop-target')
     }
-    elements.layers.ondragleave = (event: DragEventLike) => {
-      if (elements.layers.contains(event.relatedTarget)) return
+    elements.layers.ondragleave = (event: DragEvent) => {
+      if (event.relatedTarget instanceof Node && elements.layers.contains(event.relatedTarget)) return
       elements.layers.classList.remove('root-drop-target')
     }
-    elements.layers.ondrop = (event: DragEventLike) => {
+    elements.layers.ondrop = (event: DragEvent) => {
       if (!isLayerRootDropEvent(event, elements.layers)) return
       const dragged = getDraggedLayerNode(event)
       if (!dragged) return
@@ -276,37 +254,38 @@ export function renderLayers({
       createLayerText('layer-name', `${index + 1}. ${object.type}`),
       createLayerText('layer-position', `${Math.round(object.x)}, ${Math.round(object.y)}`),
     )
-    row.querySelector('[data-action="hidden"]').addEventListener('click', (event: DragEventLike) => {
+    getRequiredLayerAction(row, 'hidden').addEventListener('click', (event: MouseEvent) => {
       event.stopPropagation()
       onToggleLayerFlag(index, 'hidden')
     })
-    row.querySelector('[data-action="locked"]').addEventListener('click', (event: DragEventLike) => {
+    getRequiredLayerAction(row, 'locked').addEventListener('click', (event: MouseEvent) => {
       event.stopPropagation()
       onToggleLayerFlag(index, 'locked')
     })
-    row.addEventListener('dragstart', (event: DragEventLike) => {
+    row.addEventListener('dragstart', (event: DragEvent) => {
+      if (!event.dataTransfer) return
       event.dataTransfer.effectAllowed = 'move'
       event.dataTransfer.setData('text/plain', String(index))
       event.dataTransfer.setData(
         'application/x-node-zsb-layer',
-        JSON.stringify({ type: 'object', id: object.editorId }),
+        JSON.stringify({ type: 'object', id: object.editorId ?? '' }),
       )
       row.classList.add('dragging')
     })
     row.addEventListener('dragend', () => {
       row.classList.remove('dragging')
     })
-    row.addEventListener('dragover', (event: DragEventLike) => {
+    row.addEventListener('dragover', (event: DragEvent) => {
       if (!hasLayerDragData(event)) return
       event.preventDefault()
-      event.dataTransfer.dropEffect = 'move'
+      if (event.dataTransfer) event.dataTransfer.dropEffect = 'move'
       const target: LayerNodeRef = { type: 'object', id: object.editorId ?? '' }
       setDropPlacementClass(row, getLayerDropPlacement(event, row, target))
     })
     row.addEventListener('dragleave', () => {
       clearLayerDropClasses(row)
     })
-    row.addEventListener('drop', (event: DragEventLike) => {
+    row.addEventListener('drop', (event: DragEvent) => {
       event.preventDefault()
       event.stopPropagation()
       clearLayerDropClasses(row)
@@ -321,10 +300,10 @@ export function renderLayers({
         onMoveLayerNodeBefore(dragged, target)
         return
       }
-      const fromIndex = Number(event.dataTransfer.getData('text/plain'))
+      const fromIndex = Number(event.dataTransfer?.getData('text/plain'))
       onReorderLayer(fromIndex, index)
     })
-    row.addEventListener('click', (event: DragEventLike) => onSelectObject(index, {
+    row.addEventListener('click', (event: MouseEvent) => onSelectObject(index, {
       range: event.shiftKey,
       toggle: event.ctrlKey || event.metaKey,
     }))
@@ -357,6 +336,14 @@ function createLayerText(className: string, text: string) {
   return span
 }
 
+function getRequiredLayerAction(row: HTMLElement, action: LayerFlag): HTMLButtonElement {
+  const button = row.querySelector(`[data-action="${action}"]`)
+  if (!(button instanceof HTMLButtonElement)) {
+    throw new Error(`Missing layer action: ${action}`)
+  }
+  return button
+}
+
 function bindLayerDrag({
   node,
   onDropAfter,
@@ -367,7 +354,8 @@ function bindLayerDrag({
   row,
   targetNode,
 }: LayerDragOptions) {
-  row.addEventListener('dragstart', (event: DragEventLike) => {
+  row.addEventListener('dragstart', (event: DragEvent) => {
+    if (!event.dataTransfer) return
     event.dataTransfer.effectAllowed = 'move'
     event.dataTransfer.setData('application/x-node-zsb-layer', JSON.stringify(node))
     row.classList.add('dragging')
@@ -375,16 +363,16 @@ function bindLayerDrag({
   row.addEventListener('dragend', () => {
     row.classList.remove('dragging')
   })
-  row.addEventListener('dragover', (event: DragEventLike) => {
+  row.addEventListener('dragover', (event: DragEvent) => {
     if (!hasLayerDragData(event)) return
     event.preventDefault()
-    event.dataTransfer.dropEffect = 'move'
+    if (event.dataTransfer) event.dataTransfer.dropEffect = 'move'
     setDropPlacementClass(row, getLayerDropPlacement(event, row, targetNode))
   })
   row.addEventListener('dragleave', () => {
     clearLayerDropClasses(row)
   })
-  row.addEventListener('drop', (event: DragEventLike) => {
+  row.addEventListener('drop', (event: DragEvent) => {
     const dragged = getDraggedLayerNode(event)
     if (!dragged) return
     event.preventDefault()
@@ -419,7 +407,7 @@ function bindLayerDrag({
   })
 }
 
-function isRootGutterDrop(event: DragEventLike, row: any) {
+function isRootGutterDrop(event: DragEvent, row: HTMLElement) {
   const rect = row.getBoundingClientRect()
   return event.clientX < rect.left + 96
 }
@@ -443,7 +431,11 @@ function containsLayerNode(nodes: LayerNode[], target: LayerNodeRef): boolean {
   return false
 }
 
-function getLayerDropPlacement(event: DragEventLike, row: any, targetNode: LayerNodeRef): DropPlacement {
+function getLayerDropPlacement(
+  event: DragEvent,
+  row: HTMLElement,
+  targetNode: LayerNodeRef,
+): DropPlacement {
   const rect = row.getBoundingClientRect()
   const ratio = rect.height > 0 ? (event.clientY - rect.top) / rect.height : 0.5
   if (targetNode.type === 'group') {
@@ -454,26 +446,28 @@ function getLayerDropPlacement(event: DragEventLike, row: any, targetNode: Layer
   return ratio < 0.5 ? 'before' : 'after'
 }
 
-function setDropPlacementClass(row: any, placement: DropPlacement) {
+function setDropPlacementClass(row: HTMLElement, placement: DropPlacement) {
   clearLayerDropClasses(row)
   row.classList.add(`drop-${placement}`)
 }
 
-function clearLayerDropClasses(row: any) {
+function clearLayerDropClasses(row: HTMLElement) {
   row.classList.remove('drop-before', 'drop-after', 'drop-inside')
 }
 
-function isLayerRootDropEvent(event: DragEventLike, root: unknown) {
+function isLayerRootDropEvent(event: DragEvent, root: unknown) {
   return Boolean(root) && hasLayerDragData(event)
 }
 
-function hasLayerDragData(event: DragEventLike) {
-  return Array.from(event.dataTransfer.types).includes('application/x-node-zsb-layer')
+function hasLayerDragData(event: DragEvent) {
+  const transfer = event.dataTransfer
+  if (!transfer) return false
+  return Array.from(transfer.types).includes('application/x-node-zsb-layer')
 }
 
-function getDraggedLayerNode(event: DragEventLike): LayerNodeRef | null {
+function getDraggedLayerNode(event: DragEvent): LayerNodeRef | null {
   try {
-    const raw = event.dataTransfer.getData('application/x-node-zsb-layer')
+    const raw = event.dataTransfer?.getData('application/x-node-zsb-layer')
     return raw ? JSON.parse(raw) : null
   } catch {
     return null
@@ -481,7 +475,7 @@ function getDraggedLayerNode(event: DragEventLike): LayerNodeRef | null {
 }
 
 function startGroupRename(
-  nameElement: any,
+  nameElement: HTMLElement,
   group: GroupLayerNode,
   onRenameLayerGroup: (groupId: string, name: string) => void,
 ) {
@@ -502,7 +496,7 @@ function startGroupRename(
     onRenameLayerGroup(group.id, name)
   }
 
-  input.addEventListener('keydown', (event: { key: string, preventDefault(): void }) => {
+  input.addEventListener('keydown', (event: KeyboardEvent) => {
     if (event.key === 'Enter') {
       event.preventDefault()
       commit()

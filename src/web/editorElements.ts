@@ -1,130 +1,266 @@
-declare const document: {
-  querySelector(selector: string): any
+export interface EditorElements {
+  codeInput: HTMLTextAreaElement
+  codeOutput: HTMLTextAreaElement
+  shell: HTMLElement
+  leftPanelResizer: HTMLElement
+  rightPanelResizer: HTMLElement
+  fileMenuButton: HTMLButtonElement
+  fileMenu: HTMLElement
+  editMenuButton: HTMLButtonElement
+  editMenu: HTMLElement
+  openLocalBoardDialog: HTMLButtonElement
+  newLocalBoard: HTMLButtonElement
+  manageLocalBoards: HTMLButtonElement
+  openImportDialog: HTMLButtonElement
+  importProjectFile: HTMLButtonElement
+  projectFileInput: HTMLInputElement
+  openExportCodeDialog: HTMLButtonElement
+  exportProjectFile: HTMLButtonElement
+  openExportImageDialog: HTMLButtonElement
+  localBoardDialog: HTMLDialogElement
+  localBoardNameDialog: HTMLDialogElement
+  importDialog: HTMLDialogElement
+  exportCodeDialog: HTMLDialogElement
+  exportImageDialog: HTMLDialogElement
+  closeLocalBoardDialog: HTMLButtonElement
+  closeLocalBoardNameDialog: HTMLButtonElement
+  closeImportDialog: HTMLButtonElement
+  closeExportCodeDialog: HTMLButtonElement
+  closeExportImageDialog: HTMLButtonElement
+  loadCode: HTMLButtonElement
+  copyExportCode: HTMLButtonElement
+  copyExportImage: HTMLButtonElement
+  downloadPreviewImage: HTMLButtonElement
+  background: HTMLElement
+  assetTabBackground: HTMLButtonElement
+  assetTabObjects: HTMLButtonElement
+  assetPanelBackground: HTMLElement
+  assetPanelObjects: HTMLElement
+  localBoardList: HTMLElement
+  localBoardNameInput: HTMLInputElement
+  localBoardNameError: HTMLElement
+  confirmLocalBoardName: HTMLButtonElement
+  selectAllLocalBoards: HTMLButtonElement
+  clearSelectedLocalBoards: HTMLButtonElement
+  deleteSelectedLocalBoards: HTMLButtonElement
+  saveLocalBoard: HTMLButtonElement
+  saveAsLocalBoard: HTMLButtonElement
+  quickSaveLocalBoard: HTMLButtonElement
+  quickSaveAsLocalBoard: HTMLButtonElement
+  fileName: HTMLInputElement
+  boardName: HTMLInputElement
+  paletteTabs: HTMLElement
+  palette: HTMLElement
+  layers: HTMLElement
+  layerCount: HTMLElement
+  stageHost: HTMLElement
+  preview: HTMLImageElement
+  status: HTMLElement
+  contextMenu: HTMLElement
+  undo: HTMLButtonElement
+  redo: HTMLButtonElement
+  clearBoard: HTMLButtonElement
+  copyObject: HTMLButtonElement
+  deleteObject: HTMLButtonElement
+  duplicateObject: HTMLButtonElement
+  pasteObject: HTMLButtonElement
+  menuUndo: HTMLButtonElement
+  menuRedo: HTMLButtonElement
+  menuCopyObject: HTMLButtonElement
+  menuPasteObject: HTMLButtonElement
+  menuDuplicateObject: HTMLButtonElement
+  menuDeleteObject: HTMLButtonElement
+  menuClearBoard: HTMLButtonElement
+  moveTop: HTMLButtonElement
+  moveUp: HTMLButtonElement
+  moveDown: HTMLButtonElement
+  moveBottom: HTMLButtonElement
+  groupLayers: HTMLButtonElement
+  ungroupLayers: HTMLButtonElement
+  alignLeft: HTMLButtonElement
+  alignCenterX: HTMLButtonElement
+  alignRight: HTMLButtonElement
+  alignTop: HTMLButtonElement
+  alignCenterY: HTMLButtonElement
+  alignBottom: HTMLButtonElement
+  zoomOut: HTMLButtonElement
+  zoomSelect: HTMLInputElement
+  zoomIn: HTMLButtonElement
+  zoomValue: HTMLOutputElement
+  fitStage: HTMLButtonElement
+  snap: HTMLInputElement
+  grid: HTMLInputElement
+  gridDensity: HTMLInputElement
+  gridDensityValue: HTMLOutputElement
+  gridOpacity: HTMLInputElement
+  gridOpacityValue: HTMLOutputElement
+  emptyState: HTMLElement
+  inspector: HTMLElement
+  type: HTMLInputElement
+  x: HTMLInputElement
+  y: HTMLInputElement
+  size: HTMLInputElement
+  angle: HTMLInputElement
+  color: HTMLInputElement
+  colorTrigger: HTMLButtonElement
+  colorPreview: HTMLElement
+  colorPopover: HTMLElement
+  colorSaturation: HTMLElement
+  colorSaturationHandle: HTMLElement
+  colorHue: HTMLInputElement
+  colorText: HTMLInputElement
+  colorSwatches: HTMLElement
+  transparency: HTMLInputElement
+  transparencyRange: HTMLInputElement
+  text: HTMLInputElement
+  endX: HTMLInputElement
+  endY: HTMLInputElement
+  arc: HTMLInputElement
+  arcRange: HTMLInputElement
+  donut: HTMLInputElement
+  donutRange: HTMLInputElement
+  hidden: HTMLInputElement
+  locked: HTMLInputElement
 }
 
-export function getEditorElements() {
+type ElementConstructor<T extends Element> = {
+  new (...args: never[]): T
+}
+
+export function getEditorElements(): EditorElements {
   return {
-    codeInput: document.querySelector('#code-input'),
-    codeOutput: document.querySelector('#code-output'),
-    shell: document.querySelector('#editor-shell'),
-    leftPanelResizer: document.querySelector('#left-panel-resizer'),
-    rightPanelResizer: document.querySelector('#right-panel-resizer'),
-    fileMenuButton: document.querySelector('#file-menu-button'),
-    fileMenu: document.querySelector('#file-menu'),
-    editMenuButton: document.querySelector('#edit-menu-button'),
-    editMenu: document.querySelector('#edit-menu'),
-    openLocalBoardDialog: document.querySelector('#open-local-board-dialog'),
-    newLocalBoard: document.querySelector('#new-local-board'),
-    manageLocalBoards: document.querySelector('#manage-local-boards'),
-    openImportDialog: document.querySelector('#open-import-dialog'),
-    importProjectFile: document.querySelector('#import-project-file'),
-    projectFileInput: document.querySelector('#project-file-input'),
-    openExportCodeDialog: document.querySelector('#open-export-code-dialog'),
-    exportProjectFile: document.querySelector('#export-project-file'),
-    openExportImageDialog: document.querySelector('#open-export-image-dialog'),
-    localBoardDialog: document.querySelector('#local-board-dialog'),
-    localBoardNameDialog: document.querySelector('#local-board-name-dialog'),
-    importDialog: document.querySelector('#import-dialog'),
-    exportCodeDialog: document.querySelector('#export-code-dialog'),
-    exportImageDialog: document.querySelector('#export-image-dialog'),
-    closeLocalBoardDialog: document.querySelector('#close-local-board-dialog'),
-    closeLocalBoardNameDialog: document.querySelector('#close-local-board-name-dialog'),
-    closeImportDialog: document.querySelector('#close-import-dialog'),
-    closeExportCodeDialog: document.querySelector('#close-export-code-dialog'),
-    closeExportImageDialog: document.querySelector('#close-export-image-dialog'),
-    loadCode: document.querySelector('#load-code'),
-    copyExportCode: document.querySelector('#copy-export-code'),
-    copyExportImage: document.querySelector('#copy-export-image'),
-    downloadPreviewImage: document.querySelector('#download-preview-image'),
-    background: document.querySelector('#background-list'),
-    assetTabBackground: document.querySelector('#asset-tab-background'),
-    assetTabObjects: document.querySelector('#asset-tab-objects'),
-    assetPanelBackground: document.querySelector('#asset-panel-background'),
-    assetPanelObjects: document.querySelector('#asset-panel-objects'),
-    localBoardList: document.querySelector('#local-board-list'),
-    localBoardNameInput: document.querySelector('#local-board-name-input'),
-    localBoardNameError: document.querySelector('#local-board-name-error'),
-    confirmLocalBoardName: document.querySelector('#confirm-local-board-name'),
-    selectAllLocalBoards: document.querySelector('#select-all-local-boards'),
-    clearSelectedLocalBoards: document.querySelector('#clear-selected-local-boards'),
-    deleteSelectedLocalBoards: document.querySelector('#delete-selected-local-boards'),
-    saveLocalBoard: document.querySelector('#save-local-board'),
-    saveAsLocalBoard: document.querySelector('#save-as-local-board'),
-    quickSaveLocalBoard: document.querySelector('#quick-save-local-board'),
-    quickSaveAsLocalBoard: document.querySelector('#quick-save-as-local-board'),
-    fileName: document.querySelector('#file-name'),
-    boardName: document.querySelector('#board-name'),
-    paletteTabs: document.querySelector('#palette-tabs'),
-    palette: document.querySelector('#palette'),
-    layers: document.querySelector('#layers'),
-    layerCount: document.querySelector('#layer-count'),
-    stageHost: document.querySelector('#stage-host'),
-    preview: document.querySelector('#preview-image'),
-    status: document.querySelector('#status'),
-    contextMenu: document.querySelector('#context-menu'),
-    undo: document.querySelector('#undo-action'),
-    redo: document.querySelector('#redo-action'),
-    clearBoard: document.querySelector('#clear-board'),
-    copyObject: document.querySelector('#copy-object'),
-    deleteObject: document.querySelector('#delete-object'),
-    duplicateObject: document.querySelector('#duplicate-object'),
-    pasteObject: document.querySelector('#paste-object'),
-    menuUndo: document.querySelector('#menu-undo-action'),
-    menuRedo: document.querySelector('#menu-redo-action'),
-    menuCopyObject: document.querySelector('#menu-copy-object'),
-    menuPasteObject: document.querySelector('#menu-paste-object'),
-    menuDuplicateObject: document.querySelector('#menu-duplicate-object'),
-    menuDeleteObject: document.querySelector('#menu-delete-object'),
-    menuClearBoard: document.querySelector('#menu-clear-board'),
-    moveTop: document.querySelector('#move-top'),
-    moveUp: document.querySelector('#move-up'),
-    moveDown: document.querySelector('#move-down'),
-    moveBottom: document.querySelector('#move-bottom'),
-    groupLayers: document.querySelector('#group-layers'),
-    ungroupLayers: document.querySelector('#ungroup-layers'),
-    alignLeft: document.querySelector('#align-left'),
-    alignCenterX: document.querySelector('#align-center-x'),
-    alignRight: document.querySelector('#align-right'),
-    alignTop: document.querySelector('#align-top'),
-    alignCenterY: document.querySelector('#align-center-y'),
-    alignBottom: document.querySelector('#align-bottom'),
-    zoomOut: document.querySelector('#zoom-out'),
-    zoomSelect: document.querySelector('#zoom-select'),
-    zoomIn: document.querySelector('#zoom-in'),
-    zoomValue: document.querySelector('#zoom-value'),
-    fitStage: document.querySelector('#fit-stage'),
-    snap: document.querySelector('#snap-toggle'),
-    grid: document.querySelector('#grid-toggle'),
-    gridDensity: document.querySelector('#grid-density'),
-    gridDensityValue: document.querySelector('#grid-density-value'),
-    gridOpacity: document.querySelector('#grid-opacity'),
-    gridOpacityValue: document.querySelector('#grid-opacity-value'),
-    emptyState: document.querySelector('#empty-state'),
-    inspector: document.querySelector('#inspector-form'),
-    type: document.querySelector('#object-type'),
-    x: document.querySelector('#object-x'),
-    y: document.querySelector('#object-y'),
-    size: document.querySelector('#object-size'),
-    angle: document.querySelector('#object-angle'),
-    color: document.querySelector('#object-color'),
-    colorTrigger: document.querySelector('#object-color-trigger'),
-    colorPreview: document.querySelector('#object-color-preview'),
-    colorPopover: document.querySelector('#object-color-popover'),
-    colorSaturation: document.querySelector('#object-color-saturation'),
-    colorSaturationHandle: document.querySelector('#object-color-saturation-handle'),
-    colorHue: document.querySelector('#object-color-hue'),
-    colorText: document.querySelector('#object-color-text'),
-    colorSwatches: document.querySelector('#object-color-swatches'),
-    transparency: document.querySelector('#object-transparency'),
-    transparencyRange: document.querySelector('#object-transparency-range'),
-    text: document.querySelector('#object-text'),
-    endX: document.querySelector('#object-end-x'),
-    endY: document.querySelector('#object-end-y'),
-    arc: document.querySelector('#object-arc'),
-    arcRange: document.querySelector('#object-arc-range'),
-    donut: document.querySelector('#object-donut'),
-    donutRange: document.querySelector('#object-donut-range'),
-    hidden: document.querySelector('#object-hidden'),
-    locked: document.querySelector('#object-locked'),
+    codeInput: queryElement('#code-input', HTMLTextAreaElement),
+    codeOutput: queryElement('#code-output', HTMLTextAreaElement),
+    shell: queryElement('#editor-shell', HTMLElement),
+    leftPanelResizer: queryElement('#left-panel-resizer', HTMLElement),
+    rightPanelResizer: queryElement('#right-panel-resizer', HTMLElement),
+    fileMenuButton: queryElement('#file-menu-button', HTMLButtonElement),
+    fileMenu: queryElement('#file-menu', HTMLElement),
+    editMenuButton: queryElement('#edit-menu-button', HTMLButtonElement),
+    editMenu: queryElement('#edit-menu', HTMLElement),
+    openLocalBoardDialog: queryElement('#open-local-board-dialog', HTMLButtonElement),
+    newLocalBoard: queryElement('#new-local-board', HTMLButtonElement),
+    manageLocalBoards: queryElement('#manage-local-boards', HTMLButtonElement),
+    openImportDialog: queryElement('#open-import-dialog', HTMLButtonElement),
+    importProjectFile: queryElement('#import-project-file', HTMLButtonElement),
+    projectFileInput: queryElement('#project-file-input', HTMLInputElement),
+    openExportCodeDialog: queryElement('#open-export-code-dialog', HTMLButtonElement),
+    exportProjectFile: queryElement('#export-project-file', HTMLButtonElement),
+    openExportImageDialog: queryElement('#open-export-image-dialog', HTMLButtonElement),
+    localBoardDialog: queryElement('#local-board-dialog', HTMLDialogElement),
+    localBoardNameDialog: queryElement('#local-board-name-dialog', HTMLDialogElement),
+    importDialog: queryElement('#import-dialog', HTMLDialogElement),
+    exportCodeDialog: queryElement('#export-code-dialog', HTMLDialogElement),
+    exportImageDialog: queryElement('#export-image-dialog', HTMLDialogElement),
+    closeLocalBoardDialog: queryElement('#close-local-board-dialog', HTMLButtonElement),
+    closeLocalBoardNameDialog: queryElement('#close-local-board-name-dialog', HTMLButtonElement),
+    closeImportDialog: queryElement('#close-import-dialog', HTMLButtonElement),
+    closeExportCodeDialog: queryElement('#close-export-code-dialog', HTMLButtonElement),
+    closeExportImageDialog: queryElement('#close-export-image-dialog', HTMLButtonElement),
+    loadCode: queryElement('#load-code', HTMLButtonElement),
+    copyExportCode: queryElement('#copy-export-code', HTMLButtonElement),
+    copyExportImage: queryElement('#copy-export-image', HTMLButtonElement),
+    downloadPreviewImage: queryElement('#download-preview-image', HTMLButtonElement),
+    background: queryElement('#background-list', HTMLElement),
+    assetTabBackground: queryElement('#asset-tab-background', HTMLButtonElement),
+    assetTabObjects: queryElement('#asset-tab-objects', HTMLButtonElement),
+    assetPanelBackground: queryElement('#asset-panel-background', HTMLElement),
+    assetPanelObjects: queryElement('#asset-panel-objects', HTMLElement),
+    localBoardList: queryElement('#local-board-list', HTMLElement),
+    localBoardNameInput: queryElement('#local-board-name-input', HTMLInputElement),
+    localBoardNameError: queryElement('#local-board-name-error', HTMLElement),
+    confirmLocalBoardName: queryElement('#confirm-local-board-name', HTMLButtonElement),
+    selectAllLocalBoards: queryElement('#select-all-local-boards', HTMLButtonElement),
+    clearSelectedLocalBoards: queryElement('#clear-selected-local-boards', HTMLButtonElement),
+    deleteSelectedLocalBoards: queryElement('#delete-selected-local-boards', HTMLButtonElement),
+    saveLocalBoard: queryElement('#save-local-board', HTMLButtonElement),
+    saveAsLocalBoard: queryElement('#save-as-local-board', HTMLButtonElement),
+    quickSaveLocalBoard: queryElement('#quick-save-local-board', HTMLButtonElement),
+    quickSaveAsLocalBoard: queryElement('#quick-save-as-local-board', HTMLButtonElement),
+    fileName: queryElement('#file-name', HTMLInputElement),
+    boardName: queryElement('#board-name', HTMLInputElement),
+    paletteTabs: queryElement('#palette-tabs', HTMLElement),
+    palette: queryElement('#palette', HTMLElement),
+    layers: queryElement('#layers', HTMLElement),
+    layerCount: queryElement('#layer-count', HTMLElement),
+    stageHost: queryElement('#stage-host', HTMLElement),
+    preview: queryElement('#preview-image', HTMLImageElement),
+    status: queryElement('#status', HTMLElement),
+    contextMenu: queryElement('#context-menu', HTMLElement),
+    undo: queryElement('#undo-action', HTMLButtonElement),
+    redo: queryElement('#redo-action', HTMLButtonElement),
+    clearBoard: queryElement('#clear-board', HTMLButtonElement),
+    copyObject: queryElement('#copy-object', HTMLButtonElement),
+    deleteObject: queryElement('#delete-object', HTMLButtonElement),
+    duplicateObject: queryElement('#duplicate-object', HTMLButtonElement),
+    pasteObject: queryElement('#paste-object', HTMLButtonElement),
+    menuUndo: queryElement('#menu-undo-action', HTMLButtonElement),
+    menuRedo: queryElement('#menu-redo-action', HTMLButtonElement),
+    menuCopyObject: queryElement('#menu-copy-object', HTMLButtonElement),
+    menuPasteObject: queryElement('#menu-paste-object', HTMLButtonElement),
+    menuDuplicateObject: queryElement('#menu-duplicate-object', HTMLButtonElement),
+    menuDeleteObject: queryElement('#menu-delete-object', HTMLButtonElement),
+    menuClearBoard: queryElement('#menu-clear-board', HTMLButtonElement),
+    moveTop: queryElement('#move-top', HTMLButtonElement),
+    moveUp: queryElement('#move-up', HTMLButtonElement),
+    moveDown: queryElement('#move-down', HTMLButtonElement),
+    moveBottom: queryElement('#move-bottom', HTMLButtonElement),
+    groupLayers: queryElement('#group-layers', HTMLButtonElement),
+    ungroupLayers: queryElement('#ungroup-layers', HTMLButtonElement),
+    alignLeft: queryElement('#align-left', HTMLButtonElement),
+    alignCenterX: queryElement('#align-center-x', HTMLButtonElement),
+    alignRight: queryElement('#align-right', HTMLButtonElement),
+    alignTop: queryElement('#align-top', HTMLButtonElement),
+    alignCenterY: queryElement('#align-center-y', HTMLButtonElement),
+    alignBottom: queryElement('#align-bottom', HTMLButtonElement),
+    zoomOut: queryElement('#zoom-out', HTMLButtonElement),
+    zoomSelect: queryElement('#zoom-select', HTMLInputElement),
+    zoomIn: queryElement('#zoom-in', HTMLButtonElement),
+    zoomValue: queryElement('#zoom-value', HTMLOutputElement),
+    fitStage: queryElement('#fit-stage', HTMLButtonElement),
+    snap: queryElement('#snap-toggle', HTMLInputElement),
+    grid: queryElement('#grid-toggle', HTMLInputElement),
+    gridDensity: queryElement('#grid-density', HTMLInputElement),
+    gridDensityValue: queryElement('#grid-density-value', HTMLOutputElement),
+    gridOpacity: queryElement('#grid-opacity', HTMLInputElement),
+    gridOpacityValue: queryElement('#grid-opacity-value', HTMLOutputElement),
+    emptyState: queryElement('#empty-state', HTMLElement),
+    inspector: queryElement('#inspector-form', HTMLElement),
+    type: queryElement('#object-type', HTMLInputElement),
+    x: queryElement('#object-x', HTMLInputElement),
+    y: queryElement('#object-y', HTMLInputElement),
+    size: queryElement('#object-size', HTMLInputElement),
+    angle: queryElement('#object-angle', HTMLInputElement),
+    color: queryElement('#object-color', HTMLInputElement),
+    colorTrigger: queryElement('#object-color-trigger', HTMLButtonElement),
+    colorPreview: queryElement('#object-color-preview', HTMLElement),
+    colorPopover: queryElement('#object-color-popover', HTMLElement),
+    colorSaturation: queryElement('#object-color-saturation', HTMLElement),
+    colorSaturationHandle: queryElement('#object-color-saturation-handle', HTMLElement),
+    colorHue: queryElement('#object-color-hue', HTMLInputElement),
+    colorText: queryElement('#object-color-text', HTMLInputElement),
+    colorSwatches: queryElement('#object-color-swatches', HTMLElement),
+    transparency: queryElement('#object-transparency', HTMLInputElement),
+    transparencyRange: queryElement('#object-transparency-range', HTMLInputElement),
+    text: queryElement('#object-text', HTMLInputElement),
+    endX: queryElement('#object-end-x', HTMLInputElement),
+    endY: queryElement('#object-end-y', HTMLInputElement),
+    arc: queryElement('#object-arc', HTMLInputElement),
+    arcRange: queryElement('#object-arc-range', HTMLInputElement),
+    donut: queryElement('#object-donut', HTMLInputElement),
+    donutRange: queryElement('#object-donut-range', HTMLInputElement),
+    hidden: queryElement('#object-hidden', HTMLInputElement),
+    locked: queryElement('#object-locked', HTMLInputElement),
   }
+}
+
+function queryElement<T extends Element>(
+  selector: string,
+  constructor: ElementConstructor<T>,
+): T {
+  const element = document.querySelector(selector)
+  if (!(element instanceof constructor)) {
+    throw new Error(`Missing editor element: ${selector}`)
+  }
+  return element
 }
