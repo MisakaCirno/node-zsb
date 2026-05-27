@@ -45,12 +45,45 @@ const MARQUEE_THEMES = {
   },
 }
 
-type KonvaNode = any
 type MarqueeMode = 'contained' | 'intersect'
 
 interface Point {
   x: number
   y: number
+}
+
+interface KonvaEvent {
+  cancelBubble?: boolean
+  evt?: {
+    button?: number
+    ctrlKey?: boolean
+    metaKey?: boolean
+    shiftKey?: boolean
+  }
+  target: KonvaNode
+}
+
+interface KonvaNode {
+  add(...nodes: KonvaNode[]): void
+  draggable(value: boolean): void
+  getAttr(name: string): unknown
+  getLayer(): unknown
+  on(eventName: string, handler: (event: KonvaEvent) => void): void
+  opacity(value: number): void
+  points(points: number[]): void
+  rotation(): number
+  scaleX(value?: number): number
+  scaleY(value?: number): number
+  setAttr(name: string, value: unknown): void
+  x(): number
+  y(): number
+}
+
+interface ClipContext {
+  arc(x: number, y: number, radius: number, startAngle: number, endAngle: number): void
+  beginPath(): void
+  closePath(): void
+  moveTo(x: number, y: number): void
 }
 
 interface StageRendererDeps {
@@ -130,7 +163,7 @@ export function createStageRenderer({
   let didMarqueeDrag = false
   let suppressNextStageClick = false
 
-  stage.on('click tap', (event: any) => {
+  stage.on('click tap', (event: KonvaEvent) => {
     if (event.evt?.button && event.evt.button !== 0) return
     if (suppressNextStageClick) {
       suppressNextStageClick = false
@@ -140,7 +173,7 @@ export function createStageRenderer({
       selectObject(-1)
     }
   })
-  stage.on('mousedown touchstart', (event: any) => {
+  stage.on('mousedown touchstart', (event: KonvaEvent) => {
     if (event.evt?.button && event.evt.button !== 0) return
     if (event.target !== stage && event.target.getLayer() !== boardLayer) return
     marqueeStart = getPointerScenePoint()
@@ -218,7 +251,7 @@ export function createStageRenderer({
     const selectedIndexes = getSelectedIndexes(state)
     const selectedObjects = selectedIndexes.map((index) => state.board.objects[index])
     const selectedNodes = nodes.filter((node) => {
-      const index = node.getAttr('objectIndex')
+      const index = Number(node.getAttr('objectIndex'))
       return selectedIndexes.includes(index) && !state.board.objects[index]?.locked
     })
     const canScaleSelection = selectedObjects.length > 0
@@ -335,7 +368,7 @@ export function createStageRenderer({
     node.setAttr('objectIndex', index)
     node.draggable(!object.locked)
     node.opacity(objectOpacity(object, { hiddenOpacity: 0.15 }))
-    node.on('click tap', (event: any) => {
+    node.on('click tap', (event: KonvaEvent) => {
       if (event.evt?.button && event.evt.button !== 0) return
       event.cancelBubble = true
       selectObject(index, {
@@ -466,16 +499,16 @@ export function createStageRenderer({
     endHandle: KonvaNode
   }) {
     for (const handle of [startHandle, endHandle]) {
-      handle.on('dragstart', (event: any) => {
+      handle.on('dragstart', (event: KonvaEvent) => {
         event.cancelBubble = true
         recordHistory()
       })
-      handle.on('dragmove', (event: any) => {
+      handle.on('dragmove', (event: KonvaEvent) => {
         event.cancelBubble = true
         line.points([startHandle.x(), startHandle.y(), endHandle.x(), endHandle.y()])
         objectLayer.batchDraw()
       })
-      handle.on('dragend', (event: any) => {
+      handle.on('dragend', (event: KonvaEvent) => {
         event.cancelBubble = true
         commitLineEndpointDrag(object, group, startHandle, endHandle)
       })
@@ -555,7 +588,7 @@ export function createStageRenderer({
       rotation: object.angle ?? 0,
     })
     if (arcAngle !== 360) {
-      group.clipFunc((ctx: any) => {
+      group.clipFunc((ctx: ClipContext) => {
         const r = 512
         const startAngle = -Math.PI / 2
         const endAngle = startAngle + (arcAngle * Math.PI) / 180
