@@ -22,9 +22,9 @@ import type {
 interface LocalBoardsPanelDeps {
   state: EditorState
   elements: LocalBoardsPanelElements
-  recordHistory(): void
   renderAll(): Promise<void>
   renderBackgroundOptions(): void
+  updateHistoryButtons(): void
   showStatus(message: string, options?: { type?: string }): void
   confirmAction(message: string): boolean
   stage: StagePreview
@@ -116,9 +116,9 @@ interface RenderPreviewResponse {
 export function createLocalBoardsPanel({
   state,
   elements,
-  recordHistory,
   renderAll,
   renderBackgroundOptions,
+  updateHistoryButtons,
   showStatus,
   confirmAction,
   stage,
@@ -209,6 +209,7 @@ export function createLocalBoardsPanel({
     state.selectedIndexes = []
     state.history = []
     state.future = []
+    updateHistoryButtons()
     setCurrentFile('')
     elements.boardName.value = ''
     renderBackgroundOptions()
@@ -226,7 +227,6 @@ export function createLocalBoardsPanel({
       const shouldSave = confirmAction('当前文件有未保存修改，打开其他文件前是否先保存当前文件？')
       if (shouldSave && !await saveLocalBoard()) return false
     }
-    recordHistory()
     const project = file.project ? normalizeProject(file.project) : null
     state.board = normalizeBoard(project ? flattenProjectToBoard(project) : file.board)
     state.layerTree = project?.layers ?? state.board.objects.map((object) => ({
@@ -235,6 +235,9 @@ export function createLocalBoardsPanel({
     })).filter((node): node is LayerNode => Boolean(node.id))
     state.selectedIndex = -1
     state.selectedIndexes = []
+    state.history = []
+    state.future = []
+    updateHistoryButtons()
     setCurrentFile(file.name)
     elements.boardName.value = state.board.name ?? ''
     renderBackgroundOptions()

@@ -29,6 +29,7 @@ interface EditorControllersDeps {
   stage: StageLike & { toDataURL(options?: { pixelRatio?: number }): string }
   stageRenderer: GridRenderer
   state: EditorState
+  updateHistoryButtons(): void
 }
 
 export function createEditorControllers({
@@ -44,6 +45,7 @@ export function createEditorControllers({
   stage,
   stageRenderer,
   state,
+  updateHistoryButtons,
 }: EditorControllersDeps) {
   const objectCommands = createObjectCommands({
     state,
@@ -104,9 +106,9 @@ export function createEditorControllers({
   const localBoardsPanel = createLocalBoardsPanel({
     state,
     elements,
-    recordHistory,
     renderAll,
     renderBackgroundOptions,
+    updateHistoryButtons,
     showStatus,
     confirmAction,
     stage,

@@ -102,6 +102,7 @@ export function createEditorApp({
     stage,
     stageRenderer,
     state,
+    updateHistoryButtons,
   })
   const {
     addObject,

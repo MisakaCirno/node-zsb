@@ -1457,6 +1457,9 @@ test('editor saves, loads, and deletes local browser board slots', async ({
   await expect(page.locator('#board-name')).toHaveValue('分享草稿')
   await expect(page.locator('#status')).toContainText('已打开文件 本地草稿')
   await expect(page.locator('#local-board-dialog')).toBeHidden()
+  await expect(page.locator('#undo-action')).toBeDisabled()
+  await expect(page.locator('#file-name')).toHaveValue('本地草稿')
+  await expect(page.locator('#board-name')).toHaveValue('分享草稿')
   await openLocalBoardDialog(page)
 
   page.once('dialog', async (dialog) => {
