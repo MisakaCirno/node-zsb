@@ -194,6 +194,9 @@ export function createStageRenderer({
   let marqueeCurrent: Point | null = null
   let didMarqueeDrag = false
   let suppressNextStageClick = false
+  let isTransformingSelection = false
+  let pendingTransformCommit = 0
+  const renderedNodesByIndex = new Map<number, KonvaNode>()
 
   stage.on('click tap', (event: KonvaEvent) => {
     if (event.evt?.button && event.evt.button !== 0) return
@@ -269,6 +272,7 @@ export function createStageRenderer({
 
   async function renderObjects() {
     objectLayer.destroyChildren()
+    renderedNodesByIndex.clear()
     const nodes: KonvaNode[] = []
     for (let index = state.board.objects.length - 1; index >= 0; index--) {
       const object = state.board.objects[index]
@@ -276,6 +280,7 @@ export function createStageRenderer({
       const node = await createNode(object, index)
       if (node) {
         nodes.push(node)
+        renderedNodesByIndex.set(index, node)
         objectLayer.add(node)
       }
     }
@@ -415,15 +420,47 @@ export function createStageRenderer({
       handleDragEnd(node, object)
     })
     node.on('transformstart', () => {
-      recordHistory()
+      if (!isTransformingSelection) {
+        recordHistory()
+      }
+      isTransformingSelection = true
     })
     node.on('transformend', () => {
-      commitNodeTransform(node, object)
+      scheduleSelectedTransformCommit()
     })
     return node
   }
 
-  function commitNodeTransform(node: KonvaNode, object: BoardObject) {
+  function scheduleSelectedTransformCommit() {
+    if (pendingTransformCommit) {
+      return
+    }
+    pendingTransformCommit = window.requestAnimationFrame(() => {
+      pendingTransformCommit = 0
+      commitSelectedNodeTransforms()
+    })
+  }
+
+  function commitSelectedNodeTransforms() {
+    const selectedIndexes = getSelectedIndexes(state)
+    let hasCommittedTransform = false
+    for (const index of selectedIndexes) {
+      const object = state.board.objects[index]
+      const node = renderedNodesByIndex.get(index)
+      if (!object || !node) continue
+      applyNodeTransform(node, object)
+      hasCommittedTransform = true
+    }
+    isTransformingSelection = false
+    if (!hasCommittedTransform) {
+      return
+    }
+    renderInspector()
+    renderLayers()
+    renderAll()
+  }
+
+  function applyNodeTransform(node: KonvaNode, object: BoardObject) {
     if (object.type !== 'line') {
       object.size = clamp(
         Math.round(Math.max(Math.abs(node.scaleX()), Math.abs(node.scaleY())) * 100),
@@ -446,9 +483,6 @@ export function createStageRenderer({
       object.y = point.y
     }
     object.angle = normalizeAngle(node.rotation())
-    renderInspector()
-    renderLayers()
-    renderAll()
   }
 
   function createTextNode(object: BoardObject): KonvaNode {

@@ -23,7 +23,7 @@ async function openLocalBoardDialog(page: Page) {
 }
 
 async function openFileMenu(page: Page) {
-  if (await page.locator('#file-menu').isHidden()) {
+  for (let attempt = 0; attempt < 2 && await page.locator('#file-menu').isHidden(); attempt += 1) {
     await page.locator('#file-menu-button').click()
   }
   await expect(page.locator('#file-menu')).toBeVisible()
@@ -355,6 +355,11 @@ test('editor saves reusable presets and inserts them from the preset tab', async
   await expect(page.locator('#save-preset')).toBeEnabled()
   await page.locator('#save-preset').click()
   await expect(page.locator('#preset-name-dialog')).toBeVisible()
+  await expect(page.locator('#preset-name-dialog form')).toHaveClass(/dialog-panel/)
+  await expect(page.locator('#preset-name-dialog header')).toHaveClass(/dialog-header/)
+  await expect(page.locator('#preset-name-dialog footer')).toHaveClass(/dialog-actions/)
+  const presetNameInputBox = await page.locator('#preset-name-input').boundingBox()
+  expect(presetNameInputBox?.width).toBeGreaterThan(240)
   await page.locator('#preset-name-input').fill('开场站位')
   await page.locator('#confirm-preset-name').click()
 
@@ -362,6 +367,10 @@ test('editor saves reusable presets and inserts them from the preset tab', async
   await expect(presetCard).toHaveCount(1)
   await expect(presetCard).toContainText('2 个对象')
   await expect(presetCard.locator('.preset-preview img')).toHaveAttribute('src', /^blob:/)
+  const presetPreviewBox = await presetCard.locator('.preset-preview').boundingBox()
+  const presetPreviewImageBox = await presetCard.locator('.preset-preview img').boundingBox()
+  expect(presetPreviewImageBox?.width).toBeLessThanOrEqual(presetPreviewBox?.width ?? 0)
+  expect(presetPreviewImageBox?.height).toBeLessThanOrEqual(presetPreviewBox?.height ?? 0)
   const storedPreset = await page.evaluate(() => {
     const presets = JSON.parse(localStorage.getItem('node-zsb-editor-local-presets-v1') ?? '[]')
     return presets[0]
@@ -923,6 +932,73 @@ test('editor scales the selected object from the canvas transformer', async ({ p
 
   await page.getByRole('button', { name: '撤销' }).click()
   await expect(page.locator('#object-size')).toHaveValue('100')
+})
+
+test('editor commits multi-selected canvas scaling in one stable batch', async ({ page }) => {
+  await page.goto('/editor')
+  await expect(page.locator('#layers')).toContainText('tank')
+
+  page.once('dialog', async (dialog) => {
+    await dialog.accept()
+  })
+  await page.locator('#clear-board').click()
+  await expect(page.locator('#layers .layer-row')).toHaveCount(0)
+
+  await page.getByTitle('tank').first().click()
+  await page.locator('#object-x').fill('220')
+  await page.locator('#object-y').fill('160')
+  await page.getByTitle('tank').first().click()
+  await page.locator('#object-x').fill('320')
+  await page.locator('#object-y').fill('220')
+
+  const canvas = page.locator('#stage-host canvas').first()
+  const box = await canvas.boundingBox()
+  if (!box) throw new Error('Canvas is not visible')
+  const scale = box.width / 1024
+  const point = (x: number, y: number) => ({
+    x: box.x + x * 2 * scale,
+    y: box.y + y * 2 * scale,
+  })
+
+  await page.mouse.click(point(220, 160).x, point(220, 160).y)
+  await page.keyboard.down('Control')
+  await page.mouse.click(point(320, 220).x, point(320, 220).y)
+  await page.keyboard.up('Control')
+  await expect(page.locator('#layers .layer-row.active')).toHaveCount(2)
+
+  const from = point(204, 144)
+  const to = point(176, 116)
+  await page.mouse.move(from.x, from.y)
+  await page.mouse.down()
+  await page.mouse.move(to.x, to.y, { steps: 8 })
+  await page.mouse.up()
+
+  const transformed = await page.waitForFunction(() => {
+    const raw = localStorage.getItem('node-zsb-editor-board-v1')
+    if (!raw) return null
+    const saved = JSON.parse(raw)
+    const objects = Object.values(saved.objects ?? {}) as Array<{ size?: number, x: number, y: number }>
+    if (objects.length !== 2) return null
+    if (!objects.every((object: { size?: number }) => (object.size ?? 0) > 100)) return null
+    return objects.map((object) => ({
+      size: object.size ?? 100,
+      x: object.x,
+      y: object.y,
+    }))
+  })
+  const objects = await transformed.jsonValue() as Array<{ size: number, x: number, y: number }>
+  expect(objects).toHaveLength(2)
+  expect(objects.every((object) =>
+    Number.isFinite(object.x)
+    && Number.isFinite(object.y)
+    && object.x >= 0
+    && object.x <= 512
+    && object.y >= 0
+    && object.y <= 384
+  )).toBe(true)
+  const [firstObject, secondObject] = objects
+  if (!firstObject || !secondObject) throw new Error('Expected two transformed objects')
+  expect(Math.abs(secondObject.x - firstObject.x)).toBeGreaterThan(70)
 })
 
 test('editor multi-selects objects on the canvas and aligns them', async ({ page }) => {

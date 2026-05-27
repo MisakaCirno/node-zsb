@@ -12,7 +12,9 @@ import type {
 
 const PREVIEW_WIDTH = 180
 const PREVIEW_HEIGHT = 128
-const PREVIEW_PADDING = 12
+const PREVIEW_PADDING = 16
+const PREVIEW_MIN_BOUNDS_MARGIN = 18
+const PREVIEW_BOUNDS_MARGIN_RATIO = 0.12
 
 export async function renderPresetPreviewBlob(
   preset: LocalLayerPreset,
@@ -31,7 +33,7 @@ export async function renderPresetPreviewBlob(
   const objects = collectPresetObjects(preset)
   if (objects.length === 0) return canvasToBlob(canvas)
 
-  const bounds = getSelectionBounds(objects, { iconConfigs } as EditorState)
+  const bounds = expandPreviewBounds(getSelectionBounds(objects, { iconConfigs } as EditorState))
   const scale = getPreviewScale(bounds)
   const offset = {
     x: PREVIEW_PADDING - bounds.left * scale + (getAvailableWidth() - getBoundsWidth(bounds) * scale) / 2,
@@ -188,6 +190,21 @@ function getPreviewScale(bounds: Bounds): number {
     getAvailableWidth() / Math.max(1, getBoundsWidth(bounds)),
     getAvailableHeight() / Math.max(1, getBoundsHeight(bounds)),
   )
+}
+
+function expandPreviewBounds(bounds: Bounds): Bounds {
+  const width = getBoundsWidth(bounds)
+  const height = getBoundsHeight(bounds)
+  const margin = Math.max(
+    PREVIEW_MIN_BOUNDS_MARGIN,
+    Math.max(width, height) * PREVIEW_BOUNDS_MARGIN_RATIO,
+  )
+  return {
+    bottom: bounds.bottom + margin,
+    left: bounds.left - margin,
+    right: bounds.right + margin,
+    top: bounds.top - margin,
+  }
 }
 
 function getAvailableWidth(): number {

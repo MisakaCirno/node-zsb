@@ -426,8 +426,8 @@
       </form>
     </dialog>
     <dialog id="preset-name-dialog" class="editor-dialog compact-dialog">
-      <form method="dialog">
-        <header>
+      <form method="dialog" class="dialog-panel">
+        <header class="dialog-header">
           <h2>保存预设</h2>
           <button id="close-preset-name-dialog" class="icon-button" type="submit" value="cancel" aria-label="关闭">x</button>
         </header>
@@ -436,7 +436,7 @@
           <input id="preset-name-input" maxlength="48" />
           <span id="preset-name-error" class="field-error" aria-live="polite"></span>
         </label>
-        <footer>
+        <footer class="dialog-actions">
           <button type="submit" value="cancel">取消</button>
           <button id="confirm-preset-name" type="submit" value="confirm">保存</button>
         </footer>
