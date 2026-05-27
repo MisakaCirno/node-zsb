@@ -34,12 +34,19 @@ export interface EditorElements {
   background: HTMLElement
   assetTabBackground: HTMLButtonElement
   assetTabObjects: HTMLButtonElement
+  assetTabPresets: HTMLButtonElement
   assetPanelBackground: HTMLElement
   assetPanelObjects: HTMLElement
+  assetPanelPresets: HTMLElement
   localBoardList: HTMLElement
   localBoardNameInput: HTMLInputElement
   localBoardNameError: HTMLElement
+  presetList: HTMLElement
+  presetNameDialog: HTMLDialogElement
+  presetNameInput: HTMLInputElement
+  presetNameError: HTMLElement
   confirmLocalBoardName: HTMLButtonElement
+  confirmPresetName: HTMLButtonElement
   selectAllLocalBoards: HTMLButtonElement
   clearSelectedLocalBoards: HTMLButtonElement
   deleteSelectedLocalBoards: HTMLButtonElement
@@ -79,6 +86,8 @@ export interface EditorElements {
   moveBottom: HTMLButtonElement
   groupLayers: HTMLButtonElement
   ungroupLayers: HTMLButtonElement
+  savePreset: HTMLButtonElement
+  savePresetFromLayers: HTMLButtonElement
   toolGroupLayers: HTMLButtonElement
   toolUngroupLayers: HTMLButtonElement
   alignLeft: HTMLButtonElement
@@ -168,12 +177,19 @@ export function getEditorElements(): EditorElements {
     background: queryElement('#background-list', HTMLElement),
     assetTabBackground: queryElement('#asset-tab-background', HTMLButtonElement),
     assetTabObjects: queryElement('#asset-tab-objects', HTMLButtonElement),
+    assetTabPresets: queryElement('#asset-tab-presets', HTMLButtonElement),
     assetPanelBackground: queryElement('#asset-panel-background', HTMLElement),
     assetPanelObjects: queryElement('#asset-panel-objects', HTMLElement),
+    assetPanelPresets: queryElement('#asset-panel-presets', HTMLElement),
     localBoardList: queryElement('#local-board-list', HTMLElement),
     localBoardNameInput: queryElement('#local-board-name-input', HTMLInputElement),
     localBoardNameError: queryElement('#local-board-name-error', HTMLElement),
+    presetList: queryElement('#preset-list', HTMLElement),
+    presetNameDialog: queryElement('#preset-name-dialog', HTMLDialogElement),
+    presetNameInput: queryElement('#preset-name-input', HTMLInputElement),
+    presetNameError: queryElement('#preset-name-error', HTMLElement),
     confirmLocalBoardName: queryElement('#confirm-local-board-name', HTMLButtonElement),
+    confirmPresetName: queryElement('#confirm-preset-name', HTMLButtonElement),
     selectAllLocalBoards: queryElement('#select-all-local-boards', HTMLButtonElement),
     clearSelectedLocalBoards: queryElement('#clear-selected-local-boards', HTMLButtonElement),
     deleteSelectedLocalBoards: queryElement('#delete-selected-local-boards', HTMLButtonElement),
@@ -213,6 +229,8 @@ export function getEditorElements(): EditorElements {
     moveBottom: queryElement('#move-bottom', HTMLButtonElement),
     groupLayers: queryElement('#group-layers', HTMLButtonElement),
     ungroupLayers: queryElement('#ungroup-layers', HTMLButtonElement),
+    savePreset: queryElement('#save-preset', HTMLButtonElement),
+    savePresetFromLayers: queryElement('#save-preset-from-layers', HTMLButtonElement),
     toolGroupLayers: queryElement('#tool-group-layers', HTMLButtonElement),
     toolUngroupLayers: queryElement('#tool-ungroup-layers', HTMLButtonElement),
     alignLeft: queryElement('#align-left', HTMLButtonElement),

@@ -8,6 +8,7 @@ import {
 import { bindLayoutResizers } from './layoutResizers.js'
 import { bindAdaptiveSidebarTabs } from './sidebarTabLayout.js'
 import { bindMenuBar } from './menuBar.js'
+import { getPresetDragType } from './localPresetsPanel.js'
 import type {
   EditorActionRegistry,
 } from './types.js'
@@ -85,6 +86,10 @@ export function bindEditorEvents({
     }))
   elements.assetTabBackground.addEventListener('click', () => selectAssetTab(elements, 'background'))
   elements.assetTabObjects.addEventListener('click', () => selectAssetTab(elements, 'objects'))
+  elements.assetTabPresets.addEventListener('click', () => {
+    selectAssetTab(elements, 'presets')
+    actions.renderLocalPresets()
+  })
   bindColorPicker({
     elements,
     onChange: actions.updateSelectedFromInspector,
@@ -129,6 +134,8 @@ export function bindEditorEvents({
     actions.moveSelectedTo(actions.getLastLayerIndex()))
   elements.groupLayers.addEventListener('click', actions.groupSelected)
   elements.ungroupLayers.addEventListener('click', actions.ungroupSelectedGroup)
+  elements.savePreset.addEventListener('click', actions.saveSelectedPreset)
+  elements.savePresetFromLayers.addEventListener('click', actions.saveSelectedPreset)
   elements.toolGroupLayers.addEventListener('click', actions.groupSelected)
   elements.toolUngroupLayers.addEventListener('click', actions.ungroupSelectedGroup)
   elements.alignLeft.addEventListener('click', () => actions.alignSelected('left'))
@@ -209,9 +216,14 @@ function bindSyncedSlider(
 }
 
 function bindPaletteDrop(elements: EditorElements, actions: EditorActionRegistry) {
+  const presetDragType = getPresetDragType()
   elements.stageHost.addEventListener('dragover', (event: DragEvent) => {
     if (!event.dataTransfer) return
-    if (!Array.from(event.dataTransfer.types).includes('application/x-node-zsb-object-type')) return
+    const types = Array.from(event.dataTransfer.types)
+    if (
+      !types.includes('application/x-node-zsb-object-type')
+      && !types.includes(presetDragType)
+    ) return
     event.preventDefault()
     event.dataTransfer.dropEffect = 'copy'
     elements.stageHost.classList.add('drag-target')
@@ -223,11 +235,16 @@ function bindPaletteDrop(elements: EditorElements, actions: EditorActionRegistry
   elements.stageHost.addEventListener('drop', (event: DragEvent) => {
     if (!event.dataTransfer) return
     const type = event.dataTransfer.getData('application/x-node-zsb-object-type')
-    if (!type) return
+    const presetId = event.dataTransfer.getData(presetDragType)
+    if (!type && !presetId) return
     event.preventDefault()
     elements.stageHost.classList.remove('drag-target')
     const point = getStageDropPoint(elements, event)
     if (!point) return
+    if (presetId) {
+      actions.insertPresetAt(presetId, point)
+      return
+    }
     actions.addObjectAt(type, point)
   })
 }
@@ -317,14 +334,27 @@ function runContextAction(action: string, actions: EditorActionRegistry) {
   map[action]?.()
 }
 
-function selectAssetTab(elements: EditorElements, tab: 'background' | 'objects') {
-  const isBackground = tab === 'background'
-  elements.assetTabBackground.classList.toggle('active', isBackground)
-  elements.assetTabObjects.classList.toggle('active', !isBackground)
-  elements.assetTabBackground.setAttribute('aria-selected', String(isBackground))
-  elements.assetTabObjects.setAttribute('aria-selected', String(!isBackground))
-  elements.assetPanelBackground.classList.toggle('hidden', !isBackground)
-  elements.assetPanelObjects.classList.toggle('hidden', isBackground)
+function selectAssetTab(elements: EditorElements, tab: 'background' | 'objects' | 'presets') {
+  const tabMap = {
+    background: {
+      panel: elements.assetPanelBackground,
+      tab: elements.assetTabBackground,
+    },
+    objects: {
+      panel: elements.assetPanelObjects,
+      tab: elements.assetTabObjects,
+    },
+    presets: {
+      panel: elements.assetPanelPresets,
+      tab: elements.assetTabPresets,
+    },
+  }
+  for (const [key, entry] of Object.entries(tabMap)) {
+    const active = key === tab
+    entry.tab.classList.toggle('active', active)
+    entry.tab.setAttribute('aria-selected', String(active))
+    entry.panel.classList.toggle('hidden', !active)
+  }
 }
 
 function openDialog(dialog: HTMLDialogElement) {

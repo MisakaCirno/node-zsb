@@ -30,6 +30,8 @@ interface FeedbackElements {
   quickSaveAsLocalBoard: AsyncButtonElement
   quickOpenImportDialog: AsyncButtonElement
   quickOpenExportCodeDialog: AsyncButtonElement
+  savePreset: AsyncButtonElement
+  savePresetFromLayers: AsyncButtonElement
   boardName: DisabledElement
   fileName: DisabledElement
   newLocalBoard: DisabledElement
@@ -108,6 +110,8 @@ export function createEditorFeedback({ state, getElements }: EditorFeedbackDeps)
       elements.quickSaveAsLocalBoard,
       elements.quickOpenImportDialog,
       elements.quickOpenExportCodeDialog,
+      elements.savePreset,
+      elements.savePresetFromLayers,
     ]) {
       button.disabled = disabled
       button.setAttribute('aria-busy', String(disabled))

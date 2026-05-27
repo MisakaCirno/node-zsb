@@ -41,6 +41,8 @@ interface InspectorElements extends InspectorPanelElements {
   moveBottom: DisabledElement
   groupLayers: DisabledElement
   ungroupLayers: DisabledElement
+  savePreset: DisabledElement
+  savePresetFromLayers: DisabledElement
   toolGroupLayers: DisabledElement
   toolUngroupLayers: DisabledElement
   alignLeft: DisabledElement
@@ -126,10 +128,13 @@ export function createInspectorControls({
       !hasSelection || state.selectedIndex >= state.board.objects.length - 1
     const canGroupSelection = selectedIndexes.length >= 2
     const canUngroupSelection = Boolean(state.selectedGroupId)
+    const canSavePreset = selectedIndexes.length > 0 || Boolean(state.selectedGroupId)
     elements.groupLayers.disabled = !canGroupSelection
     elements.toolGroupLayers.disabled = !canGroupSelection
     elements.ungroupLayers.disabled = !canUngroupSelection
     elements.toolUngroupLayers.disabled = !canUngroupSelection
+    elements.savePreset.disabled = !canSavePreset
+    elements.savePresetFromLayers.disabled = !canSavePreset
     for (const button of [
       elements.alignLeft,
       elements.alignCenterX,

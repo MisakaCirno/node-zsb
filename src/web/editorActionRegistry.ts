@@ -6,6 +6,7 @@ import type {
   EditorHistoryControls,
   InspectorControls,
   LocalBoardsPanel,
+  LocalPresetsPanel,
   ObjectCommands,
   ProjectFileActions,
   ViewportControls,
@@ -18,6 +19,7 @@ interface EditorActionRegistryDeps {
   historyControls: EditorHistoryControls
   inspectorControls: InspectorControls
   localBoardsPanel: LocalBoardsPanel
+  localPresetsPanel: LocalPresetsPanel
   objectCommands: ObjectCommands
   projectFileActions: ProjectFileActions
   viewportControls: ViewportControls
@@ -30,6 +32,7 @@ export function createEditorActionRegistry({
   historyControls,
   inspectorControls,
   localBoardsPanel,
+  localPresetsPanel,
   objectCommands,
   projectFileActions,
   viewportControls,
@@ -54,6 +57,8 @@ export function createEditorActionRegistry({
     importProjectFile: projectFileActions.importProjectFile,
     loadFromCode: boardCodeActions.loadFromCode,
     loadLocalBoard: localBoardsPanel.loadLocalBoard,
+    deletePreset: localPresetsPanel.deletePreset,
+    insertPresetAt: localPresetsPanel.insertPresetAt,
     newLocalBoard: localBoardsPanel.newLocalBoard,
     getLastLayerIndex: objectCommands.getLastLayerIndex,
     groupSelected: objectCommands.groupSelected,
@@ -73,9 +78,11 @@ export function createEditorActionRegistry({
     pasteObject: objectCommands.pasteObject,
     redo: historyControls.redo,
     renderLocalBoards: localBoardsPanel.renderLocalBoards,
+    renderLocalPresets: localPresetsPanel.renderLocalPresets,
     renderPreview: boardCodeActions.renderPreview,
     saveLocalBoard: localBoardsPanel.saveLocalBoard,
     saveLocalBoardAs: localBoardsPanel.saveLocalBoardAs,
+    saveSelectedPreset: localPresetsPanel.saveSelectedPreset,
     selectLayerGroup: editorContext.selectLayerGroup,
     selectObject: editorContext.selectObject,
     setGridDensity: viewportControls.setGridDensity,
@@ -87,6 +94,7 @@ export function createEditorActionRegistry({
     toggleSnapToGrid: viewportControls.toggleSnapToGrid,
     undo: historyControls.undo,
     updateLocalBoardButtons: localBoardsPanel.updateLocalBoardButtons,
+    updatePresetButtons: localPresetsPanel.updatePresetButtons,
     updateSelectedFromInspector: inspectorControls.updateSelectedFromInspector,
   }
 }

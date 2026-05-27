@@ -6,6 +6,7 @@ import {
   GRID_SIZE_STEP,
   LOCAL_BOARDS_KEY,
   LOCAL_FILES_KEY,
+  LOCAL_PRESETS_KEY,
   MAX_GRID_OPACITY,
   MAX_GRID_SIZE,
   MIN_GRID_OPACITY,
@@ -26,6 +27,7 @@ import type {
   EditorSettings,
   LocalBoardSlot,
   LocalFile,
+  LocalLayerPreset,
   ProjectFile,
 } from './types.js'
 
@@ -123,6 +125,27 @@ export function persistLocalFiles(files: unknown[]): boolean {
   }
 }
 
+export function loadLocalPresets(): LocalLayerPreset[] {
+  try {
+    const raw = getLocalStorage().getItem(LOCAL_PRESETS_KEY)
+    const presets = raw ? JSON.parse(raw) : []
+    return Array.isArray(presets) ? normalizeLocalPresets(presets) : []
+  } catch (error) {
+    console.warn('Failed to load local presets', error)
+    return []
+  }
+}
+
+export function persistLocalPresets(presets: unknown[]): boolean {
+  try {
+    getLocalStorage().setItem(LOCAL_PRESETS_KEY, JSON.stringify(normalizeLocalPresets(presets)))
+    return true
+  } catch (error) {
+    console.warn('Failed to save local presets', error)
+    return false
+  }
+}
+
 function normalizeEditorSettings(settings: Partial<EditorSettings> | null | undefined): EditorSettings {
   const zoom = Number(settings?.zoom)
   return {
@@ -145,6 +168,145 @@ function normalizeGridOpacity(gridOpacity: unknown): number {
     Math.round((Number(gridOpacity) || DEFAULT_GRID_OPACITY) / GRID_OPACITY_STEP)
     * GRID_OPACITY_STEP
   return Number(clamp(snapped, MIN_GRID_OPACITY, MAX_GRID_OPACITY).toFixed(2))
+}
+
+function normalizeLocalPresets(presets: unknown[]): LocalLayerPreset[] {
+  const seen = new Set<string>()
+  return presets
+    .filter((preset): preset is Record<string, unknown> =>
+      isRecord(preset)
+        && typeof preset.id === 'string'
+        && !seen.has(preset.id)
+        && isRecord(preset.objects)
+        && Array.isArray(preset.layers))
+    .map((preset) => {
+      const id = String(preset.id)
+      seen.add(id)
+      const objects = normalizePresetObjects(preset.objects as Record<string, unknown>)
+      const layers = normalizePresetLayers(preset.layers as unknown[], objects)
+      const contentHash = hashPresetContent({ objects, layers })
+      return {
+        id,
+        name: String(preset.name ?? '').trim() || '未命名预设',
+        objects,
+        layers,
+        objectCount: countPresetObjects(layers, objects),
+        contentHash,
+        createdAt: stringOr(preset.createdAt, new Date().toISOString()),
+        updatedAt: stringOr(preset.updatedAt, new Date().toISOString()),
+      }
+    })
+}
+
+function normalizePresetObjects(objects: Record<string, unknown>): Record<string, Board['objects'][number]> {
+  const normalized: Record<string, Board['objects'][number]> = {}
+  for (const [id, object] of Object.entries(objects)) {
+    if (!id || !isRecord(object) || typeof object.type !== 'string') continue
+    normalized[id] = {
+      ...object,
+      type: object.type,
+      x: Number(object.x) || 0,
+      y: Number(object.y) || 0,
+    } as Board['objects'][number]
+    delete normalized[id].editorId
+  }
+  return normalized
+}
+
+function normalizePresetLayers(
+  layers: unknown[],
+  objects: Record<string, Board['objects'][number]>,
+): LocalLayerPreset['layers'] {
+  const usedObjectIds = new Set<string>()
+  const usedGroupIds = new Set<string>()
+  const normalized = normalizePresetLayerNodes(layers, objects, usedObjectIds, usedGroupIds)
+  for (const id of Object.keys(objects)) {
+    if (!usedObjectIds.has(id)) {
+      normalized.push({ type: 'object', id })
+    }
+  }
+  return normalized
+}
+
+function normalizePresetLayerNodes(
+  nodes: unknown[],
+  objects: Record<string, Board['objects'][number]>,
+  usedObjectIds: Set<string>,
+  usedGroupIds: Set<string>,
+): LocalLayerPreset['layers'] {
+  const normalized: LocalLayerPreset['layers'] = []
+  for (const node of nodes) {
+    if (!isRecord(node)) continue
+    if (
+      node.type === 'object'
+      && typeof node.id === 'string'
+      && objects[node.id]
+      && !usedObjectIds.has(node.id)
+    ) {
+      usedObjectIds.add(node.id)
+      normalized.push({ type: 'object', id: node.id })
+      continue
+    }
+    if (node.type === 'group') {
+      const id = createUniquePresetGroupId(node.id, usedGroupIds)
+      normalized.push({
+        type: 'group',
+        id,
+        name: String(node.name ?? '组'),
+        collapsed: Boolean(node.collapsed),
+        hidden: Boolean(node.hidden),
+        locked: Boolean(node.locked),
+        children: Array.isArray(node.children)
+          ? normalizePresetLayerNodes(node.children, objects, usedObjectIds, usedGroupIds)
+          : [],
+      })
+    }
+  }
+  return normalized
+}
+
+function createUniquePresetGroupId(value: unknown, used: Set<string>): string {
+  const base = typeof value === 'string' && value ? value : `grp_${used.size + 1}`
+  let id = base
+  let index = 2
+  while (used.has(id)) {
+    id = `${base}_${index}`
+    index += 1
+  }
+  used.add(id)
+  return id
+}
+
+function countPresetObjects(
+  layers: LocalLayerPreset['layers'],
+  objects: Record<string, Board['objects'][number]>,
+): number {
+  const ids = new Set<string>()
+  collectPresetObjectIds(layers, ids)
+  return [...ids].filter((id) => Boolean(objects[id])).length
+}
+
+function collectPresetObjectIds(layers: LocalLayerPreset['layers'], result: Set<string>): void {
+  for (const node of layers) {
+    if (node.type === 'object') {
+      result.add(node.id)
+      continue
+    }
+    collectPresetObjectIds(node.children ?? [], result)
+  }
+}
+
+function hashPresetContent(content: {
+  layers: LocalLayerPreset['layers']
+  objects: Record<string, Board['objects'][number]>
+}): string {
+  const text = JSON.stringify(content)
+  let hash = 2166136261
+  for (let index = 0; index < text.length; index += 1) {
+    hash ^= text.charCodeAt(index)
+    hash = Math.imul(hash, 16777619)
+  }
+  return (hash >>> 0).toString(36)
 }
 
 function migrateLocalBoardsToFiles(): Array<Record<string, unknown> & { board: Board }> {

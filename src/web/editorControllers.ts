@@ -2,6 +2,7 @@ import { createBoardCodeActions } from './boardCodeActions.js'
 import { createBoardMetaControls } from './boardMetaControls.js'
 import { createInspectorControls } from './inspectorControls.js'
 import { createLocalBoardsPanel } from './localBoardsPanel.js'
+import { createLocalPresetsPanel } from './localPresetsPanel.js'
 import { createObjectCommands } from './objectCommands.js'
 import { createProjectFileActions } from './projectFileActions.js'
 import { createViewportControls } from './viewportControls.js'
@@ -111,11 +112,21 @@ export function createEditorControllers({
     stage,
   })
 
+  const localPresetsPanel = createLocalPresetsPanel({
+    state,
+    elements,
+    recordHistory,
+    renderAll,
+    showStatus,
+    confirmAction,
+  })
+
   return {
     boardCodeActions,
     boardMetaControls,
     inspectorControls,
     localBoardsPanel,
+    localPresetsPanel,
     objectCommands,
     projectFileActions,
     viewportControls,

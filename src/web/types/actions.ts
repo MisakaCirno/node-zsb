@@ -80,6 +80,14 @@ export interface LocalBoardsPanel {
   updateLocalBoardButtons(): void
 }
 
+export interface LocalPresetsPanel {
+  deletePreset(id: string): boolean
+  insertPresetAt(id: string, point?: { x: number, y: number }): Promise<boolean>
+  renderLocalPresets(): void
+  saveSelectedPreset(): Promise<boolean>
+  updatePresetButtons(): void
+}
+
 export interface EditorHistoryControls {
   redo(): void
   undo(): void
@@ -107,6 +115,8 @@ export interface EditorActionRegistry {
   importProjectFile: ProjectFileActions['importProjectFile']
   loadFromCode: BoardCodeActions['loadFromCode']
   loadLocalBoard: LocalBoardsPanel['loadLocalBoard']
+  deletePreset: LocalPresetsPanel['deletePreset']
+  insertPresetAt: LocalPresetsPanel['insertPresetAt']
   moveLayerNodeAfter: ObjectCommands['moveLayerNodeAfter']
   moveLayerNodeBefore: ObjectCommands['moveLayerNodeBefore']
   moveLayerNodeIntoGroup: ObjectCommands['moveLayerNodeIntoGroup']
@@ -120,10 +130,12 @@ export interface EditorActionRegistry {
   pasteObject: ObjectCommands['pasteObject']
   redo: EditorHistoryControls['redo']
   renderLocalBoards: LocalBoardsPanel['renderLocalBoards']
+  renderLocalPresets: LocalPresetsPanel['renderLocalPresets']
   renderPreview: BoardCodeActions['renderPreview']
   renameLayerGroup: ObjectCommands['renameLayerGroup']
   saveLocalBoard: LocalBoardsPanel['saveLocalBoard']
   saveLocalBoardAs: LocalBoardsPanel['saveLocalBoardAs']
+  saveSelectedPreset: LocalPresetsPanel['saveSelectedPreset']
   selectLayerGroup: EditorContext['selectLayerGroup']
   selectObject: EditorContext['selectObject']
   setGridDensity: ViewportControls['setGridDensity']
@@ -138,5 +150,6 @@ export interface EditorActionRegistry {
   undo: EditorHistoryControls['undo']
   ungroupSelectedGroup: ObjectCommands['ungroupSelectedGroup']
   updateLocalBoardButtons: LocalBoardsPanel['updateLocalBoardButtons']
+  updatePresetButtons: LocalPresetsPanel['updatePresetButtons']
   updateSelectedFromInspector: InspectorControls['updateSelectedFromInspector']
 }

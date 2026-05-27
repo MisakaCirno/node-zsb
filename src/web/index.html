@@ -14,6 +14,7 @@
           <div class="sidebar-tabs" role="tablist" aria-label="资源">
             <button id="asset-tab-background" type="button" role="tab" aria-selected="false" aria-controls="asset-panel-background">背景</button>
             <button id="asset-tab-objects" class="active" type="button" role="tab" aria-selected="true" aria-controls="asset-panel-objects">对象</button>
+            <button id="asset-tab-presets" type="button" role="tab" aria-selected="false" aria-controls="asset-panel-presets">预设</button>
           </div>
           <div id="asset-panel-background" class="asset-tab-panel hidden" role="tabpanel" aria-labelledby="asset-tab-background">
             <div id="background-list" class="background-list" role="radiogroup" aria-label="背景"></div>
@@ -21,6 +22,12 @@
           <div id="asset-panel-objects" class="asset-tab-panel" role="tabpanel" aria-labelledby="asset-tab-objects">
             <div id="palette-tabs" class="segmented"></div>
             <div id="palette" class="palette" role="tabpanel"></div>
+          </div>
+          <div id="asset-panel-presets" class="asset-tab-panel preset-tab-panel hidden" role="tabpanel" aria-labelledby="asset-tab-presets">
+            <div class="preset-panel-toolbar">
+              <button id="save-preset" type="button" disabled>保存选中为预设</button>
+            </div>
+            <div id="preset-list" class="preset-list"></div>
           </div>
         </section>
       </aside>
@@ -289,6 +296,9 @@
               <button id="ungroup-layers" class="icon-tool" type="button" title="解组" aria-label="解组" disabled>
                 <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 6h7l2 3h9v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><path d="M3 9h18"/><path d="M10 15h4"/></svg>
               </button>
+              <button id="save-preset-from-layers" class="icon-tool" type="button" title="保存选中为预设" aria-label="保存预设" disabled>
+                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5h16v14H4z"/><path d="M8 9h8"/><path d="M8 13h4"/><path d="M17 16v5"/><path d="M14.5 18.5H19.5"/></svg>
+              </button>
             </div>
             <div class="layer-toolbar-group danger-toolbar-group" aria-label="图层删除">
               <button id="delete-object" class="icon-tool danger-tool" type="button" title="删除对象" aria-label="删除" disabled>
@@ -412,6 +422,23 @@
         </label>
         <footer class="dialog-actions">
           <button id="confirm-local-board-name" type="submit" value="confirm">确定</button>
+        </footer>
+      </form>
+    </dialog>
+    <dialog id="preset-name-dialog" class="editor-dialog compact-dialog">
+      <form method="dialog">
+        <header>
+          <h2>保存预设</h2>
+          <button id="close-preset-name-dialog" class="icon-button" type="submit" value="cancel" aria-label="关闭">x</button>
+        </header>
+        <label class="field">
+          <span>预设名称</span>
+          <input id="preset-name-input" maxlength="48" />
+          <span id="preset-name-error" class="field-error" aria-live="polite"></span>
+        </label>
+        <footer>
+          <button type="submit" value="cancel">取消</button>
+          <button id="confirm-preset-name" type="submit" value="confirm">保存</button>
         </footer>
       </form>
     </dialog>

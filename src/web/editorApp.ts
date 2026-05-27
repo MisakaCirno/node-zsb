@@ -109,6 +109,7 @@ export function createEditorApp({
     inspectorControls,
     loadFromCode,
     localBoardsPanel,
+    localPresetsPanel,
     objectCommands,
     projectFileActions,
     renderBackgroundOptions,
@@ -126,6 +127,7 @@ export function createEditorApp({
     historyControls,
     inspectorControls,
     localBoardsPanel,
+    localPresetsPanel,
     objectCommands,
     projectFileActions,
     viewportControls,
@@ -174,6 +176,7 @@ export function createEditorApp({
     bindEvents()
     viewportControls.syncControlStateFromDom()
     renderLocalBoards()
+    localPresetsPanel.renderLocalPresets()
     renderPaletteTabs()
     await renderAll()
     applyInitialZoom({ silent: true })

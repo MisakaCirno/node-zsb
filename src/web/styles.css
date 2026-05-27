@@ -250,6 +250,22 @@ textarea {
   padding: 12px;
 }
 
+.preset-tab-panel {
+  display: grid;
+  grid-template-rows: auto minmax(0, 1fr);
+  gap: 10px;
+  height: 100%;
+}
+
+.preset-panel-toolbar {
+  display: flex;
+  gap: 8px;
+}
+
+.preset-panel-toolbar button {
+  width: 100%;
+}
+
 .icon-button {
   width: 34px;
   min-width: 34px;
@@ -777,6 +793,96 @@ textarea {
 
 .palette button:active {
   cursor: grabbing;
+}
+
+.preset-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(132px, 1fr));
+  gap: 10px;
+  min-height: 0;
+  overflow-y: auto;
+  padding-right: 2px;
+  align-content: start;
+}
+
+.preset-card {
+  min-width: 0;
+  display: grid;
+  gap: 6px;
+  border: 1px solid #303b43;
+  border-radius: 6px;
+  background: #1b2228;
+  padding: 7px;
+}
+
+.preset-preview {
+  width: 100%;
+  height: 82px;
+  min-width: 0;
+  padding: 0;
+  display: grid;
+  place-items: center;
+  overflow: hidden;
+  border-radius: 5px;
+  background: #151a1f;
+  cursor: grab;
+}
+
+.preset-preview:active {
+  cursor: grabbing;
+}
+
+.preset-preview img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+.preset-preview-placeholder {
+  color: #81909a;
+  font-size: 12px;
+}
+
+.preset-meta {
+  min-width: 0;
+  display: grid;
+  gap: 2px;
+}
+
+.preset-meta strong,
+.preset-meta span {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.preset-meta strong {
+  color: #eef2f3;
+  font-size: 13px;
+}
+
+.preset-meta span {
+  color: #81909a;
+  font-size: 12px;
+}
+
+.preset-actions {
+  display: flex;
+  justify-content: flex-end;
+}
+
+.preset-actions button {
+  height: 28px;
+  padding: 0 9px;
+}
+
+.danger-text-button {
+  color: #ffb5b2;
+}
+
+.preset-empty {
+  margin: 0;
 }
 
 .object-preview {

@@ -325,6 +325,101 @@ test('editor groups and ungroups layers from the left toolrail', async ({ page }
   await expect(page.locator('#layers .layer-group-row')).toHaveCount(0)
 })
 
+test('editor saves reusable presets and inserts them from the preset tab', async ({ page }) => {
+  await page.goto('/editor')
+  await page.evaluate(async () => {
+    localStorage.removeItem('node-zsb-editor-local-presets-v1')
+    await new Promise<void>((resolve) => {
+      const request = (globalThis as unknown as { indexedDB: {
+        deleteDatabase(name: string): {
+          onblocked: (() => void) | null
+          onerror: (() => void) | null
+          onsuccess: (() => void) | null
+        }
+      } }).indexedDB.deleteDatabase('node-zsb-preview-cache')
+      request.onsuccess = () => resolve()
+      request.onerror = () => resolve()
+      request.onblocked = () => resolve()
+    })
+  })
+  await page.reload()
+  await expect(page.locator('#layers')).toContainText('tank')
+
+  await page.locator('#layers .layer-row').nth(0).click()
+  await page.locator('#layers .layer-row').nth(1).click({ modifiers: ['Shift'] })
+  await page.locator('#group-layers').click()
+  await expect(page.locator('#save-preset-from-layers')).toBeEnabled()
+
+  await page.locator('#asset-tab-presets').click()
+  await expect(page.locator('#asset-panel-presets')).toBeVisible()
+  await expect(page.locator('#save-preset')).toBeEnabled()
+  await page.locator('#save-preset').click()
+  await expect(page.locator('#preset-name-dialog')).toBeVisible()
+  await page.locator('#preset-name-input').fill('开场站位')
+  await page.locator('#confirm-preset-name').click()
+
+  const presetCard = page.locator('.preset-card').filter({ hasText: '开场站位' })
+  await expect(presetCard).toHaveCount(1)
+  await expect(presetCard).toContainText('2 个对象')
+  await expect(presetCard.locator('.preset-preview img')).toHaveAttribute('src', /^blob:/)
+  const storedPreset = await page.evaluate(() => {
+    const presets = JSON.parse(localStorage.getItem('node-zsb-editor-local-presets-v1') ?? '[]')
+    return presets[0]
+  })
+  expect(storedPreset.name).toBe('开场站位')
+  expect(storedPreset.preview).toBeUndefined()
+  expect(storedPreset.layers[0].type).toBe('group')
+  const cachedPreviewCount = await page.evaluate(async () => {
+    const database = await new Promise<unknown | null>((resolve) => {
+      const request = (globalThis as unknown as { indexedDB: {
+        open(name: string): {
+          onerror: (() => void) | null
+          onsuccess: (() => void) | null
+          result: unknown
+        }
+      } }).indexedDB.open('node-zsb-preview-cache')
+      request.onsuccess = () => resolve(request.result)
+      request.onerror = () => resolve(null)
+    })
+    if (!database) return 0
+    return new Promise<number>((resolve) => {
+      const request = (database as {
+        transaction(storeName: string, mode: string): {
+          objectStore(storeName: string): {
+            count(): { onsuccess: (() => void) | null, onerror: (() => void) | null, result: number }
+          }
+        }
+      })
+        .transaction('preset-previews', 'readonly')
+        .objectStore('preset-previews')
+        .count()
+      request.onsuccess = () => resolve(request.result)
+      request.onerror = () => resolve(0)
+    })
+  })
+  expect(cachedPreviewCount).toBeGreaterThan(0)
+
+  page.once('dialog', async (dialog) => {
+    await dialog.accept()
+  })
+  await page.locator('#clear-board').click()
+  await expect(page.locator('#layer-count')).toHaveText(`0 / ${MAX_BOARD_OBJECTS}`)
+  await presetCard.locator('.preset-preview').click()
+  await expect(page.locator('#layer-count')).toHaveText(`2 / ${MAX_BOARD_OBJECTS}`)
+  await expect(page.locator('#layers .layer-group-row')).toHaveCount(1)
+
+  page.once('dialog', async (dialog) => {
+    await dialog.accept()
+  })
+  await page.locator('#clear-board').click()
+  const canvas = page.locator('#stage-host canvas').first()
+  await presetCard.locator('.preset-preview').dragTo(canvas, {
+    force: true,
+    targetPosition: { x: 120, y: 140 },
+  })
+  await expect(page.locator('#layer-count')).toHaveText(`2 / ${MAX_BOARD_OBJECTS}`)
+})
+
 test('editor preserves layer groups across autosave reloads', async ({ page }) => {
   await page.goto('/editor')
   await expect(page.locator('#layers')).toContainText('tank')
@@ -640,6 +735,8 @@ test('editor renders readable Chinese labels', async ({ page }) => {
   await expect(page.locator('.layer-toolbar-group')).toHaveCount(3)
   await expect(page.locator('#asset-tab-background')).toHaveAttribute('role', 'tab')
   await expect(page.locator('#asset-tab-objects')).toHaveAttribute('aria-selected', 'true')
+  await expect(page.locator('#asset-tab-presets')).toHaveAttribute('role', 'tab')
+  await expect(page.locator('#asset-tab-presets')).toHaveText('预设')
   await expect(page.locator('#palette-tabs')).toHaveAttribute('role', 'tablist')
   await expect(page.getByRole('tab', { name: '形状' })).toHaveAttribute('aria-selected', 'false')
   await page.getByRole('tab', { name: '形状' }).click()

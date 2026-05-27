@@ -42,6 +42,17 @@ export interface LocalFile {
   preview: string
 }
 
+export interface LocalLayerPreset {
+  id: string
+  name: string
+  objects: Record<string, BoardObject>
+  layers: LayerNode[]
+  objectCount: number
+  contentHash: string
+  createdAt: string
+  updatedAt: string
+}
+
 export interface CreateProjectOptions {
   fileName?: string
   layerTree?: LayerNode[]
