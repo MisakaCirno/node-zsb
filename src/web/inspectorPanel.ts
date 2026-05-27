@@ -88,7 +88,9 @@ export function renderInspector({
 
 function updateInspectorVisibility(object: BoardObject, elements: InspectorPanelElements) {
   const capabilities = getObjectCapabilities(object.type)
+  const canTransform = !['line', 'text'].includes(object.type)
   setFieldVisible(elements, 'appearance', capabilities.appearance)
+  setFieldVisible(elements, 'transform', canTransform)
   setFieldVisible(elements, 'text', capabilities.text)
   setFieldVisible(elements, 'line', capabilities.line)
   setFieldVisible(elements, 'arc', capabilities.arcAngle || capabilities.donutRadius)

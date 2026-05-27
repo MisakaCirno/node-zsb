@@ -56,7 +56,9 @@ async function drawPresetObject(
   context.save()
   context.globalAlpha = objectOpacity(object, { hiddenOpacity: 0.35 })
   context.translate(object.x * scale + offset.x, object.y * scale + offset.y)
-  context.rotate(((object.angle ?? 0) * Math.PI) / 180)
+  if (!['line', 'text'].includes(object.type)) {
+    context.rotate(((object.angle ?? 0) * Math.PI) / 180)
+  }
   const previewScale = objectScale(object) * scale
   if (object.type === 'line') {
     drawLine(context, object, scale)
@@ -85,9 +87,12 @@ function drawLine(context: CanvasRenderingContext2D, object: BoardObject, scale:
 
 function drawText(context: CanvasRenderingContext2D, object: BoardObject, scale: number): void {
   context.fillStyle = object.color ?? '#ffffff'
+  context.strokeStyle = 'black'
+  context.lineWidth = 2
   context.font = `${Math.max(8, 14 * scale)}px "Microsoft YaHei", sans-serif`
   context.textAlign = 'center'
   context.textBaseline = 'middle'
+  context.strokeText(object.text ?? 'T', 0, 0)
   context.fillText(object.text ?? 'T', 0, 0)
 }
 
@@ -116,10 +121,19 @@ function drawCircleAoe(context: CanvasRenderingContext2D, object: BoardObject, s
 function drawDonut(context: CanvasRenderingContext2D, object: BoardObject, scale: number): void {
   const outer = 256 * scale
   const inner = (object.donutRadius ?? 80) * scale
+  const arcAngle = object.arcAngle ?? 360
+  const startAngle = -Math.PI / 2
+  const endAngle = startAngle + (arcAngle * Math.PI) / 180
   context.fillStyle = object.color ?? '#ff8000'
   context.beginPath()
-  context.arc(0, 0, outer, 0, Math.PI * 2)
-  context.arc(0, 0, inner, 0, Math.PI * 2, true)
+  if (arcAngle >= 360) {
+    context.arc(0, 0, outer, 0, Math.PI * 2)
+    context.arc(0, 0, inner, 0, Math.PI * 2, true)
+  } else {
+    context.arc(0, 0, outer, startAngle, endAngle)
+    context.arc(0, 0, inner, endAngle, startAngle, true)
+    context.closePath()
+  }
   context.fill()
 }
 

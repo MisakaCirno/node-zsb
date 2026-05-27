@@ -27,10 +27,18 @@ async function openLocalBoardDialog(page: Page) {
 }
 
 async function openFileMenu(page: Page) {
-  for (let attempt = 0; attempt < 2 && await page.locator('#file-menu').isHidden(); attempt += 1) {
+  const menu = page.locator('#file-menu')
+  if (await menu.isVisible()) return
+  for (let attempt = 0; attempt < 3; attempt += 1) {
     await page.locator('#file-menu-button').click()
+    try {
+      await expect(menu).toBeVisible({ timeout: 750 })
+      return
+    } catch {
+      // Retry; the menu button toggles, so each attempt waits for the open state before clicking again.
+    }
   }
-  await expect(page.locator('#file-menu')).toBeVisible()
+  await expect(menu).toBeVisible()
 }
 
 async function clickFileMenuAction(page: Page, selector: string) {
@@ -1780,10 +1788,12 @@ test('editor shows inspector fields that match the selected object type', async 
   await page.getByTitle('text').click()
   await expect(page.locator('[data-field="text"]')).toBeVisible()
   await expect(page.locator('[data-field="line"]')).toBeHidden()
+  await expect(page.locator('[data-field="transform"]')).toBeHidden()
 
   await page.locator('button[title="line"]').click()
   await expect(page.locator('[data-field="line"]')).toBeVisible()
   await expect(page.locator('[data-field="text"]')).toBeHidden()
+  await expect(page.locator('[data-field="transform"]')).toBeHidden()
 
   await page.locator('button[title="line_aoe"]').click()
   await expect(page.locator('#object-transparency-range')).toBeVisible()
@@ -1803,7 +1813,11 @@ test('editor shows inspector fields that match the selected object type', async 
   await expect(page.locator('#object-arc')).toHaveValue('180')
 
   await page.locator('button[title="donut"]').click()
+  await expect(page.locator('[data-field="arc-angle"]')).toBeVisible()
   await expect(page.locator('[data-field="donut-radius"]')).toBeVisible()
+  await expect(page.locator('#object-arc')).toHaveValue('360')
+  await page.locator('#object-arc-range').fill('180')
+  await expect(page.locator('#object-arc')).toHaveValue('180')
   await page.locator('#object-donut-range').fill('120')
   await expect(page.locator('#object-donut')).toHaveValue('120')
 
@@ -1817,9 +1831,22 @@ test('editor shows inspector fields that match the selected object type', async 
   const tank = payload.data.objects.find(
     (object: { type: string }) => object.type === 'tank',
   )
+  const text = payload.data.objects.find(
+    (object: { type: string }) => object.type === 'text',
+  )
+  const line = payload.data.objects.find(
+    (object: { type: string }) => object.type === 'line',
+  )
+  const donut = payload.data.objects.find(
+    (object: { type: string }) => object.type === 'donut',
+  )
   expect(tank.text).toBeUndefined()
   expect(tank.endX).toBeUndefined()
   expect(tank.arcAngle).toBeUndefined()
+  expect(text.angle).toBeUndefined()
+  expect(line.angle).toBeUndefined()
+  expect(donut.arcAngle).toBe(180)
+  expect(donut.donutRadius).toBe(120)
 })
 
 test('editor snaps positions to the grid', async ({

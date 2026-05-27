@@ -1,5 +1,4 @@
-import { cleanBoard, normalizeBoard } from './board.js'
-import { stripEditorFields } from './editorIds.js'
+import { cleanBoard, normalizeBoard, sanitizeObject } from './board.js'
 import type {
   Board,
   BoardObject,
@@ -27,7 +26,7 @@ export function createProjectFromBoard(
   const objects: ProjectObjects = {}
   const defaultLayers = normalizedBoard.objects.map((object) => {
     const id = object.editorId as string
-    objects[id] = stripEditorFields(object)
+    objects[id] = sanitizeObject(object)
     return {
       type: 'object' as const,
       id,
@@ -77,7 +76,7 @@ export function normalizeLayerTreeForBoard(
   const objects: ProjectObjects = {}
   for (const object of board.objects ?? []) {
     if (object.editorId) {
-      objects[object.editorId] = stripEditorFields(object)
+      objects[object.editorId] = sanitizeObject(object)
     }
   }
   return completeLayerNodes(normalizeLayerNodes(layerTree, objects), objects)
@@ -131,7 +130,7 @@ function normalizeProjectObjects(objects: unknown): ProjectObjects {
   }
   for (const [id, object] of Object.entries(objects)) {
     if (!id || !isRecord(object)) continue
-    normalized[id] = stripEditorFields(structuredClone(object) as BoardObject)
+    normalized[id] = sanitizeObject(structuredClone(object) as BoardObject)
   }
   return normalized
 }

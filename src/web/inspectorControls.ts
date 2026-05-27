@@ -86,8 +86,10 @@ export function createInspectorControls({
     const point = normalizePoint(numberValue(elements.x, 0, 512), numberValue(elements.y, 0, 384))
     object.x = point.x
     object.y = point.y
-    object.size = numberValue(elements.size, 10, 300)
-    object.angle = numberValue(elements.angle, 0, 360)
+    object.size = object.type === 'text' ? 100 : numberValue(elements.size, 10, 300)
+    object.angle = ['line', 'text'].includes(object.type)
+      ? undefined
+      : numberValue(elements.angle, 0, 360)
     object.color = capabilities.appearance ? elements.color.value : undefined
     object.transparency = capabilities.appearance
       ? numberValue(elements.transparency, 0, 100)

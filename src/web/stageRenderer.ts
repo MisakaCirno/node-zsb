@@ -11,6 +11,7 @@ import {
 import {
   calcTextWidth,
   calculateCircleOffset,
+  calculateDonutOffset,
   objectOpacity,
   objectScale,
   toLogicalCoordinate,
@@ -100,6 +101,7 @@ interface KonvaFactory {
   Line: KonvaConstructor
   Rect: KonvaConstructor
   Ring: KonvaConstructor
+  Shape: KonvaConstructor
   Stage: KonvaConstructor
   Text: KonvaConstructor
   Transformer: KonvaConstructor
@@ -116,10 +118,14 @@ interface KonvaTransform {
 }
 
 interface ClipContext {
-  arc(x: number, y: number, radius: number, startAngle: number, endAngle: number): void
+  arc(x: number, y: number, radius: number, startAngle: number, endAngle: number, counterclockwise?: boolean): void
   beginPath(): void
   closePath(): void
   moveTo(x: number, y: number): void
+}
+
+interface ShapeContext extends ClipContext {
+  fillStrokeShape(shape: unknown): void
 }
 
 interface StageRendererDeps {
@@ -291,12 +297,15 @@ export function createStageRenderer({
     objectLayer.draw()
     const selectedIndexes = getSelectedIndexes(state)
     const selectedObjects = selectedIndexes.map((index) => state.board.objects[index])
-    const selectedNodes = nodes.filter((node) => {
-      const index = Number(node.getAttr('objectIndex'))
-      return selectedIndexes.includes(index) && !state.board.objects[index]?.locked
-    })
-    const canScaleSelection = selectedObjects.length > 0
-      && selectedObjects.every((object) => object?.type !== 'line')
+    const canTransformSelection = selectedObjects.length > 0
+      && selectedObjects.every((object) => object && !['line', 'text'].includes(object.type))
+    const selectedNodes = canTransformSelection
+      ? nodes.filter((node) => {
+        const index = Number(node.getAttr('objectIndex'))
+        return selectedIndexes.includes(index) && !state.board.objects[index]?.locked
+      })
+      : []
+    const canScaleSelection = canTransformSelection
     transformer.enabledAnchors(canScaleSelection ? [
       'top-left',
       'top-right',
@@ -465,7 +474,7 @@ export function createStageRenderer({
   }
 
   function applyNodeTransform(node: KonvaNode, object: BoardObject) {
-    if (object.type !== 'line') {
+    if (object.type !== 'line' && object.type !== 'text') {
       object.size = clamp(
         Math.round(Math.max(Math.abs(node.scaleX()), Math.abs(node.scaleY())) * 100),
         10,
@@ -474,7 +483,7 @@ export function createStageRenderer({
       node.scaleX(objectScale(object))
       node.scaleY(objectScale(object))
     }
-    if (object.type === 'line') {
+    if (object.type === 'line' || object.type === 'text') {
       node.scaleX(1)
       node.scaleY(1)
     }
@@ -486,27 +495,28 @@ export function createStageRenderer({
       object.x = point.x
       object.y = point.y
     }
-    object.angle = normalizeAngle(node.rotation())
+    object.angle = ['line', 'text'].includes(object.type)
+      ? undefined
+      : normalizeAngle(node.rotation())
   }
 
   function createTextNode(object: BoardObject): KonvaNode {
     return new Konva.Text({
       text: object.text ?? '',
       fill: object.color ?? '#ffffff',
+      stroke: 'black',
+      strokeWidth: 0.75,
       x: toSceneCoordinate(object.x),
       y: toSceneCoordinate(object.y),
       fontSize: 28,
       fontFamily: 'Arial',
       offsetX: calcTextWidth(object.text ?? '', 28) / 2,
       offsetY: 14,
-      rotation: object.angle ?? 0,
-      scaleX: objectScale(object),
-      scaleY: objectScale(object),
       shadowEnabled: true,
       shadowColor: 'black',
-      shadowBlur: 4,
-      shadowOffsetX: 2,
-      shadowOffsetY: 2,
+      shadowBlur: 2,
+      shadowOffsetX: 1,
+      shadowOffsetY: 1,
     })
   }
 
@@ -520,7 +530,6 @@ export function createStageRenderer({
     const group = new Konva.Group({
       x: startX,
       y: startY,
-      rotation: object.angle ?? 0,
     })
     const line = new Konva.Line({
       points: [0, 0, endLocalX, endLocalY],
@@ -674,16 +683,43 @@ export function createStageRenderer({
   }
 
   function createDonutNode(object: BoardObject): KonvaNode {
-    return new Konva.Ring({
+    const scale = objectScale(object)
+    const outerRadius = 512
+    const innerRadius = toSceneCoordinate(object.donutRadius ?? 80)
+    const arcAngle = object.arcAngle ?? 360
+    const { offsetX, offsetY } = calculateDonutOffset({
+      arcAngle,
+      outerRadius,
+      innerRadius,
+    })
+    const group = new Konva.Group({
       x: toSceneCoordinate(object.x),
       y: toSceneCoordinate(object.y),
-      innerRadius: toSceneCoordinate(object.donutRadius ?? 80),
-      outerRadius: 512,
-      fill: object.color ?? '#ff8000',
-      scaleX: objectScale(object),
-      scaleY: objectScale(object),
+      offsetX,
+      offsetY,
+      scaleX: scale,
+      scaleY: scale,
       rotation: object.angle ?? 0,
     })
+    const shape = new Konva.Shape({
+      fill: object.color ?? '#ff8000',
+      sceneFunc: (ctx: ShapeContext, shape: unknown) => {
+        const startAngle = -Math.PI / 2
+        const endAngle = startAngle + (arcAngle * Math.PI) / 180
+        ctx.beginPath()
+        if (arcAngle >= 360) {
+          ctx.arc(0, 0, outerRadius, 0, Math.PI * 2)
+          ctx.arc(0, 0, innerRadius, 0, Math.PI * 2, true)
+        } else {
+          ctx.arc(0, 0, outerRadius, startAngle, endAngle)
+          ctx.arc(0, 0, innerRadius, endAngle, startAngle, true)
+          ctx.closePath()
+        }
+        ctx.fillStrokeShape(shape)
+      },
+    })
+    group.add(shape)
+    return group
   }
 
   async function createIconNode(object: BoardObject): Promise<KonvaNode> {

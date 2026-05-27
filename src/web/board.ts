@@ -7,12 +7,7 @@ import type {
 } from './types.js'
 
 export function normalizeBoard(board: Partial<Board>): NormalizedBoard {
-  const objects = (board.objects ?? []).map((object) => ({
-    size: 100,
-    color: '#ff8000',
-    transparency: 0,
-    ...object,
-  }))
+  const objects = (board.objects ?? []).map((object) => normalizeObjectForEditor(object))
   ensureObjectEditorIds(objects)
   return {
     name: board.name ?? '',
@@ -38,6 +33,16 @@ export function cleanBoard(board: NormalizedBoard): Board {
 export function sanitizeObject(object: BoardObject): BoardObject {
   const capabilities = getObjectCapabilities(object.type)
   const copy = stripEditorFields(object)
+  if (copy.type === 'text') {
+    delete copy.size
+    delete copy.angle
+  }
+  if (copy.type === 'line') {
+    delete copy.angle
+  }
+  if (copy.type === 'donut' && copy.arcAngle === undefined) {
+    copy.arcAngle = 360
+  }
   if (!capabilities.appearance) {
     delete copy.color
     delete copy.transparency
@@ -63,7 +68,23 @@ export function getObjectCapabilities(type: string): ObjectCapabilities {
     appearance: ['text', 'line', 'line_aoe', 'donut'].includes(type),
     text: type === 'text',
     line: type === 'line',
-    arcAngle: type === 'fan_aoe',
+    arcAngle: type === 'fan_aoe' || type === 'donut',
     donutRadius: type === 'donut',
   }
+}
+
+function normalizeObjectForEditor(object: BoardObject): BoardObject {
+  const normalized = sanitizeObject({
+    size: 100,
+    color: '#ff8000',
+    transparency: 0,
+    ...object,
+  })
+  if (typeof object.editorId === 'string') {
+    normalized.editorId = object.editorId
+  }
+  if (normalized.type === 'text') {
+    normalized.size = 100
+  }
+  return normalized
 }

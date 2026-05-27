@@ -440,7 +440,7 @@ function createDefaultObject(type: string, point = BOARD_CENTER): BoardObject {
   }
   if (type === 'line_aoe') return { ...base, width: 128, height: 128 }
   if (type === 'fan_aoe') return { ...base, arcAngle: 90 }
-  if (type === 'donut') return { ...base, donutRadius: 80 }
+  if (type === 'donut') return { ...base, arcAngle: 360, donutRadius: 80 }
   return base
 }
 
