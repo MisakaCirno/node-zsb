@@ -5,6 +5,7 @@ import { createEditorActionRegistry } from './editorActionRegistry.js'
 import { bindEditorEvents } from './editorBindings.js'
 import { createEditorControllers } from './editorControllers.js'
 import { createEditorContext } from './editorContext.js'
+import { mountEditorDialogTemplates } from './dialogTemplates.js'
 import { getEditorElements } from './editorElements.js'
 import { createEditorFeedback } from './editorFeedback.js'
 import { createEditorHistoryControls } from './editorHistoryControls.js'
@@ -38,6 +39,7 @@ interface RenderLoop {
 export function createEditorApp({
   confirmAction = (message) => getBrowserWindow().confirm(message),
 }: CreateEditorAppOptions = {}): EditorApp {
+  mountEditorDialogTemplates()
   const els = getEditorElements()
   const state = createEditorState()
   let renderLoop: RenderLoop
