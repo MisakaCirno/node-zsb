@@ -361,36 +361,6 @@ export interface FileLike {
   text(): Promise<string>
 }
 
-export interface BrowserClipboard {
-  writeText(text: string): Promise<void>
-  write?(items: unknown[]): Promise<void>
-}
-
-export interface BrowserWindow {
-  ClipboardItem?: new (items: Record<string, Blob>) => unknown
-  document: {
-    body: { append(element: AnchorElement): void }
-    createElement(tagName: 'a'): AnchorElement
-  }
-  history: {
-    replaceState(data: unknown, unused: string, url?: string): void
-  }
-  location: {
-    href: string
-  }
-  localStorage: {
-    getItem(key: string): string | null
-    setItem(key: string, value: string): void
-  }
-}
-
-export interface AnchorElement {
-  href: string
-  download: string
-  click(): void
-  remove(): void
-}
-
 export interface ProjectBoardMeta {
   name: string
   boardBackground: string

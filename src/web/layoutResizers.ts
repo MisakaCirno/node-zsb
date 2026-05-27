@@ -7,10 +7,6 @@ const MIN_STAGE_WIDTH = 620
 const RESIZER_WIDTH = 6
 const KEYBOARD_STEP = 16
 
-declare const document: DocumentLike
-declare const window: WindowLike
-declare function getComputedStyle(element: LayoutShellElement): StyleDeclarationLike
-
 type PanelSide = 'left' | 'right'
 
 interface LayoutResizerDeps {
@@ -19,65 +15,9 @@ interface LayoutResizerDeps {
 }
 
 interface LayoutElements {
-  shell: LayoutShellElement
-  leftPanelResizer: ResizerElement
-  rightPanelResizer: ResizerElement
-}
-
-interface LayoutShellElement {
-  clientWidth: number
-  style: {
-    setProperty(name: string, value: string): void
-  }
-  getBoundingClientRect(): { left: number, right: number }
-}
-
-interface ResizerElement {
-  addEventListener(
-    type: 'pointerdown' | 'pointermove' | 'pointerup',
-    listener: (event: PointerEventLike) => void,
-  ): void
-  addEventListener(type: 'keydown', listener: (event: KeyboardEventLike) => void): void
-  addEventListener(type: string, listener: () => void): void
-  hasPointerCapture(pointerId: number): boolean
-  releasePointerCapture(pointerId: number): void
-  setAttribute(name: string, value: string): void
-  setPointerCapture(pointerId: number): void
-}
-
-interface DocumentLike {
-  body: {
-    classList: {
-      add(className: string): void
-      remove(className: string): void
-    }
-  }
-}
-
-interface WindowLike {
-  innerWidth: number
-  localStorage: {
-    getItem(key: string): string | null
-    setItem(key: string, value: string): void
-  }
-}
-
-interface StyleDeclarationLike {
-  getPropertyValue(name: string): string
-}
-
-interface PointerEventLike {
-  clientX: number
-  key?: string
-  pointerId: number
-  preventDefault(): void
-}
-
-interface KeyboardEventLike {
-  key: string
-  clientX?: number
-  pointerId?: number
-  preventDefault(): void
+  shell: HTMLElement
+  leftPanelResizer: HTMLElement
+  rightPanelResizer: HTMLElement
 }
 
 interface NormalizedLayout {
@@ -112,7 +52,7 @@ function bindResizer({
   onResize,
   side,
   trigger,
-}: LayoutResizerDeps & { side: PanelSide, trigger: ResizerElement }) {
+}: LayoutResizerDeps & { side: PanelSide, trigger: HTMLElement }) {
   trigger.addEventListener('pointerdown', (event) => {
     event.preventDefault()
     trigger.setPointerCapture(event.pointerId)
@@ -223,7 +163,7 @@ function getCurrentLayout(elements: LayoutElements): NormalizedLayout {
   }
 }
 
-function getKeyboardDelta(event: KeyboardEventLike | PointerEventLike, side: PanelSide) {
+function getKeyboardDelta(event: KeyboardEvent, side: PanelSide) {
   if (event.key === 'ArrowLeft') return side === 'left' ? -KEYBOARD_STEP : KEYBOARD_STEP
   if (event.key === 'ArrowRight') return side === 'left' ? KEYBOARD_STEP : -KEYBOARD_STEP
   return 0

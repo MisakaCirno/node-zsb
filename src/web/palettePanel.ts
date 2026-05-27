@@ -3,8 +3,6 @@ import type {
   EditorState,
 } from './types.js'
 
-declare const document: DocumentLike
-
 interface PalettePanelDeps {
   state: EditorState
   elements: PaletteElements
@@ -20,32 +18,6 @@ interface PaletteContainer {
   innerHTML: string
   append(...nodes: unknown[]): void
   setAttribute(name: string, value: string): void
-}
-
-interface PaletteButton {
-  draggable: boolean
-  id: string
-  textContent: string | null
-  title: string
-  type: string
-  classList: {
-    toggle(className: string, force?: boolean): void
-  }
-  append(...nodes: unknown[]): void
-  addEventListener(type: 'click', listener: () => void): void
-  addEventListener(type: 'dragstart', listener: (event: DragEventLike) => void): void
-  setAttribute(name: string, value: string): void
-}
-
-interface DragEventLike {
-  dataTransfer: {
-    effectAllowed: string
-    setData(format: string, data: string): void
-  }
-}
-
-interface DocumentLike {
-  createElement(tagName: 'button'): PaletteButton
 }
 
 const PALETTE_LABELS: Record<string, string> = {
@@ -101,6 +73,7 @@ function renderPalette({ state, elements, onAddObject }: PalettePanelDeps) {
       type,
     }))
     button.addEventListener('dragstart', (event) => {
+      if (!event.dataTransfer) return
       event.dataTransfer.effectAllowed = 'copy'
       event.dataTransfer.setData('application/x-node-zsb-object-type', type)
       event.dataTransfer.setData('text/plain', type)

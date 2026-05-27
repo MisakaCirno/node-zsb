@@ -1,51 +1,15 @@
-declare const document: DocumentLike
-declare const window: WindowLike
-declare const ResizeObserver: ResizeObserverConstructor
-declare const MutationObserver: MutationObserverConstructor
-
 interface SidebarTabLayoutDeps {
   elements: {
-    paletteTabs: TabListElement
-    shell: TabListElement
-  }
-}
-
-interface TabListElement {
-  clientWidth: number
-  scrollWidth: number
-  classList: {
-    remove(className: string): void
-    toggle(className: string, force?: boolean): void
-  }
-}
-
-interface DocumentLike {
-  querySelector(selector: string): TabListElement | null
-}
-
-interface WindowLike {
-  ResizeObserver?: ResizeObserverConstructor
-  addEventListener(type: 'resize', listener: () => void): void
-  requestAnimationFrame(callback: () => void): number
-}
-
-interface ResizeObserverConstructor {
-  new(callback: () => void): {
-    observe(element: TabListElement): void
-  }
-}
-
-interface MutationObserverConstructor {
-  new(callback: () => void): {
-    observe(element: TabListElement, options: { childList?: boolean, subtree?: boolean }): void
+    paletteTabs: HTMLElement
+    shell: HTMLElement
   }
 }
 
 export function bindAdaptiveSidebarTabs({ elements }: SidebarTabLayoutDeps) {
   const tabLists = [
-    document.querySelector('.sidebar-tabs'),
+    document.querySelector<HTMLElement>('.sidebar-tabs'),
     elements.paletteTabs,
-  ].filter((tabList): tabList is TabListElement => Boolean(tabList))
+  ].filter((tabList): tabList is HTMLElement => Boolean(tabList))
   const update = () => updateSidebarTabLayout(tabLists)
   const scheduleUpdate = () => window.requestAnimationFrame(update)
 
@@ -61,7 +25,7 @@ export function bindAdaptiveSidebarTabs({ elements }: SidebarTabLayoutDeps) {
     mutationObserver.observe(tabList, { childList: true, subtree: true }))
 }
 
-function updateSidebarTabLayout(tabLists: TabListElement[]) {
+function updateSidebarTabLayout(tabLists: HTMLElement[]) {
   for (const tabList of tabLists) {
     tabList.classList.remove('compact-tabs')
     const shouldCompact = tabList.scrollWidth > tabList.clientWidth + 1

@@ -1,4 +1,5 @@
 import { normalizeBoard } from './board.js'
+import { getOptionalBrowserWindow } from './browser.js'
 import { loadSavedBoard } from './storage.js'
 import { syncFlatLayerTree } from './layerTree.js'
 import {
@@ -133,6 +134,5 @@ function getSavedProject(value: unknown): ProjectFile | null {
 }
 
 function getLocationSearch(): string {
-  const globals = globalThis as unknown as { window?: { location?: { search?: string } } }
-  return globals.window?.location?.search ?? ''
+  return getOptionalBrowserWindow()?.location.search ?? ''
 }

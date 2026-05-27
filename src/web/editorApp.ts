@@ -1,4 +1,5 @@
 import { getEditorData } from './api.js'
+import { getBrowserWindow } from './browser.js'
 import { createEditorState } from './editorState.js'
 import { createEditorActionRegistry } from './editorActionRegistry.js'
 import { bindEditorEvents } from './editorBindings.js'
@@ -18,10 +19,6 @@ import type {
   EditorElements,
 } from './editorElements.js'
 
-declare const window: {
-  confirm(message: string): boolean
-}
-
 interface CreateEditorAppOptions {
   confirmAction?: (message: string) => boolean
 }
@@ -39,7 +36,7 @@ interface RenderLoop {
 }
 
 export function createEditorApp({
-  confirmAction = (message) => window.confirm(message),
+  confirmAction = (message) => getBrowserWindow().confirm(message),
 }: CreateEditorAppOptions = {}): EditorApp {
   const els = getEditorElements()
   const state = createEditorState()

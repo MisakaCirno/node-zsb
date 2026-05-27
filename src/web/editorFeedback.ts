@@ -1,12 +1,9 @@
+import { getBrowserWindow } from './browser.js'
 import type {
   DisabledElement,
   EditorState,
   TextElement,
 } from './types.js'
-
-declare const window: {
-  setTimeout(callback: () => void, timeout: number): number
-}
 
 interface EditorFeedbackDeps {
   state: EditorState
@@ -59,6 +56,8 @@ interface ShowStatusOptions {
 }
 
 export function createEditorFeedback({ state, getElements }: EditorFeedbackDeps) {
+  const browserWindow = getBrowserWindow()
+
   async function runAction(
     action: () => unknown | Promise<unknown>,
     successMessage = '',
@@ -87,7 +86,7 @@ export function createEditorFeedback({ state, getElements }: EditorFeedbackDeps)
     elements.status.textContent = message
     elements.status.classList.toggle('error', options.type === 'error')
     elements.status.classList.add('visible')
-    state.statusTimer = window.setTimeout(() => {
+    state.statusTimer = browserWindow.setTimeout(() => {
       elements.status.classList.remove('visible')
     }, 2200)
   }

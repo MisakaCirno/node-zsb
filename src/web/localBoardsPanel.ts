@@ -8,6 +8,7 @@ import {
   flattenProjectToBoard,
   normalizeProject,
 } from './project.js'
+import { getBrowserDocument } from './browser.js'
 import { syncFlatLayerTree } from './layerTree.js'
 import { loadLocalFiles, persistLocalFiles } from './storage.js'
 import type {
@@ -64,24 +65,6 @@ interface ListElement {
   innerHTML: string
   append(...nodes: unknown[]): void
   querySelectorAll<E extends Element = Element>(selector: string): NodeListOf<E>
-}
-
-interface CreatedElement {
-  [key: string]: unknown
-  className: string
-  textContent: string | null
-  type: string
-  value: string
-  title: string
-  src: string
-  alt: string
-  append(...nodes: unknown[]): void
-  addEventListener(type: string, listener: (event?: unknown) => void): void
-  setAttribute(name: string, value: string): void
-}
-
-interface DocumentLike {
-  createElement(tagName: string): CreatedElement
 }
 
 interface FormElement {
@@ -145,7 +128,7 @@ export function createLocalBoardsPanel({
   stage,
 }: LocalBoardsPanelDeps) {
   let pendingNameRequest: PendingNameRequest | null = null
-  const browserDocument = getDocument()
+  const browserDocument = getBrowserDocument()
 
   function renderLocalBoards() {
     const files = loadLocalFiles()
@@ -560,16 +543,4 @@ function formatLocalFileTime(file: LocalFile) {
 
 function normalizeFileName(name: unknown) {
   return String(name ?? '').trim()
-}
-
-function getDocument(): DocumentLike {
-  const globals = globalThis as unknown as {
-    document?: DocumentLike
-    window?: { document?: DocumentLike }
-  }
-  const documentLike = globals.document ?? globals.window?.document
-  if (!documentLike) {
-    throw new Error('Document is not available')
-  }
-  return documentLike
 }

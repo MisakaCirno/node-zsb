@@ -20,9 +20,9 @@ import {
   isProject,
   normalizeProject,
 } from './project.js'
+import { getBrowserLocalStorage } from './browser.js'
 import type {
   Board,
-  BrowserWindow,
   EditorSettings,
   LocalBoardSlot,
   LocalFile,
@@ -213,10 +213,6 @@ function stringOr(value: unknown, fallback: string): string {
   return typeof value === 'string' ? value : fallback
 }
 
-function getLocalStorage(): BrowserWindow['localStorage'] {
-  const globals = globalThis as unknown as {
-    localStorage?: BrowserWindow['localStorage']
-    window?: BrowserWindow
-  }
-  return globals.window?.localStorage ?? globals.localStorage as BrowserWindow['localStorage']
+function getLocalStorage(): Storage {
+  return getBrowserLocalStorage()
 }

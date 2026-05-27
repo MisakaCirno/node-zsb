@@ -1,3 +1,4 @@
+import { getBrowserDocument } from './browser.js'
 import type {
   EditorState,
   ValueElement,
@@ -20,30 +21,13 @@ interface BackgroundListElement {
   append(...nodes: unknown[]): void
 }
 
-interface CreatedElement {
-  className: string
-  dataset: Record<string, string>
-  innerHTML: string
-  title: string
-  type: string
-  classList: {
-    toggle(className: string, force?: boolean): void
-  }
-  addEventListener(type: string, listener: () => void): void
-  setAttribute(name: string, value: string): void
-}
-
-interface DocumentLike {
-  createElement(tagName: string): CreatedElement
-}
-
 export function createBoardMetaControls({
   state,
   elements,
   recordHistory,
   renderAll,
 }: BoardMetaControlsDeps) {
-  const browserDocument = getDocument()
+  const browserDocument = getBrowserDocument()
 
   function renderBackgroundOptions() {
     elements.background.innerHTML = ''
@@ -89,16 +73,4 @@ export function createBoardMetaControls({
     renderBackgroundOptions,
     syncBoardNameInput,
   }
-}
-
-function getDocument(): DocumentLike {
-  const globals = globalThis as unknown as {
-    document?: DocumentLike
-    window?: { document?: DocumentLike }
-  }
-  const documentLike = globals.document ?? globals.window?.document
-  if (!documentLike) {
-    throw new Error('Document is not available')
-  }
-  return documentLike
 }

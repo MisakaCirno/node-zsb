@@ -4,11 +4,13 @@ import {
   encodeBoardCode,
   renderPreviewImage,
 } from './api.js'
+import {
+  getBrowserNavigator,
+  getBrowserWindow,
+} from './browser.js'
 import { replaceBoard } from './editorState.js'
 import type {
   BoardCodeActions,
-  BrowserClipboard,
-  BrowserWindow,
   EditorState,
   ValueElement,
 } from './types.js'
@@ -36,8 +38,12 @@ interface PreviewPayload {
   hash: string
 }
 
-const browserWindow = (globalThis as unknown as { window: BrowserWindow }).window
-const browserNavigator = (globalThis as unknown as { navigator: { clipboard?: BrowserClipboard } }).navigator
+interface ClipboardWindow extends Window {
+  ClipboardItem?: new (items: Record<string, Blob>) => ClipboardItem
+}
+
+const browserWindow = getBrowserWindow() as ClipboardWindow
+const browserNavigator = getBrowserNavigator()
 
 export function createBoardCodeActions({
   state,

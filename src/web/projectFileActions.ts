@@ -1,4 +1,5 @@
 import { replaceBoard } from './editorState.js'
+import { getBrowserWindow } from './browser.js'
 import {
   PROJECT_FILE_EXTENSION,
   createProjectFromBoard,
@@ -8,14 +9,13 @@ import {
   projectToJson,
 } from './project.js'
 import type {
-  BrowserWindow,
   EditorState,
   FileLike,
   ProjectFileActions,
   ValueElement,
 } from './types.js'
 
-const browserWindow = (globalThis as unknown as { window: BrowserWindow }).window
+const browserWindow = getBrowserWindow()
 
 interface ProjectFileElements {
   fileName: ValueElement
