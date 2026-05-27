@@ -1,3 +1,7 @@
+declare const document: {
+  querySelector(selector: string): any
+}
+
 export function getEditorElements() {
   return {
     codeInput: document.querySelector('#code-input'),
