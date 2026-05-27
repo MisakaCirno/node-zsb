@@ -1799,6 +1799,8 @@ test('editor shows inspector fields that match the selected object type', async 
   await expect(page.locator('[data-field="dimensions"]')).toBeVisible()
   await expect(page.locator('#object-width')).toHaveValue('128')
   await expect(page.locator('#object-height')).toHaveValue('128')
+  await expect(page.locator('#object-width')).toHaveAttribute('min', '16')
+  await expect(page.locator('#object-height')).toHaveAttribute('min', '16')
   await page.locator('#object-width-range').fill('180')
   await expect(page.locator('#object-width')).toHaveValue('180')
   await page.locator('#object-height').fill('42')

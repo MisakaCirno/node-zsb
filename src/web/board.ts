@@ -87,7 +87,7 @@ export function getObjectCapabilities(type: string): ObjectCapabilities {
 function normalizeDimension(value: unknown, fallback: number): number {
   const number = Math.round(Number(value ?? fallback))
   if (!Number.isFinite(number)) return fallback
-  return Math.min(512, Math.max(1, number))
+  return Math.min(512, Math.max(16, number))
 }
 
 function normalizeObjectForEditor(object: BoardObject): BoardObject {

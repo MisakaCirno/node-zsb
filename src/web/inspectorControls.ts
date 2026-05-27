@@ -98,10 +98,10 @@ export function createInspectorControls({
       : undefined
     object.text = capabilities.text ? elements.text.value || undefined : undefined
     object.width = capabilities.dimensions
-      ? numberValue(elements.objectWidth, 1, 512)
+      ? numberValue(elements.objectWidth, 16, 512)
       : undefined
     object.height = capabilities.dimensions
-      ? numberValue(elements.objectHeight, 1, 512)
+      ? numberValue(elements.objectHeight, 16, 512)
       : undefined
     object.endX = capabilities.line ? numberValue(elements.endX, 0, 512) : undefined
     object.endY = capabilities.line ? numberValue(elements.endY, 0, 384) : undefined
