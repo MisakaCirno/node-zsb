@@ -5,16 +5,19 @@ import { MAX_BOARD_OBJECTS } from '../src/web/constants.js'
 async function openImportDialog(page: Page) {
   await clickFileMenuAction(page, '#open-import-dialog')
   await expect(page.locator('#import-dialog')).toBeVisible()
+  await expect(page.locator('#editor-dialog-root > #import-dialog')).toHaveCount(1)
 }
 
 async function openExportCodeDialog(page: Page) {
   await clickFileMenuAction(page, '#open-export-code-dialog')
   await expect(page.locator('#export-code-dialog')).toBeVisible()
+  await expect(page.locator('#editor-dialog-root > #export-code-dialog')).toHaveCount(1)
 }
 
 async function openExportImageDialog(page: Page) {
   await clickFileMenuAction(page, '#open-export-image-dialog')
   await expect(page.locator('#export-image-dialog')).toBeVisible()
+  await expect(page.locator('#editor-dialog-root > #export-image-dialog')).toHaveCount(1)
 }
 
 async function openLocalBoardDialog(page: Page) {

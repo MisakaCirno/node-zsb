@@ -3,6 +3,7 @@ import { getBrowserDocument } from './browser.js'
 interface DialogActionOptions {
   id?: string
   label: string
+  type?: 'button' | 'submit'
   value?: string
 }
 
@@ -32,6 +33,9 @@ export function mountEditorDialogTemplates() {
   const mount = document.querySelector('#editor-dialog-root') ?? document.body
   mountDialogOnce(mount, createLocalBoardNameDialog())
   mountDialogOnce(mount, createPresetNameDialog())
+  mountDialogOnce(mount, createImportDialog())
+  mountDialogOnce(mount, createExportCodeDialog())
+  mountDialogOnce(mount, createExportImageDialog())
 }
 
 function createLocalBoardNameDialog() {
@@ -75,6 +79,74 @@ function createPresetNameDialog() {
   })
 }
 
+function createImportDialog() {
+  return createEditorDialog({
+    id: 'import-dialog',
+    title: '导入战术板代码',
+    closeButtonId: 'close-import-dialog',
+    body: [
+      createTextareaField({
+        id: 'code-input',
+        label: '战术板代码',
+      }),
+    ],
+    actions: [
+      {
+        id: 'load-code',
+        label: '导入',
+        type: 'button',
+      },
+    ],
+  })
+}
+
+function createExportCodeDialog() {
+  return createEditorDialog({
+    id: 'export-code-dialog',
+    title: '导出分享码',
+    closeButtonId: 'close-export-code-dialog',
+    body: [
+      createTextareaField({
+        id: 'code-output',
+        label: '分享码',
+        readonly: true,
+      }),
+    ],
+    actions: [
+      {
+        id: 'copy-export-code',
+        label: '复制分享码',
+        type: 'button',
+      },
+    ],
+  })
+}
+
+function createExportImageDialog() {
+  const document = getBrowserDocument()
+  const image = document.createElement('img')
+  image.id = 'preview-image'
+  image.alt = '战术板预览图'
+  return createEditorDialog({
+    id: 'export-image-dialog',
+    title: '导出图片',
+    closeButtonId: 'close-export-image-dialog',
+    body: [image],
+    actions: [
+      {
+        id: 'copy-export-image',
+        label: '复制图片',
+        type: 'button',
+      },
+      {
+        id: 'download-preview-image',
+        label: '下载图片',
+        type: 'button',
+      },
+    ],
+  })
+}
+
 function createNameDialog(options: NameDialogOptions) {
   const document = getBrowserDocument()
   const field = document.createElement('label')
@@ -99,6 +171,28 @@ function createNameDialog(options: NameDialogOptions) {
     body: [field],
     actions: options.actions,
   })
+}
+
+function createTextareaField({
+  id,
+  label,
+  readonly = false,
+}: {
+  id: string
+  label: string
+  readonly?: boolean
+}) {
+  const document = getBrowserDocument()
+  const field = document.createElement('label')
+  field.className = 'field'
+  const labelElement = document.createElement('span')
+  labelElement.textContent = label
+  const textarea = document.createElement('textarea')
+  textarea.id = id
+  textarea.spellcheck = false
+  textarea.readOnly = readonly
+  field.append(labelElement, textarea)
+  return field
 }
 
 function createEditorDialog({
@@ -166,7 +260,7 @@ function createDialogActions(actions: DialogActionOptions[]) {
   footer.className = 'dialog-actions'
   for (const action of actions) {
     const button = document.createElement('button')
-    button.type = 'submit'
+    button.type = action.type ?? 'submit'
     if (action.id) {
       button.id = action.id
     }

@@ -410,49 +410,6 @@
       </form>
     </dialog>
     <div id="editor-dialog-root"></div>
-    <dialog id="import-dialog" class="editor-dialog">
-      <form method="dialog" class="dialog-panel">
-        <header class="dialog-header">
-          <h2>导入战术板代码</h2>
-          <button id="close-import-dialog" class="icon-button" type="submit" aria-label="关闭">x</button>
-        </header>
-        <label class="field">
-          <span>战术板代码</span>
-          <textarea id="code-input" spellcheck="false"></textarea>
-        </label>
-        <footer class="dialog-actions">
-          <button id="load-code" type="button">导入</button>
-        </footer>
-      </form>
-    </dialog>
-    <dialog id="export-code-dialog" class="editor-dialog">
-      <form method="dialog" class="dialog-panel">
-        <header class="dialog-header">
-          <h2>导出分享码</h2>
-          <button id="close-export-code-dialog" class="icon-button" type="submit" aria-label="关闭">x</button>
-        </header>
-        <label class="field">
-          <span>分享码</span>
-          <textarea id="code-output" spellcheck="false" readonly></textarea>
-        </label>
-        <footer class="dialog-actions">
-          <button id="copy-export-code" type="button">复制分享码</button>
-        </footer>
-      </form>
-    </dialog>
-    <dialog id="export-image-dialog" class="editor-dialog">
-      <form method="dialog" class="dialog-panel">
-        <header class="dialog-header">
-          <h2>导出图片</h2>
-          <button id="close-export-image-dialog" class="icon-button" type="submit" aria-label="关闭">x</button>
-        </header>
-        <img id="preview-image" alt="战术板预览图" />
-        <footer class="dialog-actions">
-          <button id="copy-export-image" type="button">复制图片</button>
-          <button id="download-preview-image" type="button">下载图片</button>
-        </footer>
-      </form>
-    </dialog>
     <div id="context-menu" class="context-menu hidden" role="menu">
       <button type="button" role="menuitem" data-context="canvas layer" data-action="copy">复制</button>
       <button type="button" role="menuitem" data-context="canvas" data-action="paste">粘贴</button>
