@@ -21,6 +21,8 @@ interface InspectorElements extends InspectorPanelElements {
   size: ValueElement & DisabledElement
   angle: ValueElement & DisabledElement
   transparency: ValueElement
+  objectWidth: ValueElement & DisabledElement
+  objectHeight: ValueElement & DisabledElement
   endX: ValueElement & DisabledElement
   endY: ValueElement & DisabledElement
   arc: ValueElement & DisabledElement
@@ -95,6 +97,12 @@ export function createInspectorControls({
       ? numberValue(elements.transparency, 0, 100)
       : undefined
     object.text = capabilities.text ? elements.text.value || undefined : undefined
+    object.width = capabilities.dimensions
+      ? numberValue(elements.objectWidth, 1, 512)
+      : undefined
+    object.height = capabilities.dimensions
+      ? numberValue(elements.objectHeight, 1, 512)
+      : undefined
     object.endX = capabilities.line ? numberValue(elements.endX, 0, 512) : undefined
     object.endY = capabilities.line ? numberValue(elements.endY, 0, 384) : undefined
     object.arcAngle = capabilities.arcAngle ? numberValue(elements.arc, 10, 360) : undefined

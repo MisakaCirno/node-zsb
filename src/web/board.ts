@@ -57,6 +57,13 @@ export function sanitizeObject(object: BoardObject): BoardObject {
     delete copy.endX
     delete copy.endY
   }
+  if (!capabilities.dimensions) {
+    delete copy.width
+    delete copy.height
+  } else {
+    copy.width = normalizeDimension(copy.width, 128)
+    copy.height = normalizeDimension(copy.height, 128)
+  }
   if (!capabilities.arcAngle) {
     delete copy.arcAngle
   }
@@ -71,9 +78,16 @@ export function getObjectCapabilities(type: string): ObjectCapabilities {
     appearance: ['text', 'line', 'line_aoe', 'donut'].includes(type),
     text: type === 'text',
     line: type === 'line',
+    dimensions: type === 'line_aoe',
     arcAngle: type === 'fan_aoe' || type === 'donut',
     donutRadius: type === 'donut',
   }
+}
+
+function normalizeDimension(value: unknown, fallback: number): number {
+  const number = Math.round(Number(value ?? fallback))
+  if (!Number.isFinite(number)) return fallback
+  return Math.min(512, Math.max(1, number))
 }
 
 function normalizeObjectForEditor(object: BoardObject): BoardObject {

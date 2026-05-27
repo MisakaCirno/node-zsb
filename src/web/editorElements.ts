@@ -126,6 +126,10 @@ export interface EditorElements {
   transparency: HTMLInputElement
   transparencyRange: HTMLInputElement
   text: HTMLInputElement
+  objectWidth: HTMLInputElement
+  objectWidthRange: HTMLInputElement
+  objectHeight: HTMLInputElement
+  objectHeightRange: HTMLInputElement
   endX: HTMLInputElement
   endY: HTMLInputElement
   arc: HTMLInputElement
@@ -269,6 +273,10 @@ export function getEditorElements(): EditorElements {
     transparency: queryElement('#object-transparency', HTMLInputElement),
     transparencyRange: queryElement('#object-transparency-range', HTMLInputElement),
     text: queryElement('#object-text', HTMLInputElement),
+    objectWidth: queryElement('#object-width', HTMLInputElement),
+    objectWidthRange: queryElement('#object-width-range', HTMLInputElement),
+    objectHeight: queryElement('#object-height', HTMLInputElement),
+    objectHeightRange: queryElement('#object-height-range', HTMLInputElement),
     endX: queryElement('#object-end-x', HTMLInputElement),
     endY: queryElement('#object-end-y', HTMLInputElement),
     arc: queryElement('#object-arc', HTMLInputElement),

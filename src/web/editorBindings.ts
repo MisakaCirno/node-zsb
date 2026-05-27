@@ -196,6 +196,8 @@ export function bindEditorEvents({
     input.addEventListener('input', actions.updateSelectedFromInspector)
   }
   bindSyncedSlider(elements.transparency, elements.transparencyRange, actions.updateSelectedFromInspector)
+  bindSyncedSlider(elements.objectWidth, elements.objectWidthRange, actions.updateSelectedFromInspector)
+  bindSyncedSlider(elements.objectHeight, elements.objectHeightRange, actions.updateSelectedFromInspector)
   bindSyncedSlider(elements.arc, elements.arcRange, actions.updateSelectedFromInspector)
   bindSyncedSlider(elements.donut, elements.donutRange, actions.updateSelectedFromInspector)
 }

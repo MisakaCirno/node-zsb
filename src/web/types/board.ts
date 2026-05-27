@@ -63,6 +63,7 @@ export interface ObjectCapabilities {
   appearance: boolean
   text: boolean
   line: boolean
+  dimensions: boolean
   arcAngle: boolean
   donutRadius: boolean
 }

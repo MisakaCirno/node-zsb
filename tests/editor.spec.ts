@@ -1796,6 +1796,13 @@ test('editor shows inspector fields that match the selected object type', async 
   await expect(page.locator('[data-field="transform"]')).toBeHidden()
 
   await page.locator('button[title="line_aoe"]').click()
+  await expect(page.locator('[data-field="dimensions"]')).toBeVisible()
+  await expect(page.locator('#object-width')).toHaveValue('128')
+  await expect(page.locator('#object-height')).toHaveValue('128')
+  await page.locator('#object-width-range').fill('180')
+  await expect(page.locator('#object-width')).toHaveValue('180')
+  await page.locator('#object-height').fill('42')
+  await expect(page.locator('#object-height-range')).toHaveValue('42')
   await expect(page.locator('#object-transparency-range')).toBeVisible()
   await expect(page.locator('#object-transparency-range')).toHaveValue('0')
   await page.locator('#object-transparency-range').fill('35')
@@ -1837,6 +1844,9 @@ test('editor shows inspector fields that match the selected object type', async 
   const line = payload.data.objects.find(
     (object: { type: string }) => object.type === 'line',
   )
+  const lineAoe = payload.data.objects.find(
+    (object: { type: string }) => object.type === 'line_aoe',
+  )
   const donut = payload.data.objects.find(
     (object: { type: string }) => object.type === 'donut',
   )
@@ -1845,6 +1855,8 @@ test('editor shows inspector fields that match the selected object type', async 
   expect(tank.arcAngle).toBeUndefined()
   expect(text.angle).toBeUndefined()
   expect(line.angle).toBeUndefined()
+  expect(lineAoe.width).toBe(180)
+  expect(lineAoe.height).toBe(42)
   expect(donut.arcAngle).toBe(180)
   expect(donut.donutRadius).toBe(120)
 })

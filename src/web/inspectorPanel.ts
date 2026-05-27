@@ -27,6 +27,10 @@ export interface InspectorPanelElements extends ColorPickerElements {
   transparency: ValueElement
   transparencyRange: ValueElement
   text: ValueElement
+  objectWidth: ValueElement & DisabledElement
+  objectWidthRange: ValueElement & DisabledElement
+  objectHeight: ValueElement & DisabledElement
+  objectHeightRange: ValueElement & DisabledElement
   endX: ValueElement & DisabledElement
   endY: ValueElement & DisabledElement
   arc: ValueElement & DisabledElement
@@ -73,6 +77,10 @@ export function renderInspector({
   elements.transparency.value = String(object.transparency ?? 0)
   elements.transparencyRange.value = elements.transparency.value
   elements.text.value = object.text ?? ''
+  elements.objectWidth.value = String(object.width ?? 128)
+  elements.objectWidthRange.value = elements.objectWidth.value
+  elements.objectHeight.value = String(object.height ?? 128)
+  elements.objectHeightRange.value = elements.objectHeight.value
   elements.endX.value = String(object.endX ?? object.x ?? 256)
   elements.endY.value = String(object.endY ?? object.y ?? 192)
   elements.arc.value = String(object.arcAngle ?? (object.type === 'fan_aoe' ? 90 : 360))
@@ -92,6 +100,7 @@ function updateInspectorVisibility(object: BoardObject, elements: InspectorPanel
   setFieldVisible(elements, 'appearance', capabilities.appearance)
   setFieldVisible(elements, 'transform', canTransform)
   setFieldVisible(elements, 'text', capabilities.text)
+  setFieldVisible(elements, 'dimensions', capabilities.dimensions)
   setFieldVisible(elements, 'line', capabilities.line)
   setFieldVisible(elements, 'arc', capabilities.arcAngle || capabilities.donutRadius)
   setFieldVisible(elements, 'arc-angle', capabilities.arcAngle)
@@ -105,6 +114,10 @@ function updateInspectorLockState(object: BoardObject, elements: InspectorPanelE
     elements.y,
     elements.size,
     elements.angle,
+    elements.objectWidth,
+    elements.objectWidthRange,
+    elements.objectHeight,
+    elements.objectHeightRange,
     elements.endX,
     elements.endY,
     elements.arc,

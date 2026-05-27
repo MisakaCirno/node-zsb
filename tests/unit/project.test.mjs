@@ -31,7 +31,7 @@ test('cleanBoard applies game-compatible object fields', () => {
     objects: [
       { type: 'text', x: 100, y: 120, text: 'label', size: 160, angle: 45 },
       { type: 'line', x: 120, y: 140, endX: 200, endY: 180, angle: 45 },
-      { type: 'line_aoe', x: 160, y: 160, transparency: 150 },
+      { type: 'line_aoe', x: 160, y: 160, width: 180, height: 42, transparency: 150 },
       { type: 'donut', x: 220, y: 180, donutRadius: 80 },
       { type: 'donut', x: 320, y: 180, donutRadius: 80, arcAngle: 180 },
     ],
@@ -42,13 +42,15 @@ test('cleanBoard applies game-compatible object fields', () => {
     size: object.size,
     angle: object.angle,
     arcAngle: object.arcAngle,
+    width: object.width,
+    height: object.height,
     transparency: object.transparency,
   })), [
-    { type: 'text', size: undefined, angle: undefined, arcAngle: undefined, transparency: 0 },
-    { type: 'line', size: 100, angle: undefined, arcAngle: undefined, transparency: 0 },
-    { type: 'line_aoe', size: 100, angle: undefined, arcAngle: undefined, transparency: 100 },
-    { type: 'donut', size: 100, angle: undefined, arcAngle: 360, transparency: 0 },
-    { type: 'donut', size: 100, angle: undefined, arcAngle: 180, transparency: 0 },
+    { type: 'text', size: undefined, angle: undefined, arcAngle: undefined, width: undefined, height: undefined, transparency: 0 },
+    { type: 'line', size: 100, angle: undefined, arcAngle: undefined, width: undefined, height: undefined, transparency: 0 },
+    { type: 'line_aoe', size: 100, angle: undefined, arcAngle: undefined, width: 180, height: 42, transparency: 100 },
+    { type: 'donut', size: 100, angle: undefined, arcAngle: 360, width: undefined, height: undefined, transparency: 0 },
+    { type: 'donut', size: 100, angle: undefined, arcAngle: 180, width: undefined, height: undefined, transparency: 0 },
   ])
 })
 

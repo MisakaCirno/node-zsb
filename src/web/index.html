@@ -240,6 +240,22 @@
               <span>文字</span>
               <input id="object-text" maxlength="30" />
             </label>
+            <div class="field-grid parameter-field-grid" data-field="dimensions">
+              <label class="field slider-field">
+                <span>高度</span>
+                <div class="slider-control">
+                  <input id="object-height-range" type="range" min="1" max="512" step="1" aria-label="高度滑动条" />
+                  <input id="object-height" type="number" min="1" max="512" />
+                </div>
+              </label>
+              <label class="field slider-field">
+                <span>宽度</span>
+                <div class="slider-control">
+                  <input id="object-width-range" type="range" min="1" max="512" step="1" aria-label="宽度滑动条" />
+                  <input id="object-width" type="number" min="1" max="512" />
+                </div>
+              </label>
+            </div>
             <div class="field-grid" data-field="line">
               <label class="field">
                 <span>终点 X</span>
