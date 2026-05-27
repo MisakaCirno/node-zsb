@@ -74,6 +74,15 @@ export const webController = new Elysia()
       },
     },
   )
+  .get(
+    '/assets/fonts/:name',
+    ({ params }) => file(path.join(rootDir, 'src', 'assets', 'fonts', params.name)),
+    {
+      params: t.Object({
+        name: t.RegExp(/^[A-Za-z0-9_.-]+\.ttf$/),
+      }),
+    },
+  )
 
 async function serveScriptOrFile(directory: string, asset: string) {
   const filePath = path.join(directory, asset)

@@ -14,6 +14,11 @@ import { fileURLToPath } from 'node:url'
 import path from 'node:path'
 import {
   AOE_RADIUS,
+  DEFAULT_TEXT_FONT_SIZE,
+  STRATEGY_TEXT_FONT_FAMILY,
+  STRATEGY_TEXT_SHADOW_BLUR,
+  STRATEGY_TEXT_SHADOW_OFFSET,
+  STRATEGY_TEXT_STROKE_WIDTH,
   calcTextWidth,
   calculateCircleOffset as getCircleOffset,
   calculateDonutOffset as getDonutOffset,
@@ -65,26 +70,28 @@ async function createBoardLayer(backgroundType: BackgroundType = 'checkered') {
 
 function createTextBlock(data: StrategyObject): Konva.Text {
   const text = data.text ?? ''
-  const fontSize = 28
+  const fontSize = DEFAULT_TEXT_FONT_SIZE
   const textWidth = calcTextWidth(text, fontSize)
   const offsetX = textWidth / 2
   const offsetY = fontSize / 2
 
   return new Konva.Text({
     text: data.text,
-    fill: data.color,
+    fill: data.color ?? '#ffffff',
+    stroke: 'black',
+    strokeWidth: STRATEGY_TEXT_STROKE_WIDTH,
     x: toSceneCoordinate(data.x),
     y: toSceneCoordinate(data.y),
-    fontFamily: 'AlibabaPuHuiTi',
+    fontFamily: STRATEGY_TEXT_FONT_FAMILY,
     fontSize: fontSize,
     offsetX: offsetX,
     offsetY: offsetY,
     shadowEnabled: true,
     shadowColor: 'black',
-    shadowBlur: 4,
-    shadowOffsetX: 2,
-    shadowOffsetY: 2,
-    shadowOpacity: 1, // React-Konva default might handle this differently, but explicit is good
+    shadowBlur: STRATEGY_TEXT_SHADOW_BLUR,
+    shadowOffsetX: STRATEGY_TEXT_SHADOW_OFFSET,
+    shadowOffsetY: STRATEGY_TEXT_SHADOW_OFFSET,
+    shadowOpacity: 1,
   })
 }
 

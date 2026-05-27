@@ -1,6 +1,13 @@
 import { getBrowserDocument } from './browser.js'
 import { getSelectionBounds } from './objectAlignment.js'
-import { objectOpacity, objectScale } from '../shared/boardGeometry.js'
+import {
+  BOARD_SCALE,
+  DEFAULT_TEXT_FONT_SIZE,
+  STRATEGY_TEXT_FONT_FAMILY,
+  STRATEGY_TEXT_STROKE_WIDTH,
+  objectOpacity,
+  objectScale,
+} from '../shared/boardGeometry.js'
 import type {
   BoardObject,
   Bounds,
@@ -89,8 +96,8 @@ function drawLine(context: CanvasRenderingContext2D, object: BoardObject, scale:
 function drawText(context: CanvasRenderingContext2D, object: BoardObject, scale: number): void {
   context.fillStyle = object.color ?? '#ffffff'
   context.strokeStyle = 'black'
-  context.lineWidth = 2
-  context.font = `${Math.max(8, 14 * scale)}px "Microsoft YaHei", sans-serif`
+  context.lineWidth = Math.max(1, (STRATEGY_TEXT_STROKE_WIDTH / BOARD_SCALE) * scale)
+  context.font = `${Math.max(8, (DEFAULT_TEXT_FONT_SIZE / BOARD_SCALE) * scale)}px "${STRATEGY_TEXT_FONT_FAMILY}", sans-serif`
   context.textAlign = 'center'
   context.textBaseline = 'middle'
   context.strokeText(object.text ?? 'T', 0, 0)

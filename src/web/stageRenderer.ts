@@ -9,6 +9,11 @@ import {
   rotatePoint,
 } from './geometry.js'
 import {
+  DEFAULT_TEXT_FONT_SIZE,
+  STRATEGY_TEXT_FONT_FAMILY,
+  STRATEGY_TEXT_SHADOW_BLUR,
+  STRATEGY_TEXT_SHADOW_OFFSET,
+  STRATEGY_TEXT_STROKE_WIDTH,
   calcTextWidth,
   calculateCircleOffset,
   calculateDonutOffset,
@@ -207,7 +212,10 @@ export function createStageRenderer({
   let suppressNextStageClick = false
   let isTransformingSelection = false
   let pendingTransformCommit = 0
+  let textFontReady: Promise<unknown> | null = null
   const renderedNodesByIndex = new Map<number, KonvaNode>()
+
+  void ensureStrategyTextFontLoaded()
 
   stage.on('click tap', (event: KonvaEvent) => {
     if (event.evt?.button && event.evt.button !== 0) return
@@ -282,6 +290,9 @@ export function createStageRenderer({
   }
 
   async function renderObjects() {
+    if (state.board.objects.some((object) => object.type === 'text')) {
+      await ensureStrategyTextFontLoaded()
+    }
     objectLayer.destroyChildren()
     renderedNodesByIndex.clear()
     const nodes: KonvaNode[] = []
@@ -507,18 +518,18 @@ export function createStageRenderer({
       text: object.text ?? '',
       fill: object.color ?? '#ffffff',
       stroke: 'black',
-      strokeWidth: 0.75,
+      strokeWidth: STRATEGY_TEXT_STROKE_WIDTH,
       x: toSceneCoordinate(object.x),
       y: toSceneCoordinate(object.y),
-      fontSize: 28,
-      fontFamily: 'Arial',
-      offsetX: calcTextWidth(object.text ?? '', 28) / 2,
-      offsetY: 14,
+      fontSize: DEFAULT_TEXT_FONT_SIZE,
+      fontFamily: STRATEGY_TEXT_FONT_FAMILY,
+      offsetX: calcTextWidth(object.text ?? '', DEFAULT_TEXT_FONT_SIZE) / 2,
+      offsetY: DEFAULT_TEXT_FONT_SIZE / 2,
       shadowEnabled: true,
       shadowColor: 'black',
-      shadowBlur: 2,
-      shadowOffsetX: 1,
-      shadowOffsetY: 1,
+      shadowBlur: STRATEGY_TEXT_SHADOW_BLUR,
+      shadowOffsetX: STRATEGY_TEXT_SHADOW_OFFSET,
+      shadowOffsetY: STRATEGY_TEXT_SHADOW_OFFSET,
     })
   }
 
@@ -783,6 +794,16 @@ export function createStageRenderer({
     })
     state.images.set(src, promise)
     return promise
+  }
+
+  function ensureStrategyTextFontLoaded(): Promise<unknown> {
+    if (textFontReady) return textFontReady
+    const fonts = document.fonts
+    if (!fonts?.load) return Promise.resolve()
+    textFontReady = fonts
+      .load(`${DEFAULT_TEXT_FONT_SIZE}px "${STRATEGY_TEXT_FONT_FAMILY}"`)
+      .catch(() => undefined)
+    return textFontReady
   }
 
   return {
