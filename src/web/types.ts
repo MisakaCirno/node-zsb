@@ -68,6 +68,13 @@ export interface EditorSettings {
   zoomMode: ZoomMode
 }
 
+export interface EditorData {
+  backgrounds: Record<string, string>
+  defaultCode: string
+  iconConfigs: Record<string, IconConfig>
+  iconGroups: Record<string, string[]>
+}
+
 export interface EditorState extends EditorStateSlice {
   selectedGroupId: string
   currentFileName: string

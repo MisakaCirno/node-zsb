@@ -1,9 +1,19 @@
 import { calcTextWidth, objectScale } from '../shared/boardGeometry.js'
+import type {
+  BoardObject,
+  Bounds,
+  EditorState,
+} from './types.js'
 
 const DEFAULT_ICON_SIZE = 32
 const CIRCLE_AOE_SIZE = 512
 
-export function getObjectBounds(object, state) {
+interface ObjectSize {
+  width: number
+  height: number
+}
+
+export function getObjectBounds(object: BoardObject, state: EditorState): Bounds {
   if (object.type === 'line') {
     const endX = object.endX ?? object.x
     const endY = object.endY ?? object.y
@@ -23,7 +33,7 @@ export function getObjectBounds(object, state) {
   }
 }
 
-export function getSelectionBounds(objects, state) {
+export function getSelectionBounds(objects: BoardObject[], state: EditorState): Bounds {
   const bounds = objects.map((object) => getObjectBounds(object, state))
   return {
     left: Math.min(...bounds.map((bound) => bound.left)),
@@ -33,15 +43,15 @@ export function getSelectionBounds(objects, state) {
   }
 }
 
-export function getBoundsCenterX(bounds) {
+export function getBoundsCenterX(bounds: Bounds) {
   return bounds.left + (bounds.right - bounds.left) / 2
 }
 
-export function getBoundsCenterY(bounds) {
+export function getBoundsCenterY(bounds: Bounds) {
   return bounds.top + (bounds.bottom - bounds.top) / 2
 }
 
-function getObjectSize(object, state) {
+function getObjectSize(object: BoardObject, state: EditorState): ObjectSize {
   const scale = objectScale(object)
   if (object.type === 'text') {
     return {
