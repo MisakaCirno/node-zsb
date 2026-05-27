@@ -6,7 +6,10 @@ import {
   insertPresetIntoBoard,
 } from './localPresets.js'
 import { createNameDialogController } from './nameDialog.js'
-import { getPresetPreviewUrl } from './presetPreviewCache.js'
+import {
+  deletePresetPreview,
+  getPresetPreviewUrl,
+} from './presetPreviewCache.js'
 import { renderPresetPreviewBlob } from './presetPreviewRenderer.js'
 import { loadLocalPresets, persistLocalPresets } from './storage.js'
 import type {
@@ -150,7 +153,7 @@ export function createLocalPresetsPanel({
     return true
   }
 
-  function deletePreset(id: string) {
+  async function deletePreset(id: string) {
     const presets = loadLocalPresets()
     const preset = presets.find((entry) => entry.id === id)
     if (!preset) return false
@@ -159,6 +162,7 @@ export function createLocalPresetsPanel({
       showStatus('删除预设失败', { type: 'error' })
       return false
     }
+    await deletePresetPreview(getPresetCacheKey(preset))
     renderLocalPresets()
     showStatus('已删除预设')
     return true
@@ -209,7 +213,9 @@ export function createLocalPresetsPanel({
     deleteButton.type = 'button'
     deleteButton.textContent = '删除'
     deleteButton.className = 'danger-text-button'
-    deleteButton.addEventListener('click', () => deletePreset(preset.id))
+    deleteButton.addEventListener('click', () => {
+      void deletePreset(preset.id)
+    })
     actions.append(deleteButton)
 
     card.append(preview, meta, actions)
@@ -218,8 +224,7 @@ export function createLocalPresetsPanel({
 
   async function loadPreviewImage(preset: LocalLayerPreset, preview: HTMLElement) {
     try {
-      const cacheKey = `${preset.id}:${preset.contentHash}`
-      const url = await getPresetPreviewUrl(cacheKey, () =>
+      const url = await getPresetPreviewUrl(getPresetCacheKey(preset), () =>
         renderPresetPreviewBlob(preset, state.iconConfigs))
       const image = browserDocument.createElement('img')
       image.src = url
@@ -255,4 +260,8 @@ export function getPresetDragType(): string {
 
 function normalizePresetName(name: unknown) {
   return String(name ?? '').trim()
+}
+
+function getPresetCacheKey(preset: LocalLayerPreset): string {
+  return `${preset.id}:${preset.contentHash}`
 }

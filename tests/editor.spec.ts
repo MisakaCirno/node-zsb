@@ -71,6 +71,37 @@ async function getGridCanvasStats(page: Page) {
   } | null>
 }
 
+async function countPresetPreviewCache(page: Page) {
+  return page.evaluate(async () => {
+    const database = await new Promise<unknown | null>((resolve) => {
+      const request = (globalThis as unknown as { indexedDB: {
+        open(name: string): {
+          onerror: (() => void) | null
+          onsuccess: (() => void) | null
+          result: unknown
+        }
+      } }).indexedDB.open('node-zsb-preview-cache')
+      request.onsuccess = () => resolve(request.result)
+      request.onerror = () => resolve(null)
+    })
+    if (!database) return 0
+    return new Promise<number>((resolve) => {
+      const request = (database as {
+        transaction(storeName: string, mode: string): {
+          objectStore(storeName: string): {
+            count(): { onsuccess: (() => void) | null, onerror: (() => void) | null, result: number }
+          }
+        }
+      })
+        .transaction('preset-previews', 'readonly')
+        .objectStore('preset-previews')
+        .count()
+      request.onsuccess = () => resolve(request.result)
+      request.onerror = () => resolve(0)
+    })
+  })
+}
+
 async function exportBoardCode(page: Page) {
   await openExportCodeDialog(page)
   await expect(page.locator('#code-output')).toHaveValue(/\[stgy:/)
@@ -383,35 +414,7 @@ test('editor saves reusable presets and inserts them from the preset tab', async
   expect(storedPreset.name).toBe('开场站位')
   expect(storedPreset.preview).toBeUndefined()
   expect(storedPreset.layers[0].type).toBe('group')
-  const cachedPreviewCount = await page.evaluate(async () => {
-    const database = await new Promise<unknown | null>((resolve) => {
-      const request = (globalThis as unknown as { indexedDB: {
-        open(name: string): {
-          onerror: (() => void) | null
-          onsuccess: (() => void) | null
-          result: unknown
-        }
-      } }).indexedDB.open('node-zsb-preview-cache')
-      request.onsuccess = () => resolve(request.result)
-      request.onerror = () => resolve(null)
-    })
-    if (!database) return 0
-    return new Promise<number>((resolve) => {
-      const request = (database as {
-        transaction(storeName: string, mode: string): {
-          objectStore(storeName: string): {
-            count(): { onsuccess: (() => void) | null, onerror: (() => void) | null, result: number }
-          }
-        }
-      })
-        .transaction('preset-previews', 'readonly')
-        .objectStore('preset-previews')
-        .count()
-      request.onsuccess = () => resolve(request.result)
-      request.onerror = () => resolve(0)
-    })
-  })
-  expect(cachedPreviewCount).toBeGreaterThan(0)
+  await expect.poll(() => countPresetPreviewCache(page)).toBeGreaterThan(0)
 
   page.once('dialog', async (dialog) => {
     await dialog.accept()
@@ -432,6 +435,13 @@ test('editor saves reusable presets and inserts them from the preset tab', async
     targetPosition: { x: 120, y: 140 },
   })
   await expect(page.locator('#layer-count')).toHaveText(`2 / ${MAX_BOARD_OBJECTS}`)
+
+  page.once('dialog', async (dialog) => {
+    await dialog.accept()
+  })
+  await presetCard.getByRole('button', { name: '删除' }).click()
+  await expect(presetCard).toHaveCount(0)
+  await expect.poll(() => countPresetPreviewCache(page)).toBe(0)
 })
 
 test('editor preserves layer groups across autosave reloads', async ({ page }) => {

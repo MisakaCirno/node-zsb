@@ -30,6 +30,25 @@ export async function getPresetPreviewUrl(
   return storeMemoryPreview(cacheKey, blob)
 }
 
+export async function deletePresetPreview(cacheKey: string): Promise<void> {
+  const memoryEntry = memoryCache.get(cacheKey)
+  if (memoryEntry) {
+    URL.revokeObjectURL(memoryEntry.url)
+    memoryCache.delete(cacheKey)
+  }
+
+  const database = await openPreviewDatabase()
+  if (!database) return
+  await new Promise<void>((resolve) => {
+    const request = database
+      .transaction(STORE_NAME, 'readwrite')
+      .objectStore(STORE_NAME)
+      .delete(cacheKey)
+    request.onsuccess = () => resolve()
+    request.onerror = () => resolve()
+  })
+}
+
 async function readPresetPreviewBlob(cacheKey: string): Promise<Blob | null> {
   const database = await openPreviewDatabase()
   if (!database) return null

@@ -26,6 +26,13 @@ interface InsertPresetResult {
   objectCount: number
 }
 
+const BOARD_BOUNDS = {
+  bottom: 384,
+  left: 0,
+  right: 512,
+  top: 0,
+}
+
 export function createPresetFromSelection(
   state: EditorState,
   name: string,
@@ -64,10 +71,10 @@ export function insertPresetIntoBoard(
   if (state.board.objects.length + sourceObjects.length > MAX_BOARD_OBJECTS) return null
 
   const bounds = getSelectionBounds(sourceObjects, state)
-  const delta = {
+  const delta = constrainDeltaToBoard(bounds, {
     x: point.x - getBoundsCenterX(bounds),
     y: point.y - getBoundsCenterY(bounds),
-  }
+  })
   const objectIdMap = new Map<string, string>()
   const groupIdMap = new Map<string, string>()
   const clonedObjects = new Map<string, BoardObject>()
@@ -227,6 +234,37 @@ function translateObject(object: BoardObject, delta: { x: number, y: number }): 
     object.endY = clamp(Math.round(object.endY + delta.y), 0, 384)
   }
   return object
+}
+
+function constrainDeltaToBoard(
+  bounds: { bottom: number, left: number, right: number, top: number },
+  delta: { x: number, y: number },
+): { x: number, y: number } {
+  return {
+    x: constrainAxisDelta(delta.x, bounds.left, bounds.right, BOARD_BOUNDS.left, BOARD_BOUNDS.right),
+    y: constrainAxisDelta(delta.y, bounds.top, bounds.bottom, BOARD_BOUNDS.top, BOARD_BOUNDS.bottom),
+  }
+}
+
+function constrainAxisDelta(
+  delta: number,
+  sourceMin: number,
+  sourceMax: number,
+  targetMin: number,
+  targetMax: number,
+): number {
+  const sourceSize = sourceMax - sourceMin
+  const targetSize = targetMax - targetMin
+  if (sourceSize > targetSize) {
+    return targetMin + (targetSize - sourceSize) / 2 - sourceMin
+  }
+  if (sourceMin + delta < targetMin) {
+    return targetMin - sourceMin
+  }
+  if (sourceMax + delta > targetMax) {
+    return targetMax - sourceMax
+  }
+  return delta
 }
 
 function reverseLookup(map: Map<string, string>, value: string): string {

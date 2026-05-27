@@ -81,7 +81,7 @@ export interface LocalBoardsPanel {
 }
 
 export interface LocalPresetsPanel {
-  deletePreset(id: string): boolean
+  deletePreset(id: string): Promise<boolean>
   insertPresetAt(id: string, point?: { x: number, y: number }): Promise<boolean>
   renderLocalPresets(): void
   saveSelectedPreset(): Promise<boolean>
