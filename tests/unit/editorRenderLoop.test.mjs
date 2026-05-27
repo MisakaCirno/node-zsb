@@ -35,6 +35,8 @@ test('createEditorRenderLoop serializes overlapping render requests', async () =
           boardBackground: 'checkered',
           objects: [],
         },
+        currentFileName: 'queued-file',
+        layerTree: [],
         selectedIndex: -1,
       },
     })
@@ -50,6 +52,9 @@ test('createEditorRenderLoop serializes overlapping render requests', async () =
     assert.equal(boardRenderCount, 2)
     assert.equal(objectRenderCount, 2)
     assert.equal(globalThis.localStorageWrites.length, 2)
+    const saved = JSON.parse(globalThis.localStorageWrites.at(-1).value)
+    assert.equal(saved.format, 'node-zsb-project')
+    assert.equal(saved.fileName, 'queued-file')
   } finally {
     restoreGlobals()
   }

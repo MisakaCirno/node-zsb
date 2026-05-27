@@ -305,6 +305,41 @@ test('editor groups selected layers and exports the group in project JSON', asyn
   await expect(page.locator('#layers .layer-group-row')).toHaveCount(0)
 })
 
+test('editor preserves layer groups across autosave reloads', async ({ page }) => {
+  await page.goto('/editor')
+  await expect(page.locator('#layers')).toContainText('tank')
+
+  await page.locator('#layers .layer-row').nth(0).click()
+  await page.locator('#layers .layer-row').nth(1).click({ modifiers: ['Shift'] })
+  await page.locator('#group-layers').click()
+
+  const groupRow = page.locator('#layers .layer-group-row')
+  await expect(groupRow).toHaveCount(1)
+  await groupRow.locator('.layer-name').dblclick()
+  await groupRow.locator('.layer-name-input').fill('Persist Group')
+  await page.keyboard.press('Enter')
+  await expect(groupRow.locator('.layer-name')).toHaveText('Persist Group')
+
+  await page.waitForFunction(() => {
+    const raw = localStorage.getItem('node-zsb-editor-board-v1')
+    if (!raw) return false
+    const saved = JSON.parse(raw)
+    return saved.format === 'node-zsb-project'
+      && saved.layers?.[0]?.type === 'group'
+      && saved.layers?.[0]?.name === 'Persist Group'
+  })
+
+  await page.reload()
+  await expect(page.locator('#layers .layer-group-row')).toHaveCount(1)
+  await expect(page.locator('#layers .layer-group-row .layer-name')).toHaveText('Persist Group')
+
+  const project = await exportProjectFile(page)
+  expect(project.layers[0]).toMatchObject({
+    type: 'group',
+    name: 'Persist Group',
+  })
+})
+
 test('editor drags nested groups back to the layer root', async ({ page }) => {
   await page.goto('/editor')
   await expect(page.locator('#layers')).toContainText('tank')

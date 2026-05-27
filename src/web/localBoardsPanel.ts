@@ -1,8 +1,9 @@
 import { MAX_LOCAL_BOARDS } from './constants.js'
-import { cleanBoard, normalizeBoard } from './board.js'
+import { normalizeBoard } from './board.js'
 import { encodeBoardCode, renderPreviewImage } from './api.js'
 import {
   createProjectFromBoard,
+  createProjectSnapshot,
   createPureBoardFromProject,
   flattenProjectToBoard,
   normalizeProject,
@@ -221,7 +222,7 @@ export function createLocalBoardsPanel({
     state.selectedIndexes = []
     state.history = []
     state.future = []
-    setCurrentFile('', cleanBoard(state.board))
+    setCurrentFile('')
     elements.boardName.value = ''
     renderBackgroundOptions()
     renderLocalBoards()
@@ -247,7 +248,7 @@ export function createLocalBoardsPanel({
     })).filter((node): node is LayerNode => Boolean(node.id))
     state.selectedIndex = -1
     state.selectedIndexes = []
-    setCurrentFile(file.name, cleanBoard(state.board))
+    setCurrentFile(file.name)
     elements.boardName.value = state.board.name ?? ''
     renderBackgroundOptions()
     renderLocalBoards()
@@ -291,7 +292,7 @@ export function createLocalBoardsPanel({
     const nextFiles = files.filter((entry) => entry.name !== file.name)
     if (!saveLocalFiles(nextFiles)) return false
     if (state.currentFileName === file.name) {
-      setCurrentFile('', cleanBoard(state.board))
+      setCurrentFile('')
     }
     renderLocalBoards()
     showStatus('已删除本地文件')
@@ -305,7 +306,7 @@ export function createLocalBoardsPanel({
     const nextFiles = loadLocalFiles().filter((file) => !names.includes(file.name))
     if (!saveLocalFiles(nextFiles)) return false
     if (names.includes(state.currentFileName)) {
-      setCurrentFile('', cleanBoard(state.board))
+      setCurrentFile('')
     }
     renderLocalBoards()
     showStatus(`已删除 ${names.length} 个本地文件`)
@@ -387,7 +388,7 @@ export function createLocalBoardsPanel({
       ? files.map((entry, index) => index === existingIndex ? file : entry)
       : [file, ...files].slice(0, MAX_LOCAL_BOARDS)
     if (!saveLocalFiles(nextFiles)) return false
-    setCurrentFile(name, board)
+    setCurrentFile(name)
     renderLocalBoards()
     showStatus('已保存本地文件')
     return true
@@ -465,14 +466,21 @@ export function createLocalBoardsPanel({
     return normalizeFileName(elements.fileName.value || state.currentFileName)
   }
 
-  function setCurrentFile(fileName: string, board: Board) {
+  function currentProjectSnapshot(fileName = getCurrentFileName()) {
+    return createProjectSnapshot(state.board, {
+      fileName,
+      layerTree: state.layerTree,
+    })
+  }
+
+  function setCurrentFile(fileName: string) {
     state.currentFileName = fileName
-    state.localFileSnapshot = boardSnapshot(board)
+    state.localFileSnapshot = currentProjectSnapshot(fileName)
     elements.fileName.value = fileName
   }
 
   function isCurrentFileDirty() {
-    return boardSnapshot(cleanBoard(state.board)) !== state.localFileSnapshot
+    return currentProjectSnapshot() !== state.localFileSnapshot
   }
 
   function saveLocalFiles(files: LocalFile[]) {
@@ -541,10 +549,6 @@ export function createLocalBoardsPanel({
       }
     }
   }
-}
-
-function boardSnapshot(board: Board) {
-  return JSON.stringify(cleanBoard(normalizeBoard(board)))
 }
 
 function formatLocalFileTime(file: LocalFile) {

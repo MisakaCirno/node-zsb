@@ -1,8 +1,8 @@
-import { cleanBoard } from './board.js'
 import { replaceBoard } from './editorState.js'
 import {
   PROJECT_FILE_EXTENSION,
   createProjectFromBoard,
+  createProjectSnapshot,
   flattenProjectToBoard,
   parseProjectJson,
   projectToJson,
@@ -38,16 +38,17 @@ export function createProjectFileActions({
   renderBackgroundOptions,
 }: ProjectFileActionsDeps): ProjectFileActions {
   function downloadProjectFile() {
-    const fileName = normalizeProjectFileName(getCurrentFileName())
+    const projectFileName = stripProjectFileExtension(getCurrentFileName())
+    const downloadName = normalizeProjectFileName(projectFileName)
     const project = createProjectFromBoard(state.board, {
-      fileName,
+      fileName: projectFileName,
       layerTree: state.layerTree,
     })
     const blob = new Blob([projectToJson(project)], { type: 'application/json' })
     const url = URL.createObjectURL(blob)
     const link = browserWindow.document.createElement('a')
     link.href = url
-    link.download = fileName
+    link.download = downloadName
     browserWindow.document.body.append(link)
     link.click()
     link.remove()
@@ -63,7 +64,10 @@ export function createProjectFileActions({
     state.layerTree = project.layers
     const fileName = stripProjectFileExtension(file.name || project.fileName || '')
     state.currentFileName = fileName
-    state.localFileSnapshot = JSON.stringify(cleanBoard(board))
+    state.localFileSnapshot = createProjectSnapshot(state.board, {
+      fileName,
+      layerTree: state.layerTree,
+    })
     elements.fileName.value = fileName
     elements.boardName.value = state.board.name ?? ''
     renderBackgroundOptions()

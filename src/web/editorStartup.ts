@@ -1,9 +1,16 @@
-import { cleanBoard, normalizeBoard } from './board.js'
+import { normalizeBoard } from './board.js'
 import { loadSavedBoard } from './storage.js'
 import { syncFlatLayerTree } from './layerTree.js'
+import {
+  createProjectSnapshot,
+  flattenProjectToBoard,
+  isProject,
+  normalizeProject,
+} from './project.js'
 import type {
   Board,
   EditorState,
+  ProjectFile,
   ValueElement,
 } from './types.js'
 
@@ -75,8 +82,14 @@ export async function applyInitialBoardSource({
   syncBoardNameInput,
 }: ApplyInitialBoardSourceDeps) {
   if (source.type === 'saved-board') {
-    state.board = normalizeBoard(source.board as Partial<Board>)
-    syncFlatLayerTree(state)
+    const project = getSavedProject(source.board)
+    if (project) {
+      state.board = flattenProjectToBoard(project)
+      state.layerTree = project.layers
+    } else {
+      state.board = normalizeBoard(source.board as Partial<Board>)
+      syncFlatLayerTree(state)
+    }
     syncBoardNameInput()
     renderBackgroundOptions()
     return
@@ -105,10 +118,18 @@ export async function initializeEditorBoard({
     state,
     syncBoardNameInput,
   })
-  state.currentFileName = ''
-  state.localFileSnapshot = JSON.stringify(cleanBoard(state.board))
-  elements.fileName.value = ''
+  const project = source.type === 'saved-board' ? getSavedProject(source.board) : null
+  state.currentFileName = project?.fileName ?? ''
+  state.localFileSnapshot = createProjectSnapshot(state.board, {
+    fileName: state.currentFileName,
+    layerTree: state.layerTree,
+  })
+  elements.fileName.value = state.currentFileName
   return source
+}
+
+function getSavedProject(value: unknown): ProjectFile | null {
+  return isProject(value) ? normalizeProject(value) : null
 }
 
 function getLocationSearch(): string {

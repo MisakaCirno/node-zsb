@@ -42,7 +42,7 @@ export function loadSavedBoard(): unknown | null {
   }
 }
 
-export function persistSavedBoard(board: Board): boolean {
+export function persistSavedBoard(board: unknown): boolean {
   try {
     getLocalStorage().setItem(STORAGE_KEY, JSON.stringify(board))
     return true

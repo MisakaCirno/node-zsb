@@ -96,6 +96,13 @@ export function projectToJson(project: unknown): string {
   return `${JSON.stringify(normalizeProject(project), null, 2)}\n`
 }
 
+export function createProjectSnapshot(
+  board: Partial<Board>,
+  options: CreateProjectOptions = {},
+): string {
+  return projectToJson(createProjectFromBoard(board, options))
+}
+
 export function flattenProjectToBoard(project: unknown): ReturnType<typeof normalizeBoard> {
   const normalizedProject = normalizeProject(project)
   const objects: BoardObject[] = []

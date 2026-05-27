@@ -1,4 +1,4 @@
-import { cleanBoard } from './board.js'
+import { createProjectFromBoard } from './project.js'
 import { persistSavedBoard } from './storage.js'
 import { renderLayers as renderLayersPanel } from './layersPanel.js'
 import type {
@@ -110,7 +110,10 @@ export function createEditorRenderLoop({
   }
 
   function persistBoard() {
-    persistSavedBoard(cleanBoard(state.board))
+    persistSavedBoard(createProjectFromBoard(state.board, {
+      fileName: state.currentFileName,
+      layerTree: state.layerTree,
+    }))
   }
 
   return {
