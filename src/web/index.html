@@ -144,11 +144,10 @@
 
       <aside class="panel inspector">
         <section class="inspector-section share-section">
-          <div class="section-title">分享</div>
-          <label class="field share-name-field" for="board-name">
-            <span>分享名</span>
-            <input id="board-name" maxlength="7" placeholder="分享名" />
-          </label>
+          <div id="share-name-title" class="section-title">分享名</div>
+          <div class="field share-name-field">
+            <input id="board-name" maxlength="7" placeholder="分享名" aria-labelledby="share-name-title" />
+          </div>
         </section>
         <section class="inspector-section property-section">
           <div class="section-title">属性</div>
@@ -254,7 +253,10 @@
         </section>
 
         <section class="inspector-section layers-section">
-          <div class="section-title">图层 <span id="layer-count">0</span></div>
+          <div class="section-title layers-title">
+            <span>图层</span>
+            <span id="layer-count" class="layer-count">0 / 50</span>
+          </div>
           <div class="layer-toolbar">
             <div class="layer-toolbar-group" aria-label="图层顺序">
               <button id="move-top" class="icon-tool" type="button" title="移到顶层" aria-label="移到顶层" disabled>

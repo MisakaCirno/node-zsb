@@ -439,6 +439,18 @@ textarea {
   margin: 0;
 }
 
+.layers-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.layer-count {
+  margin-left: auto;
+  color: #81909a;
+  font-variant-numeric: tabular-nums;
+}
+
 .field .field-error {
   min-height: 16px;
   color: #f18b8b;

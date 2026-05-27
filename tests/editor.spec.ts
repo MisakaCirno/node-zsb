@@ -1,5 +1,6 @@
 import { expect, test, type Dialog, type Locator, type Page } from '@playwright/test'
 import { readFile } from 'node:fs/promises'
+import { MAX_BOARD_OBJECTS } from '../src/web/constants.js'
 
 async function openImportDialog(page: Page) {
   await clickFileMenuAction(page, '#open-import-dialog')
@@ -585,11 +586,14 @@ test('editor renders readable Chinese labels', async ({ page }) => {
   await expect(page.locator('.file-menu-local-actions')).toHaveCount(1)
   await expect(page.locator('.file-menu-code-actions')).toHaveCount(1)
   await expect(page.locator('.board-name-label')).toHaveText('文件名')
-  await expect(page.locator('.share-name-field span')).toHaveText('分享名')
+  await expect(page.locator('.share-section > .section-title')).toHaveText('分享名')
+  await expect(page.locator('.share-name-field span')).toHaveCount(0)
   await expect(page.locator('.inspector-section')).toHaveCount(3)
   await expect(page.locator('.share-section .share-name-field')).toBeVisible()
   await expect(page.locator('.property-section > .section-title')).toHaveText('属性')
   await expect(page.locator('.layers-section > .section-title')).toContainText('图层')
+  await expect(page.locator('.layers-title')).toHaveCSS('display', 'flex')
+  await expect(page.locator('#layer-count')).toHaveText(new RegExp(`^\\d+ / ${MAX_BOARD_OBJECTS}$`))
   await openExportCodeDialog(page)
   await expect(page.locator('#copy-export-code')).toBeVisible()
   await expect(page.getByPlaceholder('分享名')).toBeVisible()
@@ -1094,7 +1098,7 @@ test('editor clears the board with confirmation and undo support', async ({
   await expect(page.locator('#layers')).toContainText('tank')
 
   const before = await page.locator('#layers .layer-row').count()
-  await expect(page.locator('#layer-count')).toHaveText(String(before))
+  await expect(page.locator('#layer-count')).toHaveText(`${before} / ${MAX_BOARD_OBJECTS}`)
   await expect(page.locator('#clear-board')).toBeEnabled()
 
   page.once('dialog', async (dialog) => {
@@ -1111,7 +1115,7 @@ test('editor clears the board with confirmation and undo support', async ({
   await page.locator('#clear-board').click()
   await expect(page.locator('#layers .layer-row')).toHaveCount(0)
   await expect(page.locator('#layers')).toContainText('暂无对象')
-  await expect(page.locator('#layer-count')).toHaveText('0')
+  await expect(page.locator('#layer-count')).toHaveText(`0 / ${MAX_BOARD_OBJECTS}`)
   await expect(page.locator('#empty-state')).toBeVisible()
   await expect(page.locator('#clear-board')).toBeDisabled()
   await expect(page.locator('#delete-object')).toBeDisabled()
@@ -1119,7 +1123,7 @@ test('editor clears the board with confirmation and undo support', async ({
 
   await page.getByRole('button', { name: '撤销' }).click()
   await expect(page.locator('#layers .layer-row')).toHaveCount(before)
-  await expect(page.locator('#layer-count')).toHaveText(String(before))
+  await expect(page.locator('#layer-count')).toHaveText(`${before} / ${MAX_BOARD_OBJECTS}`)
   await expect(page.locator('#clear-board')).toBeEnabled()
 })
 
@@ -1247,7 +1251,7 @@ test('editor creates a new local file from the toolbar', async ({ page }) => {
   await expect(page.locator('#status')).toContainText('已新建文件')
   await expect(page.locator('#file-name')).toHaveValue('')
   await expect(page.locator('#board-name')).toHaveValue('')
-  await expect(page.locator('#layer-count')).toHaveText('0')
+  await expect(page.locator('#layer-count')).toHaveText(`0 / ${MAX_BOARD_OBJECTS}`)
 
   await openLocalBoardDialog(page)
   await expect(page.locator('#local-board-list')).toContainText('新建前草稿')

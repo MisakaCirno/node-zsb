@@ -1,4 +1,5 @@
 import { createObjectPreview } from './iconPreview.js'
+import { MAX_BOARD_OBJECTS } from './constants.js'
 import { getSelectedIndexes } from './editorState.js'
 import type {
   BoardObject,
@@ -68,7 +69,7 @@ export function renderLayers({
   onToggleLayerFlag,
 }: RenderLayersDeps) {
   elements.layers.innerHTML = ''
-  elements.layerCount.textContent = String(state.board.objects.length)
+  elements.layerCount.textContent = `${state.board.objects.length} / ${MAX_BOARD_OBJECTS}`
   if (state.board.objects.length === 0) {
     const empty = document.createElement('div')
     empty.className = 'layer-empty'
