@@ -259,8 +259,7 @@ export function createLocalBoardsPanel({
     file.updatedAt = new Date().toISOString()
     if (!saveLocalFiles(files)) return false
     if (state.currentFileName === fileName) {
-      state.currentFileName = name
-      elements.fileName.value = name
+      setCurrentFile(name)
     }
     renderLocalBoards()
     showStatus('已重命名本地文件')

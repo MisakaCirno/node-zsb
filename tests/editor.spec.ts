@@ -1,4 +1,4 @@
-import { expect, test, type Locator, type Page } from '@playwright/test'
+import { expect, test, type Dialog, type Locator, type Page } from '@playwright/test'
 import { readFile } from 'node:fs/promises'
 
 async function openImportDialog(page: Page) {
@@ -1215,6 +1215,46 @@ test('editor creates a new local file from the toolbar', async ({ page }) => {
   await openLocalBoardDialog(page)
   await expect(page.locator('#local-board-list')).toContainText('新建前草稿')
   await expect(page.locator('#local-board-list')).toContainText('分享名：原分享名')
+})
+
+test('editor does not mark the current local file dirty after renaming it', async ({ page }) => {
+  await page.goto('/editor')
+  await page.evaluate(() =>
+    localStorage.removeItem('node-zsb-editor-local-files-v1'),
+  )
+  await page.evaluate(() =>
+    localStorage.removeItem('node-zsb-editor-board-v1'),
+  )
+  await page.reload()
+  await expect(page.locator('#layers')).toContainText('tank')
+
+  await page.locator('#file-name').fill('重命名前')
+  await clickFileMenuAction(page, '#save-local-board')
+  await expect(page.locator('#status')).toContainText('已保存本地文件')
+
+  await openLocalBoardDialog(page)
+  await page.locator('#local-board-list .local-board-row')
+    .filter({ hasText: '重命名前' })
+    .getByRole('button', { name: '重命名' })
+    .click()
+  await page.locator('#local-board-name-input').fill('重命名后')
+  await page.locator('#confirm-local-board-name').click()
+  await expect(page.locator('#file-name')).toHaveValue('重命名后')
+  await page.locator('#local-board-dialog').evaluate((dialog) => {
+    if ('close' in dialog) dialog.close()
+  })
+
+  let unexpectedDialog = ''
+  const rejectUnexpectedDialog = async (dialog: Dialog) => {
+    unexpectedDialog = dialog.message()
+    await dialog.dismiss()
+  }
+  page.on('dialog', rejectUnexpectedDialog)
+  await clickFileMenuAction(page, '#new-local-board')
+  page.off('dialog', rejectUnexpectedDialog)
+
+  expect(unexpectedDialog).toBe('')
+  await expect(page.locator('#status')).toContainText('已新建文件')
 })
 
 test('editor saves local files with keyboard shortcuts', async ({ page }) => {
