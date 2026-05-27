@@ -258,6 +258,7 @@ export function createObjectCommands({
       const groupName = `组 ${Date.now().toString(36).slice(-4)}`
       if (!canMutateLayerTree(state, (layerTree) =>
         groupObjectIds(layerTree, selectedIds, groupName))) return
+      recordHistory()
       const group = groupObjectIds(
         state.layerTree,
         selectedIds,
