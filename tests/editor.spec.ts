@@ -363,15 +363,21 @@ test('editor drags nested groups back to the layer root', async ({ page }) => {
     node.type === 'group')).toBe(true)
 
   await expect(page.locator('#layer-root-drop')).toHaveCount(0)
-  const layersBox = await page.locator('#layers').boundingBox()
-  if (!layersBox) throw new Error('Layer list is not visible')
-  await innerGroup.dragTo(page.locator('#layers'), {
-    force: true,
-    targetPosition: {
-      x: 16,
-      y: layersBox.height - 8,
-    },
-  })
+  const innerGroupId = await innerGroup.evaluate((element) =>
+    (element as { dataset: { groupId?: string } }).dataset.groupId)
+  await page.locator('#layers').evaluate((element, groupId) => {
+    const browserWindow = globalThis as any
+    const dataTransfer = new browserWindow.DataTransfer()
+    dataTransfer.setData('application/x-node-zsb-layer', JSON.stringify({
+      type: 'group',
+      id: groupId,
+    }))
+    element.dispatchEvent(new browserWindow.DragEvent('drop', {
+      bubbles: true,
+      cancelable: true,
+      dataTransfer,
+    }))
+  }, innerGroupId)
   await expect(page.locator('#layers .layer-group-row')).toHaveCount(2)
   const project = await exportProjectFile(page)
   expect(project.layers.filter((node: { type: string }) => node.type === 'group')).toHaveLength(2)

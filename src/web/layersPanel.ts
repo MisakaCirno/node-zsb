@@ -46,15 +46,18 @@ interface LayerToggleOptions {
 }
 
 interface LayerDragOptions {
+  layerTree: LayerNode[]
   node: LayerNodeRef
   onDropAfter(dragged: LayerNodeRef, target: LayerNodeRef): void
   onDropBefore(dragged: LayerNodeRef, target: LayerNodeRef): void
   onDropIntoGroup(dragged: LayerNodeRef, groupId: string): void
+  onDropToRoot(dragged: LayerNodeRef): void
   row: any
   targetNode: LayerNodeRef
 }
 
 interface DragEventLike {
+  clientX: number
   clientY: number
   dataTransfer: {
     dropEffect: string
@@ -197,10 +200,12 @@ export function renderLayers({
       onToggleLayerGroupFlag(group.id, 'locked')
     })
     bindLayerDrag({
+      layerTree,
       node: { type: 'group', id: group.id },
       onDropAfter: onMoveLayerNodeAfter,
       onDropBefore: onMoveLayerNodeBefore,
       onDropIntoGroup: onMoveLayerNodeIntoGroup,
+      onDropToRoot: onMoveLayerNodeToRoot,
       row,
       targetNode: { type: 'group', id: group.id },
     })
@@ -230,10 +235,7 @@ export function renderLayers({
       if (!dragged) return
       event.preventDefault()
       elements.layers.classList.remove('root-drop-target')
-      const selectedGroup = state.selectedGroupId && state.selectedGroupId !== dragged.id
-        ? { type: 'group', id: state.selectedGroupId }
-        : null
-      onMoveLayerNodeToRoot((selectedGroup ?? dragged) as LayerNodeRef)
+      onMoveLayerNodeToRoot(dragged)
     }
   }
 
@@ -306,6 +308,7 @@ export function renderLayers({
     })
     row.addEventListener('drop', (event: DragEventLike) => {
       event.preventDefault()
+      event.stopPropagation()
       clearLayerDropClasses(row)
       const dragged = getDraggedLayerNode(event)
       if (dragged) {
@@ -359,6 +362,8 @@ function bindLayerDrag({
   onDropAfter,
   onDropBefore,
   onDropIntoGroup,
+  onDropToRoot,
+  layerTree,
   row,
   targetNode,
 }: LayerDragOptions) {
@@ -383,9 +388,26 @@ function bindLayerDrag({
     const dragged = getDraggedLayerNode(event)
     if (!dragged) return
     event.preventDefault()
+    event.stopPropagation()
     clearLayerDropClasses(row)
     const placement = getLayerDropPlacement(event, row, targetNode)
+    if (
+      placement !== 'inside'
+      && targetNode.type === 'group'
+      && isRootGutterDrop(event, row)
+      && isLayerNodeInsideGroup(layerTree, dragged, targetNode.id)
+    ) {
+      onDropToRoot(dragged)
+      return
+    }
     if (placement === 'inside' && targetNode.type === 'group') {
+      if (
+        isRootGutterDrop(event, row)
+        && isLayerNodeInsideGroup(layerTree, dragged, targetNode.id)
+      ) {
+        onDropToRoot(dragged)
+        return
+      }
       onDropIntoGroup(dragged, targetNode.id)
       return
     }
@@ -395,6 +417,30 @@ function bindLayerDrag({
     }
     onDropBefore(dragged, targetNode)
   })
+}
+
+function isRootGutterDrop(event: DragEventLike, row: any) {
+  const rect = row.getBoundingClientRect()
+  return event.clientX < rect.left + 96
+}
+
+function isLayerNodeInsideGroup(nodes: LayerNode[], target: LayerNodeRef, groupId: string): boolean {
+  for (const node of nodes) {
+    if (node.type !== 'group') continue
+    if (node.id === groupId) {
+      return containsLayerNode(node.children, target)
+    }
+    if (isLayerNodeInsideGroup(node.children, target, groupId)) return true
+  }
+  return false
+}
+
+function containsLayerNode(nodes: LayerNode[], target: LayerNodeRef): boolean {
+  for (const node of nodes) {
+    if (node.type === target.type && node.id === target.id) return true
+    if (node.type === 'group' && containsLayerNode(node.children, target)) return true
+  }
+  return false
 }
 
 function getLayerDropPlacement(event: DragEventLike, row: any, targetNode: LayerNodeRef): DropPlacement {
@@ -418,7 +464,7 @@ function clearLayerDropClasses(row: any) {
 }
 
 function isLayerRootDropEvent(event: DragEventLike, root: unknown) {
-  return event.target === root && hasLayerDragData(event)
+  return Boolean(root) && hasLayerDragData(event)
 }
 
 function hasLayerDragData(event: DragEventLike) {
