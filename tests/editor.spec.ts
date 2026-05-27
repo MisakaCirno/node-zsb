@@ -1253,6 +1253,7 @@ test('editor does not mark the current local file dirty after renaming it', asyn
   await openLocalBoardDialog(page)
   await page.locator('#local-board-list .local-board-row')
     .filter({ hasText: '重命名前' })
+    .locator('.local-board-actions')
     .getByRole('button', { name: '重命名' })
     .click()
   await page.locator('#local-board-name-input').fill('重命名后')
