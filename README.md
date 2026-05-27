@@ -2,49 +2,67 @@
 
 基于 Bun、Elysia、Konva、skia-canvas 和 sharp 的战术板图片渲染与可视化编辑服务。
 
+项目同时提供两类能力：
+
+- 服务端 API：把战术板分享码或 JSON 渲染为 WebP 图片。
+- 浏览器编辑器：通过可编辑画板创建、调整、分组、保存和导入导出战术板。
+
 ## 安装
 
 ```bash
 bun install
 ```
 
-## 运行
+## 启动
+
+生产/普通运行：
 
 ```bash
 bun run start
 ```
 
-开发时可以使用 watch 模式：
+开发 watch 模式：
 
 ```bash
 bun run dev
 ```
 
-服务默认监听 `http://localhost:3000`。
+服务默认监听：
 
-可编辑画板入口：
+```text
+http://localhost:3000
+```
+
+编辑器入口：
 
 ```text
 http://localhost:3000/editor
 ```
 
+如果浏览器显示 `NOT_FOUND`，先确认访问的是 `/editor`，不是站点根路径 `/`。
+
 ## 编辑器能力
 
-- 导入、导出战术板代码，并可渲染预览图。
-- 通过图标面板添加职业、机制、标记、形状和范围对象。
-- 在画布或属性面板中编辑对象位置、大小、角度、颜色、文字、线段端点和范围参数。
-- 支持图层选择、上移、下移、隐藏、锁定、清空画板和对象数量显示。
-- 支持撤销、重做、自动恢复上一次画板、本地存档槽和 URL 参数导入。
-- 支持辅助网格、网格吸附、居中、画布适配和缩放。
-- 线段对象可以直接拖拽起点和终点。
+- 从对象面板添加职业、机制、标记、形状和范围对象。
+- 直接在画布中拖拽、旋转、缩放对象；线段对象支持拖拽起点和终点。
+- 通过属性面板编辑位置、大小、角度、颜色、透明度、文字、线段端点和范围参数。
+- 支持图层选择、多选、Shift 范围选择、拖拽排序、隐藏、锁定、删除、置顶和置底。
+- 支持编辑器内分组和嵌套组；导出分享码时会自动展平为游戏可用的纯净战术板。
+- 支持撤销、重做、复制、粘贴、创建副本、键盘微调和自定义右键菜单。
+- 支持本地文件系统：新建、打开、保存、另存为、重命名、删除和预览本地文件。
+- 支持导入/导出分享码，导入/导出编辑器工程 JSON，导出预览图片。
+- 支持辅助网格、网格吸附、网格密度、网格透明度、画布适配和 25% 到 200% 缩放。
+- 支持浏览器自动恢复上一次编辑状态，以及通过 URL `code` 参数导入分享码。
 
 ## 快捷键
 
 | 快捷键 | 功能 |
 | --- | --- |
-| `Ctrl/Cmd + C` | 复制选中对象到编辑器剪贴板 |
+| `Ctrl/Cmd + S` | 保存当前本地文件 |
+| `Ctrl/Cmd + Shift + S` | 另存为本地文件 |
+| `Ctrl/Cmd + C` | 复制选中对象 |
 | `Ctrl/Cmd + V` | 粘贴对象 |
-| `Ctrl/Cmd + D` | 快速复制选中对象 |
+| `Ctrl/Cmd + D` | 创建选中对象副本 |
 | `Ctrl/Cmd + Z` | 撤销 |
 | `Ctrl/Cmd + Shift + Z` | 重做 |
 | `Ctrl/Cmd + Y` | 重做 |
@@ -58,19 +76,25 @@ http://localhost:3000/editor
 
 ## 校验
 
+类型检查：
+
 ```bash
 bun run typecheck
 ```
+
+单元测试：
 
 ```bash
 bun run test:unit
 ```
 
+端到端测试：
+
 ```bash
 bun run test:e2e
 ```
 
-也可以使用 Playwright 的 headed 或 UI 模式：
+Playwright headed 或 UI 模式：
 
 ```bash
 bun run test:e2e:headed
@@ -79,20 +103,31 @@ bun run test:e2e:ui
 
 ## 架构
 
-编辑器前端模块边界、启动流程、渲染循环和测试策略见 [docs/editor-architecture.md](docs/editor-architecture.md)。
+当前代码结构：
 
-## 接口
+- `index.ts`：服务入口。
+- `src/server`：API、图片渲染、静态资源读取和缓存。
+- `src/web`：浏览器编辑器。
+- `src/web/types`：前端共享类型。
+- `src/shared`：前后端共享纯逻辑。
+- `src/assets`：背景、对象贴图和字体素材。
 
-- `GET /board/:code?`：根据战术板代码渲染 webp 图片；未传 `code` 时渲染默认示例图。
+更详细的模块边界、启动流程、渲染循环、项目 JSON 和扩展规则见 [docs/editor-architecture.md](docs/editor-architecture.md)。
+
+## API
+
+- `GET /board/:code?`：根据战术板分享码渲染 WebP 图片；未传 `code` 时渲染默认示例图。
 - `POST /board/render`：渲染战术板并返回图片 `hash` 和 `thumbhash`。
 - `GET /preview/:name`：根据 `hash` 读取缓存图片。
-- `POST /utils/code2json`：战术板代码转 JSON。
-- `POST /utils/json2code`：战术板 JSON 转代码。
+- `POST /utils/code2json`：战术板分享码转 JSON。
+- `POST /utils/json2code`：战术板 JSON 转分享码。
 - `GET /editor`：打开可编辑战术板画板。
 - `GET /editor-data`：读取编辑器图标、背景和默认代码元数据。
 
-无效战术板代码会返回 400，不再静默回退为默认图。
+无效战术板分享码会返回 `400`，不会静默回退为默认图。
 
-## 缓存
+## 本地数据和缓存
 
-渲染结果会写入项目根目录下的 `cache` 目录。该目录已在 `.gitignore` 中忽略。
+- 浏览器自动恢复、编辑器设置和本地文件保存在浏览器 `localStorage` 中。
+- 服务端渲染结果会写入项目根目录下的 `cache` 目录。
+- `cache` 已在 `.gitignore` 中忽略。
