@@ -1057,6 +1057,46 @@ test('editor multi-selects objects on the canvas and aligns them', async ({ page
   await expect(page.locator('#object-x')).toHaveValue('320')
 })
 
+test('editor drags multi-selected objects together on the canvas', async ({ page }) => {
+  await page.goto('/editor')
+  await expect(page.locator('#layers')).toContainText('tank')
+
+  page.once('dialog', async (dialog) => {
+    await dialog.accept()
+  })
+  await page.locator('#clear-board').click()
+  await expect(page.locator('#layers .layer-row')).toHaveCount(0)
+
+  await page.getByTitle('tank').first().click()
+  await page.locator('#object-x').fill('220')
+  await page.locator('#object-y').fill('160')
+  await page.getByTitle('tank').first().click()
+  await page.locator('#object-x').fill('320')
+  await page.locator('#object-y').fill('220')
+
+  const canvas = page.locator('#stage-host canvas').first()
+  const box = await canvas.boundingBox()
+  if (!box) throw new Error('Canvas is not visible')
+  const point = (x: number, y: number) => ({
+    x: box.x + (x / 512) * box.width,
+    y: box.y + (y / 384) * box.height,
+  })
+
+  await page.mouse.click(point(220, 160).x, point(220, 160).y)
+  await page.keyboard.down('Control')
+  await page.mouse.click(point(320, 220).x, point(320, 220).y)
+  await page.keyboard.up('Control')
+  await expect(page.locator('#layers .layer-row.active')).toHaveCount(2)
+
+  await page.mouse.move(point(320, 220).x, point(320, 220).y)
+  await page.mouse.down()
+  await page.mouse.move(point(340, 240).x, point(340, 240).y, { steps: 8 })
+  await page.mouse.up()
+
+  await expect(page.locator('#layers .layer-row').nth(0).locator('.layer-position')).toHaveText('240, 180')
+  await expect(page.locator('#layers .layer-row').nth(1).locator('.layer-position')).toHaveText('340, 240')
+})
+
 test('editor range-selects layer rows with shift click', async ({ page }) => {
   await page.goto('/editor')
   await expect(page.locator('#layers')).toContainText('tank')
@@ -1598,6 +1638,37 @@ test('editor nudges the selected object with arrow keys', async ({ page }) => {
 
   await page.keyboard.press('Shift+ArrowDown')
   await expect(page.locator('#object-y')).toHaveValue('202')
+})
+
+test('editor nudges multi-selected objects with arrow keys', async ({ page }) => {
+  await page.goto('/editor')
+  await expect(page.locator('#layers')).toContainText('tank')
+
+  const firstRow = page.locator('#layers .layer-row').nth(0)
+  const secondRow = page.locator('#layers .layer-row').nth(1)
+  await firstRow.click()
+  await secondRow.click({ modifiers: ['Shift'] })
+  await expect(page.locator('#layers .layer-row.active')).toHaveCount(2)
+
+  const readPosition = async (row: Locator) => {
+    const text = await row.locator('.layer-position').innerText()
+    const match = text.match(/(-?\d+),\s*(-?\d+)/)
+    if (!match) throw new Error(`Invalid layer position: ${text}`)
+    return { x: Number(match[1]), y: Number(match[2]) }
+  }
+  const firstBefore = await readPosition(firstRow)
+  const secondBefore = await readPosition(secondRow)
+
+  await page.keyboard.press('ArrowRight')
+
+  await expect.poll(() => readPosition(firstRow)).toEqual({
+    x: firstBefore.x + 1,
+    y: firstBefore.y,
+  })
+  await expect.poll(() => readPosition(secondRow)).toEqual({
+    x: secondBefore.x + 1,
+    y: secondBefore.y,
+  })
 })
 
 test('editor copies and pastes the selected object with keyboard shortcuts', async ({

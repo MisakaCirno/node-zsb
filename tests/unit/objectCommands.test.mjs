@@ -89,6 +89,68 @@ test('object commands record history when grouping selected objects', () => {
   assert.equal(state.selectedGroupId, state.layerTree[0].id)
 })
 
+test('object commands toggle layer flags for the full selection', () => {
+  const state = createCommandState()
+  state.selectedIndex = 1
+  state.selectedIndexes = [0, 1]
+  let historyCount = 0
+  let renderCount = 0
+  const commands = createObjectCommands({
+    state,
+    recordHistory: () => {
+      historyCount += 1
+    },
+    renderAll: () => {
+      renderCount += 1
+    },
+    selectObject: () => {},
+    getSelected: () => state.board.objects[state.selectedIndex],
+    getSelectedList: () => state.selectedIndexes.map((index) => state.board.objects[index]),
+    normalizePoint: (x, y) => ({ x, y }),
+    showStatus: () => {},
+    confirmAction: () => true,
+  })
+
+  commands.toggleSelectedLayerFlag('hidden')
+
+  assert.equal(historyCount, 1)
+  assert.equal(renderCount, 1)
+  assert.equal(state.board.objects[0].hidden, true)
+  assert.equal(state.board.objects[1].hidden, true)
+})
+
+test('object commands nudge the full selection with one constrained delta', () => {
+  const state = createCommandState()
+  state.selectedIndex = 1
+  state.selectedIndexes = [0, 1]
+  state.board.objects[0].x = 20
+  state.board.objects[1].x = 480
+  let historyCount = 0
+  let renderCount = 0
+  const commands = createObjectCommands({
+    state,
+    recordHistory: () => {
+      historyCount += 1
+    },
+    renderAll: () => {
+      renderCount += 1
+    },
+    selectObject: () => {},
+    getSelected: () => state.board.objects[state.selectedIndex],
+    getSelectedList: () => state.selectedIndexes.map((index) => state.board.objects[index]),
+    normalizePoint: (x, y) => ({ x, y }),
+    showStatus: () => {},
+    confirmAction: () => true,
+  })
+
+  commands.nudgeSelected('ArrowRight', 20)
+
+  assert.equal(historyCount, 1)
+  assert.equal(renderCount, 1)
+  assert.equal(state.board.objects[0].x, 36)
+  assert.equal(state.board.objects[1].x, 496)
+})
+
 function createCommandState() {
   return {
     board: {
@@ -102,6 +164,7 @@ function createCommandState() {
     selectedGroupId: '',
     selectedIndex: -1,
     selectedIndexes: [],
+    iconConfigs: {},
     layerTree: [
       {
         type: 'group',

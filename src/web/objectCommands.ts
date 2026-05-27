@@ -114,11 +114,13 @@ export function createObjectCommands({
     },
 
     toggleSelectedLayerFlag(key: LayerFlag) {
-      const index = state.selectedIndex
-      const object = state.board.objects[index]
-      if (!object) return
+      const selectedObjects = getSelectedList()
+      if (selectedObjects.length === 0) return
+      const shouldEnable = selectedObjects.some((object) => !object[key])
       recordHistory()
-      object[key] = object[key] ? undefined : true
+      for (const object of selectedObjects) {
+        object[key] = shouldEnable || undefined
+      }
       renderAll()
     },
 
@@ -335,8 +337,6 @@ export function createObjectCommands({
     },
 
     nudgeSelected(key: string, step: number) {
-      const object = getSelected()
-      if (!object || object.locked) return
       const deltas: Record<ArrowKey, [number, number]> = {
         ArrowUp: [0, -step],
         ArrowDown: [0, step],
@@ -345,10 +345,22 @@ export function createObjectCommands({
       }
       const delta = deltas[key as ArrowKey]
       if (!delta) return
-      recordHistory()
+      const selectedObjects = getSelectedList().filter((object) => !object.locked)
+      const primaryObject = getSelected()
+      const referenceObject = primaryObject && !primaryObject.locked ? primaryObject : selectedObjects[0]
+      if (!referenceObject || selectedObjects.length === 0) return
       const [dx, dy] = delta
-      const point = normalizePoint(object.x + dx, object.y + dy)
-      moveObjectBy(object, point.x - object.x, point.y - object.y)
+      const point = normalizePoint(referenceObject.x + dx, referenceObject.y + dy)
+      const moveDelta = getConstrainedMoveDelta(
+        getSelectionBounds(selectedObjects, state),
+        point.x - referenceObject.x,
+        point.y - referenceObject.y,
+      )
+      if (moveDelta.dx === 0 && moveDelta.dy === 0) return
+      recordHistory()
+      for (const object of selectedObjects) {
+        moveObjectBy(object, moveDelta.dx, moveDelta.dy)
+      }
       renderAll()
     },
   }
@@ -380,6 +392,17 @@ function moveObjectBy(object: BoardObject, dx: number, dy: number): void {
     object.endX = clamp(Math.round(object.endX + dx), 0, 512)
     object.endY = clamp(Math.round(object.endY + dy), 0, 384)
   }
+}
+
+function getConstrainedMoveDelta(bounds: Bounds, dx: number, dy: number) {
+  return {
+    dx: clampDelta(dx, BOARD_BOUNDS.left - bounds.left, BOARD_BOUNDS.right - bounds.right),
+    dy: clampDelta(dy, BOARD_BOUNDS.top - bounds.top, BOARD_BOUNDS.bottom - bounds.bottom),
+  }
+}
+
+function clampDelta(delta: number, min: number, max: number) {
+  return clamp(Math.round(delta), Math.ceil(min), Math.floor(max))
 }
 
 function moveSelectedToIndex(

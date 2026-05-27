@@ -17,7 +17,7 @@ import {
   toSceneCoordinate,
 } from '../shared/boardGeometry.js'
 import { getSelectedIndexes } from './editorState.js'
-import { getObjectBounds } from './objectAlignment.js'
+import { getObjectBounds, getSelectionBounds } from './objectAlignment.js'
 import type {
   BoardObject,
   Bounds,
@@ -38,6 +38,12 @@ const MARQUEE_THEMES = {
     fill: 'rgba(102, 194, 165, 0.16)',
     stroke: '#66c2a5',
   },
+}
+const BOARD_BOUNDS = {
+  left: 0,
+  right: 512,
+  top: 0,
+  bottom: 384,
 }
 
 type MarqueeMode = 'contained' | 'intersect'
@@ -417,7 +423,7 @@ export function createStageRenderer({
       recordHistory()
     })
     node.on('dragend', () => {
-      handleDragEnd(node, object)
+      handleDragEnd(node, object, index)
     })
     node.on('transformstart', () => {
       if (!isTransformingSelection) {
@@ -703,22 +709,50 @@ export function createStageRenderer({
     })
   }
 
-  function handleDragEnd(node: KonvaNode, object: BoardObject) {
+  function handleDragEnd(node: KonvaNode, object: BoardObject, index: number) {
     const oldX = object.x
     const oldY = object.y
     const point = normalizePoint(
       toLogicalCoordinate(node.x()),
       toLogicalCoordinate(node.y()),
     )
-    object.x = point.x
-    object.y = point.y
-    if (object.type === 'line' && object.endX !== undefined && object.endY !== undefined) {
-      object.endX = clamp(Math.round(object.endX + object.x - oldX), 0, 512)
-      object.endY = clamp(Math.round(object.endY + object.y - oldY), 0, 384)
+    const selectedIndexes = getSelectedIndexes(state)
+    const selectedObjects = selectedIndexes
+      .map((selectedIndex) => state.board.objects[selectedIndex])
+      .filter((entry): entry is BoardObject => Boolean(entry && !entry.locked))
+    const shouldMoveSelection = selectedIndexes.includes(index) && selectedObjects.length > 1
+    let delta = { dx: point.x - oldX, dy: point.y - oldY }
+    if (shouldMoveSelection) {
+      delta = getConstrainedMoveDelta(getSelectionBounds(selectedObjects, state), delta.dx, delta.dy)
+      for (const selectedObject of selectedObjects) {
+        moveObjectBy(selectedObject, delta.dx, delta.dy)
+      }
+    } else {
+      moveObjectBy(object, delta.dx, delta.dy)
     }
     renderInspector()
     renderLayers()
     renderAll()
+  }
+
+  function moveObjectBy(object: BoardObject, dx: number, dy: number): void {
+    object.x = clamp(Math.round(object.x + dx), 0, 512)
+    object.y = clamp(Math.round(object.y + dy), 0, 384)
+    if (object.type === 'line' && object.endX !== undefined && object.endY !== undefined) {
+      object.endX = clamp(Math.round(object.endX + dx), 0, 512)
+      object.endY = clamp(Math.round(object.endY + dy), 0, 384)
+    }
+  }
+
+  function getConstrainedMoveDelta(bounds: Bounds, dx: number, dy: number) {
+    return {
+      dx: clampDelta(dx, BOARD_BOUNDS.left - bounds.left, BOARD_BOUNDS.right - bounds.right),
+      dy: clampDelta(dy, BOARD_BOUNDS.top - bounds.top, BOARD_BOUNDS.bottom - bounds.bottom),
+    }
+  }
+
+  function clampDelta(delta: number, min: number, max: number) {
+    return clamp(Math.round(delta), Math.ceil(min), Math.floor(max))
   }
 
   function loadImage(src: string): Promise<unknown> {
