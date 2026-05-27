@@ -18,6 +18,20 @@ import {
 } from '../shared/boardGeometry.js'
 import { getSelectedIndexes } from './editorState.js'
 import { getObjectBounds } from './objectAlignment.js'
+import type {
+  BoardObject,
+  Bounds,
+  EditorContext,
+  EditorState,
+  StageLike,
+} from './types.js'
+
+declare const Konva: any
+declare const Image: new () => {
+  onerror: ((error: unknown) => void) | null
+  onload: (() => void) | null
+  src: string
+}
 
 const MARQUEE_DRAG_THRESHOLD = 4
 const MARQUEE_THEMES = {
@@ -29,6 +43,35 @@ const MARQUEE_THEMES = {
     fill: 'rgba(102, 194, 165, 0.16)',
     stroke: '#66c2a5',
   },
+}
+
+type KonvaNode = any
+type MarqueeMode = 'contained' | 'intersect'
+
+interface Point {
+  x: number
+  y: number
+}
+
+interface StageRendererDeps {
+  container: string
+  state: EditorState
+  normalizePoint: EditorContext['normalizePoint']
+  normalizeCoordinate: EditorContext['normalizeCoordinate']
+  recordHistory: () => void
+  renderAll: () => Promise<void> | void
+  renderInspector: () => void
+  renderLayers: () => void
+  selectObject: EditorContext['selectObject']
+  selectObjects: EditorContext['selectObjects']
+  showStatus: (message: string) => void
+}
+
+export interface StageRenderer {
+  stage: StageLike & { toDataURL(options?: { pixelRatio?: number }): string }
+  renderBoard(): Promise<void>
+  renderGrid(): void
+  renderObjects(): Promise<void>
 }
 
 export function createStageRenderer({
@@ -43,7 +86,7 @@ export function createStageRenderer({
   selectObject,
   selectObjects,
   showStatus,
-}) {
+}: StageRendererDeps): StageRenderer {
   const stage = new Konva.Stage({
     container,
     width: SCENE_WIDTH,
@@ -82,12 +125,12 @@ export function createStageRenderer({
   transformerLayer.add(transformer)
   marqueeLayer.add(marqueeRect)
 
-  let marqueeStart = null
-  let marqueeCurrent = null
+  let marqueeStart: Point | null = null
+  let marqueeCurrent: Point | null = null
   let didMarqueeDrag = false
   let suppressNextStageClick = false
 
-  stage.on('click tap', (event) => {
+  stage.on('click tap', (event: any) => {
     if (event.evt?.button && event.evt.button !== 0) return
     if (suppressNextStageClick) {
       suppressNextStageClick = false
@@ -97,7 +140,7 @@ export function createStageRenderer({
       selectObject(-1)
     }
   })
-  stage.on('mousedown touchstart', (event) => {
+  stage.on('mousedown touchstart', (event: any) => {
     if (event.evt?.button && event.evt.button !== 0) return
     if (event.target !== stage && event.target.getLayer() !== boardLayer) return
     marqueeStart = getPointerScenePoint()
@@ -161,9 +204,10 @@ export function createStageRenderer({
 
   async function renderObjects() {
     objectLayer.destroyChildren()
-    const nodes = []
+    const nodes: KonvaNode[] = []
     for (let index = state.board.objects.length - 1; index >= 0; index--) {
       const object = state.board.objects[index]
+      if (!object) continue
       const node = await createNode(object, index)
       if (node) {
         nodes.push(node)
@@ -189,7 +233,7 @@ export function createStageRenderer({
     transformerLayer.draw()
   }
 
-  function createGridLine(points, index) {
+  function createGridLine(points: number[], index: number): KonvaNode {
     const major = index % 4 === 0
     return new Konva.Line({
       points,
@@ -201,7 +245,7 @@ export function createStageRenderer({
     })
   }
 
-  function updateMarqueeRect(start, current) {
+  function updateMarqueeRect(start: Point, current: Point) {
     const width = current.x - start.x
     const height = current.y - start.y
     didMarqueeDrag = didMarqueeDrag
@@ -221,8 +265,8 @@ export function createStageRenderer({
     marqueeLayer.batchDraw()
   }
 
-  function getMarqueeSelectedIndexes(rect, mode) {
-    const selected = []
+  function getMarqueeSelectedIndexes(rect: Bounds, mode: MarqueeMode): number[] {
+    const selected: number[] = []
     state.board.objects.forEach((object, index) => {
       if (objectMatchesMarquee(getObjectBounds(object, state), rect, mode)) {
         selected.push(index)
@@ -231,7 +275,7 @@ export function createStageRenderer({
     return selected
   }
 
-  function objectMatchesMarquee(objectBounds, rect, mode) {
+  function objectMatchesMarquee(objectBounds: Bounds, rect: Bounds, mode: MarqueeMode) {
     if (mode === 'intersect') {
       return objectBounds.right >= rect.left
         && objectBounds.left <= rect.right
@@ -244,15 +288,15 @@ export function createStageRenderer({
       && objectBounds.bottom <= rect.bottom
   }
 
-  function getMarqueeMode(start, current) {
+  function getMarqueeMode(start: Point, current: Point): MarqueeMode {
     return current.x >= start.x ? 'contained' : 'intersect'
   }
 
-  function getMarqueeTheme(start, current) {
+  function getMarqueeTheme(start: Point, current: Point) {
     return MARQUEE_THEMES[getMarqueeMode(start, current)]
   }
 
-  function getLogicalRect(start, current) {
+  function getLogicalRect(start: Point, current: Point): Bounds {
     const left = toLogicalCoordinate(Math.min(start.x, current.x))
     const right = toLogicalCoordinate(Math.max(start.x, current.x))
     const top = toLogicalCoordinate(Math.min(start.y, current.y))
@@ -260,14 +304,14 @@ export function createStageRenderer({
     return { left, right, top, bottom }
   }
 
-  function getPointerScenePoint() {
+  function getPointerScenePoint(): Point | null {
     const pointer = stage.getPointerPosition()
     if (!pointer) return null
     return stage.getAbsoluteTransform().copy().invert().point(pointer)
   }
 
-  async function createNode(object, index) {
-    let node
+  async function createNode(object: BoardObject, index: number): Promise<KonvaNode> {
+    let node: KonvaNode
     switch (object.type) {
       case 'text':
         node = createTextNode(object)
@@ -291,7 +335,7 @@ export function createStageRenderer({
     node.setAttr('objectIndex', index)
     node.draggable(!object.locked)
     node.opacity(objectOpacity(object, { hiddenOpacity: 0.15 }))
-    node.on('click tap', (event) => {
+    node.on('click tap', (event: any) => {
       if (event.evt?.button && event.evt.button !== 0) return
       event.cancelBubble = true
       selectObject(index, {
@@ -314,7 +358,7 @@ export function createStageRenderer({
     return node
   }
 
-  function commitNodeTransform(node, object) {
+  function commitNodeTransform(node: KonvaNode, object: BoardObject) {
     if (object.type !== 'line') {
       object.size = clamp(
         Math.round(Math.max(Math.abs(node.scaleX()), Math.abs(node.scaleY())) * 100),
@@ -342,7 +386,7 @@ export function createStageRenderer({
     renderAll()
   }
 
-  function createTextNode(object) {
+  function createTextNode(object: BoardObject): KonvaNode {
     return new Konva.Text({
       text: object.text ?? '',
       fill: object.color ?? '#ffffff',
@@ -363,7 +407,7 @@ export function createStageRenderer({
     })
   }
 
-  function createLineNode(object) {
+  function createLineNode(object: BoardObject): KonvaNode {
     const startX = toSceneCoordinate(object.x)
     const startY = toSceneCoordinate(object.y)
     const endX = toSceneCoordinate(object.endX ?? object.x)
@@ -396,7 +440,7 @@ export function createStageRenderer({
     return group
   }
 
-  function createLineHandle(x, y, draggable) {
+  function createLineHandle(x: number, y: number, draggable: boolean): KonvaNode {
     return new Konva.Circle({
       x,
       y,
@@ -408,25 +452,42 @@ export function createStageRenderer({
     })
   }
 
-  function bindLineHandleDrag({ object, group, line, startHandle, endHandle }) {
+  function bindLineHandleDrag({
+    object,
+    group,
+    line,
+    startHandle,
+    endHandle,
+  }: {
+    object: BoardObject
+    group: KonvaNode
+    line: KonvaNode
+    startHandle: KonvaNode
+    endHandle: KonvaNode
+  }) {
     for (const handle of [startHandle, endHandle]) {
-      handle.on('dragstart', (event) => {
+      handle.on('dragstart', (event: any) => {
         event.cancelBubble = true
         recordHistory()
       })
-      handle.on('dragmove', (event) => {
+      handle.on('dragmove', (event: any) => {
         event.cancelBubble = true
         line.points([startHandle.x(), startHandle.y(), endHandle.x(), endHandle.y()])
         objectLayer.batchDraw()
       })
-      handle.on('dragend', (event) => {
+      handle.on('dragend', (event: any) => {
         event.cancelBubble = true
         commitLineEndpointDrag(object, group, startHandle, endHandle)
       })
     }
   }
 
-  function commitLineEndpointDrag(object, group, startHandle, endHandle) {
+  function commitLineEndpointDrag(
+    object: BoardObject,
+    group: KonvaNode,
+    startHandle: KonvaNode,
+    endHandle: KonvaNode,
+  ) {
     const rotation = group.rotation()
     const start = normalizePointFromScene(
       getLineHandleScenePoint(group, startHandle, rotation),
@@ -449,7 +510,7 @@ export function createStageRenderer({
     showStatus('已调整线段端点')
   }
 
-  function getLineHandleScenePoint(group, handle, rotation) {
+  function getLineHandleScenePoint(group: KonvaNode, handle: KonvaNode, rotation: number): Point {
     const point = rotatePoint({ x: handle.x(), y: handle.y() }, rotation)
     return {
       x: group.x() + point.x,
@@ -457,14 +518,14 @@ export function createStageRenderer({
     }
   }
 
-  function normalizePointFromScene(point) {
+  function normalizePointFromScene(point: Point): Point {
     return normalizePoint(
       toLogicalCoordinate(point.x),
       toLogicalCoordinate(point.y),
     )
   }
 
-  function createLineAoeNode(object) {
+  function createLineAoeNode(object: BoardObject): KonvaNode {
     const width = object.width ?? 128
     const height = object.height ?? 128
     return new Konva.Rect({
@@ -481,7 +542,7 @@ export function createStageRenderer({
     })
   }
 
-  async function createCircleAoeNode(object) {
+  async function createCircleAoeNode(object: BoardObject): Promise<KonvaNode> {
     const arcAngle = object.type === 'fan_aoe' ? (object.arcAngle ?? 90) : 360
     const { offsetX, offsetY } = calculateCircleOffset(arcAngle)
     const group = new Konva.Group({
@@ -494,7 +555,7 @@ export function createStageRenderer({
       rotation: object.angle ?? 0,
     })
     if (arcAngle !== 360) {
-      group.clipFunc((ctx) => {
+      group.clipFunc((ctx: any) => {
         const r = 512
         const startAngle = -Math.PI / 2
         const endAngle = startAngle + (arcAngle * Math.PI) / 180
@@ -509,7 +570,7 @@ export function createStageRenderer({
     return group
   }
 
-  function createDonutNode(object) {
+  function createDonutNode(object: BoardObject): KonvaNode {
     return new Konva.Ring({
       x: toSceneCoordinate(object.x),
       y: toSceneCoordinate(object.y),
@@ -522,7 +583,7 @@ export function createStageRenderer({
     })
   }
 
-  async function createIconNode(object) {
+  async function createIconNode(object: BoardObject): Promise<KonvaNode> {
     const config = state.iconConfigs[object.type]
     if (!config) {
       return createTextNode({ ...object, text: object.type, color: '#ffffff' })
@@ -543,7 +604,7 @@ export function createStageRenderer({
     })
   }
 
-  function handleDragEnd(node, object) {
+  function handleDragEnd(node: KonvaNode, object: BoardObject) {
     const oldX = object.x
     const oldY = object.y
     const point = normalizePoint(
@@ -561,8 +622,9 @@ export function createStageRenderer({
     renderAll()
   }
 
-  function loadImage(src) {
-    if (state.images.has(src)) return state.images.get(src)
+  function loadImage(src: string): Promise<unknown> {
+    const cached = state.images.get(src)
+    if (cached) return cached
     const promise = new Promise((resolve, reject) => {
       const image = new Image()
       image.onload = () => resolve(image)
