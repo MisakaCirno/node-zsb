@@ -368,6 +368,12 @@ textarea {
   border-top: 1px solid #303b43;
 }
 
+.file-menu-separator {
+  height: 1px;
+  margin: 4px 2px;
+  background: #303b43;
+}
+
 .file-menu-item {
   width: 100%;
   max-width: 100%;
@@ -502,6 +508,13 @@ textarea {
   border-left: 1px solid #303b43;
   border-right: 1px solid #303b43;
   padding: 0 8px;
+}
+
+.toolbar-separator {
+  align-self: stretch;
+  width: 1px;
+  margin: 3px 4px;
+  background: #303b43;
 }
 
 .toolbar-group button {

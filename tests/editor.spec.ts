@@ -569,6 +569,7 @@ test('editor renders readable Chinese labels', async ({ page }) => {
   await expect(page.locator('#open-import-dialog svg')).toHaveCSS('stroke', 'rgb(217, 224, 228)')
   await expect(page.locator('#open-import-dialog svg path')).toHaveCount(5)
   await expect(page.locator('#open-import-dialog')).toHaveCSS('width', '238px')
+  await expect(page.locator('.file-menu-code-actions .file-menu-separator')).toHaveCount(1)
   await expect(page.locator('#open-export-code-dialog svg')).toBeVisible()
   await expect(page.locator('#open-export-image-dialog svg')).toBeVisible()
   await expect(page.locator('#open-export-code-dialog')).toContainText('导出分享码')
@@ -582,6 +583,11 @@ test('editor renders readable Chinese labels', async ({ page }) => {
   await expect(page.locator('#menu-duplicate-object kbd')).toHaveText('Ctrl+D')
   await page.keyboard.press('Escape')
   await expect(page.locator('#edit-menu')).toBeHidden()
+  await expect(page.locator('#quick-open-import-dialog')).toHaveAttribute('title', '导入分享码')
+  await expect(page.locator('#quick-open-export-code-dialog')).toHaveAttribute('title', '导出分享码')
+  await expect(page.locator('#quick-open-import-dialog svg')).toBeVisible()
+  await expect(page.locator('#quick-open-export-code-dialog svg')).toBeVisible()
+  await expect(page.locator('.top-command-icons .toolbar-separator')).toHaveCount(4)
   await expect(page.locator('.board-name-group')).toHaveCount(1)
   await expect(page.locator('.file-menu-local-actions')).toHaveCount(1)
   await expect(page.locator('.file-menu-code-actions')).toHaveCount(1)
@@ -647,6 +653,19 @@ test('editor renders readable Chinese labels', async ({ page }) => {
   ])
 })
 
+test('editor opens share code dialogs from toolbar shortcuts', async ({ page }) => {
+  await page.goto('/editor')
+  await expect(page.locator('#layers')).toContainText('tank')
+
+  await page.locator('#quick-open-import-dialog').click()
+  await expect(page.locator('#import-dialog')).toBeVisible()
+  await page.locator('#import-dialog').evaluate((dialog) => dialog.close())
+
+  await page.locator('#quick-open-export-code-dialog').click()
+  await expect(page.locator('#export-code-dialog')).toBeVisible()
+  await expect(page.locator('#code-output')).toHaveValue(/\[stgy:/)
+})
+
 test('editor disables async action buttons while exporting', async ({ page }) => {
   await page.goto('/editor')
   await expect(page.locator('#layers')).toContainText('tank')
@@ -665,6 +684,8 @@ test('editor disables async action buttons while exporting', async ({ page }) =>
   await expect(page.locator('#file-menu-button')).toBeDisabled()
   await expect(page.locator('#open-export-code-dialog')).toBeDisabled()
   await expect(page.locator('#open-export-image-dialog')).toBeDisabled()
+  await expect(page.locator('#quick-open-import-dialog')).toBeDisabled()
+  await expect(page.locator('#quick-open-export-code-dialog')).toBeDisabled()
   await expect(page.locator('#status')).toContainText('正在生成分享码')
 
   releaseExport()
@@ -673,6 +694,8 @@ test('editor disables async action buttons while exporting', async ({ page }) =>
   await expect(page.locator('#file-menu-button')).toBeEnabled()
   await expect(page.locator('#open-export-code-dialog')).toBeEnabled()
   await expect(page.locator('#open-export-image-dialog')).toBeEnabled()
+  await expect(page.locator('#quick-open-import-dialog')).toBeEnabled()
+  await expect(page.locator('#quick-open-export-code-dialog')).toBeEnabled()
 })
 
 test('editor imports code, changes background, and edits text and line objects', async ({

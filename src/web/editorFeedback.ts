@@ -28,6 +28,8 @@ interface FeedbackElements {
   downloadPreviewImage: AsyncButtonElement
   quickSaveLocalBoard: AsyncButtonElement
   quickSaveAsLocalBoard: AsyncButtonElement
+  quickOpenImportDialog: AsyncButtonElement
+  quickOpenExportCodeDialog: AsyncButtonElement
   boardName: DisabledElement
   fileName: DisabledElement
   newLocalBoard: DisabledElement
@@ -104,6 +106,8 @@ export function createEditorFeedback({ state, getElements }: EditorFeedbackDeps)
       elements.downloadPreviewImage,
       elements.quickSaveLocalBoard,
       elements.quickSaveAsLocalBoard,
+      elements.quickOpenImportDialog,
+      elements.quickOpenExportCodeDialog,
     ]) {
       button.disabled = disabled
       button.setAttribute('aria-busy', String(disabled))

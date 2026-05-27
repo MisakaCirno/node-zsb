@@ -47,6 +47,7 @@ export function bindEditorEvents({
     openDialog(elements.localBoardDialog)
   })
   elements.openImportDialog.addEventListener('click', () => openDialog(elements.importDialog))
+  elements.quickOpenImportDialog.addEventListener('click', () => openDialog(elements.importDialog))
   elements.importProjectFile.addEventListener('click', () => {
     elements.projectFileInput.value = ''
     elements.projectFileInput.click()
@@ -61,6 +62,13 @@ export function bindEditorEvents({
     })
   })
   elements.openExportCodeDialog.addEventListener('click', () =>
+    runAction(async () => {
+      await actions.exportCode()
+      openDialog(elements.exportCodeDialog)
+    }, '已生成分享码', {
+      busyMessage: '正在生成分享码...',
+    }))
+  elements.quickOpenExportCodeDialog.addEventListener('click', () =>
     runAction(async () => {
       await actions.exportCode()
       openDialog(elements.exportCodeDialog)
