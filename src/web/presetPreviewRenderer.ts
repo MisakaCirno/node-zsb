@@ -58,6 +58,7 @@ async function drawPresetObject(
   context.translate(object.x * scale + offset.x, object.y * scale + offset.y)
   if (!['line', 'text'].includes(object.type)) {
     context.rotate(((object.angle ?? 0) * Math.PI) / 180)
+    context.scale(object.horizontalFlip ? -1 : 1, object.verticalFlip ? -1 : 1)
   }
   const previewScale = objectScale(object) * scale
   if (object.type === 'line') {

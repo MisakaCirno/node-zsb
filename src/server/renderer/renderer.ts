@@ -168,7 +168,7 @@ function createDonut(data: StrategyObject): Konva.Group {
 
   const group = new Konva.Group({
     x: toSceneCoordinate(data.x),
-    y: toSceneCoordinate(data.y) - 10,
+    y: toSceneCoordinate(data.y),
     scaleX: flippedScale(scale, data.horizontalFlip),
     scaleY: flippedScale(scale, data.verticalFlip),
     opacity: opacity,

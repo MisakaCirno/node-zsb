@@ -15,11 +15,6 @@ interface ArcOffsetOptions {
   innerRadius?: number
 }
 
-interface Point {
-  x: number
-  y: number
-}
-
 export function toSceneCoordinate(value: number): number {
   return value * BOARD_SCALE
 }
@@ -56,41 +51,10 @@ export function calcTextWidth(text = '', fontSize = DEFAULT_TEXT_FONT_SIZE): num
 export function calculateCircleOffset(
   arcAngle: number,
   radius = AOE_RADIUS,
-  center = AOE_CENTER,
 ): { offsetX: number, offsetY: number } {
-  if (arcAngle === 360) {
-    return { offsetX: center, offsetY: center }
-  }
-
-  const startAngle = -Math.PI / 2
-  const endAngle = startAngle + degreesToRadians(arcAngle)
-  let minX = center
-  let maxX = center
-  let minY = center
-  let maxY = center
-
-  const startX = center + radius * Math.cos(startAngle)
-  const startY = center + radius * Math.sin(startAngle)
-  const endX = center + radius * Math.cos(endAngle)
-  const endY = center + radius * Math.sin(endAngle)
-
-  minX = Math.min(minX, startX, endX)
-  maxX = Math.max(maxX, startX, endX)
-  minY = Math.min(minY, startY, endY)
-  maxY = Math.max(maxY, startY, endY)
-
-  for (const angle of [0, Math.PI / 2, Math.PI, (3 * Math.PI) / 2]) {
-    if (!isAngleWithinArc(angle, startAngle, endAngle)) continue
-    minX = Math.min(minX, center + radius * Math.cos(angle))
-    maxX = Math.max(maxX, center + radius * Math.cos(angle))
-    minY = Math.min(minY, center + radius * Math.sin(angle))
-    maxY = Math.max(maxY, center + radius * Math.sin(angle))
-  }
-
-  return {
-    offsetX: (minX + maxX) / 2,
-    offsetY: (minY + maxY) / 2,
-  }
+  if (arcAngle >= 360) return { offsetX: radius, offsetY: radius }
+  const crop = calculateSectorCrop(arcAngle, radius, 0)
+  return getAbsoluteSectorCropCenter(crop, radius)
 }
 
 export function calculateDonutOffset({
@@ -98,39 +62,15 @@ export function calculateDonutOffset({
   outerRadius = AOE_RADIUS,
   innerRadius = 0,
 }: ArcOffsetOptions = {}): { offsetX: number, offsetY: number } {
-  if (arcAngle === 360) {
+  if (arcAngle >= 360) {
     return { offsetX: 0, offsetY: 0 }
   }
 
-  const startAngle = -Math.PI / 2
-  const endAngle = startAngle + degreesToRadians(arcAngle)
-  const points = [
-    arcPoint(outerRadius, startAngle),
-    arcPoint(outerRadius, endAngle),
-    arcPoint(innerRadius, startAngle),
-    arcPoint(innerRadius, endAngle),
-  ]
-
-  for (const angle of [0, Math.PI / 2, Math.PI, (3 * Math.PI) / 2]) {
-    if (isAngleWithinArc(angle, startAngle, endAngle)) {
-      points.push(arcPoint(outerRadius, angle))
-    }
-  }
-
-  let minX = Infinity
-  let maxX = -Infinity
-  let minY = Infinity
-  let maxY = -Infinity
-  for (const point of points) {
-    minX = Math.min(minX, point.x)
-    maxX = Math.max(maxX, point.x)
-    minY = Math.min(minY, point.y)
-    maxY = Math.max(maxY, point.y)
-  }
-
+  const crop = calculateSectorCrop(arcAngle, outerRadius, innerRadius)
+  const center = getAbsoluteSectorCropCenter(crop, outerRadius)
   return {
-    offsetX: (minX + maxX) / 2,
-    offsetY: (minY + maxY) / 2,
+    offsetX: center.offsetX - outerRadius,
+    offsetY: center.offsetY - outerRadius,
   }
 }
 
@@ -138,24 +78,41 @@ export function degreesToRadians(degrees: number): number {
   return (degrees * Math.PI) / 180
 }
 
-function arcPoint(radius: number, angle: number): Point {
-  return {
-    x: radius * Math.cos(angle),
-    y: radius * Math.sin(angle),
+function calculateSectorCrop(
+  arcAngle: number,
+  outerRadius: number,
+  innerRadius: number,
+): { left: number, right: number, bottom: number } {
+  const radians = degreesToRadians(Math.max(0, Math.min(arcAngle, 360)))
+  let left = 0
+  let right = 0
+  let bottom = 0
+
+  if (radians < Math.PI * 1.5 && radians >= Math.PI) {
+    left = (1 + Math.sin(radians)) * outerRadius
+  } else if (radians < Math.PI) {
+    left = outerRadius
   }
+
+  if (radians < Math.PI) {
+    bottom = radians >= Math.PI * 0.5
+      ? (1 + Math.cos(radians)) * outerRadius
+      : outerRadius + Math.cos(radians) * innerRadius
+  }
+
+  if (radians < Math.PI * 0.5) {
+    right = (1 - Math.sin(radians)) * outerRadius
+  }
+
+  return { left, right, bottom }
 }
 
-function isAngleWithinArc(angle: number, startAngle: number, endAngle: number): boolean {
-  const normalized = normalizeRadians(angle)
-  const start = normalizeRadians(startAngle)
-  let end = normalizeRadians(endAngle)
-
-  if (end < start) end += Math.PI * 2
-  const checked = normalized < start ? normalized + Math.PI * 2 : normalized
-
-  return checked >= start && checked <= end
-}
-
-function normalizeRadians(angle: number): number {
-  return ((angle % (Math.PI * 2)) + Math.PI * 2) % (Math.PI * 2)
+function getAbsoluteSectorCropCenter(
+  crop: { left: number, right: number, bottom: number },
+  radius: number,
+): { offsetX: number, offsetY: number } {
+  return {
+    offsetX: (radius * 2 + crop.left - crop.right) / 2,
+    offsetY: (radius * 2 - crop.bottom) / 2,
+  }
 }

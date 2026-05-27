@@ -12,6 +12,7 @@ import {
   calcTextWidth,
   calculateCircleOffset,
   calculateDonutOffset,
+  flippedScale,
   objectOpacity,
   objectScale,
   toLogicalCoordinate,
@@ -480,8 +481,9 @@ export function createStageRenderer({
         10,
         300,
       )
-      node.scaleX(objectScale(object))
-      node.scaleY(objectScale(object))
+      const scale = objectScale(object)
+      node.scaleX(flippedScale(scale, Boolean(object.horizontalFlip)))
+      node.scaleY(flippedScale(scale, Boolean(object.verticalFlip)))
     }
     if (object.type === 'line' || object.type === 'text') {
       node.scaleX(1)
@@ -648,8 +650,8 @@ export function createStageRenderer({
       width: toSceneCoordinate(width),
       height: toSceneCoordinate(height),
       fill: object.color ?? '#ff8000',
-      scaleX: objectScale(object),
-      scaleY: objectScale(object),
+      scaleX: flippedScale(objectScale(object), Boolean(object.horizontalFlip)),
+      scaleY: flippedScale(objectScale(object), Boolean(object.verticalFlip)),
       rotation: object.angle ?? 0,
     })
   }
@@ -657,13 +659,14 @@ export function createStageRenderer({
   async function createCircleAoeNode(object: BoardObject): Promise<KonvaNode> {
     const arcAngle = object.type === 'fan_aoe' ? (object.arcAngle ?? 90) : 360
     const { offsetX, offsetY } = calculateCircleOffset(arcAngle)
+    const scale = objectScale(object)
     const group = new Konva.Group({
       x: toSceneCoordinate(object.x),
       y: toSceneCoordinate(object.y),
       offsetX,
       offsetY,
-      scaleX: objectScale(object),
-      scaleY: objectScale(object),
+      scaleX: flippedScale(scale, Boolean(object.horizontalFlip)),
+      scaleY: flippedScale(scale, Boolean(object.verticalFlip)),
       rotation: object.angle ?? 0,
     })
     if (arcAngle !== 360) {
@@ -697,8 +700,8 @@ export function createStageRenderer({
       y: toSceneCoordinate(object.y),
       offsetX,
       offsetY,
-      scaleX: scale,
-      scaleY: scale,
+      scaleX: flippedScale(scale, Boolean(object.horizontalFlip)),
+      scaleY: flippedScale(scale, Boolean(object.verticalFlip)),
       rotation: object.angle ?? 0,
     })
     const shape = new Konva.Shape({
@@ -737,8 +740,8 @@ export function createStageRenderer({
       offsetY: config.size,
       x: toSceneCoordinate(object.x),
       y: toSceneCoordinate(object.y),
-      scaleX: objectScale(object),
-      scaleY: objectScale(object),
+      scaleX: flippedScale(objectScale(object), Boolean(object.horizontalFlip)),
+      scaleY: flippedScale(objectScale(object), Boolean(object.verticalFlip)),
       rotation: object.angle ?? 0,
     })
   }
