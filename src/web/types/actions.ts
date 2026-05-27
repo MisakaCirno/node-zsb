@@ -124,6 +124,7 @@ export interface EditorActionRegistry {
   renameLayerGroup: ObjectCommands['renameLayerGroup']
   saveLocalBoard: LocalBoardsPanel['saveLocalBoard']
   saveLocalBoardAs: LocalBoardsPanel['saveLocalBoardAs']
+  selectLayerGroup: EditorContext['selectLayerGroup']
   selectObject: EditorContext['selectObject']
   setGridDensity: ViewportControls['setGridDensity']
   setGridOpacity: ViewportControls['setGridOpacity']

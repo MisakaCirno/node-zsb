@@ -247,6 +247,12 @@ function bindContextMenu(elements: EditorElements, actions: EditorActionRegistry
     const row = getClosestElement(event.target, '.layer-row')
     if (!row) return
     event.preventDefault()
+    if (row.dataset.groupId) {
+      actions.selectLayerGroup(row.dataset.groupId)
+      closeContextMenu(elements)
+      return
+    }
+    if (!row.dataset.index) return
     actions.selectObject(Number(row.dataset.index))
     openContextMenu(elements, 'layer', event.clientX, event.clientY)
   })

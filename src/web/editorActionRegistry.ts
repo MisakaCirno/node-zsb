@@ -76,6 +76,7 @@ export function createEditorActionRegistry({
     renderPreview: boardCodeActions.renderPreview,
     saveLocalBoard: localBoardsPanel.saveLocalBoard,
     saveLocalBoardAs: localBoardsPanel.saveLocalBoardAs,
+    selectLayerGroup: editorContext.selectLayerGroup,
     selectObject: editorContext.selectObject,
     setGridDensity: viewportControls.setGridDensity,
     setGridOpacity: viewportControls.setGridOpacity,

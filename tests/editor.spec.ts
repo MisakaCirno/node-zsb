@@ -958,6 +958,24 @@ test('editor opens custom context menus for canvas and layers', async ({ page })
   await expect(page.locator('#layers .layer-row').nth(layerCount - 2)).toContainText('text')
 })
 
+test('editor selects layer groups without opening the object context menu', async ({ page }) => {
+  await page.goto('/editor')
+  await expect(page.locator('#layers')).toContainText('tank')
+
+  await page.locator('#layers .layer-row').nth(0).click()
+  await page.locator('#layers .layer-row').nth(1).click({ modifiers: ['Shift'] })
+  await expect(page.locator('#group-layers')).toBeEnabled()
+  await page.locator('#group-layers').click()
+
+  const groupRow = page.locator('#layers .layer-group-row')
+  await expect(groupRow).toHaveCount(1)
+  await groupRow.click({ button: 'right' })
+
+  await expect(groupRow).toHaveClass(/active/)
+  await expect(page.locator('#context-menu')).toBeHidden()
+  await expect(page.locator('#ungroup-layers')).toBeEnabled()
+})
+
 test('editor reports invalid share code without replacing the board', async ({
   page,
 }) => {

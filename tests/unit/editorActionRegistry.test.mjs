@@ -47,6 +47,7 @@ test('createEditorActionRegistry exposes the event binding action surface', () =
       'renderPreview',
       'saveLocalBoard',
       'saveLocalBoardAs',
+      'selectLayerGroup',
       'selectObject',
       'setGridDensity',
       'setGridOpacity',
@@ -76,6 +77,7 @@ test('createEditorActionRegistry exposes the event binding action surface', () =
     },
     editorContext: {
       deselect: handlers.deselect,
+      selectLayerGroup: handlers.selectLayerGroup,
       selectObject: handlers.selectObject,
     },
     historyControls: {
