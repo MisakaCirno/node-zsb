@@ -801,7 +801,7 @@ export function createStageRenderer({
     const fonts = document.fonts
     if (!fonts?.load) return Promise.resolve()
     textFontReady = fonts
-      .load(`${DEFAULT_TEXT_FONT_SIZE}px "${STRATEGY_TEXT_FONT_FAMILY}"`)
+      .load(`${DEFAULT_TEXT_FONT_SIZE}px ${STRATEGY_TEXT_FONT_FAMILY}`)
       .catch(() => undefined)
     return textFontReady
   }

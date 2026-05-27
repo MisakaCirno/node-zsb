@@ -2,9 +2,9 @@ import type { BoardObject } from '../web/types.js'
 
 export const BOARD_SCALE = 2
 export const DEFAULT_TEXT_FONT_SIZE = 28
-export const STRATEGY_TEXT_FONT_FAMILY = 'AlibabaPuHuiTi'
-export const STRATEGY_TEXT_STROKE_WIDTH = 0.75
-export const STRATEGY_TEXT_SHADOW_BLUR = 2
+export const STRATEGY_TEXT_FONT_FAMILY = 'Arial, "Microsoft YaHei", AlibabaPuHuiTi'
+export const STRATEGY_TEXT_STROKE_WIDTH = 0.6
+export const STRATEGY_TEXT_SHADOW_BLUR = 1.5
 export const STRATEGY_TEXT_SHADOW_OFFSET = 1
 export const MAX_GAME_TRANSPARENCY = 100
 export const AOE_RADIUS = 512
