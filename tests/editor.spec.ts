@@ -23,6 +23,7 @@ async function openExportImageDialog(page: Page) {
 async function openLocalBoardDialog(page: Page) {
   await clickFileMenuAction(page, '#open-local-board-dialog')
   await expect(page.locator('#local-board-dialog')).toBeVisible()
+  await expect(page.locator('#editor-dialog-root > #local-board-dialog')).toHaveCount(1)
 }
 
 async function openFileMenu(page: Page) {

@@ -31,11 +31,51 @@ interface NameDialogOptions {
 export function mountEditorDialogTemplates() {
   const document = getBrowserDocument()
   const mount = document.querySelector('#editor-dialog-root') ?? document.body
+  mountDialogOnce(mount, createLocalBoardDialog())
   mountDialogOnce(mount, createLocalBoardNameDialog())
   mountDialogOnce(mount, createPresetNameDialog())
   mountDialogOnce(mount, createImportDialog())
   mountDialogOnce(mount, createExportCodeDialog())
   mountDialogOnce(mount, createExportImageDialog())
+}
+
+function createLocalBoardDialog() {
+  const document = getBrowserDocument()
+  const bulkActions = document.createElement('div')
+  bulkActions.className = 'local-board-bulk-actions'
+  bulkActions.append(
+    createButton({
+      id: 'select-all-local-boards',
+      label: '全选',
+      type: 'button',
+      disabled: true,
+    }),
+    createButton({
+      id: 'clear-selected-local-boards',
+      label: '全不选',
+      type: 'button',
+      disabled: true,
+    }),
+    createButton({
+      className: 'danger-button',
+      id: 'delete-selected-local-boards',
+      label: '删除所选',
+      type: 'button',
+      disabled: true,
+    }),
+  )
+
+  const list = document.createElement('div')
+  list.id = 'local-board-list'
+  list.className = 'local-board-list'
+  list.setAttribute('aria-label', '本地文件列表')
+
+  return createEditorDialog({
+    id: 'local-board-dialog',
+    title: '本地文件',
+    closeButtonId: 'close-local-board-dialog',
+    body: [bulkActions, list],
+  })
 }
 
 function createLocalBoardNameDialog() {
@@ -259,18 +299,37 @@ function createDialogActions(actions: DialogActionOptions[]) {
   const footer = document.createElement('footer')
   footer.className = 'dialog-actions'
   for (const action of actions) {
-    const button = document.createElement('button')
-    button.type = action.type ?? 'submit'
-    if (action.id) {
-      button.id = action.id
-    }
-    if (action.value) {
-      button.value = action.value
-    }
-    button.textContent = action.label
-    footer.append(button)
+    footer.append(createButton(action))
   }
   return footer
+}
+
+function createButton({
+  className,
+  disabled = false,
+  id,
+  label,
+  type = 'submit',
+  value,
+}: DialogActionOptions & {
+  className?: string
+  disabled?: boolean
+}) {
+  const document = getBrowserDocument()
+  const button = document.createElement('button')
+  button.type = type
+  button.disabled = disabled
+  if (className) {
+    button.className = className
+  }
+  if (id) {
+    button.id = id
+  }
+  if (value) {
+    button.value = value
+  }
+  button.textContent = label
+  return button
 }
 
 function mountDialogOnce(mount: Element, dialog: HTMLDialogElement) {
