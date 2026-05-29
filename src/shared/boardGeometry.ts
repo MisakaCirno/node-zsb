@@ -7,6 +7,8 @@ export const STRATEGY_TEXT_STROKE_WIDTH = 0.6
 export const STRATEGY_TEXT_SHADOW_BLUR = 1.5
 export const STRATEGY_TEXT_SHADOW_OFFSET = 1
 export const MAX_GAME_TRANSPARENCY = 100
+export const MIN_GAME_OBJECT_SIZE = 50
+export const MAX_GAME_OBJECT_SIZE = 200
 export const AOE_RADIUS = 512
 export const AOE_CENTER = 512
 
@@ -29,7 +31,13 @@ export function toLogicalCoordinate(value: number): number {
 }
 
 export function objectScale(object: Pick<BoardObject, 'size'>): number {
-  return (object.size ?? 100) / 100
+  return normalizeObjectSize(object.size) / 100
+}
+
+export function normalizeObjectSize(value = 100): number {
+  const number = Math.round(Number(value))
+  if (!Number.isFinite(number)) return 100
+  return Math.min(MAX_GAME_OBJECT_SIZE, Math.max(MIN_GAME_OBJECT_SIZE, number))
 }
 
 export function objectOpacity(

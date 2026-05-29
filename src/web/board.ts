@@ -1,5 +1,8 @@
 import { ensureObjectEditorIds, stripEditorFields } from './editorIds.js'
-import { normalizeTransparency } from '../shared/boardGeometry.js'
+import {
+  normalizeObjectSize,
+  normalizeTransparency,
+} from '../shared/boardGeometry.js'
 import type {
   Board,
   BoardObject,
@@ -37,6 +40,8 @@ export function sanitizeObject(object: BoardObject): BoardObject {
   if (copy.type === 'text') {
     delete copy.size
     delete copy.angle
+  } else {
+    copy.size = normalizeObjectSize(Number(copy.size ?? 100))
   }
   if (copy.type === 'line') {
     delete copy.angle

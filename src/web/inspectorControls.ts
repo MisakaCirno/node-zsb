@@ -2,6 +2,10 @@ import { getObjectCapabilities } from './board.js'
 import { getSelectedIndexes } from './editorState.js'
 import { numberValue } from './geometry.js'
 import { renderInspector as renderInspectorPanel } from './inspectorPanel.js'
+import {
+  MAX_GAME_OBJECT_SIZE,
+  MIN_GAME_OBJECT_SIZE,
+} from '../shared/boardGeometry.js'
 import type {
   InspectorPanelElements,
 } from './inspectorPanel.js'
@@ -88,7 +92,9 @@ export function createInspectorControls({
     const point = normalizePoint(numberValue(elements.x, 0, 512), numberValue(elements.y, 0, 384))
     object.x = point.x
     object.y = point.y
-    object.size = object.type === 'text' ? 100 : numberValue(elements.size, 10, 300)
+    object.size = object.type === 'text'
+      ? 100
+      : numberValue(elements.size, MIN_GAME_OBJECT_SIZE, MAX_GAME_OBJECT_SIZE)
     object.angle = ['line', 'text'].includes(object.type)
       ? undefined
       : numberValue(elements.angle, 0, 360)
