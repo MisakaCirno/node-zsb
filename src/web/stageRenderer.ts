@@ -15,6 +15,7 @@ import {
   calcTextWidth,
   calculateCircleOffset,
   calculateDonutOffset,
+  DEFAULT_DONUT_COLOR,
   flippedScale,
   normalizeLineAoeHeight,
   normalizeLineAoeWidth,
@@ -723,7 +724,7 @@ export function createStageRenderer({
       rotation: object.angle ?? 0,
     })
     const shape = new Konva.Shape({
-      fill: object.color ?? '#ff8000',
+      fill: DEFAULT_DONUT_COLOR,
       sceneFunc: (ctx: ShapeContext, shape: unknown) => {
         const startAngle = -Math.PI / 2
         const endAngle = startAngle + (arcAngle * Math.PI) / 180

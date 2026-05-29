@@ -6,6 +6,7 @@ export const STRATEGY_TEXT_FONT_FAMILY = 'Arial, "Microsoft YaHei", AlibabaPuHui
 export const STRATEGY_TEXT_STROKE_WIDTH = 0.6
 export const STRATEGY_TEXT_SHADOW_BLUR = 1.5
 export const STRATEGY_TEXT_SHADOW_OFFSET = 1
+export const DEFAULT_DONUT_COLOR = '#55cc88'
 export const MAX_GAME_TRANSPARENCY = 100
 export const MIN_GAME_OBJECT_SIZE = 50
 export const MIN_GAME_AOE_SIZE = 10

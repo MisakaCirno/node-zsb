@@ -107,8 +107,8 @@ export function createInspectorControls({
     object.angle = capabilities.angle
       ? normalizeObjectAngle(numberValue(elements.angle, MIN_GAME_ROTATION_ANGLE, MAX_GAME_ROTATION_ANGLE))
       : undefined
-    object.color = capabilities.appearance ? elements.color.value : undefined
-    object.transparency = capabilities.appearance
+    object.color = capabilities.color ? elements.color.value : undefined
+    object.transparency = capabilities.transparency
       ? numberValue(elements.transparency, 0, 100)
       : undefined
     object.text = capabilities.text ? elements.text.value || undefined : undefined

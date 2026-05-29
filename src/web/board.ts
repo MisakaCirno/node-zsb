@@ -58,8 +58,10 @@ export function sanitizeObject(object: BoardObject): BoardObject {
   if (copy.type === 'donut' && copy.arcAngle === undefined) {
     copy.arcAngle = 360
   }
-  if (!capabilities.appearance) {
+  if (!capabilities.color) {
     delete copy.color
+  }
+  if (!capabilities.transparency) {
     delete copy.transparency
   } else {
     copy.transparency = normalizeTransparency(Number(copy.transparency ?? 0))
@@ -90,8 +92,19 @@ export function sanitizeObject(object: BoardObject): BoardObject {
 }
 
 export function getObjectCapabilities(type: string): ObjectCapabilities {
+  const color = ['text', 'line', 'line_aoe'].includes(type)
+  const transparency = [
+    'text',
+    'line',
+    'line_aoe',
+    'circle_aoe',
+    'fan_aoe',
+    'donut',
+  ].includes(type)
   return {
-    appearance: ['text', 'line', 'line_aoe', 'donut'].includes(type),
+    appearance: color || transparency,
+    color,
+    transparency,
     text: type === 'text',
     line: type === 'line',
     size: !['text', 'line', 'line_aoe'].includes(type),

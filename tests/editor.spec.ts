@@ -1797,6 +1797,8 @@ test('editor shows inspector fields that match the selected object type', async 
 
   await page.locator('button[title="line_aoe"]').click()
   await expect(page.locator('[data-field="dimensions"]')).toBeVisible()
+  await expect(page.locator('[data-field="color"]')).toBeVisible()
+  await expect(page.locator('[data-field="transparency"]')).toBeVisible()
   await expect(page.locator('[data-field="size"]')).toBeHidden()
   await expect(page.locator('[data-field="angle"]')).toBeVisible()
   await expect(page.locator('#object-angle')).toHaveAttribute('min', '-180')
@@ -1826,6 +1828,8 @@ test('editor shows inspector fields that match the selected object type', async 
 
   await page.locator('button[title="fan_aoe"]').click()
   await expect(page.locator('[data-field="size"]')).toBeVisible()
+  await expect(page.locator('[data-field="color"]')).toBeHidden()
+  await expect(page.locator('[data-field="transparency"]')).toBeVisible()
   await expect(page.locator('#object-size')).toHaveAttribute('min', '10')
   await expect(page.locator('#object-size')).toHaveAttribute('max', '200')
   await page.locator('#object-size').fill('5')
@@ -1835,6 +1839,8 @@ test('editor shows inspector fields that match the selected object type', async 
   await expect(page.locator('#object-arc')).toHaveValue('180')
 
   await page.locator('button[title="donut"]').click()
+  await expect(page.locator('[data-field="color"]')).toBeHidden()
+  await expect(page.locator('[data-field="transparency"]')).toBeVisible()
   await expect(page.locator('[data-field="arc-angle"]')).toBeVisible()
   await expect(page.locator('[data-field="donut-radius"]')).toBeVisible()
   await expect(page.locator('#object-arc')).toHaveValue('360')

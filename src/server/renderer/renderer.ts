@@ -14,6 +14,7 @@ import { fileURLToPath } from 'node:url'
 import path from 'node:path'
 import {
   AOE_RADIUS,
+  DEFAULT_DONUT_COLOR,
   DEFAULT_TEXT_FONT_SIZE,
   STRATEGY_TEXT_FONT_FAMILY,
   STRATEGY_TEXT_SHADOW_BLUR,
@@ -205,7 +206,7 @@ function createDonut(data: StrategyObject): Konva.Group {
 
       ctx.fillStrokeShape(shape)
     },
-    fill: 'orange',
+    fill: DEFAULT_DONUT_COLOR,
   })
 
   group.add(shape)

@@ -107,6 +107,8 @@ function updateInspectorVisibility(object: BoardObject, elements: InspectorPanel
   const capabilities = getObjectCapabilities(object.type)
   const canTransform = capabilities.size || capabilities.angle
   setFieldVisible(elements, 'appearance', capabilities.appearance)
+  setFieldVisible(elements, 'color', capabilities.color)
+  setFieldVisible(elements, 'transparency', capabilities.transparency)
   setFieldVisible(elements, 'transform', canTransform)
   setFieldVisible(elements, 'size', capabilities.size)
   setFieldVisible(elements, 'angle', capabilities.angle)

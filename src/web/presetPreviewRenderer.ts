@@ -2,6 +2,7 @@ import { getBrowserDocument } from './browser.js'
 import { getSelectionBounds } from './objectAlignment.js'
 import {
   BOARD_SCALE,
+  DEFAULT_DONUT_COLOR,
   DEFAULT_TEXT_FONT_SIZE,
   STRATEGY_TEXT_FONT_FAMILY,
   STRATEGY_TEXT_STROKE_WIDTH,
@@ -114,7 +115,7 @@ function drawLineAoe(context: CanvasRenderingContext2D, object: BoardObject, sca
 function drawCircleAoe(context: CanvasRenderingContext2D, object: BoardObject, scale: number): void {
   const radius = 256 * scale
   const arcAngle = object.type === 'fan_aoe' ? (object.arcAngle ?? 90) : 360
-  context.fillStyle = object.color ?? '#ff8000'
+  context.fillStyle = DEFAULT_DONUT_COLOR
   context.beginPath()
   if (arcAngle >= 360) {
     context.arc(0, 0, radius, 0, Math.PI * 2)

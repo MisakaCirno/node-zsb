@@ -61,6 +61,8 @@ export interface Bounds {
 
 export interface ObjectCapabilities {
   appearance: boolean
+  color: boolean
+  transparency: boolean
   text: boolean
   line: boolean
   size: boolean
