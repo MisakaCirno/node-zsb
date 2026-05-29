@@ -1,6 +1,10 @@
 import { getObjectCapabilities } from './board.js'
 import { syncColorControl } from './colorPicker.js'
-import { getObjectSizeBounds } from '../shared/boardGeometry.js'
+import {
+  DEFAULT_LINE_COLOR,
+  getDefaultObjectColor,
+  getObjectSizeBounds,
+} from '../shared/boardGeometry.js'
 import type {
   ColorPickerElements,
 } from './colorPicker.js'
@@ -81,7 +85,7 @@ export function renderInspector({
   elements.size.min = String(sizeBounds.min)
   elements.size.max = String(sizeBounds.max)
   elements.angle.value = String(object.angle ?? 0)
-  elements.color.value = object.color ?? '#ff8000'
+  elements.color.value = object.color ?? getDefaultObjectColor(object.type) ?? DEFAULT_LINE_COLOR
   syncColorControl(elements)
   elements.transparency.value = String(object.transparency ?? 0)
   elements.transparencyRange.value = elements.transparency.value

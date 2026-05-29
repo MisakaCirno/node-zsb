@@ -16,6 +16,8 @@ import {
   calculateCircleOffset,
   calculateDonutOffset,
   DEFAULT_DONUT_COLOR,
+  DEFAULT_LINE_COLOR,
+  DEFAULT_TEXT_COLOR,
   flippedScale,
   normalizeLineAoeHeight,
   normalizeLineAoeWidth,
@@ -524,7 +526,7 @@ export function createStageRenderer({
   function createTextNode(object: BoardObject): KonvaNode {
     return new Konva.Text({
       text: object.text ?? '',
-      fill: object.color ?? '#ffffff',
+      fill: object.color ?? DEFAULT_TEXT_COLOR,
       stroke: 'black',
       strokeWidth: STRATEGY_TEXT_STROKE_WIDTH,
       x: toSceneCoordinate(object.x),
@@ -554,7 +556,7 @@ export function createStageRenderer({
     })
     const line = new Konva.Line({
       points: [0, 0, endLocalX, endLocalY],
-      stroke: object.color ?? '#ff8000',
+      stroke: object.color ?? DEFAULT_LINE_COLOR,
       strokeWidth: toSceneCoordinate(object.height ?? 6),
       lineCap: 'round',
     })
@@ -668,7 +670,7 @@ export function createStageRenderer({
       offsetY: height,
       width: toSceneCoordinate(width),
       height: toSceneCoordinate(height),
-      fill: object.color ?? '#ff8000',
+      fill: object.color ?? DEFAULT_LINE_COLOR,
       scaleX: flippedScale(objectScale(object), Boolean(object.horizontalFlip)),
       scaleY: flippedScale(objectScale(object), Boolean(object.verticalFlip)),
       rotation: object.angle ?? 0,
@@ -747,7 +749,7 @@ export function createStageRenderer({
   async function createIconNode(object: BoardObject): Promise<KonvaNode> {
     const config = state.iconConfigs[object.type]
     if (!config) {
-      return createTextNode({ ...object, text: object.type, color: '#ffffff' })
+      return createTextNode({ ...object, text: object.type, color: DEFAULT_TEXT_COLOR })
     }
     const image = await loadImage(`/assets/objects/${config.src}.webp`)
     return new Konva.Image({

@@ -6,6 +6,9 @@ export const STRATEGY_TEXT_FONT_FAMILY = 'Arial, "Microsoft YaHei", AlibabaPuHui
 export const STRATEGY_TEXT_STROKE_WIDTH = 0.6
 export const STRATEGY_TEXT_SHADOW_BLUR = 1.5
 export const STRATEGY_TEXT_SHADOW_OFFSET = 1
+export const DEFAULT_TEXT_COLOR = '#FFFFFF'
+export const DEFAULT_LINE_COLOR = '#FF7F00'
+export const DEFAULT_AOE_COLOR = '#FF7F00'
 export const DEFAULT_DONUT_COLOR = '#55cc88'
 export const MAX_GAME_TRANSPARENCY = 100
 export const MIN_GAME_OBJECT_SIZE = 50
@@ -59,6 +62,12 @@ export function getObjectSizeBounds(type = ''): NumericBounds {
     return { min: MIN_GAME_AOE_SIZE, max: MAX_GAME_OBJECT_SIZE }
   }
   return { min: MIN_GAME_OBJECT_SIZE, max: MAX_GAME_OBJECT_SIZE }
+}
+
+export function getDefaultObjectColor(type = ''): string | undefined {
+  if (type === 'text') return DEFAULT_TEXT_COLOR
+  if (type === 'line' || type === 'line_aoe') return DEFAULT_LINE_COLOR
+  return undefined
 }
 
 export function normalizeLineAoeHeight(value = 128): number {

@@ -2,7 +2,10 @@ import { getBrowserDocument } from './browser.js'
 import { getSelectionBounds } from './objectAlignment.js'
 import {
   BOARD_SCALE,
+  DEFAULT_AOE_COLOR,
   DEFAULT_DONUT_COLOR,
+  DEFAULT_LINE_COLOR,
+  DEFAULT_TEXT_COLOR,
   DEFAULT_TEXT_FONT_SIZE,
   STRATEGY_TEXT_FONT_FAMILY,
   STRATEGY_TEXT_STROKE_WIDTH,
@@ -86,7 +89,7 @@ async function drawPresetObject(
 }
 
 function drawLine(context: CanvasRenderingContext2D, object: BoardObject, scale: number): void {
-  context.strokeStyle = object.color ?? '#ff8000'
+  context.strokeStyle = object.color ?? DEFAULT_LINE_COLOR
   context.lineWidth = 2
   context.beginPath()
   context.moveTo(0, 0)
@@ -95,7 +98,7 @@ function drawLine(context: CanvasRenderingContext2D, object: BoardObject, scale:
 }
 
 function drawText(context: CanvasRenderingContext2D, object: BoardObject, scale: number): void {
-  context.fillStyle = object.color ?? '#ffffff'
+  context.fillStyle = object.color ?? DEFAULT_TEXT_COLOR
   context.strokeStyle = 'black'
   context.lineWidth = Math.max(1, (STRATEGY_TEXT_STROKE_WIDTH / BOARD_SCALE) * scale)
   context.font = `${Math.max(8, (DEFAULT_TEXT_FONT_SIZE / BOARD_SCALE) * scale)}px ${STRATEGY_TEXT_FONT_FAMILY}, sans-serif`
@@ -108,14 +111,14 @@ function drawText(context: CanvasRenderingContext2D, object: BoardObject, scale:
 function drawLineAoe(context: CanvasRenderingContext2D, object: BoardObject, scale: number): void {
   const width = (object.width ?? 128) * scale
   const height = (object.height ?? 128) * scale
-  context.fillStyle = object.color ?? '#ff8000'
+  context.fillStyle = object.color ?? DEFAULT_LINE_COLOR
   context.fillRect(-width / 2, -height / 2, width, height)
 }
 
 function drawCircleAoe(context: CanvasRenderingContext2D, object: BoardObject, scale: number): void {
   const radius = 256 * scale
   const arcAngle = object.type === 'fan_aoe' ? (object.arcAngle ?? 90) : 360
-  context.fillStyle = DEFAULT_DONUT_COLOR
+  context.fillStyle = DEFAULT_AOE_COLOR
   context.beginPath()
   if (arcAngle >= 360) {
     context.arc(0, 0, radius, 0, Math.PI * 2)
@@ -133,7 +136,7 @@ function drawDonut(context: CanvasRenderingContext2D, object: BoardObject, scale
   const arcAngle = object.arcAngle ?? 360
   const startAngle = -Math.PI / 2
   const endAngle = startAngle + (arcAngle * Math.PI) / 180
-  context.fillStyle = object.color ?? '#ff8000'
+  context.fillStyle = DEFAULT_DONUT_COLOR
   context.beginPath()
   if (arcAngle >= 360) {
     context.arc(0, 0, outer, 0, Math.PI * 2)

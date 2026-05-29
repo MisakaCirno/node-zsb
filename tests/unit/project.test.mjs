@@ -49,10 +49,10 @@ test('cleanBoard applies game-compatible object fields', () => {
     donutRadius: object.donutRadius,
     transparency: object.transparency,
   })), [
-    { type: 'text', size: undefined, angle: undefined, arcAngle: undefined, width: undefined, height: undefined, color: '#ff8000', donutRadius: undefined, transparency: 0 },
-    { type: 'line', size: 50, angle: undefined, arcAngle: undefined, width: undefined, height: undefined, color: '#ff8000', donutRadius: undefined, transparency: 0 },
+    { type: 'text', size: undefined, angle: undefined, arcAngle: undefined, width: undefined, height: undefined, color: '#FFFFFF', donutRadius: undefined, transparency: 0 },
+    { type: 'line', size: 50, angle: undefined, arcAngle: undefined, width: undefined, height: undefined, color: '#FF7F00', donutRadius: undefined, transparency: 0 },
     { type: 'circle_aoe', size: 10, angle: undefined, arcAngle: undefined, width: undefined, height: undefined, color: undefined, donutRadius: undefined, transparency: 100 },
-    { type: 'line_aoe', size: 100, angle: -45, arcAngle: undefined, width: 16, height: 384, color: '#ff8000', donutRadius: undefined, transparency: 100 },
+    { type: 'line_aoe', size: 100, angle: -45, arcAngle: undefined, width: 16, height: 384, color: '#FF7F00', donutRadius: undefined, transparency: 100 },
     { type: 'donut', size: 10, angle: 179, arcAngle: 360, width: undefined, height: undefined, color: undefined, donutRadius: 240, transparency: 0 },
     { type: 'donut', size: 100, angle: undefined, arcAngle: 180, width: undefined, height: undefined, color: undefined, donutRadius: 80, transparency: 0 },
   ])

@@ -1,6 +1,7 @@
 import { clamp } from './geometry.js'
 import { createEditorId } from './editorIds.js'
 import { getSelectedIndexes } from './editorState.js'
+import { getDefaultObjectColor } from '../shared/boardGeometry.js'
 import {
   BOARD_BOUNDS,
   getConstrainedMoveDelta,
@@ -426,19 +427,20 @@ function createDefaultObject(type: string, point = BOARD_CENTER): BoardObject {
     x: point.x,
     y: point.y,
     size: 100,
-    color: '#ff8000',
     transparency: 0,
   }
-  if (type === 'text') return { ...base, text: '文字', color: '#ffffff' }
+  const color = getDefaultObjectColor(type)
+  const coloredBase = color ? { ...base, color } : base
+  if (type === 'text') return { ...coloredBase, text: '文字' }
   if (type === 'line') {
     return {
-      ...base,
+      ...coloredBase,
       endX: clamp(point.x + 64, 0, 512),
       endY: point.y,
       height: 6,
     }
   }
-  if (type === 'line_aoe') return { ...base, width: 128, height: 128 }
+  if (type === 'line_aoe') return { ...coloredBase, width: 128, height: 128 }
   if (type === 'fan_aoe') return { ...base, arcAngle: 90 }
   if (type === 'donut') return { ...base, arcAngle: 360, donutRadius: 80 }
   return base

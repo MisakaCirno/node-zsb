@@ -1,5 +1,6 @@
 import { ensureObjectEditorIds, stripEditorFields } from './editorIds.js'
 import {
+  getDefaultObjectColor,
   normalizeDonutRadius,
   normalizeLineAoeHeight,
   normalizeLineAoeWidth,
@@ -60,6 +61,10 @@ export function sanitizeObject(object: BoardObject): BoardObject {
   }
   if (!capabilities.color) {
     delete copy.color
+  } else {
+    copy.color = typeof copy.color === 'string'
+      ? copy.color
+      : getDefaultObjectColor(copy.type)
   }
   if (!capabilities.transparency) {
     delete copy.transparency
@@ -118,7 +123,6 @@ export function getObjectCapabilities(type: string): ObjectCapabilities {
 function normalizeObjectForEditor(object: BoardObject): BoardObject {
   const normalized = sanitizeObject({
     size: 100,
-    color: '#ff8000',
     transparency: 0,
     ...object,
   })

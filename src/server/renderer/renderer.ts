@@ -15,6 +15,8 @@ import path from 'node:path'
 import {
   AOE_RADIUS,
   DEFAULT_DONUT_COLOR,
+  DEFAULT_LINE_COLOR,
+  DEFAULT_TEXT_COLOR,
   DEFAULT_TEXT_FONT_SIZE,
   STRATEGY_TEXT_FONT_FAMILY,
   STRATEGY_TEXT_SHADOW_BLUR,
@@ -78,7 +80,7 @@ function createTextBlock(data: StrategyObject): Konva.Text {
 
   return new Konva.Text({
     text: data.text,
-    fill: data.color ?? '#ffffff',
+    fill: data.color ?? DEFAULT_TEXT_COLOR,
     stroke: 'black',
     strokeWidth: STRATEGY_TEXT_STROKE_WIDTH,
     x: toSceneCoordinate(data.x),
@@ -108,7 +110,7 @@ function createLineBlock(data: StrategyObject): Konva.Group {
 
   const line = new Konva.Line({
     points: [startX, startY, endX, endY],
-    stroke: data.color ?? '#ff8000',
+    stroke: data.color ?? DEFAULT_LINE_COLOR,
     strokeWidth: toSceneCoordinate(data.height ?? 6),
     opacity: opacity,
   })
@@ -153,7 +155,7 @@ function createLineAoe(data: StrategyObject): Konva.Rect {
     offsetY: height,
     width: toSceneCoordinate(width),
     height: toSceneCoordinate(height),
-    fill: data.color ?? '#ff8000',
+    fill: data.color ?? DEFAULT_LINE_COLOR,
     scaleX: scale,
     scaleY: scale,
     rotation: data.angle ?? 0,

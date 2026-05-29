@@ -89,7 +89,7 @@ export function setColorValue(
 }
 
 export function syncColorControl(elements: ColorPickerElements) {
-  const color = normalizeHexColor(elements.color.value) || '#ff8000'
+  const color = normalizeHexColor(elements.color.value) || '#FF7F00'
   const hsv = hexToHsv(color)
   elements.color.value = color
   elements.colorText.value = color
@@ -133,7 +133,7 @@ function updateSaturationFromPointer(
 }
 
 function hexToHsv(hex: string | undefined): HsvColor {
-  const normalized = normalizeHexColor(hex) || '#ff8000'
+  const normalized = normalizeHexColor(hex) || '#FF7F00'
   const r = Number.parseInt(normalized.slice(1, 3), 16) / 255
   const g = Number.parseInt(normalized.slice(3, 5), 16) / 255
   const b = Number.parseInt(normalized.slice(5, 7), 16) / 255
