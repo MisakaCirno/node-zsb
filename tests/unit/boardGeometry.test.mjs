@@ -5,6 +5,7 @@ import {
   calculateCircleOffset,
   calculateDonutOffset,
   flippedScale,
+  normalizeObjectAngle,
   normalizeObjectSize,
   normalizeTransparency,
   objectOpacity,
@@ -46,6 +47,14 @@ test('objectScale follows game size ranges by object type', () => {
   assert.equal(objectScale({ type: 'circle_aoe', size: 5 }), 0.1)
   assert.equal(objectScale({ type: 'line_aoe', size: 250 }), 1)
   assert.equal(objectScale({ type: 'tank', size: 250 }), 2)
+})
+
+test('normalizeObjectAngle follows the game -180 to 180 rotation range', () => {
+  assert.equal(normalizeObjectAngle(315), -45)
+  assert.equal(normalizeObjectAngle(181), -179)
+  assert.equal(normalizeObjectAngle(-181), 179)
+  assert.equal(normalizeObjectAngle(180), 180)
+  assert.equal(normalizeObjectAngle(-180), -180)
 })
 
 test('objectOpacity follows the game 0-100 transparency scale', () => {

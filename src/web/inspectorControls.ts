@@ -4,6 +4,9 @@ import { numberValue } from './geometry.js'
 import { renderInspector as renderInspectorPanel } from './inspectorPanel.js'
 import {
   getObjectSizeBounds,
+  MAX_GAME_ROTATION_ANGLE,
+  MIN_GAME_ROTATION_ANGLE,
+  normalizeObjectAngle,
   normalizeObjectSize,
 } from '../shared/boardGeometry.js'
 import type {
@@ -101,7 +104,9 @@ export function createInspectorControls({
     object.size = object.type === 'text'
       ? 100
       : normalizeObjectSize(numberValue(elements.size, sizeBounds.min, sizeBounds.max), object.type)
-    object.angle = capabilities.angle ? numberValue(elements.angle, 0, 360) : undefined
+    object.angle = capabilities.angle
+      ? normalizeObjectAngle(numberValue(elements.angle, MIN_GAME_ROTATION_ANGLE, MAX_GAME_ROTATION_ANGLE))
+      : undefined
     object.color = capabilities.appearance ? elements.color.value : undefined
     object.transparency = capabilities.appearance
       ? numberValue(elements.transparency, 0, 100)

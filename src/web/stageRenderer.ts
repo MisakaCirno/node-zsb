@@ -4,7 +4,6 @@ import {
   SCENE_WIDTH,
 } from './constants.js'
 import {
-  normalizeAngle,
   rotatePoint,
 } from './geometry.js'
 import {
@@ -19,6 +18,7 @@ import {
   flippedScale,
   normalizeLineAoeHeight,
   normalizeLineAoeWidth,
+  normalizeObjectAngle,
   normalizeObjectSize,
   objectOpacity,
   objectScale,
@@ -517,7 +517,7 @@ export function createStageRenderer({
     }
     object.angle = ['line', 'text'].includes(object.type)
       ? undefined
-      : normalizeAngle(node.rotation())
+      : normalizeObjectAngle(node.rotation())
   }
 
   function createTextNode(object: BoardObject): KonvaNode {

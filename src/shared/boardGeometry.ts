@@ -13,6 +13,8 @@ export const MAX_GAME_OBJECT_SIZE = 200
 export const MIN_LINE_AOE_DIMENSION = 16
 export const MAX_LINE_AOE_HEIGHT = 384
 export const MAX_LINE_AOE_WIDTH = 512
+export const MIN_GAME_ROTATION_ANGLE = -180
+export const MAX_GAME_ROTATION_ANGLE = 180
 export const AOE_RADIUS = 512
 export const AOE_CENTER = 512
 
@@ -68,6 +70,13 @@ export function normalizeLineAoeWidth(value = 128): number {
 
 export function normalizeDonutRadius(value = 80): number {
   return normalizeBoundedNumber(value, 0, 240, 80)
+}
+
+export function normalizeObjectAngle(value = 0): number {
+  const number = Math.round(Number(value))
+  if (!Number.isFinite(number)) return 0
+  const normalized = modulo(number + 180, 360) - 180
+  return normalized === -180 && number > 0 ? 180 : normalized
 }
 
 export function objectOpacity(
@@ -183,4 +192,8 @@ function normalizeBoundedNumber(
 
 function clamp(value: number, min: number, max: number): number {
   return Math.min(max, Math.max(min, value))
+}
+
+function modulo(value: number, divisor: number): number {
+  return ((value % divisor) + divisor) % divisor
 }

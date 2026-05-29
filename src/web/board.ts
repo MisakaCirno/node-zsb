@@ -3,6 +3,7 @@ import {
   normalizeDonutRadius,
   normalizeLineAoeHeight,
   normalizeLineAoeWidth,
+  normalizeObjectAngle,
   normalizeObjectSize,
   normalizeTransparency,
 } from '../shared/boardGeometry.js'
@@ -48,6 +49,11 @@ export function sanitizeObject(object: BoardObject): BoardObject {
   }
   if (copy.type === 'line') {
     delete copy.angle
+  }
+  if (!capabilities.angle) {
+    delete copy.angle
+  } else if (copy.angle !== undefined) {
+    copy.angle = normalizeObjectAngle(Number(copy.angle))
   }
   if (copy.type === 'donut' && copy.arcAngle === undefined) {
     copy.arcAngle = 360
