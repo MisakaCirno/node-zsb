@@ -3,8 +3,8 @@ import { getSelectedIndexes } from './editorState.js'
 import { numberValue } from './geometry.js'
 import { renderInspector as renderInspectorPanel } from './inspectorPanel.js'
 import {
-  MAX_GAME_OBJECT_SIZE,
-  MIN_GAME_OBJECT_SIZE,
+  getObjectSizeBounds,
+  normalizeObjectSize,
 } from '../shared/boardGeometry.js'
 import type {
   InspectorPanelElements,
@@ -22,7 +22,7 @@ import type {
 interface InspectorElements extends InspectorPanelElements {
   x: ValueElement & DisabledElement
   y: ValueElement & DisabledElement
-  size: ValueElement & DisabledElement
+  size: ValueElement & DisabledElement & BoundsElement
   angle: ValueElement & DisabledElement
   transparency: ValueElement
   objectWidth: ValueElement & DisabledElement
@@ -59,6 +59,11 @@ interface InspectorElements extends InspectorPanelElements {
   alignBottom: DisabledElement
 }
 
+interface BoundsElement {
+  min: string
+  max: string
+}
+
 interface InspectorControlsDeps {
   state: EditorState
   elements: InspectorElements
@@ -92,12 +97,11 @@ export function createInspectorControls({
     const point = normalizePoint(numberValue(elements.x, 0, 512), numberValue(elements.y, 0, 384))
     object.x = point.x
     object.y = point.y
+    const sizeBounds = getObjectSizeBounds(object.type)
     object.size = object.type === 'text'
       ? 100
-      : numberValue(elements.size, MIN_GAME_OBJECT_SIZE, MAX_GAME_OBJECT_SIZE)
-    object.angle = ['line', 'text'].includes(object.type)
-      ? undefined
-      : numberValue(elements.angle, 0, 360)
+      : normalizeObjectSize(numberValue(elements.size, sizeBounds.min, sizeBounds.max), object.type)
+    object.angle = capabilities.angle ? numberValue(elements.angle, 0, 360) : undefined
     object.color = capabilities.appearance ? elements.color.value : undefined
     object.transparency = capabilities.appearance
       ? numberValue(elements.transparency, 0, 100)
@@ -107,7 +111,7 @@ export function createInspectorControls({
       ? numberValue(elements.objectWidth, 16, 512)
       : undefined
     object.height = capabilities.dimensions
-      ? numberValue(elements.objectHeight, 16, 512)
+      ? numberValue(elements.objectHeight, 16, 384)
       : undefined
     object.endX = capabilities.line ? numberValue(elements.endX, 0, 512) : undefined
     object.endY = capabilities.line ? numberValue(elements.endY, 0, 384) : undefined

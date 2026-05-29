@@ -31,8 +31,8 @@ test('cleanBoard applies game-compatible object fields', () => {
     objects: [
       { type: 'text', x: 100, y: 120, text: 'label', size: 160, angle: 45 },
       { type: 'line', x: 120, y: 140, endX: 200, endY: 180, size: 20, angle: 45 },
-      { type: 'line_aoe', x: 160, y: 160, size: 250, width: 1, height: 1, transparency: 150 },
-      { type: 'donut', x: 220, y: 180, donutRadius: 80 },
+      { type: 'line_aoe', x: 160, y: 160, size: 250, width: 1, height: 500, transparency: 150 },
+      { type: 'donut', x: 220, y: 180, size: 5, donutRadius: 500 },
       { type: 'donut', x: 320, y: 180, donutRadius: 80, arcAngle: 180 },
     ],
   })
@@ -44,13 +44,14 @@ test('cleanBoard applies game-compatible object fields', () => {
     arcAngle: object.arcAngle,
     width: object.width,
     height: object.height,
+    donutRadius: object.donutRadius,
     transparency: object.transparency,
   })), [
-    { type: 'text', size: undefined, angle: undefined, arcAngle: undefined, width: undefined, height: undefined, transparency: 0 },
-    { type: 'line', size: 50, angle: undefined, arcAngle: undefined, width: undefined, height: undefined, transparency: 0 },
-    { type: 'line_aoe', size: 200, angle: undefined, arcAngle: undefined, width: 16, height: 16, transparency: 100 },
-    { type: 'donut', size: 100, angle: undefined, arcAngle: 360, width: undefined, height: undefined, transparency: 0 },
-    { type: 'donut', size: 100, angle: undefined, arcAngle: 180, width: undefined, height: undefined, transparency: 0 },
+    { type: 'text', size: undefined, angle: undefined, arcAngle: undefined, width: undefined, height: undefined, donutRadius: undefined, transparency: 0 },
+    { type: 'line', size: 50, angle: undefined, arcAngle: undefined, width: undefined, height: undefined, donutRadius: undefined, transparency: 0 },
+    { type: 'line_aoe', size: 100, angle: undefined, arcAngle: undefined, width: 16, height: 384, donutRadius: undefined, transparency: 100 },
+    { type: 'donut', size: 10, angle: undefined, arcAngle: 360, width: undefined, height: undefined, donutRadius: 240, transparency: 0 },
+    { type: 'donut', size: 100, angle: undefined, arcAngle: 180, width: undefined, height: undefined, donutRadius: 80, transparency: 0 },
   ])
 })
 

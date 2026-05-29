@@ -8,7 +8,11 @@ export const STRATEGY_TEXT_SHADOW_BLUR = 1.5
 export const STRATEGY_TEXT_SHADOW_OFFSET = 1
 export const MAX_GAME_TRANSPARENCY = 100
 export const MIN_GAME_OBJECT_SIZE = 50
+export const MIN_GAME_AOE_SIZE = 10
 export const MAX_GAME_OBJECT_SIZE = 200
+export const MIN_LINE_AOE_DIMENSION = 16
+export const MAX_LINE_AOE_HEIGHT = 384
+export const MAX_LINE_AOE_WIDTH = 512
 export const AOE_RADIUS = 512
 export const AOE_CENTER = 512
 
@@ -22,6 +26,11 @@ interface ArcOffsetOptions {
   innerRadius?: number
 }
 
+export interface NumericBounds {
+  min: number
+  max: number
+}
+
 export function toSceneCoordinate(value: number): number {
   return value * BOARD_SCALE
 }
@@ -30,14 +39,35 @@ export function toLogicalCoordinate(value: number): number {
   return Math.round(value / BOARD_SCALE)
 }
 
-export function objectScale(object: Pick<BoardObject, 'size'>): number {
-  return normalizeObjectSize(object.size) / 100
+export function objectScale(object: Pick<BoardObject, 'size' | 'type'>): number {
+  return normalizeObjectSize(object.size, object.type) / 100
 }
 
-export function normalizeObjectSize(value = 100): number {
+export function normalizeObjectSize(value = 100, type = ''): number {
+  if (type === 'line_aoe') return 100
   const number = Math.round(Number(value))
   if (!Number.isFinite(number)) return 100
-  return Math.min(MAX_GAME_OBJECT_SIZE, Math.max(MIN_GAME_OBJECT_SIZE, number))
+  const bounds = getObjectSizeBounds(type)
+  return clamp(number, bounds.min, bounds.max)
+}
+
+export function getObjectSizeBounds(type = ''): NumericBounds {
+  if (type === 'circle_aoe' || type === 'fan_aoe' || type === 'donut') {
+    return { min: MIN_GAME_AOE_SIZE, max: MAX_GAME_OBJECT_SIZE }
+  }
+  return { min: MIN_GAME_OBJECT_SIZE, max: MAX_GAME_OBJECT_SIZE }
+}
+
+export function normalizeLineAoeHeight(value = 128): number {
+  return normalizeBoundedNumber(value, MIN_LINE_AOE_DIMENSION, MAX_LINE_AOE_HEIGHT, 128)
+}
+
+export function normalizeLineAoeWidth(value = 128): number {
+  return normalizeBoundedNumber(value, MIN_LINE_AOE_DIMENSION, MAX_LINE_AOE_WIDTH, 128)
+}
+
+export function normalizeDonutRadius(value = 80): number {
+  return normalizeBoundedNumber(value, 0, 240, 80)
 }
 
 export function objectOpacity(
@@ -138,4 +168,19 @@ function getAbsoluteSectorCropCenter(
 
 function clampTransparency(value: number): number {
   return Math.min(MAX_GAME_TRANSPARENCY, Math.max(0, value))
+}
+
+function normalizeBoundedNumber(
+  value: unknown,
+  min: number,
+  max: number,
+  fallback: number,
+): number {
+  const number = Math.round(Number(value ?? fallback))
+  if (!Number.isFinite(number)) return fallback
+  return clamp(number, min, max)
+}
+
+function clamp(value: number, min: number, max: number): number {
+  return Math.min(max, Math.max(min, value))
 }

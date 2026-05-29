@@ -35,11 +35,17 @@ test('flippedScale mirrors a rendered object without changing its stored size', 
   assert.equal(flippedScale(1.5, true), -1.5)
 })
 
-test('objectScale follows the game 50-200 size range', () => {
+test('objectScale follows game size ranges by object type', () => {
   assert.equal(normalizeObjectSize(20), 50)
   assert.equal(normalizeObjectSize(250), 200)
-  assert.equal(objectScale({ size: 20 }), 0.5)
-  assert.equal(objectScale({ size: 250 }), 2)
+  assert.equal(normalizeObjectSize(5, 'circle_aoe'), 10)
+  assert.equal(normalizeObjectSize(5, 'fan_aoe'), 10)
+  assert.equal(normalizeObjectSize(5, 'donut'), 10)
+  assert.equal(normalizeObjectSize(250, 'line_aoe'), 100)
+  assert.equal(objectScale({ type: 'tank', size: 20 }), 0.5)
+  assert.equal(objectScale({ type: 'circle_aoe', size: 5 }), 0.1)
+  assert.equal(objectScale({ type: 'line_aoe', size: 250 }), 1)
+  assert.equal(objectScale({ type: 'tank', size: 250 }), 2)
 })
 
 test('objectOpacity follows the game 0-100 transparency scale', () => {

@@ -1,5 +1,6 @@
 import { getObjectCapabilities } from './board.js'
 import { syncColorControl } from './colorPicker.js'
+import { getObjectSizeBounds } from '../shared/boardGeometry.js'
 import type {
   ColorPickerElements,
 } from './colorPicker.js'
@@ -22,7 +23,7 @@ export interface InspectorPanelElements extends ColorPickerElements {
   type: ValueElement
   x: ValueElement & DisabledElement
   y: ValueElement & DisabledElement
-  size: ValueElement & DisabledElement
+  size: ValueElement & DisabledElement & BoundsElement
   angle: ValueElement & DisabledElement
   transparency: ValueElement
   transparencyRange: ValueElement
@@ -51,6 +52,11 @@ interface QueryElement extends ClassListElement {
   querySelector(selector: string): ClassListElement | null
 }
 
+interface BoundsElement {
+  min: string
+  max: string
+}
+
 interface ClosestElement {
   closest(selector: string): (ClassListElement & {
     setAttribute(name: string, value: string): void
@@ -71,6 +77,9 @@ export function renderInspector({
   elements.x.value = String(object.x ?? 256)
   elements.y.value = String(object.y ?? 192)
   elements.size.value = String(object.size ?? 100)
+  const sizeBounds = getObjectSizeBounds(object.type)
+  elements.size.min = String(sizeBounds.min)
+  elements.size.max = String(sizeBounds.max)
   elements.angle.value = String(object.angle ?? 0)
   elements.color.value = object.color ?? '#ff8000'
   syncColorControl(elements)
@@ -96,9 +105,11 @@ export function renderInspector({
 
 function updateInspectorVisibility(object: BoardObject, elements: InspectorPanelElements) {
   const capabilities = getObjectCapabilities(object.type)
-  const canTransform = !['line', 'text'].includes(object.type)
+  const canTransform = capabilities.size || capabilities.angle
   setFieldVisible(elements, 'appearance', capabilities.appearance)
   setFieldVisible(elements, 'transform', canTransform)
+  setFieldVisible(elements, 'size', capabilities.size)
+  setFieldVisible(elements, 'angle', capabilities.angle)
   setFieldVisible(elements, 'text', capabilities.text)
   setFieldVisible(elements, 'dimensions', capabilities.dimensions)
   setFieldVisible(elements, 'line', capabilities.line)

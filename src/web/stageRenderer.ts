@@ -4,7 +4,6 @@ import {
   SCENE_WIDTH,
 } from './constants.js'
 import {
-  clamp,
   normalizeAngle,
   rotatePoint,
 } from './geometry.js'
@@ -18,6 +17,9 @@ import {
   calculateCircleOffset,
   calculateDonutOffset,
   flippedScale,
+  normalizeLineAoeHeight,
+  normalizeLineAoeWidth,
+  normalizeObjectSize,
   objectOpacity,
   objectScale,
   toLogicalCoordinate,
@@ -486,11 +488,16 @@ export function createStageRenderer({
   }
 
   function applyNodeTransform(node: KonvaNode, object: BoardObject) {
-    if (object.type !== 'line' && object.type !== 'text') {
-      object.size = clamp(
+    if (object.type === 'line_aoe') {
+      object.width = normalizeLineAoeWidth((object.width ?? 128) * Math.abs(node.scaleX()))
+      object.height = normalizeLineAoeHeight((object.height ?? 128) * Math.abs(node.scaleY()))
+      const scale = objectScale(object)
+      node.scaleX(flippedScale(scale, Boolean(object.horizontalFlip)))
+      node.scaleY(flippedScale(scale, Boolean(object.verticalFlip)))
+    } else if (object.type !== 'line' && object.type !== 'text') {
+      object.size = normalizeObjectSize(
         Math.round(Math.max(Math.abs(node.scaleX()), Math.abs(node.scaleY())) * 100),
-        10,
-        300,
+        object.type,
       )
       const scale = objectScale(object)
       node.scaleX(flippedScale(scale, Boolean(object.horizontalFlip)))
