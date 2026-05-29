@@ -185,8 +185,6 @@ export function bindEditorEvents({
   for (const input of [
     elements.x,
     elements.y,
-    elements.size,
-    elements.angle,
     elements.text,
     elements.endX,
     elements.endY,
@@ -195,6 +193,8 @@ export function bindEditorEvents({
   ]) {
     input.addEventListener('input', actions.updateSelectedFromInspector)
   }
+  bindSyncedSlider(elements.size, elements.sizeRange, actions.updateSelectedFromInspector)
+  bindSyncedSlider(elements.angle, elements.angleRange, actions.updateSelectedFromInspector)
   bindSyncedSlider(elements.transparency, elements.transparencyRange, actions.updateSelectedFromInspector)
   bindSyncedSlider(elements.objectWidth, elements.objectWidthRange, actions.updateSelectedFromInspector)
   bindSyncedSlider(elements.objectHeight, elements.objectHeightRange, actions.updateSelectedFromInspector)
@@ -208,13 +208,45 @@ function bindSyncedSlider(
   onChange: () => void,
 ) {
   numberInput.addEventListener('input', () => {
-    rangeInput.value = numberInput.value
+    const value = getNumericInputValue(numberInput)
+    if (value === undefined) return
+    rangeInput.value = clampNumericValue(numberInput, value)
+    if (value !== rangeInput.value) return
     onChange()
+  })
+  numberInput.addEventListener('change', () => {
+    const value = getNumericInputValue(numberInput)
+    if (value === undefined) return
+    const clamped = clampNumericValue(numberInput, value)
+    numberInput.value = clamped
+    rangeInput.value = clamped
+    onChange()
+  })
+  numberInput.addEventListener('keydown', (event: KeyboardEvent) => {
+    if (event.key === 'Enter') numberInput.blur()
   })
   rangeInput.addEventListener('input', () => {
     numberInput.value = rangeInput.value
     onChange()
   })
+}
+
+function getNumericInputValue(input: HTMLInputElement): string | undefined {
+  const raw = input.value.trim()
+  if (raw === '' || raw === '-') return undefined
+  const value = Number(raw)
+  if (!Number.isFinite(value)) return undefined
+  return String(value)
+}
+
+function clampNumericValue(input: HTMLInputElement, raw: string): string {
+  const value = Number(raw)
+  const min = Number(input.min)
+  const max = Number(input.max)
+  const lower = Number.isFinite(min) ? min : -Infinity
+  const upper = Number.isFinite(max) ? max : Infinity
+  const clamped = Math.min(upper, Math.max(lower, value))
+  return String(clamped)
 }
 
 function bindPaletteDrop(elements: EditorElements, actions: EditorActionRegistry) {

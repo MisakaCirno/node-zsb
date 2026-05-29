@@ -113,7 +113,9 @@ export interface EditorElements {
   x: HTMLInputElement
   y: HTMLInputElement
   size: HTMLInputElement
+  sizeRange: HTMLInputElement
   angle: HTMLInputElement
+  angleRange: HTMLInputElement
   color: HTMLInputElement
   colorTrigger: HTMLButtonElement
   colorPreview: HTMLElement
@@ -260,7 +262,9 @@ export function getEditorElements(): EditorElements {
     x: queryElement('#object-x', HTMLInputElement),
     y: queryElement('#object-y', HTMLInputElement),
     size: queryElement('#object-size', HTMLInputElement),
+    sizeRange: queryElement('#object-size-range', HTMLInputElement),
     angle: queryElement('#object-angle', HTMLInputElement),
+    angleRange: queryElement('#object-angle-range', HTMLInputElement),
     color: queryElement('#object-color', HTMLInputElement),
     colorTrigger: queryElement('#object-color-trigger', HTMLButtonElement),
     colorPreview: queryElement('#object-color-preview', HTMLElement),

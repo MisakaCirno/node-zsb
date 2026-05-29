@@ -26,7 +26,9 @@ interface InspectorElements extends InspectorPanelElements {
   x: ValueElement & DisabledElement
   y: ValueElement & DisabledElement
   size: ValueElement & DisabledElement & BoundsElement
+  sizeRange: ValueElement & DisabledElement & BoundsElement
   angle: ValueElement & DisabledElement
+  angleRange: ValueElement & DisabledElement
   transparency: ValueElement
   objectWidth: ValueElement & DisabledElement
   objectHeight: ValueElement & DisabledElement

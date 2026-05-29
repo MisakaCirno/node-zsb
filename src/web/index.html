@@ -193,14 +193,20 @@
                 <input id="object-y" type="number" min="0" max="384" />
               </label>
             </div>
-            <div class="field-grid" data-field="transform">
-              <label class="field" data-field="size">
+            <div class="field-grid parameter-field-grid" data-field="transform">
+              <label class="field slider-field" data-field="size">
                 <span>大小</span>
-                <input id="object-size" type="number" min="50" max="200" />
+                <div class="slider-control">
+                  <input id="object-size-range" type="range" min="50" max="200" step="1" aria-label="大小滑动条" />
+                  <input id="object-size" type="number" min="50" max="200" />
+                </div>
               </label>
-              <label class="field" data-field="angle">
+              <label class="field slider-field" data-field="angle">
                 <span>角度</span>
-                <input id="object-angle" type="number" min="-180" max="180" />
+                <div class="slider-control">
+                  <input id="object-angle-range" type="range" min="-180" max="180" step="1" aria-label="角度滑动条" />
+                  <input id="object-angle" type="number" min="-180" max="180" />
+                </div>
               </label>
             </div>
             <div class="field-grid inspector-appearance" data-field="appearance">

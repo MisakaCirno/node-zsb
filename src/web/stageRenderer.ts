@@ -19,6 +19,10 @@ import {
   DEFAULT_LINE_COLOR,
   DEFAULT_TEXT_COLOR,
   flippedScale,
+  getObjectSizeBounds,
+  MAX_LINE_AOE_HEIGHT,
+  MAX_LINE_AOE_WIDTH,
+  MIN_LINE_AOE_DIMENSION,
   normalizeLineAoeHeight,
   normalizeLineAoeWidth,
   normalizeObjectAngle,
@@ -90,6 +94,7 @@ interface KonvaNode {
   on(eventName: string, handler: (event: KonvaEvent) => void): void
   opacity(value: number): void
   points(points: number[]): void
+  position(value?: Point): Point
   rotation(): number
   scale(value: { x: number, y: number }): void
   scaleX(value?: number): number
@@ -446,6 +451,9 @@ export function createStageRenderer({
     node.on('dragstart', () => {
       recordHistory()
     })
+    node.on('dragmove', () => {
+      constrainNodePosition(node)
+    })
     node.on('dragend', () => {
       handleDragEnd(node, object, index)
     })
@@ -454,6 +462,9 @@ export function createStageRenderer({
         recordHistory()
       }
       isTransformingSelection = true
+    })
+    node.on('transform', () => {
+      constrainNodeTransform(node, object)
     })
     node.on('transformend', () => {
       scheduleSelectedTransformCommit()
@@ -521,6 +532,45 @@ export function createStageRenderer({
     object.angle = ['line', 'text'].includes(object.type)
       ? undefined
       : normalizeObjectAngle(node.rotation())
+  }
+
+  function constrainNodePosition(node: KonvaNode) {
+    node.position({
+      x: toSceneCoordinate(normalizeCoordinate(toLogicalCoordinate(node.x()), 0, 512)),
+      y: toSceneCoordinate(normalizeCoordinate(toLogicalCoordinate(node.y()), 0, 384)),
+    })
+  }
+
+  function constrainNodeTransform(node: KonvaNode, object: BoardObject) {
+    if (object.type === 'line' || object.type === 'text') return
+    if (object.type === 'line_aoe') {
+      constrainLineAoeScale(node, object)
+      return
+    }
+    const bounds = getObjectSizeBounds(object.type)
+    node.scaleX(clampSignedScale(node.scaleX(), bounds.min / 100, bounds.max / 100))
+    node.scaleY(clampSignedScale(node.scaleY(), bounds.min / 100, bounds.max / 100))
+  }
+
+  function constrainLineAoeScale(node: KonvaNode, object: BoardObject) {
+    const width = object.width ?? 128
+    const height = object.height ?? 128
+    node.scaleX(clampSignedScale(
+      node.scaleX(),
+      MIN_LINE_AOE_DIMENSION / width,
+      MAX_LINE_AOE_WIDTH / width,
+    ))
+    node.scaleY(clampSignedScale(
+      node.scaleY(),
+      MIN_LINE_AOE_DIMENSION / height,
+      MAX_LINE_AOE_HEIGHT / height,
+    ))
+  }
+
+  function clampSignedScale(value: number, min: number, max: number): number {
+    const sign = value < 0 ? -1 : 1
+    const magnitude = Math.min(max, Math.max(min, Math.abs(value)))
+    return sign * magnitude
   }
 
   function createTextNode(object: BoardObject): KonvaNode {

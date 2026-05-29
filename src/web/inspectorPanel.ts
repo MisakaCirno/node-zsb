@@ -28,7 +28,9 @@ export interface InspectorPanelElements extends ColorPickerElements {
   x: ValueElement & DisabledElement
   y: ValueElement & DisabledElement
   size: ValueElement & DisabledElement & BoundsElement
+  sizeRange: ValueElement & DisabledElement & BoundsElement
   angle: ValueElement & DisabledElement
+  angleRange: ValueElement & DisabledElement
   transparency: ValueElement
   transparencyRange: ValueElement
   text: ValueElement
@@ -84,7 +86,11 @@ export function renderInspector({
   const sizeBounds = getObjectSizeBounds(object.type)
   elements.size.min = String(sizeBounds.min)
   elements.size.max = String(sizeBounds.max)
+  elements.sizeRange.min = elements.size.min
+  elements.sizeRange.max = elements.size.max
+  elements.sizeRange.value = elements.size.value
   elements.angle.value = String(object.angle ?? 0)
+  elements.angleRange.value = elements.angle.value
   elements.color.value = object.color ?? getDefaultObjectColor(object.type) ?? DEFAULT_LINE_COLOR
   syncColorControl(elements)
   elements.transparency.value = String(object.transparency ?? 0)
@@ -130,7 +136,9 @@ function updateInspectorLockState(object: BoardObject, elements: InspectorPanelE
     elements.x,
     elements.y,
     elements.size,
+    elements.sizeRange,
     elements.angle,
+    elements.angleRange,
     elements.objectWidth,
     elements.objectWidthRange,
     elements.objectHeight,
