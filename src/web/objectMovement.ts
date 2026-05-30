@@ -1,7 +1,9 @@
 import { clamp } from './geometry.js'
+import { getSelectionBounds } from './objectAlignment.js'
 import type {
   BoardObject,
   Bounds,
+  EditorState,
 } from './types.js'
 
 export const BOARD_BOUNDS = {
@@ -18,6 +20,22 @@ export function moveObjectBy(object: BoardObject, dx: number, dy: number): void 
     object.endX = clamp(Math.round(object.endX + dx), BOARD_BOUNDS.left, BOARD_BOUNDS.right)
     object.endY = clamp(Math.round(object.endY + dy), BOARD_BOUNDS.top, BOARD_BOUNDS.bottom)
   }
+}
+
+export function moveObjectsBy(objects: BoardObject[], dx: number, dy: number): void {
+  for (const object of objects) {
+    moveObjectBy(object, dx, dy)
+  }
+}
+
+export function getConstrainedObjectsMoveDelta(
+  objects: BoardObject[],
+  state: EditorState,
+  dx: number,
+  dy: number,
+) {
+  if (objects.length === 0) return { dx: 0, dy: 0 }
+  return getConstrainedMoveDelta(getSelectionBounds(objects, state), dx, dy)
 }
 
 export function getConstrainedMoveDelta(bounds: Bounds, dx: number, dy: number) {

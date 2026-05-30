@@ -29,10 +29,10 @@ import {
   toSceneCoordinate,
 } from '../shared/boardGeometry.js'
 import { getSelectedIndexes } from './editorState.js'
-import { getObjectBounds, getSelectionBounds } from './objectAlignment.js'
+import { getObjectBounds } from './objectAlignment.js'
 import {
-  getConstrainedMoveDelta,
-  moveObjectBy,
+  getConstrainedObjectsMoveDelta,
+  moveObjectsBy,
 } from './objectMovement.js'
 import type {
   BoardObject,
@@ -842,15 +842,9 @@ export function createStageRenderer({
       .map((selectedIndex) => state.board.objects[selectedIndex])
       .filter((entry): entry is BoardObject => Boolean(entry && !entry.locked))
     const shouldMoveSelection = selectedIndexes.includes(index) && selectedObjects.length > 1
-    let delta = { dx: point.x - oldX, dy: point.y - oldY }
-    if (shouldMoveSelection) {
-      delta = getConstrainedMoveDelta(getSelectionBounds(selectedObjects, state), delta.dx, delta.dy)
-      for (const selectedObject of selectedObjects) {
-        moveObjectBy(selectedObject, delta.dx, delta.dy)
-      }
-    } else {
-      moveObjectBy(object, delta.dx, delta.dy)
-    }
+    const objectsToMove = shouldMoveSelection ? selectedObjects : [object]
+    const delta = getConstrainedObjectsMoveDelta(objectsToMove, state, point.x - oldX, point.y - oldY)
+    moveObjectsBy(objectsToMove, delta.dx, delta.dy)
     renderInspector()
     renderLayers()
     renderAll()

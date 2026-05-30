@@ -4,8 +4,9 @@ import { getSelectedIndexes } from './editorState.js'
 import { getDefaultObjectColor } from '../shared/boardGeometry.js'
 import {
   BOARD_BOUNDS,
-  getConstrainedMoveDelta,
+  getConstrainedObjectsMoveDelta,
   moveObjectBy,
+  moveObjectsBy,
 } from './objectMovement.js'
 import {
   appendObjectLayerNode,
@@ -351,16 +352,15 @@ export function createObjectCommands({
       if (!referenceObject || selectedObjects.length === 0) return
       const [dx, dy] = delta
       const point = normalizePoint(referenceObject.x + dx, referenceObject.y + dy)
-      const moveDelta = getConstrainedMoveDelta(
-        getSelectionBounds(selectedObjects, state),
+      const moveDelta = getConstrainedObjectsMoveDelta(
+        selectedObjects,
+        state,
         point.x - referenceObject.x,
         point.y - referenceObject.y,
       )
       if (moveDelta.dx === 0 && moveDelta.dy === 0) return
       recordHistory()
-      for (const object of selectedObjects) {
-        moveObjectBy(object, moveDelta.dx, moveDelta.dy)
-      }
+      moveObjectsBy(selectedObjects, moveDelta.dx, moveDelta.dy)
       renderAll()
     },
   }
