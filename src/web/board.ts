@@ -1,4 +1,8 @@
-import { ensureObjectEditorIds, stripEditorFields } from './editorIds.js'
+import {
+  ensureObjectEditorIds,
+  stripEditorFields,
+  stripPureBoardEditorFields,
+} from './editorIds.js'
 import {
   getDefaultObjectColor,
   normalizeDonutRadius,
@@ -30,8 +34,7 @@ export function cleanBoard(board: NormalizedBoard): Board {
     name: board.name || undefined,
     boardBackground: board.boardBackground,
     objects: board.objects.map((object) => {
-      const copy = sanitizeObject(object)
-      stripPureBoardEditorFields(copy)
+      const copy = stripPureBoardEditorFields(sanitizeObject(object))
       for (const key of Object.keys(copy)) {
         if (copy[key] === undefined || copy[key] === '') delete copy[key]
       }
@@ -134,9 +137,4 @@ function normalizeObjectForEditor(object: BoardObject): BoardObject {
     normalized.size = 100
   }
   return normalized
-}
-
-function stripPureBoardEditorFields(object: BoardObject): void {
-  delete object.hidden
-  delete object.locked
 }

@@ -3,6 +3,10 @@ import test from 'node:test'
 
 import { cleanBoard, normalizeBoard } from '../../src/web/board.js'
 import {
+  stripEditorFields,
+  stripPureBoardEditorFields,
+} from '../../src/web/editorIds.js'
+import {
   PROJECT_FORMAT,
   createProjectFromBoard,
   createPureBoardFromProject,
@@ -25,6 +29,30 @@ test('normalizeBoard assigns stable editor ids and cleanBoard strips editor-only
   assert.equal(cleanBoard(board).objects[0].editorId, undefined)
   assert.equal(cleanBoard(board).objects[0].hidden, undefined)
   assert.equal(cleanBoard(board).objects[1].locked, undefined)
+})
+
+test('editor field stripping distinguishes project metadata from pure board metadata', () => {
+  const object = {
+    type: 'tank',
+    x: 1,
+    y: 2,
+    editorId: 'obj_a',
+    hidden: true,
+    locked: true,
+  }
+
+  assert.deepEqual(stripEditorFields(object), {
+    type: 'tank',
+    x: 1,
+    y: 2,
+    hidden: true,
+    locked: true,
+  })
+  assert.deepEqual(stripPureBoardEditorFields(object), {
+    type: 'tank',
+    x: 1,
+    y: 2,
+  })
 })
 
 test('cleanBoard applies game-compatible object fields', () => {

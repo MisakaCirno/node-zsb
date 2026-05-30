@@ -1,6 +1,11 @@
 import type { BoardObject } from './types.js'
 
 const EDITOR_ID_KEY = 'editorId'
+const PURE_BOARD_EDITOR_KEYS = [
+  EDITOR_ID_KEY,
+  'hidden',
+  'locked',
+] as const
 
 export function createEditorId(prefix = 'obj'): string {
   const random = Math.random().toString(36).slice(2, 10)
@@ -24,5 +29,13 @@ export function ensureObjectEditorIds<T extends BoardObject>(objects: T[]): T[] 
 export function stripEditorFields<T extends BoardObject>(object: T): BoardObject {
   const copy = { ...object }
   delete copy[EDITOR_ID_KEY]
+  return copy
+}
+
+export function stripPureBoardEditorFields<T extends BoardObject>(object: T): BoardObject {
+  const copy = { ...object }
+  for (const key of PURE_BOARD_EDITOR_KEYS) {
+    delete copy[key]
+  }
   return copy
 }
