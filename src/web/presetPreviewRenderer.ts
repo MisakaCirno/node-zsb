@@ -101,7 +101,7 @@ function drawText(context: CanvasRenderingContext2D, object: BoardObject, scale:
   context.fillStyle = object.color ?? DEFAULT_TEXT_COLOR
   context.strokeStyle = 'black'
   context.lineWidth = Math.max(1, (STRATEGY_TEXT_STROKE_WIDTH / BOARD_SCALE) * scale)
-  context.font = `${Math.max(8, (DEFAULT_TEXT_FONT_SIZE / BOARD_SCALE) * scale)}px ${STRATEGY_TEXT_FONT_FAMILY}, sans-serif`
+  context.font = `${Math.max(8, (DEFAULT_TEXT_FONT_SIZE / BOARD_SCALE) * scale)}px ${STRATEGY_TEXT_FONT_FAMILY}`
   context.textAlign = 'center'
   context.textBaseline = 'middle'
   context.strokeText(object.text ?? 'T', 0, 0)

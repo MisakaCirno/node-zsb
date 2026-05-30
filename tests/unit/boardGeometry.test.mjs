@@ -10,6 +10,8 @@ import {
   normalizeTransparency,
   objectOpacity,
   objectScale,
+  STRATEGY_TEXT_FONT_FAMILY,
+  STRATEGY_TEXT_FONT_PRIMARY,
 } from '../../src/shared/boardGeometry.js'
 
 test('calculateCircleOffset follows strategy board sector crop center', () => {
@@ -63,4 +65,10 @@ test('objectOpacity follows the game 0-100 transparency scale', () => {
   assert.equal(objectOpacity({ transparency: 100 }), 0)
   assert.equal(objectOpacity({ transparency: 150 }), 0)
   assert.equal(normalizeTransparency(150), 100)
+})
+
+test('strategy text font stack prefers the bundled renderer font', () => {
+  assert.equal(STRATEGY_TEXT_FONT_PRIMARY, 'AlibabaPuHuiTi')
+  assert.equal(STRATEGY_TEXT_FONT_FAMILY.startsWith(`${STRATEGY_TEXT_FONT_PRIMARY},`), true)
+  assert.equal(STRATEGY_TEXT_FONT_FAMILY.includes('sans-serif'), true)
 })

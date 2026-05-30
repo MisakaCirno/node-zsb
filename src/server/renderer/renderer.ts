@@ -19,6 +19,7 @@ import {
   DEFAULT_TEXT_COLOR,
   DEFAULT_TEXT_FONT_SIZE,
   STRATEGY_TEXT_FONT_FAMILY,
+  STRATEGY_TEXT_FONT_PRIMARY,
   STRATEGY_TEXT_SHADOW_BLUR,
   STRATEGY_TEXT_SHADOW_OFFSET,
   STRATEGY_TEXT_STROKE_WIDTH,
@@ -42,7 +43,7 @@ const FONT_PATH = path.resolve(
   'AlibabaPuHuiTi-3-55-Regular.ttf',
 )
 
-FontLibrary.use('AlibabaPuHuiTi', [FONT_PATH])
+FontLibrary.use(STRATEGY_TEXT_FONT_PRIMARY, [FONT_PATH])
 
 // --- Helper Functions from Components ---
 

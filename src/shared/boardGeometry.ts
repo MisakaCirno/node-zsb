@@ -2,7 +2,8 @@ import type { BoardObject } from '../web/types.js'
 
 export const BOARD_SCALE = 2
 export const DEFAULT_TEXT_FONT_SIZE = 28
-export const STRATEGY_TEXT_FONT_FAMILY = 'Arial, "Microsoft YaHei", AlibabaPuHuiTi'
+export const STRATEGY_TEXT_FONT_PRIMARY = 'AlibabaPuHuiTi'
+export const STRATEGY_TEXT_FONT_FAMILY = `${STRATEGY_TEXT_FONT_PRIMARY}, Arial, "Microsoft YaHei", sans-serif`
 export const STRATEGY_TEXT_STROKE_WIDTH = 0.6
 export const STRATEGY_TEXT_SHADOW_BLUR = 1.5
 export const STRATEGY_TEXT_SHADOW_OFFSET = 1
