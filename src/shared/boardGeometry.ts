@@ -37,6 +37,13 @@ export interface NumericBounds {
   max: number
 }
 
+export interface GeometryBounds {
+  left: number
+  right: number
+  top: number
+  bottom: number
+}
+
 export function toSceneCoordinate(value: number): number {
   return value * BOARD_SCALE
 }
@@ -139,6 +146,20 @@ export function calculateDonutOffset({
   return {
     offsetX: center.offsetX - outerRadius,
     offsetY: center.offsetY - outerRadius,
+  }
+}
+
+export function calculateSectorBounds(
+  arcAngle: number,
+  outerRadius = AOE_RADIUS,
+  innerRadius = 0,
+): GeometryBounds {
+  const crop = calculateSectorCrop(arcAngle, outerRadius, innerRadius)
+  return {
+    left: crop.left,
+    right: outerRadius * 2 - crop.right,
+    top: 0,
+    bottom: outerRadius * 2 - crop.bottom,
   }
 }
 
