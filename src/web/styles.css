@@ -333,6 +333,8 @@ textarea {
   border-bottom: 1px solid #27313a;
   background: #151a1f;
   min-width: 0;
+  display: grid;
+  gap: 6px;
   overflow-x: auto;
   overflow-y: hidden;
 }
@@ -348,6 +350,35 @@ textarea {
 
 .stage-toolbar-row > * {
   flex: 0 0 auto;
+}
+
+.stage-document-row {
+  display: grid;
+  grid-template-columns: minmax(260px, 1fr) minmax(180px, 280px);
+  min-width: 0;
+  padding: 6px 8px;
+  border: 1px solid #27313a;
+  border-radius: 8px;
+  background: #11181c;
+  white-space: normal;
+}
+
+.stage-document-row > * {
+  min-width: 0;
+}
+
+.document-name-field {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+
+.document-name-label {
+  color: #9ed9c6;
+  font-size: 12px;
+  font-weight: 700;
 }
 
 .stage-toolbar-cluster {
@@ -487,38 +518,8 @@ textarea {
   box-shadow: inset 0 0 0 1px rgba(102, 194, 165, 0.18);
 }
 
-.board-name-field {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-}
-
-.board-name-label {
-  color: #a8b4bd;
-  font-size: 12px;
-}
-
 .share-name-field {
   margin: 0;
-}
-
-.global-property-card {
-  display: grid;
-  gap: 8px;
-  margin-bottom: 12px;
-  padding: 10px;
-  border: 1px solid rgba(102, 194, 165, 0.35);
-  border-radius: 8px;
-  background:
-    linear-gradient(180deg, rgba(102, 194, 165, 0.14), rgba(67, 168, 216, 0.08)),
-    #121b1d;
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04);
-}
-
-.global-property-title {
-  color: #a8f0dd;
-  font-size: 12px;
-  font-weight: 700;
 }
 
 .layers-title {
@@ -541,6 +542,10 @@ textarea {
 
 .stage-toolbar input {
   width: 140px;
+}
+
+.stage-document-row input {
+  width: 100%;
 }
 
 .stage-toolbar select {

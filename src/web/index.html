@@ -35,6 +35,16 @@
 
       <section class="stage-wrap">
         <div class="stage-toolbar">
+          <div class="stage-toolbar-row stage-document-row" aria-label="文档信息">
+            <label class="document-name-field file-name-field" for="file-name">
+              <span class="document-name-label">文件名</span>
+              <input id="file-name" maxlength="48" placeholder="未命名文件" />
+            </label>
+            <label class="document-name-field share-name-field" for="board-name">
+              <span id="share-name-title" class="document-name-label">分享名</span>
+              <input id="board-name" maxlength="7" placeholder="分享名" aria-labelledby="share-name-title" />
+            </label>
+          </div>
           <div class="stage-toolbar-row stage-toolbar-main">
             <div class="stage-toolbar-cluster">
               <nav class="app-menubar" role="menubar" aria-label="主菜单">
@@ -47,12 +57,6 @@
                   <svg viewBox="0 0 24 24" aria-hidden="true"><path d="m7 10 5 5 5-5"/></svg>
                 </button>
               </nav>
-              <div class="toolbar-group board-name-group" aria-label="画板名称">
-                <label class="board-name-field" for="file-name">
-                  <span class="board-name-label">文件名</span>
-                  <input id="file-name" maxlength="48" placeholder="未命名文件" />
-                </label>
-              </div>
             </div>
             <div class="toolbar-group top-command-icons" aria-label="常用命令">
               <button id="quick-save-local-board" class="icon-tool" type="button" title="保存文件 Ctrl+S" aria-label="保存文件">
@@ -161,12 +165,6 @@
 
       <aside class="panel inspector">
         <section class="inspector-section property-section">
-          <div class="global-property-card">
-            <div id="share-name-title" class="global-property-title">分享名</div>
-            <div class="field share-name-field">
-              <input id="board-name" maxlength="7" placeholder="分享名" aria-labelledby="share-name-title" />
-            </div>
-          </div>
           <div class="section-title">属性</div>
           <div id="empty-state" class="empty-state">选择一个对象</div>
           <div id="inspector-form" class="inspector-form hidden">
