@@ -1,4 +1,5 @@
 import Elysia, { file, status, t } from 'elysia'
+import type { Context } from 'elysia'
 import { existsSync } from 'node:fs'
 import { readFile } from 'node:fs/promises'
 import path from 'node:path'
@@ -16,11 +17,16 @@ const sharedDir = path.join(rootDir, 'src', 'shared')
 const scriptAssetPattern = /^[A-Za-z][A-Za-z0-9]*\.js$/
 const webAssetPattern = /^(?:[A-Za-z][A-Za-z0-9]*\.js|styles\.css)$/
 
+type ResponseHeaders = NonNullable<Context['set']['headers']>
+
 export const webController = new Elysia()
-  .get('/editor', () => file(path.join(webDir, 'index.html')))
+  .get('/editor', ({ set }) => {
+    setNoStore(set.headers)
+    return file(path.join(webDir, 'index.html'))
+  })
   .get(
     '/editor/:asset',
-    ({ params }) => serveScriptOrFile(webDir, params.asset),
+    ({ params, set }) => serveScriptOrFile(webDir, params.asset, set.headers),
     {
       params: t.Object({
         asset: t.RegExp(webAssetPattern),
@@ -29,22 +35,26 @@ export const webController = new Elysia()
   )
   .get(
     '/shared/:asset',
-    ({ params }) => serveScriptOrFile(sharedDir, params.asset),
+    ({ params, set }) => serveScriptOrFile(sharedDir, params.asset, set.headers),
     {
       params: t.Object({
         asset: t.RegExp(scriptAssetPattern),
       }),
     },
   )
-  .get('/editor-data', () => ({
-    defaultCode,
-    iconGroups,
-    iconConfigs: getAllIconConfigs(),
-    backgrounds: getBoardBackgrounds(),
-  }))
-  .get('/vendor/konva.min.js', () =>
-    file(path.join(rootDir, 'node_modules', 'konva', 'konva.min.js')),
-  )
+  .get('/editor-data', ({ set }) => {
+    setNoStore(set.headers)
+    return {
+      defaultCode,
+      iconGroups,
+      iconConfigs: getAllIconConfigs(),
+      backgrounds: getBoardBackgrounds(),
+    }
+  })
+  .get('/vendor/konva.min.js', ({ set }) => {
+    setNoStore(set.headers)
+    return file(path.join(rootDir, 'node_modules', 'konva', 'konva.min.js'))
+  })
   .get(
     '/assets/background/:name',
     ({ params }) => file(getBoardUrl(params.name.replace('.webp', ''))),
@@ -79,7 +89,12 @@ export const webController = new Elysia()
     },
   )
 
-async function serveScriptOrFile(directory: string, asset: string) {
+async function serveScriptOrFile(
+  directory: string,
+  asset: string,
+  headers: ResponseHeaders,
+) {
+  setNoStore(headers)
   const filePath = path.join(directory, asset)
   if (!asset.endsWith('.js') || existsSync(filePath)) {
     return file(filePath)
@@ -100,7 +115,12 @@ async function serveScriptOrFile(directory: string, asset: string) {
 
   return new Response(output, {
     headers: {
+      'cache-control': 'no-store',
       'content-type': 'application/javascript; charset=utf-8',
     },
   })
+}
+
+function setNoStore(headers: ResponseHeaders) {
+  headers['cache-control'] = 'no-store'
 }
