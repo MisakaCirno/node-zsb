@@ -1113,7 +1113,13 @@ textarea {
 
 .inspector-primary-grid {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) auto;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 8px;
+}
+
+.coordinate-control {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
   gap: 8px;
 }
 
@@ -1188,10 +1194,11 @@ textarea {
 
 .color-popover {
   position: absolute;
-  left: 0;
+  right: 0;
   top: 42px;
   z-index: 12;
   width: 236px;
+  max-width: min(236px, calc(100vw - 24px));
   display: grid;
   gap: 10px;
   padding: 10px;

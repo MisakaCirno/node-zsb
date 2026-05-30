@@ -1,5 +1,4 @@
 import { clamp } from './geometry.js'
-import { getSelectionBounds } from './objectAlignment.js'
 import type {
   BoardObject,
   Bounds,
@@ -34,8 +33,9 @@ export function getConstrainedObjectsMoveDelta(
   dx: number,
   dy: number,
 ) {
+  void state
   if (objects.length === 0) return { dx: 0, dy: 0 }
-  return getConstrainedMoveDelta(getSelectionBounds(objects, state), dx, dy)
+  return getConstrainedPointDelta(objects.flatMap(getObjectMovePoints), dx, dy)
 }
 
 export function getConstrainedMoveDelta(bounds: Bounds, dx: number, dy: number) {
@@ -47,4 +47,23 @@ export function getConstrainedMoveDelta(bounds: Bounds, dx: number, dy: number) 
 
 function clampDelta(delta: number, min: number, max: number) {
   return clamp(Math.round(delta), Math.ceil(min), Math.floor(max))
+}
+
+function getObjectMovePoints(object: BoardObject) {
+  const points = [{ x: object.x, y: object.y }]
+  if (object.type === 'line' && object.endX !== undefined && object.endY !== undefined) {
+    points.push({ x: object.endX, y: object.endY })
+  }
+  return points
+}
+
+function getConstrainedPointDelta(points: Array<{ x: number, y: number }>, dx: number, dy: number) {
+  const minX = Math.min(...points.map((point) => point.x))
+  const maxX = Math.max(...points.map((point) => point.x))
+  const minY = Math.min(...points.map((point) => point.y))
+  const maxY = Math.max(...points.map((point) => point.y))
+  return {
+    dx: clampDelta(dx, BOARD_BOUNDS.left - minX, BOARD_BOUNDS.right - maxX),
+    dy: clampDelta(dy, BOARD_BOUNDS.top - minY, BOARD_BOUNDS.bottom - maxY),
+  }
 }

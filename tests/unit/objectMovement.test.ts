@@ -51,12 +51,21 @@ test('getConstrainedMoveDelta clamps a group delta to the board bounds', () => {
   )
 })
 
-test('getConstrainedObjectsMoveDelta uses object bounds instead of only centers', () => {
+test('getConstrainedObjectsMoveDelta clamps object centers instead of visual bounds', () => {
   assert.deepEqual(
     getConstrainedObjectsMoveDelta([
-      { type: 'tank', x: 500, y: 192, size: 100 },
+      { type: 'circle_aoe', x: 256, y: 128, size: 200 },
+    ], state, -300, 300),
+    { dx: -256, dy: 256 },
+  )
+})
+
+test('getConstrainedObjectsMoveDelta also keeps line endpoints on the board', () => {
+  assert.deepEqual(
+    getConstrainedObjectsMoveDelta([
+      { type: 'line', x: 500, y: 100, endX: 512, endY: 120 },
     ], state, 20, 0),
-    { dx: -4, dy: 0 },
+    { dx: 0, dy: 0 },
   )
 })
 

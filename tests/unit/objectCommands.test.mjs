@@ -119,7 +119,7 @@ test('object commands toggle layer flags for the full selection', () => {
   assert.equal(state.board.objects[1].hidden, true)
 })
 
-test('object commands nudge the full selection with one constrained delta', () => {
+test('object commands nudge the full selection with one center-constrained delta', () => {
   const state = createCommandState()
   state.selectedIndex = 1
   state.selectedIndexes = [0, 1]
@@ -147,8 +147,8 @@ test('object commands nudge the full selection with one constrained delta', () =
 
   assert.equal(historyCount, 1)
   assert.equal(renderCount, 1)
-  assert.equal(state.board.objects[0].x, 36)
-  assert.equal(state.board.objects[1].x, 496)
+  assert.equal(state.board.objects[0].x, 40)
+  assert.equal(state.board.objects[1].x, 500)
 })
 
 function createCommandState() {

@@ -181,14 +181,13 @@
             <input id="object-hidden" class="type-value-input" type="checkbox" aria-hidden="true" tabindex="-1" />
             <input id="object-locked" class="type-value-input" type="checkbox" aria-hidden="true" tabindex="-1" />
             <div class="field-grid inspector-primary-grid" data-field="position">
-              <label class="field">
-                <span>X</span>
-                <input id="object-x" type="number" min="0" max="512" />
-              </label>
-              <label class="field">
-                <span>Y</span>
-                <input id="object-y" type="number" min="0" max="384" />
-              </label>
+              <div class="field coordinate-field">
+                <span>XY</span>
+                <div class="coordinate-control">
+                  <input id="object-x" type="number" min="0" max="512" aria-label="X 坐标" />
+                  <input id="object-y" type="number" min="0" max="384" aria-label="Y 坐标" />
+                </div>
+              </div>
               <div class="field color-field" data-field="color">
                 <span>颜色</span>
                 <div class="color-control">
