@@ -110,6 +110,31 @@ export interface IconRenderSpec {
   opacity: number
 }
 
+export interface ArcPathContext {
+  beginPath(): void
+  moveTo(x: number, y: number): void
+  arc(
+    x: number,
+    y: number,
+    radius: number,
+    startAngle: number,
+    endAngle: number,
+    counterclockwise?: boolean,
+  ): void
+  closePath(): void
+}
+
+export interface CenteredSectorPathOptions {
+  arcAngle: number
+  radius: number
+  startAngle: number
+  endAngle: number
+}
+
+export interface DonutPathOptions {
+  radiusScale?: number
+}
+
 export function createLineRenderSpec(
   object: RenderObjectLike,
   options: RenderOpacityOptions = {},
@@ -230,4 +255,53 @@ export function createIconRenderSpec(
     rotation: object.angle ?? 0,
     opacity: objectOpacity(object, options),
   }
+}
+
+export function traceCircleAoeClipPath(
+  context: ArcPathContext,
+  spec: CircleAoeRenderSpec,
+): void {
+  context.beginPath()
+  context.moveTo(spec.clipRadius, spec.clipRadius)
+  context.arc(
+    spec.clipRadius,
+    spec.clipRadius,
+    spec.clipRadius,
+    spec.startAngle,
+    spec.endAngle,
+  )
+  context.closePath()
+}
+
+export function traceCenteredSectorPath(
+  context: ArcPathContext,
+  options: CenteredSectorPathOptions,
+): void {
+  context.beginPath()
+  if (options.arcAngle >= 360) {
+    context.arc(0, 0, options.radius, 0, Math.PI * 2)
+    return
+  }
+  context.moveTo(0, 0)
+  context.arc(0, 0, options.radius, options.startAngle, options.endAngle)
+  context.closePath()
+}
+
+export function traceDonutPath(
+  context: ArcPathContext,
+  spec: DonutRenderSpec,
+  options: DonutPathOptions = {},
+): void {
+  const radiusScale = options.radiusScale ?? 1
+  const outerRadius = spec.outerRadius * radiusScale
+  const innerRadius = spec.innerRadius * radiusScale
+  context.beginPath()
+  if (spec.arcAngle >= 360) {
+    context.arc(0, 0, outerRadius, 0, Math.PI * 2, false)
+    context.arc(0, 0, innerRadius, 0, Math.PI * 2, true)
+    return
+  }
+  context.arc(0, 0, outerRadius, spec.startAngle, spec.endAngle, false)
+  context.arc(0, 0, innerRadius, spec.endAngle, spec.startAngle, true)
+  context.closePath()
 }

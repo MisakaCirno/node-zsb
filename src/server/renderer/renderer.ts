@@ -23,6 +23,8 @@ import {
   createIconRenderSpec,
   createLineAoeRenderSpec,
   createLineRenderSpec,
+  traceCircleAoeClipPath,
+  traceDonutPath,
 } from '../../shared/objectRendering.js'
 import { createStrategyTextStyle } from '../../shared/textRendering.js'
 
@@ -149,19 +151,7 @@ function createDonut(data: StrategyObject): Konva.Group {
 
   const shape = new Konva.Shape({
     sceneFunc: (ctx, shape) => {
-
-      ctx.beginPath()
-
-      if (spec.arcAngle >= 360) {
-        // 完整圆环
-        ctx.arc(0, 0, spec.outerRadius, 0, Math.PI * 2, false)
-        ctx.arc(0, 0, spec.innerRadius, 0, Math.PI * 2, true)
-      } else {
-        // 扇形圆环
-        ctx.arc(0, 0, spec.outerRadius, spec.startAngle, spec.endAngle, false)
-        ctx.arc(0, 0, spec.innerRadius, spec.endAngle, spec.startAngle, true)
-        ctx.closePath()
-      }
+      traceDonutPath(ctx, spec)
 
       ctx.fillStrokeShape(shape)
     },
@@ -188,10 +178,7 @@ async function createCircleAoe(data: StrategyObject) {
 
   if (spec.arcAngle !== 360) {
     group.clipFunc((ctx) => {
-      ctx.beginPath()
-      ctx.moveTo(spec.clipRadius, spec.clipRadius)
-      ctx.arc(spec.clipRadius, spec.clipRadius, spec.clipRadius, spec.startAngle, spec.endAngle)
-      ctx.closePath()
+      traceCircleAoeClipPath(ctx, spec)
     })
   }
 

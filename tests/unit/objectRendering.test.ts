@@ -15,7 +15,42 @@ import {
   createIconRenderSpec,
   createLineAoeRenderSpec,
   createLineRenderSpec,
+  traceCenteredSectorPath,
+  traceCircleAoeClipPath,
+  traceDonutPath,
 } from '../../src/shared/objectRendering.js'
+
+interface PathCall {
+  name: string
+  values: unknown[]
+}
+
+class RecordingPathContext {
+  calls: PathCall[] = []
+
+  beginPath(): void {
+    this.calls.push({ name: 'beginPath', values: [] })
+  }
+
+  moveTo(x: number, y: number): void {
+    this.calls.push({ name: 'moveTo', values: [x, y] })
+  }
+
+  arc(
+    x: number,
+    y: number,
+    radius: number,
+    startAngle: number,
+    endAngle: number,
+    counterclockwise?: boolean,
+  ): void {
+    this.calls.push({ name: 'arc', values: [x, y, radius, startAngle, endAngle, counterclockwise] })
+  }
+
+  closePath(): void {
+    this.calls.push({ name: 'closePath', values: [] })
+  }
+}
 
 test('createLineRenderSpec exposes scene and local line coordinates', () => {
   const spec = createLineRenderSpec({
@@ -120,4 +155,87 @@ test('createIconRenderSpec converts icon size and flips consistently', () => {
   assert.equal(spec.offsetY, 64)
   assert.equal(spec.scaleX, 1.5)
   assert.equal(spec.scaleY, -1.5)
+})
+
+test('traceCircleAoeClipPath builds the shared fan clip path', () => {
+  const spec = createCircleAoeRenderSpec({
+    type: 'fan_aoe',
+    x: 0,
+    y: 0,
+    arcAngle: 90,
+  })
+  const context = new RecordingPathContext()
+
+  traceCircleAoeClipPath(context, spec)
+
+  assert.deepEqual(context.calls.map((call) => call.name), ['beginPath', 'moveTo', 'arc', 'closePath'])
+  assert.deepEqual(context.calls[1]?.values, [AOE_RADIUS, AOE_RADIUS])
+  assert.deepEqual(context.calls[2]?.values, [
+    AOE_RADIUS,
+    AOE_RADIUS,
+    AOE_RADIUS,
+    spec.startAngle,
+    spec.endAngle,
+    undefined,
+  ])
+})
+
+test('traceCenteredSectorPath builds full circles and partial sectors', () => {
+  const fullContext = new RecordingPathContext()
+  traceCenteredSectorPath(fullContext, {
+    arcAngle: 360,
+    radius: 10,
+    startAngle: -Math.PI / 2,
+    endAngle: Math.PI,
+  })
+
+  assert.deepEqual(fullContext.calls.map((call) => call.name), ['beginPath', 'arc'])
+  assert.deepEqual(fullContext.calls[1]?.values, [0, 0, 10, 0, Math.PI * 2, undefined])
+
+  const sectorContext = new RecordingPathContext()
+  traceCenteredSectorPath(sectorContext, {
+    arcAngle: 90,
+    radius: 20,
+    startAngle: -Math.PI / 2,
+    endAngle: 0,
+  })
+
+  assert.deepEqual(sectorContext.calls.map((call) => call.name), ['beginPath', 'moveTo', 'arc', 'closePath'])
+  assert.deepEqual(sectorContext.calls[1]?.values, [0, 0])
+})
+
+test('traceDonutPath builds full and partial donut paths with optional radius scaling', () => {
+  const fullSpec = createDonutRenderSpec({
+    type: 'donut',
+    x: 0,
+    y: 0,
+    donutRadius: 40,
+    arcAngle: 360,
+  })
+  const fullContext = new RecordingPathContext()
+  traceDonutPath(fullContext, fullSpec, { radiusScale: 0.5 })
+
+  assert.deepEqual(fullContext.calls.map((call) => call.name), ['beginPath', 'arc', 'arc'])
+  assert.deepEqual(fullContext.calls[1]?.values, [0, 0, AOE_RADIUS / 2, 0, Math.PI * 2, false])
+  assert.deepEqual(fullContext.calls[2]?.values, [0, 0, 40, 0, Math.PI * 2, true])
+
+  const partialSpec = createDonutRenderSpec({
+    type: 'donut',
+    x: 0,
+    y: 0,
+    donutRadius: 30,
+    arcAngle: 180,
+  })
+  const partialContext = new RecordingPathContext()
+  traceDonutPath(partialContext, partialSpec)
+
+  assert.deepEqual(partialContext.calls.map((call) => call.name), ['beginPath', 'arc', 'arc', 'closePath'])
+  assert.deepEqual(partialContext.calls[1]?.values, [
+    0,
+    0,
+    partialSpec.outerRadius,
+    partialSpec.startAngle,
+    partialSpec.endAngle,
+    false,
+  ])
 })

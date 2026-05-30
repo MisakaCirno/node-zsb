@@ -11,6 +11,8 @@ import {
   createDonutRenderSpec,
   createLineAoeRenderSpec,
   createLineRenderSpec,
+  traceCenteredSectorPath,
+  traceDonutPath,
 } from '../shared/objectRendering.js'
 import {
   getStrategyTextCanvasFont,
@@ -123,33 +125,20 @@ function drawLineAoe(context: CanvasRenderingContext2D, object: BoardObject, sca
 
 function drawCircleAoe(context: CanvasRenderingContext2D, object: BoardObject, scale: number): void {
   const spec = createCircleAoeRenderSpec(object)
-  const radius = 256 * scale
   context.fillStyle = DEFAULT_AOE_COLOR
-  context.beginPath()
-  if (spec.arcAngle >= 360) {
-    context.arc(0, 0, radius, 0, Math.PI * 2)
-  } else {
-    context.moveTo(0, 0)
-    context.arc(0, 0, radius, spec.startAngle, spec.endAngle)
-    context.closePath()
-  }
+  traceCenteredSectorPath(context, {
+    arcAngle: spec.arcAngle,
+    radius: spec.clipRadius / 2 * scale,
+    startAngle: spec.startAngle,
+    endAngle: spec.endAngle,
+  })
   context.fill()
 }
 
 function drawDonut(context: CanvasRenderingContext2D, object: BoardObject, scale: number): void {
   const spec = createDonutRenderSpec(object)
-  const outer = 256 * scale
-  const inner = spec.innerRadius / 2 * scale
   context.fillStyle = spec.fill
-  context.beginPath()
-  if (spec.arcAngle >= 360) {
-    context.arc(0, 0, outer, 0, Math.PI * 2)
-    context.arc(0, 0, inner, 0, Math.PI * 2, true)
-  } else {
-    context.arc(0, 0, outer, spec.startAngle, spec.endAngle)
-    context.arc(0, 0, inner, spec.endAngle, spec.startAngle, true)
-    context.closePath()
-  }
+  traceDonutPath(context, spec, { radiusScale: scale / 2 })
   context.fill()
 }
 
