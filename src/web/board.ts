@@ -3,6 +3,7 @@ import {
   stripEditorFields,
   stripPureBoardEditorFields,
 } from './editorIds.js'
+import { DEFAULT_BOARD_BACKGROUND } from '../shared/backgrounds.js'
 import {
   getDefaultObjectColor,
   normalizeDonutRadius,
@@ -24,7 +25,7 @@ export function normalizeBoard(board: Partial<Board>): NormalizedBoard {
   ensureObjectEditorIds(objects)
   return {
     name: board.name ?? '',
-    boardBackground: board.boardBackground ?? 'checkered',
+    boardBackground: board.boardBackground ?? DEFAULT_BOARD_BACKGROUND,
     objects,
   }
 }

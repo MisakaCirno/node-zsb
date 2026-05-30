@@ -1,4 +1,5 @@
 import { DEFAULT_GRID_OPACITY, DEFAULT_GRID_SIZE } from './constants.js'
+import { DEFAULT_BOARD_BACKGROUND } from '../shared/backgrounds.js'
 import type {
   BoardObject,
   EditorState,
@@ -10,7 +11,7 @@ export function createEditorState(): EditorState {
   return {
     board: {
       name: '',
-      boardBackground: 'checkered',
+      boardBackground: DEFAULT_BOARD_BACKGROUND,
       objects: [],
     },
     selectedIndex: -1,

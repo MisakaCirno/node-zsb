@@ -28,6 +28,7 @@ import {
   traceCircleAoeClipPath,
   traceDonutPath,
 } from '../shared/objectRendering.js'
+import { DEFAULT_BOARD_BACKGROUND, getBoardBackgroundId } from '../shared/backgrounds.js'
 import {
   createStrategyTextStyle,
   getStrategyTextFontLoadSpec,
@@ -292,7 +293,8 @@ export function createStageRenderer({
 
   async function renderBoard() {
     boardLayer.destroyChildren()
-    const backgroundId = state.backgrounds[state.board.boardBackground ?? 'checkered'] ?? '2'
+    const backgroundId = state.backgrounds[state.board.boardBackground ?? DEFAULT_BOARD_BACKGROUND]
+      ?? getBoardBackgroundId(state.board.boardBackground)
     const image = await loadImage(`/assets/background/${backgroundId}.webp`)
     boardLayer.add(
       new Konva.Image({

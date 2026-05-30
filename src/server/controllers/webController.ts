@@ -7,6 +7,7 @@ import ts from 'typescript'
 import { defaultCode } from '../utils/getCode.ts'
 import { getAllIconConfigs, iconGroups } from '../utils/iconMap.ts'
 import { getBoardUrl, getIconUrl } from '../utils/staticImage.ts'
+import { getBoardBackgrounds } from '../../shared/backgrounds.js'
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
 const rootDir = path.resolve(__dirname, '..', '..', '..')
@@ -39,15 +40,7 @@ export const webController = new Elysia()
     defaultCode,
     iconGroups,
     iconConfigs: getAllIconConfigs(),
-    backgrounds: {
-      none: '1',
-      checkered: '2',
-      checkered_circle: '3',
-      checkered_square: '4',
-      grey: '5',
-      grey_circle: '6',
-      grey_square: '7',
-    },
+    backgrounds: getBoardBackgrounds(),
   }))
   .get('/vendor/konva.min.js', () =>
     file(path.join(rootDir, 'node_modules', 'konva', 'konva.min.js')),

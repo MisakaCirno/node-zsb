@@ -12,6 +12,7 @@ import { getBrowserDocument } from './browser.js'
 import { syncFlatLayerTree } from './layerTree.js'
 import { createNameDialogController } from './nameDialog.js'
 import { loadLocalFiles, persistLocalFiles } from './storage.js'
+import { DEFAULT_BOARD_BACKGROUND } from '../shared/backgrounds.js'
 import type {
   Board,
   EditorState,
@@ -201,7 +202,7 @@ export function createLocalBoardsPanel({
     }
     state.board = normalizeBoard({
       name: '',
-      boardBackground: 'checkered',
+      boardBackground: DEFAULT_BOARD_BACKGROUND,
       objects: [],
     })
     syncFlatLayerTree(state)

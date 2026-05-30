@@ -1,4 +1,5 @@
 import { cleanBoard, normalizeBoard, sanitizeObject } from './board.js'
+import { DEFAULT_BOARD_BACKGROUND } from '../shared/backgrounds.js'
 import type {
   Board,
   BoardObject,
@@ -43,7 +44,7 @@ export function createProjectFromBoard(
     fileName: options.fileName ?? '',
     board: {
       name: normalizedBoard.name ?? '',
-      boardBackground: normalizedBoard.boardBackground ?? 'checkered',
+      boardBackground: normalizedBoard.boardBackground ?? DEFAULT_BOARD_BACKGROUND,
     },
     objects,
     layers,
@@ -62,7 +63,7 @@ export function normalizeProject(project: unknown): ProjectFile {
     fileName: String(project.fileName ?? ''),
     board: {
       name: project.board?.name ?? '',
-      boardBackground: project.board?.boardBackground ?? 'checkered',
+      boardBackground: project.board?.boardBackground ?? DEFAULT_BOARD_BACKGROUND,
     },
     objects,
     layers,

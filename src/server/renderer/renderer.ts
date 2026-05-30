@@ -17,6 +17,9 @@ import {
   STRATEGY_TEXT_FONT_PRIMARY,
 } from '../../shared/boardGeometry.js'
 import {
+  getBoardBackgroundId,
+} from '../../shared/backgrounds.js'
+import {
   createCircleAoeRenderSpec,
   createDonutRenderSpec,
   createIconRenderSpec,
@@ -40,22 +43,9 @@ const FONT_PATH = path.resolve(
 
 FontLibrary.use(STRATEGY_TEXT_FONT_PRIMARY, [FONT_PATH])
 
-// --- Helper Functions from Components ---
-
-// From Board.tsx
-const boardMap: Record<BackgroundType, string> = {
-  none: getBoardUrl('1'),
-  checkered: getBoardUrl('2'),
-  checkered_circle: getBoardUrl('3'),
-  checkered_square: getBoardUrl('4'),
-  grey: getBoardUrl('5'),
-  grey_circle: getBoardUrl('6'),
-  grey_square: getBoardUrl('7'),
-}
-
-async function createBoardLayer(backgroundType: BackgroundType = 'checkered') {
+async function createBoardLayer(backgroundType?: BackgroundType) {
   const layer = new Konva.Layer()
-  const imageUrl = boardMap[backgroundType]
+  const imageUrl = getBoardUrl(getBoardBackgroundId(backgroundType))
 
   const imageObj = await loadImage(imageUrl)
   const konvaImage = new Konva.Image({
