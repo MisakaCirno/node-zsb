@@ -119,6 +119,9 @@ export async function initializeEditorBoard({
     state,
     syncBoardNameInput,
   })
+  if (source.type === 'url-code') {
+    clearUrlCodeParameter()
+  }
   const project = source.type === 'editor-draft' ? getSavedProject(source.board) : null
   state.currentFileName = project?.fileName ?? ''
   state.localFileSnapshot = createProjectSnapshot(state.board, {
@@ -131,6 +134,16 @@ export async function initializeEditorBoard({
 
 function getSavedProject(value: unknown): ProjectFile | null {
   return isProject(value) ? normalizeProject(value) : null
+}
+
+export function clearUrlCodeParameter() {
+  const browserWindow = getOptionalBrowserWindow()
+  if (!browserWindow?.history?.replaceState) return
+  const url = new URL(browserWindow.location.href)
+  if (!url.searchParams.has('code')) return
+  url.searchParams.delete('code')
+  const nextUrl = `${url.pathname}${url.search}${url.hash}`
+  browserWindow.history.replaceState(browserWindow.history.state, '', nextUrl)
 }
 
 function getLocationSearch(): string {

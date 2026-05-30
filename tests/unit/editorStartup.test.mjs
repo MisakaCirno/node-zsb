@@ -3,6 +3,7 @@ import test from 'node:test'
 
 import {
   applyInitialBoardSource,
+  clearUrlCodeParameter,
   getInitialBoardSource,
 } from '../../src/web/editorStartup.js'
 import { PROJECT_FORMAT } from '../../src/web/project.js'
@@ -139,4 +140,31 @@ test('applyInitialBoardSource imports code sources without recording history', a
 
   assert.equal(elements.codeInput.value, 'share-code')
   assert.deepEqual(calls, [['share-code', { record: false }]])
+})
+
+test('clearUrlCodeParameter removes only the imported share code from the address', () => {
+  const previousWindow = globalThis.window
+  const calls = []
+  globalThis.window = {
+    history: {
+      state: { keep: true },
+      replaceState: (...args) => calls.push(args),
+    },
+    location: {
+      href: 'http://localhost:3000/editor?code=share-code&tab=objects#canvas',
+      search: '?code=share-code&tab=objects',
+    },
+  }
+
+  try {
+    clearUrlCodeParameter()
+  } finally {
+    if (previousWindow === undefined) {
+      delete globalThis.window
+    } else {
+      globalThis.window = previousWindow
+    }
+  }
+
+  assert.deepEqual(calls, [[{ keep: true }, '', '/editor?tab=objects#canvas']])
 })
