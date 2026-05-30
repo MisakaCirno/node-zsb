@@ -31,6 +31,7 @@ export function cleanBoard(board: NormalizedBoard): Board {
     boardBackground: board.boardBackground,
     objects: board.objects.map((object) => {
       const copy = sanitizeObject(object)
+      stripPureBoardEditorFields(copy)
       for (const key of Object.keys(copy)) {
         if (copy[key] === undefined || copy[key] === '') delete copy[key]
       }
@@ -133,4 +134,9 @@ function normalizeObjectForEditor(object: BoardObject): BoardObject {
     normalized.size = 100
   }
   return normalized
+}
+
+function stripPureBoardEditorFields(object: BoardObject): void {
+  delete object.hidden
+  delete object.locked
 }

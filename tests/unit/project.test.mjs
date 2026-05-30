@@ -11,18 +11,20 @@ import {
   projectToJson,
 } from '../../src/web/project.js'
 
-test('normalizeBoard assigns stable editor ids and cleanBoard strips them', () => {
+test('normalizeBoard assigns stable editor ids and cleanBoard strips editor-only fields', () => {
   const board = normalizeBoard({
     boardBackground: 'checkered',
     objects: [
-      { type: 'tank', x: 100, y: 120 },
-      { type: 'healer', x: 140, y: 160, editorId: 'obj_existing' },
+      { type: 'tank', x: 100, y: 120, hidden: true },
+      { type: 'healer', x: 140, y: 160, editorId: 'obj_existing', locked: true },
     ],
   })
 
   assert.match(board.objects[0].editorId, /^obj_/)
   assert.equal(board.objects[1].editorId, 'obj_existing')
   assert.equal(cleanBoard(board).objects[0].editorId, undefined)
+  assert.equal(cleanBoard(board).objects[0].hidden, undefined)
+  assert.equal(cleanBoard(board).objects[1].locked, undefined)
 })
 
 test('cleanBoard applies game-compatible object fields', () => {
@@ -63,7 +65,7 @@ test('project files keep editor metadata separate from pure boards', () => {
     name: 'P1',
     boardBackground: 'checkered',
     objects: [
-      { type: 'tank', x: 100, y: 120, editorId: 'obj_a' },
+      { type: 'tank', x: 100, y: 120, editorId: 'obj_a', hidden: true },
       { type: 'healer', x: 140, y: 160, editorId: 'obj_b' },
     ],
   }, {
@@ -77,6 +79,7 @@ test('project files keep editor metadata separate from pure boards', () => {
     { type: 'object', id: 'obj_b' },
   ])
   assert.equal(project.objects.obj_a.editorId, undefined)
+  assert.equal(project.objects.obj_a.hidden, true)
 
   const board = flattenProjectToBoard(project)
   assert.equal(board.objects[0].editorId, 'obj_a')
