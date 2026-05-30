@@ -611,9 +611,17 @@ test('editor resizes side panels and keeps object tabs visible', async ({ page }
   const paletteTabWritingMode = async () =>
     page.locator('#palette-tabs button').first().evaluate((tab) =>
       tab.ownerDocument.defaultView?.getComputedStyle(tab).writingMode ?? '')
+  const rightPropertyHeight = async () =>
+    page.locator('#editor-shell').evaluate((shell) =>
+      Number.parseFloat(
+        shell.ownerDocument.defaultView
+          ?.getComputedStyle(shell)
+          .getPropertyValue('--right-property-height') ?? '0',
+      ))
 
   await expect(page.locator('#left-panel-resizer')).toHaveAttribute('role', 'separator')
   await expect(page.locator('#right-panel-resizer')).toHaveAttribute('role', 'separator')
+  await expect(page.locator('#right-panel-height-resizer')).toHaveAttribute('aria-orientation', 'horizontal')
   const assetBox = await page.locator('.asset-panel').boundingBox()
   const toolbarBox = await page.locator('.stage-toolbar').boundingBox()
   const toolrailBox = await page.locator('.editor-toolrail').boundingBox()
@@ -666,11 +674,22 @@ test('editor resizes side panels and keeps object tabs visible', async ({ page }
   const widerRightColumns = await shellColumns()
   expect(widerRightColumns[4]).toBeGreaterThan(widerLeftColumns[4])
 
+  const initialPropertyHeight = await rightPropertyHeight()
+  const heightHandle = await page.locator('#right-panel-height-resizer').boundingBox()
+  if (!heightHandle) throw new Error('Right panel height resizer is not visible')
+  await page.mouse.move(heightHandle.x + heightHandle.width / 2, heightHandle.y + heightHandle.height / 2)
+  await page.mouse.down()
+  await page.mouse.move(heightHandle.x + heightHandle.width / 2, heightHandle.y + heightHandle.height / 2 + 80)
+  await page.mouse.up()
+  const resizedPropertyHeight = await rightPropertyHeight()
+  expect(resizedPropertyHeight).toBeGreaterThan(initialPropertyHeight)
+
   await page.reload()
   await expect(page.locator('#layers')).toContainText('tank')
   const persistedColumns = await shellColumns()
   expect(persistedColumns[0]).toBeCloseTo(widerRightColumns[0], 0)
   expect(persistedColumns[4]).toBeCloseTo(widerRightColumns[4], 0)
+  expect(await rightPropertyHeight()).toBeCloseTo(resizedPropertyHeight, 0)
 })
 
 test('editor renders readable Chinese labels', async ({ page }) => {
@@ -734,10 +753,11 @@ test('editor renders readable Chinese labels', async ({ page }) => {
   await expect(page.locator('.file-menu-local-actions')).toHaveCount(1)
   await expect(page.locator('.file-menu-code-actions')).toHaveCount(1)
   await expect(page.locator('.board-name-label')).toHaveText('文件名')
-  await expect(page.locator('.share-section > .section-title')).toHaveText('分享名')
+  await expect(page.locator('.global-property-card #share-name-title')).toHaveText('分享名')
   await expect(page.locator('.share-name-field span')).toHaveCount(0)
-  await expect(page.locator('.inspector-section')).toHaveCount(3)
-  await expect(page.locator('.share-section .share-name-field')).toBeVisible()
+  await expect(page.locator('.inspector-section')).toHaveCount(2)
+  await expect(page.locator('.global-property-card .share-name-field')).toBeVisible()
+  await expect(page.locator('#right-panel-height-resizer')).toBeVisible()
   await expect(page.locator('.property-section > .section-title')).toHaveText('属性')
   await expect(page.locator('.layers-section > .section-title')).toContainText('图层')
   await expect(page.locator('.layers-title')).toHaveCSS('display', 'flex')

@@ -4,6 +4,7 @@ export interface EditorElements {
   shell: HTMLElement
   leftPanelResizer: HTMLElement
   rightPanelResizer: HTMLElement
+  rightPanelHeightResizer: HTMLElement
   fileMenuButton: HTMLButtonElement
   fileMenu: HTMLElement
   editMenuButton: HTMLButtonElement
@@ -153,6 +154,7 @@ export function getEditorElements(): EditorElements {
     shell: queryElement('#editor-shell', HTMLElement),
     leftPanelResizer: queryElement('#left-panel-resizer', HTMLElement),
     rightPanelResizer: queryElement('#right-panel-resizer', HTMLElement),
+    rightPanelHeightResizer: queryElement('#right-panel-height-resizer', HTMLElement),
     fileMenuButton: queryElement('#file-menu-button', HTMLButtonElement),
     fileMenu: queryElement('#file-menu', HTMLElement),
     editMenuButton: queryElement('#edit-menu-button', HTMLButtonElement),

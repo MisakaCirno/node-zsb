@@ -160,13 +160,13 @@
       <div id="right-panel-resizer" class="panel-resizer" role="separator" aria-label="调整右侧面板宽度" aria-orientation="vertical" tabindex="0"></div>
 
       <aside class="panel inspector">
-        <section class="inspector-section share-section">
-          <div id="share-name-title" class="section-title">分享名</div>
-          <div class="field share-name-field">
-            <input id="board-name" maxlength="7" placeholder="分享名" aria-labelledby="share-name-title" />
-          </div>
-        </section>
         <section class="inspector-section property-section">
+          <div class="global-property-card">
+            <div id="share-name-title" class="global-property-title">分享名</div>
+            <div class="field share-name-field">
+              <input id="board-name" maxlength="7" placeholder="分享名" aria-labelledby="share-name-title" />
+            </div>
+          </div>
           <div class="section-title">属性</div>
           <div id="empty-state" class="empty-state">选择一个对象</div>
           <div id="inspector-form" class="inspector-form hidden">
@@ -290,6 +290,8 @@
             </div>
           </div>
         </section>
+
+        <div id="right-panel-height-resizer" class="panel-height-resizer" role="separator" aria-label="调整属性和图层面板高度" aria-orientation="horizontal" tabindex="0"></div>
 
         <section class="inspector-section layers-section">
           <div class="section-title layers-title">
