@@ -46,6 +46,9 @@ test('createEditorRenderLoop serializes overlapping render requests', async () =
     const secondRender = loop.renderAll()
     assert.equal(firstRender, secondRender)
     assert.equal(boardRenderCount, 1)
+    assert.equal(globalThis.localStorageWrites.length, 1)
+    const immediateDraft = JSON.parse(globalThis.localStorageWrites.at(-1).value)
+    assert.equal(immediateDraft.board.name, 'queued')
 
     releaseFirstBoard()
     await secondRender

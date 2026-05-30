@@ -60,6 +60,7 @@ export function createEditorRenderLoop({
   let lastPersistedSnapshot = ''
 
   function renderAll() {
+    persistBoardIfChanged()
     needsRender = true
     if (!isRendering) {
       currentRender = drainRenderQueue()
@@ -85,7 +86,6 @@ export function createEditorRenderLoop({
     await stageRenderer.renderObjects()
     renderLayers()
     renderInspector()
-    persistBoardIfChanged()
   }
 
   function renderInspector() {

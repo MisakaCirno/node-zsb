@@ -1,6 +1,6 @@
 import { expect, test, type Dialog, type Locator, type Page } from '@playwright/test'
 import { readFile } from 'node:fs/promises'
-import { MAX_BOARD_OBJECTS } from '../src/web/constants.js'
+import { MAX_BOARD_OBJECTS, STORAGE_KEY } from '../src/web/constants.js'
 
 async function openImportDialog(page: Page) {
   await clickFileMenuAction(page, '#open-import-dialog')
@@ -227,12 +227,24 @@ test('editor creates an object by dragging from the palette to the canvas', asyn
     targetPosition: target,
   })
 
+  const draftObjectCount = await page.evaluate((key) => {
+    const browserWindow = globalThis as unknown as { localStorage: Storage }
+    const raw = browserWindow.localStorage.getItem(key)
+    if (!raw) return 0
+    const draft = JSON.parse(raw)
+    return Array.isArray(draft?.layers) ? draft.layers.length : 0
+  }, STORAGE_KEY)
+  expect(draftObjectCount).toBe(before + 1)
+
   await expect(page.locator('#layers .layer-row')).toHaveCount(before + 1)
   await expect(page.locator('#object-type')).toHaveValue('tank')
   const objectX = Number(await page.locator('#object-x').inputValue())
   const objectY = Number(await page.locator('#object-y').inputValue())
   expect(Math.abs(objectX - Math.round((target.x / box.width) * 512))).toBeLessThanOrEqual(1)
   expect(Math.abs(objectY - Math.round((target.y / box.height) * 384))).toBeLessThanOrEqual(1)
+
+  await page.reload()
+  await expect(page.locator('#layers .layer-row')).toHaveCount(before + 1)
 })
 
 test('editor exports and imports project JSON files', async ({ page }) => {
