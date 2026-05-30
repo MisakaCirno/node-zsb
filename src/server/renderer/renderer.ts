@@ -43,6 +43,8 @@ const FONT_PATH = path.resolve(
 
 FontLibrary.use(STRATEGY_TEXT_FONT_PRIMARY, [FONT_PATH])
 
+type RenderedObjectNode = Konva.Group | Konva.Rect | Konva.Text | Konva.Image
+
 async function createBoardLayer(backgroundType?: BackgroundType) {
   const layer = new Konva.Layer()
   const imageUrl = getBoardUrl(getBoardBackgroundId(backgroundType))
@@ -57,7 +59,7 @@ async function createBoardLayer(backgroundType?: BackgroundType) {
   return layer
 }
 
-function createTextBlock(data: StrategyObject): Konva.Text {
+function createTextNode(data: StrategyObject): Konva.Text {
   const style = createStrategyTextStyle(data.text ?? '', data.color ?? DEFAULT_TEXT_COLOR)
   const spec = createTextRenderSpec(data)
   return new Konva.Text({
@@ -69,8 +71,7 @@ function createTextBlock(data: StrategyObject): Konva.Text {
   })
 }
 
-// From LineBlock.tsx
-function createLineBlock(data: StrategyObject): Konva.Group {
+function createLineNode(data: StrategyObject): Konva.Group {
   const spec = createLineRenderSpec(data)
   const group = new Konva.Group({
     x: spec.startX,
@@ -109,8 +110,7 @@ function createLineBlock(data: StrategyObject): Konva.Group {
   return group
 }
 
-// From LineAoe.tsx
-function createLineAoe(data: StrategyObject): Konva.Rect {
+function createLineAoeNode(data: StrategyObject): Konva.Rect {
   const spec = createLineAoeRenderSpec(data)
 
   return new Konva.Rect({
@@ -128,7 +128,7 @@ function createLineAoe(data: StrategyObject): Konva.Rect {
   })
 }
 
-function createDonut(data: StrategyObject): Konva.Group {
+function createDonutNode(data: StrategyObject): Konva.Group {
   const spec = createDonutRenderSpec(data)
 
   const group = new Konva.Group({
@@ -155,7 +155,7 @@ function createDonut(data: StrategyObject): Konva.Group {
   return group
 }
 
-async function createCircleAoe(data: StrategyObject) {
+async function createCircleAoeNode(data: StrategyObject): Promise<Konva.Group> {
   const spec = createCircleAoeRenderSpec(data)
 
   const group = new Konva.Group({
@@ -187,14 +187,11 @@ async function createCircleAoe(data: StrategyObject) {
   return group
 }
 
-// From NormalIcon.tsx
-async function createNormalIcon(data: StrategyObject): Promise<Konva.Image> {
+async function createIconNode(data: StrategyObject): Promise<Konva.Image | null> {
   const config = getIconConfig(data)
-  // We can't return null like React component, so return a dummy group or handle skipping upstream
-  // But since this function is expected to return a Konva Node, let's just make an Empty one or return null and handle it.
   if (!config) {
     console.warn(`No icon config found for type: ${data.type}`)
-    return new Konva.Image()
+    return null
   }
 
   const iconUrl = getIconUrl(config.src)
@@ -219,23 +216,21 @@ async function createNormalIcon(data: StrategyObject): Promise<Konva.Image> {
   return imageNode
 }
 
-// --- Main Render Function ---
-
-async function createIcon(data: StrategyObject) {
+async function createObjectNode(data: StrategyObject): Promise<RenderedObjectNode | null> {
   switch (data.type as IconType) {
     case 'line_aoe':
-      return createLineAoe(data)
+      return createLineAoeNode(data)
     case 'donut':
-      return createDonut(data)
+      return createDonutNode(data)
     case 'text':
-      return createTextBlock(data)
+      return createTextNode(data)
     case 'line':
-      return createLineBlock(data)
+      return createLineNode(data)
     case 'circle_aoe':
     case 'fan_aoe':
-      return createCircleAoe(data)
+      return createCircleAoeNode(data)
     default:
-      return createNormalIcon(data)
+      return createIconNode(data)
   }
 }
 
@@ -243,28 +238,27 @@ export async function renderBoard(
   boardData: DecodeResult,
   containerId?: string,
 ) {
-  // Initialize Stage
   const stage = new Konva.Stage({
     container: containerId,
     width: SCENE_WIDTH,
     height: SCENE_HEIGHT,
   })
 
-  // Create Layers
   const boardLayer = await createBoardLayer(boardData.boardBackground)
-  const iconLayer = new Konva.Layer()
+  const objectLayer = new Konva.Layer()
 
-  // Add Icons (reversed order as in App.tsx)
-  const items = [...boardData.objects].reverse().map((obj) => createIcon(obj))
-  const resolvedItems = await Promise.all(items)
-  resolvedItems.forEach((iconNode) => {
-    if (iconNode) {
-      iconLayer.add(iconNode)
+  const objectNodePromises = [...boardData.objects]
+    .reverse()
+    .map((object) => createObjectNode(object))
+  const objectNodes = await Promise.all(objectNodePromises)
+  objectNodes.forEach((objectNode) => {
+    if (objectNode) {
+      objectLayer.add(objectNode)
     }
   })
 
   stage.add(boardLayer)
-  stage.add(iconLayer)
+  stage.add(objectLayer)
 
   return stage
 }
