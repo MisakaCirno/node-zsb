@@ -2,12 +2,16 @@ import { getBrowserDocument } from './browser.js'
 import { getSelectionBounds } from './objectAlignment.js'
 import {
   DEFAULT_AOE_COLOR,
-  DEFAULT_DONUT_COLOR,
-  DEFAULT_LINE_COLOR,
   DEFAULT_TEXT_COLOR,
   objectOpacity,
   objectScale,
 } from '../shared/boardGeometry.js'
+import {
+  createCircleAoeRenderSpec,
+  createDonutRenderSpec,
+  createLineAoeRenderSpec,
+  createLineRenderSpec,
+} from '../shared/objectRendering.js'
 import {
   getStrategyTextCanvasFont,
   getStrategyTextCanvasStrokeWidth,
@@ -89,8 +93,9 @@ async function drawPresetObject(
 }
 
 function drawLine(context: CanvasRenderingContext2D, object: BoardObject, scale: number): void {
-  context.strokeStyle = object.color ?? DEFAULT_LINE_COLOR
-  context.lineWidth = 2
+  const spec = createLineRenderSpec(object)
+  context.strokeStyle = spec.stroke
+  context.lineWidth = Math.max(1, spec.strokeWidth / 2 * scale)
   context.beginPath()
   context.moveTo(0, 0)
   context.lineTo(((object.endX ?? object.x) - object.x) * scale, ((object.endY ?? object.y) - object.y) * scale)
@@ -109,41 +114,40 @@ function drawText(context: CanvasRenderingContext2D, object: BoardObject, scale:
 }
 
 function drawLineAoe(context: CanvasRenderingContext2D, object: BoardObject, scale: number): void {
-  const width = (object.width ?? 128) * scale
-  const height = (object.height ?? 128) * scale
-  context.fillStyle = object.color ?? DEFAULT_LINE_COLOR
+  const spec = createLineAoeRenderSpec(object)
+  const width = spec.logicalWidth * scale
+  const height = spec.logicalHeight * scale
+  context.fillStyle = spec.fill
   context.fillRect(-width / 2, -height / 2, width, height)
 }
 
 function drawCircleAoe(context: CanvasRenderingContext2D, object: BoardObject, scale: number): void {
+  const spec = createCircleAoeRenderSpec(object)
   const radius = 256 * scale
-  const arcAngle = object.type === 'fan_aoe' ? (object.arcAngle ?? 90) : 360
   context.fillStyle = DEFAULT_AOE_COLOR
   context.beginPath()
-  if (arcAngle >= 360) {
+  if (spec.arcAngle >= 360) {
     context.arc(0, 0, radius, 0, Math.PI * 2)
   } else {
     context.moveTo(0, 0)
-    context.arc(0, 0, radius, -Math.PI / 2, -Math.PI / 2 + (arcAngle * Math.PI) / 180)
+    context.arc(0, 0, radius, spec.startAngle, spec.endAngle)
     context.closePath()
   }
   context.fill()
 }
 
 function drawDonut(context: CanvasRenderingContext2D, object: BoardObject, scale: number): void {
+  const spec = createDonutRenderSpec(object)
   const outer = 256 * scale
-  const inner = (object.donutRadius ?? 80) * scale
-  const arcAngle = object.arcAngle ?? 360
-  const startAngle = -Math.PI / 2
-  const endAngle = startAngle + (arcAngle * Math.PI) / 180
-  context.fillStyle = DEFAULT_DONUT_COLOR
+  const inner = spec.innerRadius / 2 * scale
+  context.fillStyle = spec.fill
   context.beginPath()
-  if (arcAngle >= 360) {
+  if (spec.arcAngle >= 360) {
     context.arc(0, 0, outer, 0, Math.PI * 2)
     context.arc(0, 0, inner, 0, Math.PI * 2, true)
   } else {
-    context.arc(0, 0, outer, startAngle, endAngle)
-    context.arc(0, 0, inner, endAngle, startAngle, true)
+    context.arc(0, 0, outer, spec.startAngle, spec.endAngle)
+    context.arc(0, 0, inner, spec.endAngle, spec.startAngle, true)
     context.closePath()
   }
   context.fill()

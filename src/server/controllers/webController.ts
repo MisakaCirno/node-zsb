@@ -29,7 +29,7 @@ export const webController = new Elysia()
     ({ params }) => serveScriptOrFile(sharedDir, params.asset),
     {
       params: t.Object({
-        asset: t.RegExp(/^(?:boardGeometry|textRendering)\.js$/),
+        asset: t.RegExp(/^(?:boardGeometry|objectRendering|textRendering)\.js$/),
       }),
     },
   )

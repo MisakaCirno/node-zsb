@@ -13,19 +13,17 @@ import { SCENE_HEIGHT, SCENE_WIDTH } from '../utils/resize.ts'
 import { fileURLToPath } from 'node:url'
 import path from 'node:path'
 import {
-  AOE_RADIUS,
-  DEFAULT_DONUT_COLOR,
-  DEFAULT_LINE_COLOR,
   DEFAULT_TEXT_COLOR,
   STRATEGY_TEXT_FONT_PRIMARY,
-  calculateCircleOffset as getCircleOffset,
-  calculateDonutOffset as getDonutOffset,
-  degreesToRadians,
-  flippedScale,
-  objectOpacity,
-  objectScale,
   toSceneCoordinate,
 } from '../../shared/boardGeometry.js'
+import {
+  createCircleAoeRenderSpec,
+  createDonutRenderSpec,
+  createIconRenderSpec,
+  createLineAoeRenderSpec,
+  createLineRenderSpec,
+} from '../../shared/objectRendering.js'
 import { createStrategyTextStyle } from '../../shared/textRendering.js'
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
@@ -79,37 +77,33 @@ function createTextBlock(data: StrategyObject): Konva.Text {
 
 // From LineBlock.tsx
 function createLineBlock(data: StrategyObject): Konva.Group {
-  const startX = toSceneCoordinate(data.x)
-  const startY = toSceneCoordinate(data.y)
-  const endX = toSceneCoordinate(data.endX ?? data.x)
-  const endY = toSceneCoordinate(data.endY ?? data.y)
-  const opacity = objectOpacity(data)
-
-  const group = new Konva.Group()
+  const spec = createLineRenderSpec(data)
+  const group = new Konva.Group({
+    x: spec.startX,
+    y: spec.startY,
+    opacity: spec.opacity,
+  })
 
   const line = new Konva.Line({
-    points: [startX, startY, endX, endY],
-    stroke: data.color ?? DEFAULT_LINE_COLOR,
-    strokeWidth: toSceneCoordinate(data.height ?? 6),
-    opacity: opacity,
+    points: [0, 0, spec.endLocalX, spec.endLocalY],
+    stroke: spec.stroke,
+    strokeWidth: spec.strokeWidth,
   })
 
   const startCircle = new Konva.Circle({
-    x: startX,
-    y: startY,
+    x: 0,
+    y: 0,
     radius: 8,
     fill: 'white',
-    opacity: opacity,
     stroke: '#43A8D8',
     strokeWidth: 2,
   })
 
   const endCircle = new Konva.Circle({
-    x: endX,
-    y: endY,
+    x: spec.endLocalX,
+    y: spec.endLocalY,
     radius: 8,
     fill: 'white',
-    opacity: opacity,
     stroke: '#43A8D8',
     strokeWidth: 2,
   })
@@ -122,72 +116,56 @@ function createLineBlock(data: StrategyObject): Konva.Group {
 
 // From LineAoe.tsx
 function createLineAoe(data: StrategyObject): Konva.Rect {
-  const width = data.width ?? 128
-  const height = data.height ?? 128
-  const scale = objectScale(data)
-  const opacity = objectOpacity(data)
+  const spec = createLineAoeRenderSpec(data)
 
   return new Konva.Rect({
-    x: toSceneCoordinate(data.x),
-    y: toSceneCoordinate(data.y),
-    offsetX: width,
-    offsetY: height,
-    width: toSceneCoordinate(width),
-    height: toSceneCoordinate(height),
-    fill: data.color ?? DEFAULT_LINE_COLOR,
-    scaleX: scale,
-    scaleY: scale,
-    rotation: data.angle ?? 0,
-    opacity: opacity,
+    x: spec.x,
+    y: spec.y,
+    offsetX: spec.offsetX,
+    offsetY: spec.offsetY,
+    width: spec.width,
+    height: spec.height,
+    fill: spec.fill,
+    scaleX: spec.scaleX,
+    scaleY: spec.scaleY,
+    rotation: spec.rotation,
+    opacity: spec.opacity,
   })
 }
 
 function createDonut(data: StrategyObject): Konva.Group {
-  const scale = objectScale(data)
-  const opacity = objectOpacity(data)
-  const outerRadius = AOE_RADIUS
-  const innerRadius = toSceneCoordinate(data.donutRadius ?? 0)
-  const arcAngle = data.arcAngle ?? 360
-
-  const { offsetX, offsetY } = getDonutOffset({
-    arcAngle,
-    outerRadius,
-    innerRadius,
-  })
+  const spec = createDonutRenderSpec(data)
 
   const group = new Konva.Group({
-    x: toSceneCoordinate(data.x),
-    y: toSceneCoordinate(data.y),
-    scaleX: flippedScale(scale, data.horizontalFlip),
-    scaleY: flippedScale(scale, data.verticalFlip),
-    opacity: opacity,
-    offsetX: offsetX,
-    offsetY: offsetY,
-    rotation: data.angle ?? 0,
+    x: spec.x,
+    y: spec.y,
+    scaleX: spec.scaleX,
+    scaleY: spec.scaleY,
+    opacity: spec.opacity,
+    offsetX: spec.offsetX,
+    offsetY: spec.offsetY,
+    rotation: spec.rotation,
   })
 
   const shape = new Konva.Shape({
     sceneFunc: (ctx, shape) => {
-      const angleRad = degreesToRadians(arcAngle)
-      const startAngle = -Math.PI / 2
-      const endAngle = startAngle + angleRad
 
       ctx.beginPath()
 
-      if (arcAngle === 360) {
+      if (spec.arcAngle >= 360) {
         // 完整圆环
-        ctx.arc(0, 0, outerRadius, 0, Math.PI * 2, false)
-        ctx.arc(0, 0, innerRadius, 0, Math.PI * 2, true)
+        ctx.arc(0, 0, spec.outerRadius, 0, Math.PI * 2, false)
+        ctx.arc(0, 0, spec.innerRadius, 0, Math.PI * 2, true)
       } else {
         // 扇形圆环
-        ctx.arc(0, 0, outerRadius, startAngle, endAngle, false)
-        ctx.arc(0, 0, innerRadius, endAngle, startAngle, true)
+        ctx.arc(0, 0, spec.outerRadius, spec.startAngle, spec.endAngle, false)
+        ctx.arc(0, 0, spec.innerRadius, spec.endAngle, spec.startAngle, true)
         ctx.closePath()
       }
 
       ctx.fillStrokeShape(shape)
     },
-    fill: DEFAULT_DONUT_COLOR,
+    fill: spec.fill,
   })
 
   group.add(shape)
@@ -195,32 +173,24 @@ function createDonut(data: StrategyObject): Konva.Group {
 }
 
 async function createCircleAoe(data: StrategyObject) {
-  const scale = objectScale(data)
-  const opacity = objectOpacity(data)
-  const arcAngle = data.type === 'fan_aoe' ? (data.arcAngle ?? 90) : 360
-  const { offsetX, offsetY } = getCircleOffset(arcAngle)
+  const spec = createCircleAoeRenderSpec(data)
 
   const group = new Konva.Group({
-    x: toSceneCoordinate(data.x),
-    y: toSceneCoordinate(data.y),
-    rotation: data.angle ?? 0,
-    scaleX: flippedScale(scale, data.horizontalFlip),
-    scaleY: flippedScale(scale, data.verticalFlip),
-    opacity: opacity,
-    offsetX: offsetX,
-    offsetY: offsetY,
+    x: spec.x,
+    y: spec.y,
+    rotation: spec.rotation,
+    scaleX: spec.scaleX,
+    scaleY: spec.scaleY,
+    opacity: spec.opacity,
+    offsetX: spec.offsetX,
+    offsetY: spec.offsetY,
   })
 
-  if (arcAngle !== 360) {
+  if (spec.arcAngle !== 360) {
     group.clipFunc((ctx) => {
-      const r = 512
-      const angleRad = degreesToRadians(arcAngle)
-      const startAngle = -Math.PI / 2
-      const endAngle = -Math.PI / 2 + angleRad
-
       ctx.beginPath()
-      ctx.moveTo(512, 512)
-      ctx.arc(512, 512, r, startAngle, endAngle)
+      ctx.moveTo(spec.clipRadius, spec.clipRadius)
+      ctx.arc(spec.clipRadius, spec.clipRadius, spec.clipRadius, spec.startAngle, spec.endAngle)
       ctx.closePath()
     })
   }
@@ -229,8 +199,8 @@ async function createCircleAoe(data: StrategyObject) {
   const imageObj = await loadImage(circleSrc)
   const konvaImage = new Konva.Image({
     image: imageObj,
-    width: 1024,
-    height: 1024,
+    width: spec.imageWidth,
+    height: spec.imageHeight,
   })
   group.add(konvaImage)
 
@@ -247,23 +217,22 @@ async function createNormalIcon(data: StrategyObject): Promise<Konva.Image> {
     return new Konva.Image()
   }
 
-  const scale = objectScale(data)
-  const opacity = objectOpacity(data)
   const iconUrl = getIconUrl(config.src)
 
   const imageObj = await loadImage(iconUrl)
+  const spec = createIconRenderSpec(data, config.size)
   const imageNode = new Konva.Image({
     image: imageObj,
-    width: toSceneCoordinate(config.size),
-    height: toSceneCoordinate(config.size),
-    offsetX: config.size,
-    offsetY: config.size,
-    x: toSceneCoordinate(data.x),
-    y: toSceneCoordinate(data.y),
-    scaleX: flippedScale(scale, data.horizontalFlip),
-    scaleY: flippedScale(scale, data.verticalFlip),
-    rotation: data.angle ?? 0,
-    opacity: opacity,
+    width: spec.width,
+    height: spec.height,
+    offsetX: spec.offsetX,
+    offsetY: spec.offsetY,
+    x: spec.x,
+    y: spec.y,
+    scaleX: spec.scaleX,
+    scaleY: spec.scaleY,
+    rotation: spec.rotation,
+    opacity: spec.opacity,
     crop: config.crop,
   })
 

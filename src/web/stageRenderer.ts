@@ -7,10 +7,6 @@ import {
   rotatePoint,
 } from './geometry.js'
 import {
-  calculateCircleOffset,
-  calculateDonutOffset,
-  DEFAULT_DONUT_COLOR,
-  DEFAULT_LINE_COLOR,
   DEFAULT_TEXT_COLOR,
   flippedScale,
   normalizeLineAoeHeight,
@@ -22,6 +18,13 @@ import {
   toLogicalCoordinate,
   toSceneCoordinate,
 } from '../shared/boardGeometry.js'
+import {
+  createCircleAoeRenderSpec,
+  createDonutRenderSpec,
+  createIconRenderSpec,
+  createLineAoeRenderSpec,
+  createLineRenderSpec,
+} from '../shared/objectRendering.js'
 import {
   createStrategyTextStyle,
   getStrategyTextFontLoadSpec,
@@ -594,24 +597,19 @@ export function createStageRenderer({
   }
 
   function createLineNode(object: BoardObject): KonvaNode {
-    const startX = toSceneCoordinate(object.x)
-    const startY = toSceneCoordinate(object.y)
-    const endX = toSceneCoordinate(object.endX ?? object.x)
-    const endY = toSceneCoordinate(object.endY ?? object.y)
-    const endLocalX = endX - startX
-    const endLocalY = endY - startY
+    const spec = createLineRenderSpec(object)
     const group = new Konva.Group({
-      x: startX,
-      y: startY,
+      x: spec.startX,
+      y: spec.startY,
     })
     const line = new Konva.Line({
-      points: [0, 0, endLocalX, endLocalY],
-      stroke: object.color ?? DEFAULT_LINE_COLOR,
-      strokeWidth: toSceneCoordinate(object.height ?? 6),
+      points: [0, 0, spec.endLocalX, spec.endLocalY],
+      stroke: spec.stroke,
+      strokeWidth: spec.strokeWidth,
       lineCap: 'round',
     })
     const startHandle = createLineHandle(0, 0, !object.locked)
-    const endHandle = createLineHandle(endLocalX, endLocalY, !object.locked)
+    const endHandle = createLineHandle(spec.endLocalX, spec.endLocalY, !object.locked)
     bindLineHandleDrag({
       object,
       group,
@@ -711,82 +709,66 @@ export function createStageRenderer({
   }
 
   function createLineAoeNode(object: BoardObject): KonvaNode {
-    const width = object.width ?? 128
-    const height = object.height ?? 128
+    const spec = createLineAoeRenderSpec(object)
     return new Konva.Rect({
-      x: toSceneCoordinate(object.x),
-      y: toSceneCoordinate(object.y),
-      offsetX: width,
-      offsetY: height,
-      width: toSceneCoordinate(width),
-      height: toSceneCoordinate(height),
-      fill: object.color ?? DEFAULT_LINE_COLOR,
-      scaleX: flippedScale(objectScale(object), Boolean(object.horizontalFlip)),
-      scaleY: flippedScale(objectScale(object), Boolean(object.verticalFlip)),
-      rotation: object.angle ?? 0,
+      x: spec.x,
+      y: spec.y,
+      offsetX: spec.offsetX,
+      offsetY: spec.offsetY,
+      width: spec.width,
+      height: spec.height,
+      fill: spec.fill,
+      scaleX: spec.scaleX,
+      scaleY: spec.scaleY,
+      rotation: spec.rotation,
     })
   }
 
   async function createCircleAoeNode(object: BoardObject): Promise<KonvaNode> {
-    const arcAngle = object.type === 'fan_aoe' ? (object.arcAngle ?? 90) : 360
-    const { offsetX, offsetY } = calculateCircleOffset(arcAngle)
-    const scale = objectScale(object)
+    const spec = createCircleAoeRenderSpec(object)
     const group = new Konva.Group({
-      x: toSceneCoordinate(object.x),
-      y: toSceneCoordinate(object.y),
-      offsetX,
-      offsetY,
-      scaleX: flippedScale(scale, Boolean(object.horizontalFlip)),
-      scaleY: flippedScale(scale, Boolean(object.verticalFlip)),
-      rotation: object.angle ?? 0,
+      x: spec.x,
+      y: spec.y,
+      offsetX: spec.offsetX,
+      offsetY: spec.offsetY,
+      scaleX: spec.scaleX,
+      scaleY: spec.scaleY,
+      rotation: spec.rotation,
     })
-    if (arcAngle !== 360) {
+    if (spec.arcAngle !== 360) {
       group.clipFunc((ctx: ClipContext) => {
-        const r = 512
-        const startAngle = -Math.PI / 2
-        const endAngle = startAngle + (arcAngle * Math.PI) / 180
         ctx.beginPath()
-        ctx.moveTo(512, 512)
-        ctx.arc(512, 512, r, startAngle, endAngle)
+        ctx.moveTo(spec.clipRadius, spec.clipRadius)
+        ctx.arc(spec.clipRadius, spec.clipRadius, spec.clipRadius, spec.startAngle, spec.endAngle)
         ctx.closePath()
       })
     }
     const image = await loadImage('/assets/objects/circle_aoe.webp')
-    group.add(new Konva.Image({ image, width: 1024, height: 1024 }))
+    group.add(new Konva.Image({ image, width: spec.imageWidth, height: spec.imageHeight }))
     return group
   }
 
   function createDonutNode(object: BoardObject): KonvaNode {
-    const scale = objectScale(object)
-    const outerRadius = 512
-    const innerRadius = toSceneCoordinate(object.donutRadius ?? 80)
-    const arcAngle = object.arcAngle ?? 360
-    const { offsetX, offsetY } = calculateDonutOffset({
-      arcAngle,
-      outerRadius,
-      innerRadius,
-    })
+    const spec = createDonutRenderSpec(object)
     const group = new Konva.Group({
-      x: toSceneCoordinate(object.x),
-      y: toSceneCoordinate(object.y),
-      offsetX,
-      offsetY,
-      scaleX: flippedScale(scale, Boolean(object.horizontalFlip)),
-      scaleY: flippedScale(scale, Boolean(object.verticalFlip)),
-      rotation: object.angle ?? 0,
+      x: spec.x,
+      y: spec.y,
+      offsetX: spec.offsetX,
+      offsetY: spec.offsetY,
+      scaleX: spec.scaleX,
+      scaleY: spec.scaleY,
+      rotation: spec.rotation,
     })
     const shape = new Konva.Shape({
-      fill: DEFAULT_DONUT_COLOR,
+      fill: spec.fill,
       sceneFunc: (ctx: ShapeContext, shape: unknown) => {
-        const startAngle = -Math.PI / 2
-        const endAngle = startAngle + (arcAngle * Math.PI) / 180
         ctx.beginPath()
-        if (arcAngle >= 360) {
-          ctx.arc(0, 0, outerRadius, 0, Math.PI * 2)
-          ctx.arc(0, 0, innerRadius, 0, Math.PI * 2, true)
+        if (spec.arcAngle >= 360) {
+          ctx.arc(0, 0, spec.outerRadius, 0, Math.PI * 2)
+          ctx.arc(0, 0, spec.innerRadius, 0, Math.PI * 2, true)
         } else {
-          ctx.arc(0, 0, outerRadius, startAngle, endAngle)
-          ctx.arc(0, 0, innerRadius, endAngle, startAngle, true)
+          ctx.arc(0, 0, spec.outerRadius, spec.startAngle, spec.endAngle)
+          ctx.arc(0, 0, spec.innerRadius, spec.endAngle, spec.startAngle, true)
           ctx.closePath()
         }
         ctx.fillStrokeShape(shape)
@@ -802,18 +784,19 @@ export function createStageRenderer({
       return createTextNode({ ...object, text: object.type, color: DEFAULT_TEXT_COLOR })
     }
     const image = await loadImage(`/assets/objects/${config.src}.webp`)
+    const spec = createIconRenderSpec(object, config.size)
     return new Konva.Image({
       image,
       crop: config.crop,
-      width: toSceneCoordinate(config.size),
-      height: toSceneCoordinate(config.size),
-      offsetX: config.size,
-      offsetY: config.size,
-      x: toSceneCoordinate(object.x),
-      y: toSceneCoordinate(object.y),
-      scaleX: flippedScale(objectScale(object), Boolean(object.horizontalFlip)),
-      scaleY: flippedScale(objectScale(object), Boolean(object.verticalFlip)),
-      rotation: object.angle ?? 0,
+      width: spec.width,
+      height: spec.height,
+      offsetX: spec.offsetX,
+      offsetY: spec.offsetY,
+      x: spec.x,
+      y: spec.y,
+      scaleX: spec.scaleX,
+      scaleY: spec.scaleY,
+      rotation: spec.rotation,
     })
   }
 
