@@ -125,7 +125,9 @@ export interface EditorElements {
   colorTrigger: HTMLButtonElement
   colorPreview: HTMLElement
   colorPopover: HTMLElement
-  colorRgb: HTMLInputElement
+  colorRed: HTMLInputElement
+  colorGreen: HTMLInputElement
+  colorBlue: HTMLInputElement
   colorSaturation: HTMLElement
   colorSaturationHandle: HTMLElement
   colorHue: HTMLInputElement
@@ -279,7 +281,9 @@ export function getEditorElements(): EditorElements {
     colorTrigger: queryElement('#object-color-trigger', HTMLButtonElement),
     colorPreview: queryElement('#object-color-preview', HTMLElement),
     colorPopover: queryElement('#object-color-popover', HTMLElement),
-    colorRgb: queryElement('#object-color-rgb', HTMLInputElement),
+    colorRed: queryElement('#object-color-red', HTMLInputElement),
+    colorGreen: queryElement('#object-color-green', HTMLInputElement),
+    colorBlue: queryElement('#object-color-blue', HTMLInputElement),
     colorSaturation: queryElement('#object-color-saturation', HTMLElement),
     colorSaturationHandle: queryElement('#object-color-saturation-handle', HTMLElement),
     colorHue: queryElement('#object-color-hue', HTMLInputElement),

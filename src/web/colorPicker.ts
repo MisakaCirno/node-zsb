@@ -10,7 +10,9 @@ export interface ColorPickerElements {
   colorHue: HTMLInputElement
   colorPopover: HTMLElement
   colorPreview: HTMLElement
-  colorRgb: HTMLInputElement
+  colorRed: HTMLInputElement
+  colorGreen: HTMLInputElement
+  colorBlue: HTMLInputElement
   colorSaturation: HTMLElement
   colorSaturationHandle: HTMLElement
 }
@@ -32,9 +34,11 @@ export function bindColorPicker({
   elements.colorText.addEventListener('input', () => {
     setColorValue(elements, elements.colorText.value, onChange)
   })
-  elements.colorRgb.addEventListener('input', () => {
-    setColorValue(elements, rgbTextToHex(elements.colorRgb.value), onChange)
-  })
+  for (const input of [elements.colorRed, elements.colorGreen, elements.colorBlue]) {
+    input.addEventListener('input', () => {
+      setColorValue(elements, rgbInputsToHex(elements), onChange)
+    })
+  }
   elements.colorHue.addEventListener('input', () => {
     const hsv = hexToHsv(elements.color.value)
     setColorValue(elements, hsvToHex({
@@ -92,7 +96,10 @@ export function syncColorControl(elements: ColorPickerElements) {
   elements.color.value = color
   elements.colorText.value = color
   elements.colorPreview.style.background = color
-  elements.colorRgb.value = hexToRgbText(color)
+  const rgb = hexToRgb(color)
+  elements.colorRed.value = String(rgb.r)
+  elements.colorGreen.value = String(rgb.g)
+  elements.colorBlue.value = String(rgb.b)
   elements.colorHue.value = String(Math.round(hsv.h))
   elements.colorSaturation.style.setProperty('--picker-hue-color', hsvToHex({
     h: hsv.h,
@@ -148,24 +155,21 @@ function hexToHsv(hex: string | undefined): HsvColor {
   }
 }
 
-function hexToRgbText(hex: string) {
-  const r = Number.parseInt(hex.slice(1, 3), 16)
-  const g = Number.parseInt(hex.slice(3, 5), 16)
-  const b = Number.parseInt(hex.slice(5, 7), 16)
-  return `${r}, ${g}, ${b}`
+function hexToRgb(hex: string) {
+  return {
+    r: Number.parseInt(hex.slice(1, 3), 16),
+    g: Number.parseInt(hex.slice(3, 5), 16),
+    b: Number.parseInt(hex.slice(5, 7), 16),
+  }
 }
 
-function rgbTextToHex(value: string | undefined) {
-  const channels = value
-    ?.trim()
-    .split(/[\s,]+/)
-    .filter(Boolean)
-    .map((channel) => Number(channel)) ?? []
-  if (channels.length !== 3) return ''
-  if (channels.some((channel) =>
-    !Number.isInteger(channel) || channel < 0 || channel > 255)) {
-    return ''
-  }
+function rgbInputsToHex(elements: ColorPickerElements) {
+  const channels = [
+    Number(elements.colorRed.value),
+    Number(elements.colorGreen.value),
+    Number(elements.colorBlue.value),
+  ]
+  if (channels.some((channel) => !Number.isInteger(channel) || channel < 0 || channel > 255)) return ''
   const [r = 0, g = 0, b = 0] = channels
   return `#${toHex(r)}${toHex(g)}${toHex(b)}`
 }

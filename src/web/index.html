@@ -209,7 +209,11 @@
                     </label>
                     <label class="color-value-row color-rgb-row">
                       <span>RGB</span>
-                      <input id="object-color-rgb" class="color-rgb-input" maxlength="13" spellcheck="false" aria-label="RGB 颜色值" />
+                      <span class="color-rgb-control">
+                        <input id="object-color-red" class="color-rgb-input" type="number" min="0" max="255" aria-label="红色通道" />
+                        <input id="object-color-green" class="color-rgb-input" type="number" min="0" max="255" aria-label="绿色通道" />
+                        <input id="object-color-blue" class="color-rgb-input" type="number" min="0" max="255" aria-label="蓝色通道" />
+                      </span>
                     </label>
                   </div>
                 </div>

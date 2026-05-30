@@ -1274,6 +1274,18 @@ textarea {
   min-height: 30px;
 }
 
+.color-rgb-control {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 6px;
+}
+
+.color-rgb-control input {
+  min-width: 0;
+  padding: 0 6px;
+  text-align: right;
+}
+
 .layers {
   display: grid;
   gap: 6px;
