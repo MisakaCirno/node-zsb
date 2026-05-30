@@ -44,6 +44,13 @@ export interface LineRenderSpec {
   endLocalY: number
   stroke: string
   strokeWidth: number
+  lineCap: 'round'
+  opacity: number
+}
+
+export interface TextRenderSpec {
+  x: number
+  y: number
   opacity: number
 }
 
@@ -152,6 +159,18 @@ export function createLineRenderSpec(
     endLocalY: endY - startY,
     stroke: object.color ?? DEFAULT_LINE_COLOR,
     strokeWidth: toSceneCoordinate(object.height ?? 6),
+    lineCap: 'round',
+    opacity: objectOpacity(object, options),
+  }
+}
+
+export function createTextRenderSpec(
+  object: RenderObjectLike,
+  options: RenderOpacityOptions = {},
+): TextRenderSpec {
+  return {
+    x: toSceneCoordinate(object.x),
+    y: toSceneCoordinate(object.y),
     opacity: objectOpacity(object, options),
   }
 }

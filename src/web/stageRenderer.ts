@@ -24,6 +24,7 @@ import {
   createIconRenderSpec,
   createLineAoeRenderSpec,
   createLineRenderSpec,
+  createTextRenderSpec,
   traceCircleAoeClipPath,
   traceDonutPath,
 } from '../shared/objectRendering.js'
@@ -591,10 +592,11 @@ export function createStageRenderer({
 
   function createTextNode(object: BoardObject): KonvaNode {
     const style = createStrategyTextStyle(object.text ?? '', object.color ?? DEFAULT_TEXT_COLOR)
+    const spec = createTextRenderSpec(object)
     return new Konva.Text({
       ...style,
-      x: toSceneCoordinate(object.x),
-      y: toSceneCoordinate(object.y),
+      x: spec.x,
+      y: spec.y,
     })
   }
 
@@ -608,7 +610,7 @@ export function createStageRenderer({
       points: [0, 0, spec.endLocalX, spec.endLocalY],
       stroke: spec.stroke,
       strokeWidth: spec.strokeWidth,
-      lineCap: 'round',
+      lineCap: spec.lineCap,
     })
     const startHandle = createLineHandle(0, 0, !object.locked)
     const endHandle = createLineHandle(spec.endLocalX, spec.endLocalY, !object.locked)

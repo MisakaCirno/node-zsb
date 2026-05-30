@@ -15,6 +15,7 @@ import {
   createIconRenderSpec,
   createLineAoeRenderSpec,
   createLineRenderSpec,
+  createTextRenderSpec,
   traceCenteredSectorPath,
   traceCircleAoeClipPath,
   traceDonutPath,
@@ -70,6 +71,20 @@ test('createLineRenderSpec exposes scene and local line coordinates', () => {
   assert.equal(spec.endLocalY, toSceneCoordinate(30))
   assert.equal(spec.stroke, DEFAULT_LINE_COLOR)
   assert.equal(spec.strokeWidth, toSceneCoordinate(8))
+  assert.equal(spec.lineCap, 'round')
+})
+
+test('createTextRenderSpec exposes scene position and opacity', () => {
+  const spec = createTextRenderSpec({
+    type: 'text',
+    x: 12,
+    y: 34,
+    transparency: 40,
+  })
+
+  assert.equal(spec.x, toSceneCoordinate(12))
+  assert.equal(spec.y, toSceneCoordinate(34))
+  assert.equal(spec.opacity, 0.6)
 })
 
 test('createLineAoeRenderSpec normalizes dimensions and applies transforms', () => {

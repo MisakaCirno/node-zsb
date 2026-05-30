@@ -15,7 +15,6 @@ import path from 'node:path'
 import {
   DEFAULT_TEXT_COLOR,
   STRATEGY_TEXT_FONT_PRIMARY,
-  toSceneCoordinate,
 } from '../../shared/boardGeometry.js'
 import {
   createCircleAoeRenderSpec,
@@ -23,6 +22,7 @@ import {
   createIconRenderSpec,
   createLineAoeRenderSpec,
   createLineRenderSpec,
+  createTextRenderSpec,
   traceCircleAoeClipPath,
   traceDonutPath,
 } from '../../shared/objectRendering.js'
@@ -69,10 +69,12 @@ async function createBoardLayer(backgroundType: BackgroundType = 'checkered') {
 
 function createTextBlock(data: StrategyObject): Konva.Text {
   const style = createStrategyTextStyle(data.text ?? '', data.color ?? DEFAULT_TEXT_COLOR)
+  const spec = createTextRenderSpec(data)
   return new Konva.Text({
     ...style,
-    x: toSceneCoordinate(data.x),
-    y: toSceneCoordinate(data.y),
+    x: spec.x,
+    y: spec.y,
+    opacity: spec.opacity,
     shadowOpacity: 1,
   })
 }
@@ -90,6 +92,7 @@ function createLineBlock(data: StrategyObject): Konva.Group {
     points: [0, 0, spec.endLocalX, spec.endLocalY],
     stroke: spec.stroke,
     strokeWidth: spec.strokeWidth,
+    lineCap: spec.lineCap,
   })
 
   const startCircle = new Konva.Circle({
