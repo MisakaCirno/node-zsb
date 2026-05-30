@@ -63,6 +63,24 @@ test('constrainTransformBox keeps fixed-ratio side handles from scaling past the
   })
 })
 
+test('constrainTransformBox keeps fixed-ratio side handles from scaling past the opposite edge', () => {
+  const box = constrainTransformBox({
+    activeAnchor: 'middle-left',
+    baseBox: { x: 100, y: 80, width: 40, height: 20 },
+    limits: { minX: 0.5, maxX: 3, minY: 0.5, maxY: 3, keepRatio: true },
+    newBox: { x: 150, y: 80, width: 70, height: 20 },
+    oldBox: { x: 120, y: 85, width: 20, height: 10 },
+  })
+
+  assert.deepEqual(box, {
+    x: 120,
+    y: 85,
+    width: 20,
+    height: 10,
+    rotation: undefined,
+  })
+})
+
 test('constrainTransformBox clamps free scaling independently to the selected limits', () => {
   const box = constrainTransformBox({
     activeAnchor: 'bottom-right',

@@ -244,6 +244,7 @@ export function createStageRenderer({
   let suppressNextStageClick = false
   let isTransformingSelection = false
   let pendingTransformCommit = 0
+  let transformActiveAnchor: string | null = null
   let transformStartBox: TransformBox | null = null
   let transformScaleLimits: TransformScaleLimits | null = null
   let textFontReady: Promise<unknown> | null = null
@@ -480,6 +481,7 @@ export function createStageRenderer({
     node.on('transformstart', () => {
       if (!isTransformingSelection) {
         recordHistory()
+        transformActiveAnchor = null
         transformStartBox = null
         transformScaleLimits = getSelectionScaleLimits(
           getSelectedIndexes(state).map((selectedIndex) => state.board.objects[selectedIndex]),
@@ -517,6 +519,7 @@ export function createStageRenderer({
       hasCommittedTransform = true
     }
     isTransformingSelection = false
+    transformActiveAnchor = null
     transformStartBox = null
     transformScaleLimits = null
     if (!hasCommittedTransform) {
@@ -575,12 +578,16 @@ export function createStageRenderer({
   }
 
   function constrainTransformerBox(oldBox: TransformBox, newBox: TransformBox): TransformBox {
+    const currentAnchor = transformer.getActiveAnchor?.() ?? ''
+    if (!transformActiveAnchor && currentAnchor) {
+      transformActiveAnchor = currentAnchor
+    }
     transformStartBox ??= copyTransformBox(oldBox)
     transformScaleLimits ??= getSelectionScaleLimits(
       getSelectedIndexes(state).map((index) => state.board.objects[index]),
     )
     return constrainTransformBox({
-      activeAnchor: transformer.getActiveAnchor?.() ?? '',
+      activeAnchor: transformActiveAnchor ?? currentAnchor,
       baseBox: transformStartBox,
       limits: transformScaleLimits,
       newBox,
