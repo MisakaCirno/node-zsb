@@ -94,6 +94,7 @@ export interface EditorElements {
   savePresetFromLayers: HTMLButtonElement
   toolGroupLayers: HTMLButtonElement
   toolUngroupLayers: HTMLButtonElement
+  toolSavePreset: HTMLButtonElement
   alignLeft: HTMLButtonElement
   alignCenterX: HTMLButtonElement
   alignRight: HTMLButtonElement
@@ -124,12 +125,11 @@ export interface EditorElements {
   colorTrigger: HTMLButtonElement
   colorPreview: HTMLElement
   colorPopover: HTMLElement
-  colorRgb: HTMLOutputElement
+  colorRgb: HTMLInputElement
   colorSaturation: HTMLElement
   colorSaturationHandle: HTMLElement
   colorHue: HTMLInputElement
   colorText: HTMLInputElement
-  colorSwatches: HTMLElement
   transparency: HTMLInputElement
   transparencyRange: HTMLInputElement
   text: HTMLInputElement
@@ -248,6 +248,7 @@ export function getEditorElements(): EditorElements {
     savePresetFromLayers: queryElement('#save-preset-from-layers', HTMLButtonElement),
     toolGroupLayers: queryElement('#tool-group-layers', HTMLButtonElement),
     toolUngroupLayers: queryElement('#tool-ungroup-layers', HTMLButtonElement),
+    toolSavePreset: queryElement('#tool-save-preset', HTMLButtonElement),
     alignLeft: queryElement('#align-left', HTMLButtonElement),
     alignCenterX: queryElement('#align-center-x', HTMLButtonElement),
     alignRight: queryElement('#align-right', HTMLButtonElement),
@@ -278,12 +279,11 @@ export function getEditorElements(): EditorElements {
     colorTrigger: queryElement('#object-color-trigger', HTMLButtonElement),
     colorPreview: queryElement('#object-color-preview', HTMLElement),
     colorPopover: queryElement('#object-color-popover', HTMLElement),
-    colorRgb: queryElement('#object-color-rgb', HTMLOutputElement),
+    colorRgb: queryElement('#object-color-rgb', HTMLInputElement),
     colorSaturation: queryElement('#object-color-saturation', HTMLElement),
     colorSaturationHandle: queryElement('#object-color-saturation-handle', HTMLElement),
     colorHue: queryElement('#object-color-hue', HTMLInputElement),
     colorText: queryElement('#object-color-text', HTMLInputElement),
-    colorSwatches: queryElement('#object-color-swatches', HTMLElement),
     transparency: queryElement('#object-transparency', HTMLInputElement),
     transparencyRange: queryElement('#object-transparency-range', HTMLInputElement),
     text: queryElement('#object-text', HTMLInputElement),

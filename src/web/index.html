@@ -133,6 +133,9 @@
             <button id="tool-ungroup-layers" class="icon-tool" type="button" title="解组" aria-label="解组" disabled>
               <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 6h7l2 3h9v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><path d="M3 9h18"/><path d="M10 15h4"/></svg>
             </button>
+            <button id="tool-save-preset" class="icon-tool" type="button" title="保存选中为预设" aria-label="保存预设" disabled>
+              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 5h16v14H4z"/><path d="M8 9h8"/><path d="M8 13h4"/><path d="M17 16v5"/><path d="M14.5 18.5H19.5"/></svg>
+            </button>
           </div>
           <div id="stage-host"></div>
         </div>
@@ -204,18 +207,10 @@
                       <span>HEX</span>
                       <input id="object-color-text" class="color-hex-input" maxlength="7" spellcheck="false" aria-label="颜色值" />
                     </label>
-                    <div class="color-value-row color-rgb-row">
+                    <label class="color-value-row color-rgb-row">
                       <span>RGB</span>
-                      <output id="object-color-rgb">255, 127, 0</output>
-                    </div>
-                    <div id="object-color-swatches" class="color-swatches" aria-label="常用颜色">
-                      <button type="button" data-color="#FF7F00" title="#FF7F00" aria-label="#FF7F00"><span style="background:#FF7F00"></span></button>
-                      <button type="button" data-color="#00ffcc" title="#00ffcc" aria-label="#00ffcc"><span style="background:#00ffcc"></span></button>
-                      <button type="button" data-color="#43a8d8" title="#43a8d8" aria-label="#43a8d8"><span style="background:#43a8d8"></span></button>
-                      <button type="button" data-color="#ffffff" title="#ffffff" aria-label="#ffffff"><span style="background:#ffffff"></span></button>
-                      <button type="button" data-color="#ff4f69" title="#ff4f69" aria-label="#ff4f69"><span style="background:#ff4f69"></span></button>
-                      <button type="button" data-color="#9b7cff" title="#9b7cff" aria-label="#9b7cff"><span style="background:#9b7cff"></span></button>
-                    </div>
+                      <input id="object-color-rgb" class="color-rgb-input" maxlength="13" spellcheck="false" aria-label="RGB 颜色值" />
+                    </label>
                   </div>
                 </div>
               </div>

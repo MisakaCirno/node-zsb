@@ -150,6 +150,7 @@ export function bindEditorEvents({
   elements.savePresetFromLayers.addEventListener('click', actions.saveSelectedPreset)
   elements.toolGroupLayers.addEventListener('click', actions.groupSelected)
   elements.toolUngroupLayers.addEventListener('click', actions.ungroupSelectedGroup)
+  elements.toolSavePreset.addEventListener('click', actions.saveSelectedPreset)
   elements.alignLeft.addEventListener('click', () => actions.alignSelected('left'))
   elements.alignCenterX.addEventListener('click', () => actions.alignSelected('center-x'))
   elements.alignRight.addEventListener('click', () => actions.alignSelected('right'))

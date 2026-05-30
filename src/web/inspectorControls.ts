@@ -56,6 +56,7 @@ interface InspectorElements extends InspectorPanelElements {
   savePresetFromLayers: DisabledElement
   toolGroupLayers: DisabledElement
   toolUngroupLayers: DisabledElement
+  toolSavePreset: DisabledElement
   alignLeft: DisabledElement
   alignCenterX: DisabledElement
   alignRight: DisabledElement
@@ -162,6 +163,7 @@ export function createInspectorControls({
     elements.toolUngroupLayers.disabled = !canUngroupSelection
     elements.savePreset.disabled = !canSavePreset
     elements.savePresetFromLayers.disabled = !canSavePreset
+    elements.toolSavePreset.disabled = !canSavePreset
     for (const button of [
       elements.alignLeft,
       elements.alignCenterX,

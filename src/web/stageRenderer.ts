@@ -178,6 +178,19 @@ interface StageRendererDeps {
   showStatus: (message: string) => void
 }
 
+interface ActiveDrag {
+  indexes: number[]
+  lastDelta: Point
+  nodeSnapshots: Array<{
+    node: KonvaNode
+    x: number
+    y: number
+  }>
+  objectSnapshots: BoardObject[]
+  referenceIndex: number
+  referenceStart: Point
+}
+
 export interface StageRenderer {
   stage: StageLike & { toDataURL(options?: { pixelRatio?: number }): string }
   renderBoard(): Promise<void>
@@ -248,6 +261,7 @@ export function createStageRenderer({
   let transformStartBox: TransformBox | null = null
   let transformScaleLimits: TransformScaleLimits | null = null
   let textFontReady: Promise<unknown> | null = null
+  let activeDrag: ActiveDrag | null = null
   const renderedNodesByIndex = new Map<number, KonvaNode>()
 
   void ensureStrategyTextFontLoaded()
@@ -294,10 +308,10 @@ export function createStageRenderer({
   })
 
   async function renderBoard() {
-    boardLayer.destroyChildren()
     const backgroundId = state.backgrounds[state.board.boardBackground ?? DEFAULT_BOARD_BACKGROUND]
       ?? getBoardBackgroundId(state.board.boardBackground)
     const image = await loadImage(`/assets/background/${backgroundId}.webp`)
+    boardLayer.destroyChildren()
     boardLayer.add(
       new Konva.Image({
         image,
@@ -329,18 +343,22 @@ export function createStageRenderer({
     if (state.board.objects.some((object) => object.type === 'text')) {
       await ensureStrategyTextFontLoaded()
     }
-    objectLayer.destroyChildren()
-    renderedNodesByIndex.clear()
     const nodes: KonvaNode[] = []
+    const nextRenderedNodesByIndex = new Map<number, KonvaNode>()
     for (let index = state.board.objects.length - 1; index >= 0; index--) {
       const object = state.board.objects[index]
       if (!object) continue
       const node = await createNode(object, index)
       if (node) {
         nodes.push(node)
-        renderedNodesByIndex.set(index, node)
-        objectLayer.add(node)
+        nextRenderedNodesByIndex.set(index, node)
       }
+    }
+    objectLayer.destroyChildren()
+    renderedNodesByIndex.clear()
+    for (const [index, node] of nextRenderedNodesByIndex) {
+      renderedNodesByIndex.set(index, node)
+      objectLayer.add(node)
     }
     objectLayer.draw()
     const selectedIndexes = getSelectedIndexes(state)
@@ -471,9 +489,10 @@ export function createStageRenderer({
     })
     node.on('dragstart', () => {
       recordHistory()
+      beginNodeDrag(object, index)
     })
     node.on('dragmove', () => {
-      constrainNodePosition(node)
+      updateNodeDrag(node, object, index)
     })
     node.on('dragend', () => {
       handleDragEnd(node, object, index)
@@ -568,6 +587,66 @@ export function createStageRenderer({
       x: toSceneCoordinate(normalizeCoordinate(toLogicalCoordinate(node.x()), 0, 512)),
       y: toSceneCoordinate(normalizeCoordinate(toLogicalCoordinate(node.y()), 0, 384)),
     })
+  }
+
+  function beginNodeDrag(object: BoardObject, index: number) {
+    const selectedIndexes = getSelectedIndexes(state)
+    const dragIndexes = (selectedIndexes.includes(index) ? selectedIndexes : [index])
+      .filter((selectedIndex) => !state.board.objects[selectedIndex]?.locked)
+    const objectSnapshots = dragIndexes
+      .map((selectedIndex) => state.board.objects[selectedIndex])
+      .filter((entry): entry is BoardObject => Boolean(entry))
+      .map(cloneMoveObject)
+    const nodeSnapshots = dragIndexes
+      .map((selectedIndex) => {
+        const renderedNode = renderedNodesByIndex.get(selectedIndex)
+        return renderedNode
+          ? { node: renderedNode, x: renderedNode.x(), y: renderedNode.y() }
+          : null
+      })
+      .filter((entry): entry is ActiveDrag['nodeSnapshots'][number] => Boolean(entry))
+    activeDrag = {
+      indexes: dragIndexes,
+      lastDelta: { x: 0, y: 0 },
+      nodeSnapshots,
+      objectSnapshots,
+      referenceIndex: index,
+      referenceStart: { x: object.x, y: object.y },
+    }
+  }
+
+  function updateNodeDrag(node: KonvaNode, object: BoardObject, index: number) {
+    const dragState = activeDrag
+    if (!dragState || dragState.referenceIndex !== index) {
+      constrainNodePosition(node)
+      return
+    }
+    const delta = getNodeDragDelta(node, dragState)
+    dragState.lastDelta = { x: delta.dx, y: delta.dy }
+    for (const snapshot of dragState.nodeSnapshots) {
+      snapshot.node.position({
+        x: snapshot.x + toSceneCoordinate(delta.dx),
+        y: snapshot.y + toSceneCoordinate(delta.dy),
+      })
+    }
+    if (!dragState.indexes.includes(index)) {
+      constrainNodePosition(node)
+    }
+    objectLayer.batchDraw()
+    transformerLayer.batchDraw()
+  }
+
+  function getNodeDragDelta(node: KonvaNode, dragState: ActiveDrag) {
+    const point = normalizePoint(
+      toLogicalCoordinate(node.x()),
+      toLogicalCoordinate(node.y()),
+    )
+    return getConstrainedObjectsMoveDelta(
+      dragState.objectSnapshots,
+      state,
+      point.x - dragState.referenceStart.x,
+      point.y - dragState.referenceStart.y,
+    )
   }
 
   function constrainNodeTransform(node: KonvaNode, object: BoardObject) {
@@ -804,23 +883,33 @@ export function createStageRenderer({
   }
 
   function handleDragEnd(node: KonvaNode, object: BoardObject, index: number) {
-    const oldX = object.x
-    const oldY = object.y
-    const point = normalizePoint(
-      toLogicalCoordinate(node.x()),
-      toLogicalCoordinate(node.y()),
-    )
-    const selectedIndexes = getSelectedIndexes(state)
-    const selectedObjects = selectedIndexes
-      .map((selectedIndex) => state.board.objects[selectedIndex])
-      .filter((entry): entry is BoardObject => Boolean(entry && !entry.locked))
-    const shouldMoveSelection = selectedIndexes.includes(index) && selectedObjects.length > 1
-    const objectsToMove = shouldMoveSelection ? selectedObjects : [object]
-    const delta = getConstrainedObjectsMoveDelta(objectsToMove, state, point.x - oldX, point.y - oldY)
+    const dragState = activeDrag
+    activeDrag = null
+    const objectsToMove = dragState?.referenceIndex === index
+      ? dragState.indexes
+        .map((selectedIndex) => state.board.objects[selectedIndex])
+        .filter((entry): entry is BoardObject => Boolean(entry && !entry.locked))
+      : [object]
+    const delta = dragState?.referenceIndex === index
+      ? { dx: dragState.lastDelta.x, dy: dragState.lastDelta.y }
+      : getNodeDragDelta(node, {
+        indexes: [index],
+        lastDelta: { x: 0, y: 0 },
+        nodeSnapshots: [],
+        objectSnapshots: [cloneMoveObject(object)],
+        referenceIndex: index,
+        referenceStart: { x: object.x, y: object.y },
+      })
     moveObjectsBy(objectsToMove, delta.dx, delta.dy)
     renderInspector()
     renderLayers()
     renderAll()
+  }
+
+  function cloneMoveObject(object: BoardObject): BoardObject {
+    return {
+      ...object,
+    }
   }
 
   function loadImage(src: string): Promise<unknown> {

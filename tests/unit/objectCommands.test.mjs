@@ -151,6 +151,30 @@ test('object commands nudge the full selection with one center-constrained delta
   assert.equal(state.board.objects[1].x, 500)
 })
 
+test('object commands preserve selection spacing when the group reaches the board edge', () => {
+  const state = createCommandState()
+  state.selectedIndex = 1
+  state.selectedIndexes = [0, 1]
+  state.board.objects[0].x = 20
+  state.board.objects[1].x = 500
+  const commands = createObjectCommands({
+    state,
+    recordHistory: () => {},
+    renderAll: () => {},
+    selectObject: () => {},
+    getSelected: () => state.board.objects[state.selectedIndex],
+    getSelectedList: () => state.selectedIndexes.map((index) => state.board.objects[index]),
+    normalizePoint: (x, y) => ({ x, y }),
+    showStatus: () => {},
+    confirmAction: () => true,
+  })
+
+  commands.nudgeSelected('ArrowRight', 20)
+
+  assert.equal(state.board.objects[0].x, 32)
+  assert.equal(state.board.objects[1].x, 512)
+})
+
 function createCommandState() {
   return {
     board: {

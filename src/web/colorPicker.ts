@@ -10,10 +10,9 @@ export interface ColorPickerElements {
   colorHue: HTMLInputElement
   colorPopover: HTMLElement
   colorPreview: HTMLElement
-  colorRgb: HTMLOutputElement
+  colorRgb: HTMLInputElement
   colorSaturation: HTMLElement
   colorSaturationHandle: HTMLElement
-  colorSwatches: HTMLElement
 }
 
 interface HsvColor {
@@ -32,6 +31,9 @@ export function bindColorPicker({
   })
   elements.colorText.addEventListener('input', () => {
     setColorValue(elements, elements.colorText.value, onChange)
+  })
+  elements.colorRgb.addEventListener('input', () => {
+    setColorValue(elements, rgbTextToHex(elements.colorRgb.value), onChange)
   })
   elements.colorHue.addEventListener('input', () => {
     const hsv = hexToHsv(elements.color.value)
@@ -65,11 +67,6 @@ export function bindColorPicker({
       v: clamp01(hsv.v + delta.v),
     }), onChange)
   })
-  elements.colorSwatches.addEventListener('click', (event) => {
-    const button = getClosestHTMLElement(event.target, '[data-color]')
-    if (!button) return
-    setColorValue(elements, button.dataset.color, onChange)
-  })
   document.addEventListener('click', (event) => {
     if (elements.colorPopover.classList.contains('hidden')) return
     if (getClosestHTMLElement(event.target, '.color-control')) return
@@ -95,7 +92,7 @@ export function syncColorControl(elements: ColorPickerElements) {
   elements.color.value = color
   elements.colorText.value = color
   elements.colorPreview.style.background = color
-  elements.colorRgb.textContent = hexToRgbText(color)
+  elements.colorRgb.value = hexToRgbText(color)
   elements.colorHue.value = String(Math.round(hsv.h))
   elements.colorSaturation.style.setProperty('--picker-hue-color', hsvToHex({
     h: hsv.h,
@@ -105,12 +102,6 @@ export function syncColorControl(elements: ColorPickerElements) {
   elements.colorSaturationHandle.style.left = `${hsv.s * 100}%`
   elements.colorSaturationHandle.style.top = `${(1 - hsv.v) * 100}%`
   elements.colorSaturation.setAttribute('aria-valuetext', color)
-  for (const swatch of elements.colorSwatches.querySelectorAll<HTMLElement>('[data-color]')) {
-    swatch.classList.toggle(
-      'active',
-      swatch.dataset.color?.toLowerCase() === color,
-    )
-  }
 }
 
 export function normalizeHexColor(value: string | undefined) {
@@ -162,6 +153,21 @@ function hexToRgbText(hex: string) {
   const g = Number.parseInt(hex.slice(3, 5), 16)
   const b = Number.parseInt(hex.slice(5, 7), 16)
   return `${r}, ${g}, ${b}`
+}
+
+function rgbTextToHex(value: string | undefined) {
+  const channels = value
+    ?.trim()
+    .split(/[\s,]+/)
+    .filter(Boolean)
+    .map((channel) => Number(channel)) ?? []
+  if (channels.length !== 3) return ''
+  if (channels.some((channel) =>
+    !Number.isInteger(channel) || channel < 0 || channel > 255)) {
+    return ''
+  }
+  const [r = 0, g = 0, b = 0] = channels
+  return `#${toHex(r)}${toHex(g)}${toHex(b)}`
 }
 
 function hsvToHex({

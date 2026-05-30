@@ -1254,8 +1254,12 @@ textarea {
   accent-color: #66c2a5;
 }
 
-.color-hex-input {
+.color-hex-input,
+.color-rgb-input {
   font-family: "Cascadia Mono", "Consolas", monospace;
+}
+
+.color-hex-input {
   text-transform: uppercase;
 }
 
@@ -1268,44 +1272,6 @@ textarea {
 
 .color-value-row input {
   min-height: 30px;
-}
-
-.color-rgb-row output {
-  min-height: 30px;
-  display: flex;
-  align-items: center;
-  border: 1px solid #37424b;
-  border-radius: 6px;
-  background: #10161a;
-  color: #dce6ea;
-  font-family: "Cascadia Mono", "Consolas", monospace;
-  font-size: 12px;
-  padding: 0 9px;
-}
-
-.color-swatches {
-  grid-column: 1 / -1;
-  display: grid;
-  grid-template-columns: repeat(6, 1fr);
-  gap: 6px;
-}
-
-.color-swatches button {
-  height: 26px;
-  min-width: 0;
-  padding: 3px;
-}
-
-.color-swatches button.active {
-  border-color: #66c2a5;
-  background: #20362f;
-}
-
-.color-swatches span {
-  display: block;
-  width: 100%;
-  height: 100%;
-  border-radius: 3px;
 }
 
 .layers {
