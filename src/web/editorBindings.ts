@@ -39,6 +39,7 @@ export function bindEditorEvents({
   actions,
 }: EditorBindingsDeps) {
   bindMenuBar(elements)
+  syncDocumentNameCounters(elements)
   elements.openLocalBoardDialog.addEventListener('click', () => {
     actions.renderLocalBoards()
     openDialog(elements.localBoardDialog)
@@ -115,7 +116,10 @@ export function bindEditorEvents({
     runAction(actions.copyExportImage, '已复制图片'))
   elements.downloadPreviewImage.addEventListener('click', actions.downloadPreviewImage)
   elements.boardName.addEventListener('change', actions.onBoardNameChange)
-  elements.boardName.addEventListener('input', () => syncShareNameCount(elements))
+  elements.boardName.addEventListener('input', () =>
+    syncNameCounter(elements.boardName, elements.shareNameCount))
+  elements.fileName.addEventListener('input', () =>
+    syncNameCounter(elements.fileName, elements.fileNameCount))
   elements.newLocalBoard.addEventListener('click', actions.newLocalBoard)
   elements.saveLocalBoard.addEventListener('click', actions.saveLocalBoard)
   elements.saveAsLocalBoard.addEventListener('click', actions.saveLocalBoardAs)
@@ -410,9 +414,14 @@ function openImportDialog(elements: EditorElements) {
   elements.codeInput.focus()
 }
 
-function syncShareNameCount(elements: EditorElements) {
-  const maxLength = elements.boardName.maxLength > 0 ? elements.boardName.maxLength : 7
-  elements.shareNameCount.textContent = `${elements.boardName.value.length}/${maxLength}`
+function syncDocumentNameCounters(elements: EditorElements) {
+  syncNameCounter(elements.fileName, elements.fileNameCount)
+  syncNameCounter(elements.boardName, elements.shareNameCount)
+}
+
+function syncNameCounter(input: HTMLInputElement, output: HTMLOutputElement) {
+  const maxLength = input.maxLength > 0 ? input.maxLength : input.value.length
+  output.textContent = `${input.value.length}/${maxLength}`
 }
 
 function getClosestElement(target: EventTarget | null, selector: string): HTMLElement | null {

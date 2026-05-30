@@ -12,14 +12,17 @@ import type {
   EditorState,
   FileLike,
   ProjectFileActions,
+  TextElement,
   ValueElement,
 } from './types.js'
 
 const browserWindow = getBrowserWindow()
 
 interface ProjectFileElements {
-  fileName: ValueElement
-  boardName: ValueElement
+  fileName: ValueElement & { maxLength: number }
+  fileNameCount: TextElement
+  boardName: ValueElement & { maxLength: number }
+  shareNameCount: TextElement
 }
 
 interface ProjectFileActionsDeps {
@@ -70,6 +73,8 @@ export function createProjectFileActions({
     })
     elements.fileName.value = fileName
     elements.boardName.value = state.board.name ?? ''
+    syncNameCounter(elements.fileName, elements.fileNameCount)
+    syncNameCounter(elements.boardName, elements.shareNameCount)
     renderBackgroundOptions()
     await renderAll()
     return true
@@ -83,6 +88,11 @@ export function createProjectFileActions({
   function getCurrentFileName(): string {
     return elements.fileName.value || state.currentFileName || state.board.name || '未命名工程'
   }
+}
+
+function syncNameCounter(input: ValueElement & { maxLength: number }, output: TextElement) {
+  const maxLength = input.maxLength > 0 ? input.maxLength : input.value.length
+  output.textContent = `${input.value.length}/${maxLength}`
 }
 
 function normalizeProjectFileName(name: unknown): string {

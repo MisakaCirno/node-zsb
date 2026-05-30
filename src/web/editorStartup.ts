@@ -12,6 +12,7 @@ import type {
   Board,
   EditorState,
   ProjectFile,
+  TextElement,
   ValueElement,
 } from './types.js'
 
@@ -29,7 +30,8 @@ interface InitialBoardSourceOptions {
 
 interface StartupElements {
   codeInput: ValueElement
-  fileName: ValueElement
+  fileName: ValueElement & { maxLength: number }
+  fileNameCount: TextElement
 }
 
 interface ApplyInitialBoardSourceDeps {
@@ -129,7 +131,13 @@ export async function initializeEditorBoard({
     layerTree: state.layerTree,
   })
   elements.fileName.value = state.currentFileName
+  syncNameCounter(elements.fileName, elements.fileNameCount)
   return source
+}
+
+function syncNameCounter(input: ValueElement & { maxLength: number }, output: TextElement) {
+  const maxLength = input.maxLength > 0 ? input.maxLength : input.value.length
+  output.textContent = `${input.value.length}/${maxLength}`
 }
 
 function getSavedProject(value: unknown): ProjectFile | null {

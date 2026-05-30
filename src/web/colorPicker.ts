@@ -10,6 +10,7 @@ export interface ColorPickerElements {
   colorHue: HTMLInputElement
   colorPopover: HTMLElement
   colorPreview: HTMLElement
+  colorRgb: HTMLOutputElement
   colorSaturation: HTMLElement
   colorSaturationHandle: HTMLElement
   colorSwatches: HTMLElement
@@ -94,6 +95,7 @@ export function syncColorControl(elements: ColorPickerElements) {
   elements.color.value = color
   elements.colorText.value = color
   elements.colorPreview.style.background = color
+  elements.colorRgb.textContent = hexToRgbText(color)
   elements.colorHue.value = String(Math.round(hsv.h))
   elements.colorSaturation.style.setProperty('--picker-hue-color', hsvToHex({
     h: hsv.h,
@@ -153,6 +155,13 @@ function hexToHsv(hex: string | undefined): HsvColor {
     s: max === 0 ? 0 : delta / max,
     v: max,
   }
+}
+
+function hexToRgbText(hex: string) {
+  const r = Number.parseInt(hex.slice(1, 3), 16)
+  const g = Number.parseInt(hex.slice(3, 5), 16)
+  const b = Number.parseInt(hex.slice(5, 7), 16)
+  return `${r}, ${g}, ${b}`
 }
 
 function hsvToHex({

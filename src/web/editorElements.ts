@@ -59,6 +59,7 @@ export interface EditorElements {
   quickOpenExportCodeDialog: HTMLButtonElement
   quickOpenExportImageDialog: HTMLButtonElement
   fileName: HTMLInputElement
+  fileNameCount: HTMLOutputElement
   boardName: HTMLInputElement
   shareNameCount: HTMLOutputElement
   paletteTabs: HTMLElement
@@ -123,6 +124,7 @@ export interface EditorElements {
   colorTrigger: HTMLButtonElement
   colorPreview: HTMLElement
   colorPopover: HTMLElement
+  colorRgb: HTMLOutputElement
   colorSaturation: HTMLElement
   colorSaturationHandle: HTMLElement
   colorHue: HTMLInputElement
@@ -211,6 +213,7 @@ export function getEditorElements(): EditorElements {
     quickOpenExportCodeDialog: queryElement('#quick-open-export-code-dialog', HTMLButtonElement),
     quickOpenExportImageDialog: queryElement('#quick-open-export-image-dialog', HTMLButtonElement),
     fileName: queryElement('#file-name', HTMLInputElement),
+    fileNameCount: queryElement('#file-name-count', HTMLOutputElement),
     boardName: queryElement('#board-name', HTMLInputElement),
     shareNameCount: queryElement('#share-name-count', HTMLOutputElement),
     paletteTabs: queryElement('#palette-tabs', HTMLElement),
@@ -275,6 +278,7 @@ export function getEditorElements(): EditorElements {
     colorTrigger: queryElement('#object-color-trigger', HTMLButtonElement),
     colorPreview: queryElement('#object-color-preview', HTMLElement),
     colorPopover: queryElement('#object-color-popover', HTMLElement),
+    colorRgb: queryElement('#object-color-rgb', HTMLOutputElement),
     colorSaturation: queryElement('#object-color-saturation', HTMLElement),
     colorSaturationHandle: queryElement('#object-color-saturation-handle', HTMLElement),
     colorHue: queryElement('#object-color-hue', HTMLInputElement),

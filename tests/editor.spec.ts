@@ -709,7 +709,7 @@ test('editor renders readable Chinese labels', async ({ page }) => {
   const shareNameBox = await page.locator('#board-name').boundingBox()
   if (!fileNameBox || !shareNameBox) throw new Error('Document name inputs are not visible')
   expect(shareNameBox.x).toBeGreaterThan(fileNameBox.x + fileNameBox.width)
-  expect(shareNameBox.width).toBeLessThan(160)
+  expect(shareNameBox.width).toBeLessThan(260)
   await openFileMenu(page)
   await expect(page.locator('#file-menu-button')).toHaveAttribute('aria-expanded', 'true')
   await expect(page.getByRole('menuitem', { name: '新建文件' })).toBeVisible()
@@ -751,9 +751,11 @@ test('editor renders readable Chinese labels', async ({ page }) => {
   await expect(page.locator('#quick-open-import-dialog svg')).toBeVisible()
   await expect(page.locator('#quick-open-export-code-dialog svg')).toBeVisible()
   await expect(page.locator('#quick-open-export-image-dialog svg')).toBeVisible()
-  await expect(page.locator('#share-name-count')).toHaveText('0/7')
-  await page.locator('#board-name').fill('ABCDEFG')
-  await expect(page.locator('#share-name-count')).toHaveText('7/7')
+  await expect(page.locator('#file-name-count')).toHaveText('0/48')
+  await page.locator('#file-name').fill('文件名计数')
+  await expect(page.locator('#file-name-count')).toHaveText('5/48')
+  await page.locator('#board-name').fill('12345678912345678912')
+  await expect(page.locator('#share-name-count')).toHaveText('20/20')
   const menuBoxAfterClose = await page.locator('.stage-toolbar-cluster').boundingBox()
   const shortcutsBox = await page.locator('.top-command-icons').boundingBox()
   if (!menuBoxAfterClose || !shortcutsBox) throw new Error('Toolbar groups are not visible')
@@ -763,7 +765,7 @@ test('editor renders readable Chinese labels', async ({ page }) => {
   await expect(page.locator('.file-menu-local-actions')).toHaveCount(1)
   await expect(page.locator('.file-menu-code-actions')).toHaveCount(1)
   await expect(page.locator('.file-name-field .document-name-label')).toHaveText('文件名')
-  await expect(page.locator('.stage-document-row #share-name-title')).toHaveText('分享名')
+  await expect(page.locator('.stage-document-row #share-name-title')).toHaveText('战术板名称')
   await expect(page.locator('.inspector-section')).toHaveCount(2)
   await expect(page.locator('.stage-document-row .share-name-field')).toBeVisible()
   await expect(page.locator('.property-section #board-name')).toHaveCount(0)
@@ -774,7 +776,7 @@ test('editor renders readable Chinese labels', async ({ page }) => {
   await expect(page.locator('#layer-count')).toHaveText(new RegExp(`^\\d+ / ${MAX_BOARD_OBJECTS}$`))
   await openExportCodeDialog(page)
   await expect(page.locator('#copy-export-code')).toBeVisible()
-  await expect(page.getByPlaceholder('分享名')).toBeVisible()
+  await expect(page.getByPlaceholder('战术板名称')).toBeVisible()
   await page.locator('#export-code-dialog').evaluate((dialog) => dialog.close())
   await expect(page.locator('#layers')).toContainText('tank')
   await expect(page.locator('#layer-count')).not.toHaveText('0')
@@ -885,10 +887,12 @@ test('editor imports code, changes background, and edits text and line objects',
   await page.goto('/editor')
   await expect(page.locator('#layers')).toContainText('tank')
 
+  const initialCode = await exportBoardCode(page)
+  await page.locator('#export-code-dialog').evaluate((dialog) => dialog.close())
   await openImportDialog(page)
-  const initialCode = await page.locator('#code-input').inputValue()
   await page.locator('#code-input').fill(initialCode)
   await page.locator('#load-code').click()
+  await expect(page.locator('#import-dialog')).toBeHidden()
 
   await page.locator('#asset-tab-background').click()
   await page.locator('#background-list [data-background="grey_square"]').click()
@@ -903,12 +907,14 @@ test('editor imports code, changes background, and edits text and line objects',
   await expect(page.locator('#object-type')).toHaveValue('text')
   await page.locator('#object-text').fill('MT')
   await expect(page.locator('#object-color')).toHaveAttribute('type', 'text')
-  await page.locator('#object-color-text').fill('#00ffcc')
-  await expect(page.locator('#object-color-text')).toHaveValue('#00ffcc')
   await page.locator('#object-color-trigger').click()
   await expect(page.locator('#object-color-popover')).toBeVisible()
+  await page.locator('#object-color-text').fill('#00ffcc')
+  await expect(page.locator('#object-color-text')).toHaveValue('#00ffcc')
+  await expect(page.locator('#object-color-rgb')).toHaveText('0, 255, 204')
   await page.locator('#object-color-swatches [data-color="#43a8d8"]').click()
   await expect(page.locator('#object-color')).toHaveValue('#43a8d8')
+  await expect(page.locator('#object-color-rgb')).toHaveText('67, 168, 216')
   await expect(page.locator('#object-color-preview')).toHaveCSS('background-color', 'rgb(67, 168, 216)')
   await expect(page.locator('#layers')).toContainText('text')
 
@@ -1469,8 +1475,6 @@ test('editor updates object action button states from the selection', async ({
   await page.keyboard.press('Control+C')
   await expect(page.locator('#paste-object')).toBeEnabled()
 
-  await page.locator('#object-locked').check()
-
   await page.keyboard.press('Escape')
   await expect(page.locator('#delete-object')).toBeDisabled()
   await expect(page.locator('#duplicate-object')).toBeDisabled()
@@ -1880,34 +1884,14 @@ test('editor toggles hidden and locked states from the layer list', async ({
   const firstLayer = page.locator('#layers .layer-row').first()
   await firstLayer.click()
   const beforeX = await page.locator('#object-x').inputValue()
-  const hiddenToggleMetrics = await page.locator('#object-hidden').locator('xpath=..').evaluate((toggle) => {
-    const icon = toggle.querySelector('svg:not([style*="display: none"])')
-    const toggleRect = toggle.getBoundingClientRect()
-    const iconRect = icon?.getBoundingClientRect()
-    return {
-      iconHeight: iconRect?.height ?? 0,
-      iconWidth: iconRect?.width ?? 0,
-      offsetX: iconRect ? Math.abs((toggleRect.left + toggleRect.width / 2) - (iconRect.left + iconRect.width / 2)) : 99,
-      offsetY: iconRect ? Math.abs((toggleRect.top + toggleRect.height / 2) - (iconRect.top + iconRect.height / 2)) : 99,
-      toggleHeight: toggleRect.height,
-      toggleWidth: toggleRect.width,
-    }
-  })
-  expect(hiddenToggleMetrics.toggleWidth).toBeGreaterThanOrEqual(38)
-  expect(hiddenToggleMetrics.toggleHeight).toBeGreaterThanOrEqual(38)
-  expect(hiddenToggleMetrics.iconWidth).toBeGreaterThanOrEqual(21)
-  expect(hiddenToggleMetrics.iconHeight).toBeGreaterThanOrEqual(21)
-  expect(hiddenToggleMetrics.offsetX).toBeLessThanOrEqual(1)
-  expect(hiddenToggleMetrics.offsetY).toBeLessThanOrEqual(1)
+  await expect(page.locator('.inspector-toggle')).toHaveCount(0)
 
   await firstLayer.locator('[data-action="hidden"]').click()
   await expect(page.locator('#object-hidden')).toBeChecked()
-  await expect(page.locator('#object-hidden').locator('xpath=..')).toHaveAttribute('aria-pressed', 'true')
   await expect(firstLayer).toHaveClass(/muted/)
 
   await firstLayer.locator('[data-action="locked"]').click()
   await expect(page.locator('#object-locked')).toBeChecked()
-  await expect(page.locator('#object-locked').locator('xpath=..')).toHaveClass(/active/)
   await expect(page.locator('#object-x')).toBeDisabled()
   await expect(page.locator('#object-size')).toBeDisabled()
   await expect(page.locator('#object-color')).toBeEnabled()

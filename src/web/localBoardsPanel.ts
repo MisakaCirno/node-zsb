@@ -45,7 +45,9 @@ interface LocalBoardsPanelElements {
   saveAsLocalBoard: DisabledElement
   newLocalBoard: DisabledElement
   fileName: InputElement
+  fileNameCount: TextElement
   boardName: InputElement
+  shareNameCount: TextElement
 }
 
 interface StagePreview {
@@ -80,6 +82,7 @@ interface SubmitLike {
 
 interface InputElement {
   value: string
+  maxLength: number
   checked?: boolean
   addEventListener(type: string, listener: () => void): void
   focus(): void
@@ -213,6 +216,7 @@ export function createLocalBoardsPanel({
     updateHistoryButtons()
     setCurrentFile('')
     elements.boardName.value = ''
+    syncNameCounter(elements.boardName, elements.shareNameCount)
     renderBackgroundOptions()
     renderLocalBoards()
     await renderAll()
@@ -241,6 +245,7 @@ export function createLocalBoardsPanel({
     updateHistoryButtons()
     setCurrentFile(file.name)
     elements.boardName.value = state.board.name ?? ''
+    syncNameCounter(elements.boardName, elements.shareNameCount)
     renderBackgroundOptions()
     renderLocalBoards()
     await renderAll()
@@ -439,6 +444,12 @@ export function createLocalBoardsPanel({
     state.currentFileName = fileName
     state.localFileSnapshot = currentProjectSnapshot(fileName)
     elements.fileName.value = fileName
+    syncNameCounter(elements.fileName, elements.fileNameCount)
+  }
+
+  function syncNameCounter(input: InputElement, output: TextElement) {
+    const maxLength = input.maxLength > 0 ? input.maxLength : input.value.length
+    output.textContent = `${input.value.length}/${maxLength}`
   }
 
   function isCurrentFileDirty() {
