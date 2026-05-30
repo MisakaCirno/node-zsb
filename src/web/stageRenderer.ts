@@ -67,6 +67,12 @@ interface Point {
   y: number
 }
 
+interface TransformBox extends Point {
+  width: number
+  height: number
+  rotation?: number
+}
+
 interface KonvaEvent {
   cancelBubble?: boolean
   evt?: {
@@ -88,6 +94,7 @@ interface KonvaNode {
   enabledAnchors(anchors: string[]): void
   getAbsoluteTransform(): KonvaTransform
   getAttr(name: string): unknown
+  getActiveAnchor?(): string | null
   getLayer(): unknown
   getPointerPosition(): Point | null
   nodes(nodes: KonvaNode[]): void
@@ -206,6 +213,7 @@ export function createStageRenderer({
     ],
     borderStroke: '#66c2a5',
     anchorStroke: '#66c2a5',
+    boundBoxFunc: constrainTransformerBox,
   })
 
   stage.add(boardLayer)
@@ -550,6 +558,53 @@ export function createStageRenderer({
     const bounds = getObjectSizeBounds(object.type)
     node.scaleX(clampSignedScale(node.scaleX(), bounds.min / 100, bounds.max / 100))
     node.scaleY(clampSignedScale(node.scaleY(), bounds.min / 100, bounds.max / 100))
+  }
+
+  function constrainTransformerBox(oldBox: TransformBox, newBox: TransformBox): TransformBox {
+    if (transformer.getActiveAnchor?.() === 'rotater') return newBox
+    if (oldBox.width === 0 || oldBox.height === 0) return oldBox
+    if (newBox.width <= 0 || newBox.height <= 0) return oldBox
+
+    const scale = Math.max(
+      Math.abs(newBox.width / oldBox.width),
+      Math.abs(newBox.height / oldBox.height),
+    )
+    const limits = getSelectedScaleLimits()
+    if (!limits) return newBox
+    return scale >= limits.min && scale <= limits.max ? newBox : oldBox
+  }
+
+  function getSelectedScaleLimits(): { min: number, max: number } | null {
+    let min = 0
+    let max = Infinity
+    let hasTransformableObject = false
+    for (const index of getSelectedIndexes(state)) {
+      const object = state.board.objects[index]
+      if (!object || object.locked || object.type === 'line' || object.type === 'text') continue
+      const limits = getObjectScaleLimits(object)
+      min = Math.max(min, limits.min)
+      max = Math.min(max, limits.max)
+      hasTransformableObject = true
+    }
+    if (!hasTransformableObject) return null
+    return { min, max }
+  }
+
+  function getObjectScaleLimits(object: BoardObject): { min: number, max: number } {
+    if (object.type === 'line_aoe') {
+      const width = normalizeLineAoeWidth(object.width ?? 128)
+      const height = normalizeLineAoeHeight(object.height ?? 128)
+      return {
+        min: Math.max(MIN_LINE_AOE_DIMENSION / width, MIN_LINE_AOE_DIMENSION / height),
+        max: Math.min(MAX_LINE_AOE_WIDTH / width, MAX_LINE_AOE_HEIGHT / height),
+      }
+    }
+    const bounds = getObjectSizeBounds(object.type)
+    const size = normalizeObjectSize(object.size, object.type)
+    return {
+      min: bounds.min / size,
+      max: bounds.max / size,
+    }
   }
 
   function constrainLineAoeScale(node: KonvaNode, object: BoardObject) {
