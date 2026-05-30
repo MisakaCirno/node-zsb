@@ -952,6 +952,10 @@ test('editor scales the selected object from the canvas transformer', async ({ p
 
   await expect.poll(async () => Number(await page.locator('#object-size').inputValue()))
     .toBeGreaterThan(100)
+  await expect.poll(async () => Number(await page.locator('#object-x').inputValue()))
+    .toBeLessThan(256)
+  await expect.poll(async () => Number(await page.locator('#object-y').inputValue()))
+    .toBeLessThan(192)
 
   await page.getByRole('button', { name: '撤销' }).click()
   await expect(page.locator('#object-size')).toHaveValue('100')
@@ -986,6 +990,37 @@ test('editor keeps objects stationary when transformer scaling hits the size lim
 
   await expect(page.locator('#object-size')).toHaveValue('200')
   await expect(page.locator('#object-x')).toHaveValue('256')
+  await expect(page.locator('#object-y')).toHaveValue('192')
+})
+
+test('editor scales fixed-ratio objects from side handles around the opposite midpoint', async ({ page }) => {
+  await page.goto('/editor')
+  await expect(page.locator('#layers')).toContainText('tank')
+
+  await page.getByTitle('tank').first().click()
+  await expect(page.locator('#object-size')).toHaveValue('100')
+  await expect(page.locator('#object-x')).toHaveValue('256')
+  await expect(page.locator('#object-y')).toHaveValue('192')
+
+  const canvas = page.locator('#stage-host canvas').first()
+  const box = await canvas.boundingBox()
+  if (!box) throw new Error('Canvas is not visible')
+  const point = (x: number, y: number) => ({
+    x: box.x + (x / 512) * box.width,
+    y: box.y + (y / 384) * box.height,
+  })
+  const from = point(272, 192)
+  const to = point(304, 192)
+
+  await page.mouse.move(from.x, from.y)
+  await page.mouse.down()
+  await page.mouse.move(to.x, to.y, { steps: 8 })
+  await page.mouse.up()
+
+  await expect.poll(async () => Number(await page.locator('#object-size').inputValue()))
+    .toBeGreaterThan(100)
+  await expect.poll(async () => Number(await page.locator('#object-x').inputValue()))
+    .toBeGreaterThan(256)
   await expect(page.locator('#object-y')).toHaveValue('192')
 })
 

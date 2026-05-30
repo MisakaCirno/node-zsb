@@ -588,14 +588,14 @@ export function createStageRenderer({
     const baseBox = transformStartBox
     const scaleX = Math.abs(newBox.width / baseBox.width)
     const scaleY = Math.abs(newBox.height / baseBox.height)
-    const uniformScale = Math.max(
-      Math.abs(newBox.width / baseBox.width),
-      Math.abs(newBox.height / baseBox.height),
-    )
+    const activeAnchor = transformer.getActiveAnchor?.() ?? ''
+    const uniformScale = getUniformScaleForAnchor(activeAnchor, scaleX, scaleY)
     const limits = transformScaleLimits ?? getSelectedScaleLimits()
     if (!limits) return newBox
     if (limits.keepRatio) {
-      return uniformScale >= limits.minX && uniformScale <= limits.maxX ? newBox : oldBox
+      return uniformScale >= limits.minX && uniformScale <= limits.maxX
+        ? createAnchoredFixedRatioBox(baseBox, uniformScale, activeAnchor, newBox)
+        : oldBox
     }
     return scaleX >= limits.minX
       && scaleX <= limits.maxX
@@ -613,6 +613,66 @@ export function createStageRenderer({
       height: box.height,
       rotation: box.rotation,
     }
+  }
+
+  function createAnchoredFixedRatioBox(
+    baseBox: TransformBox,
+    scale: number,
+    anchor: string,
+    sourceBox: TransformBox,
+  ): TransformBox {
+    const width = baseBox.width * scale
+    const height = baseBox.height * scale
+    const centerX = baseBox.x + baseBox.width / 2
+    const centerY = baseBox.y + baseBox.height / 2
+    const right = baseBox.x + baseBox.width
+    const bottom = baseBox.y + baseBox.height
+    const box = {
+      x: baseBox.x,
+      y: baseBox.y,
+      width,
+      height,
+      rotation: sourceBox.rotation,
+    }
+    switch (anchor) {
+      case 'top-left':
+        box.x = right - width
+        box.y = bottom - height
+        break
+      case 'top-center':
+        box.x = centerX - width / 2
+        box.y = bottom - height
+        break
+      case 'top-right':
+        box.y = bottom - height
+        break
+      case 'middle-left':
+        box.x = right - width
+        box.y = centerY - height / 2
+        break
+      case 'middle-right':
+        box.y = centerY - height / 2
+        break
+      case 'bottom-left':
+        box.x = right - width
+        break
+      case 'bottom-center':
+        box.x = centerX - width / 2
+        break
+    }
+    return {
+      x: box.x,
+      y: box.y,
+      width: box.width,
+      height: box.height,
+      rotation: box.rotation,
+    }
+  }
+
+  function getUniformScaleForAnchor(anchor: string, scaleX: number, scaleY: number): number {
+    if (anchor === 'top-center' || anchor === 'bottom-center') return scaleY
+    if (anchor === 'middle-left' || anchor === 'middle-right') return scaleX
+    return Math.max(scaleX, scaleY)
   }
 
   function getSelectedScaleLimits(): TransformScaleLimits | null {
