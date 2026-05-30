@@ -109,7 +109,6 @@ export function createBoardCodeActions({
     const code = await encodeBoardCode(cleanBoard(state.board))
     elements.codeOutput.value = code
     elements.codeInput.value = code
-    updateCodeUrl(code)
     return code
   }
 
@@ -121,10 +120,4 @@ export function createBoardCodeActions({
     loadFromCode,
     renderPreview,
   }
-}
-
-function updateCodeUrl(code: string): void {
-  const url = new URL(browserWindow.location.href)
-  url.searchParams.set('code', code)
-  browserWindow.history.replaceState(null, '', url.toString())
 }

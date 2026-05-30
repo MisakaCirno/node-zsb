@@ -793,6 +793,7 @@ test('editor opens share code dialogs from toolbar shortcuts', async ({ page }) 
   await page.locator('#quick-open-export-code-dialog').click()
   await expect(page.locator('#export-code-dialog')).toBeVisible()
   await expect(page.locator('#code-output')).toHaveValue(/\[stgy:/)
+  await expect(page).toHaveURL(/\/editor$/)
 })
 
 test('editor disables async action buttons while exporting', async ({ page }) => {
