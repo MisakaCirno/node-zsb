@@ -10,6 +10,10 @@ const serverInfo = {
   port: 3000,
 }
 
+interface StoppableServer {
+  stop?: () => void | Promise<void>
+}
+
 declare global {
   namespace NodeJS {
     interface Process {
@@ -43,3 +47,14 @@ process.isBun ? initBunServer() : initNodeServer()
 console.log(
   `Server running at http://${serverInfo.hostname}:${serverInfo.port}`
 )
+
+async function shutdown() {
+  try {
+    await (server as StoppableServer | undefined)?.stop?.()
+  } finally {
+    process.exit(0)
+  }
+}
+
+process.once('SIGINT', shutdown)
+process.once('SIGTERM', shutdown)
