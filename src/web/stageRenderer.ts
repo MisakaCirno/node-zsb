@@ -7,12 +7,6 @@ import {
   rotatePoint,
 } from './geometry.js'
 import {
-  DEFAULT_TEXT_FONT_SIZE,
-  STRATEGY_TEXT_FONT_FAMILY,
-  STRATEGY_TEXT_SHADOW_BLUR,
-  STRATEGY_TEXT_SHADOW_OFFSET,
-  STRATEGY_TEXT_STROKE_WIDTH,
-  calcTextWidth,
   calculateCircleOffset,
   calculateDonutOffset,
   DEFAULT_DONUT_COLOR,
@@ -28,6 +22,10 @@ import {
   toLogicalCoordinate,
   toSceneCoordinate,
 } from '../shared/boardGeometry.js'
+import {
+  createStrategyTextStyle,
+  getStrategyTextFontLoadSpec,
+} from '../shared/textRendering.js'
 import { getSelectedIndexes } from './editorState.js'
 import { getObjectBounds } from './objectAlignment.js'
 import {
@@ -587,22 +585,11 @@ export function createStageRenderer({
   }
 
   function createTextNode(object: BoardObject): KonvaNode {
+    const style = createStrategyTextStyle(object.text ?? '', object.color ?? DEFAULT_TEXT_COLOR)
     return new Konva.Text({
-      text: object.text ?? '',
-      fill: object.color ?? DEFAULT_TEXT_COLOR,
-      stroke: 'black',
-      strokeWidth: STRATEGY_TEXT_STROKE_WIDTH,
+      ...style,
       x: toSceneCoordinate(object.x),
       y: toSceneCoordinate(object.y),
-      fontSize: DEFAULT_TEXT_FONT_SIZE,
-      fontFamily: STRATEGY_TEXT_FONT_FAMILY,
-      offsetX: calcTextWidth(object.text ?? '', DEFAULT_TEXT_FONT_SIZE) / 2,
-      offsetY: DEFAULT_TEXT_FONT_SIZE / 2,
-      shadowEnabled: true,
-      shadowColor: 'black',
-      shadowBlur: STRATEGY_TEXT_SHADOW_BLUR,
-      shadowOffsetX: STRATEGY_TEXT_SHADOW_OFFSET,
-      shadowOffsetY: STRATEGY_TEXT_SHADOW_OFFSET,
     })
   }
 
@@ -868,7 +855,7 @@ export function createStageRenderer({
     const fonts = document.fonts
     if (!fonts?.load) return Promise.resolve()
     textFontReady = fonts
-      .load(`${DEFAULT_TEXT_FONT_SIZE}px ${STRATEGY_TEXT_FONT_FAMILY}`)
+      .load(getStrategyTextFontLoadSpec())
       .catch(() => undefined)
     return textFontReady
   }

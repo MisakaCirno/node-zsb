@@ -17,13 +17,7 @@ import {
   DEFAULT_DONUT_COLOR,
   DEFAULT_LINE_COLOR,
   DEFAULT_TEXT_COLOR,
-  DEFAULT_TEXT_FONT_SIZE,
-  STRATEGY_TEXT_FONT_FAMILY,
   STRATEGY_TEXT_FONT_PRIMARY,
-  STRATEGY_TEXT_SHADOW_BLUR,
-  STRATEGY_TEXT_SHADOW_OFFSET,
-  STRATEGY_TEXT_STROKE_WIDTH,
-  calcTextWidth,
   calculateCircleOffset as getCircleOffset,
   calculateDonutOffset as getDonutOffset,
   degreesToRadians,
@@ -32,6 +26,7 @@ import {
   objectScale,
   toSceneCoordinate,
 } from '../../shared/boardGeometry.js'
+import { createStrategyTextStyle } from '../../shared/textRendering.js'
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
 const FONT_PATH = path.resolve(
@@ -73,28 +68,11 @@ async function createBoardLayer(backgroundType: BackgroundType = 'checkered') {
 }
 
 function createTextBlock(data: StrategyObject): Konva.Text {
-  const text = data.text ?? ''
-  const fontSize = DEFAULT_TEXT_FONT_SIZE
-  const textWidth = calcTextWidth(text, fontSize)
-  const offsetX = textWidth / 2
-  const offsetY = fontSize / 2
-
+  const style = createStrategyTextStyle(data.text ?? '', data.color ?? DEFAULT_TEXT_COLOR)
   return new Konva.Text({
-    text: data.text,
-    fill: data.color ?? DEFAULT_TEXT_COLOR,
-    stroke: 'black',
-    strokeWidth: STRATEGY_TEXT_STROKE_WIDTH,
+    ...style,
     x: toSceneCoordinate(data.x),
     y: toSceneCoordinate(data.y),
-    fontFamily: STRATEGY_TEXT_FONT_FAMILY,
-    fontSize: fontSize,
-    offsetX: offsetX,
-    offsetY: offsetY,
-    shadowEnabled: true,
-    shadowColor: 'black',
-    shadowBlur: STRATEGY_TEXT_SHADOW_BLUR,
-    shadowOffsetX: STRATEGY_TEXT_SHADOW_OFFSET,
-    shadowOffsetY: STRATEGY_TEXT_SHADOW_OFFSET,
     shadowOpacity: 1,
   })
 }
