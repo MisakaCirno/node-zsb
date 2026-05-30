@@ -53,20 +53,26 @@ export function constrainTransformBox({
   if (newBox.width <= 0 || newBox.height <= 0) return oldBox
   if (!limits) return newBox
 
-  const scaleX = Math.abs(newBox.width / baseBox.width)
-  const scaleY = Math.abs(newBox.height / baseBox.height)
+  const { scaleX, scaleY } = getDirectionalScalesForAnchor(activeAnchor, baseBox, newBox)
   if (limits.keepRatio) {
     const uniformScale = getUniformScaleForAnchor(activeAnchor, scaleX, scaleY)
-    return uniformScale >= limits.minX && uniformScale <= limits.maxX
-      ? createAnchoredFixedRatioBox(baseBox, uniformScale, activeAnchor, newBox)
-      : oldBox
+    const minScale = Math.max(limits.minX, limits.minY)
+    const maxScale = Math.min(limits.maxX, limits.maxY)
+    if (minScale > maxScale) return oldBox
+    return createAnchoredFixedRatioBox(
+      baseBox,
+      clamp(uniformScale, minScale, maxScale),
+      activeAnchor,
+      newBox,
+    )
   }
-  return scaleX >= limits.minX
-    && scaleX <= limits.maxX
-    && scaleY >= limits.minY
-    && scaleY <= limits.maxY
-    ? newBox
-    : oldBox
+  return createAnchoredFreeScaleBox(
+    baseBox,
+    clamp(scaleX, limits.minX, limits.maxX),
+    clamp(scaleY, limits.minY, limits.maxY),
+    activeAnchor,
+    newBox,
+  )
 }
 
 export function getSelectionScaleLimits(objects: Array<BoardObject | undefined>): TransformScaleLimits | null {
@@ -190,10 +196,101 @@ function createAnchoredFixedRatioBox(
   }
 }
 
+function createAnchoredFreeScaleBox(
+  baseBox: TransformBox,
+  scaleX: number,
+  scaleY: number,
+  anchor: string,
+  sourceBox: TransformBox,
+): TransformBox {
+  const width = baseBox.width * scaleX
+  const height = baseBox.height * scaleY
+  const centerX = baseBox.x + baseBox.width / 2
+  const centerY = baseBox.y + baseBox.height / 2
+  const right = baseBox.x + baseBox.width
+  const bottom = baseBox.y + baseBox.height
+  return {
+    x: anchor.includes('left')
+      ? right - width
+      : anchor.includes('center')
+        ? centerX - width / 2
+        : baseBox.x,
+    y: anchor.includes('top')
+      ? bottom - height
+      : anchor.includes('middle')
+        ? centerY - height / 2
+        : baseBox.y,
+    width,
+    height,
+    rotation: sourceBox.rotation,
+  }
+}
+
+function getDirectionalScalesForAnchor(
+  anchor: string,
+  baseBox: TransformBox,
+  newBox: TransformBox,
+): { scaleX: number, scaleY: number } {
+  const right = baseBox.x + baseBox.width
+  const bottom = baseBox.y + baseBox.height
+  const newRight = newBox.x + newBox.width
+  const newBottom = newBox.y + newBox.height
+  return {
+    scaleX: getDirectionalScale({
+      anchor,
+      baseSize: baseBox.width,
+      negativeSide: 'left',
+      positiveSide: 'right',
+      negativeDistance: right - newBox.x,
+      positiveDistance: newRight - baseBox.x,
+      fallbackSize: newBox.width,
+    }),
+    scaleY: getDirectionalScale({
+      anchor,
+      baseSize: baseBox.height,
+      negativeSide: 'top',
+      positiveSide: 'bottom',
+      negativeDistance: bottom - newBox.y,
+      positiveDistance: newBottom - baseBox.y,
+      fallbackSize: newBox.height,
+    }),
+  }
+}
+
+function getDirectionalScale({
+  anchor,
+  baseSize,
+  fallbackSize,
+  negativeDistance,
+  negativeSide,
+  positiveDistance,
+  positiveSide,
+}: {
+  anchor: string
+  baseSize: number
+  fallbackSize: number
+  negativeDistance: number
+  negativeSide: string
+  positiveDistance: number
+  positiveSide: string
+}): number {
+  if (anchor.includes(negativeSide)) {
+    return Math.max(0, negativeDistance) / baseSize
+  }
+  if (anchor.includes(positiveSide)) {
+    return Math.max(0, positiveDistance) / baseSize
+  }
+  return Math.abs(fallbackSize / baseSize)
+}
+
 function getUniformScaleForAnchor(anchor: string, scaleX: number, scaleY: number): number {
   if (anchor === 'top-center' || anchor === 'bottom-center') return scaleY
   if (anchor === 'middle-left' || anchor === 'middle-right') return scaleX
   return Math.max(scaleX, scaleY)
+}
+
+function clamp(value: number, min: number, max: number): number {
+  return Math.min(max, Math.max(min, value))
 }
 
 function getRenderedObjectScaleLimits(object: BoardObject): TransformScaleLimits {

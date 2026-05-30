@@ -26,7 +26,7 @@ test('constrainTransformBox keeps fixed-ratio side handles anchored on the oppos
   })
 })
 
-test('constrainTransformBox rejects fixed-ratio scaling outside the selected limits', () => {
+test('constrainTransformBox clamps fixed-ratio scaling to the selected limits', () => {
   const oldBox = { x: 100, y: 80, width: 40, height: 20 }
   const box = constrainTransformBox({
     activeAnchor: 'bottom-right',
@@ -36,7 +36,49 @@ test('constrainTransformBox rejects fixed-ratio scaling outside the selected lim
     oldBox,
   })
 
-  assert.equal(box, oldBox)
+  assert.deepEqual(box, {
+    x: 100,
+    y: 80,
+    width: 60,
+    height: 30,
+    rotation: undefined,
+  })
+})
+
+test('constrainTransformBox keeps fixed-ratio side handles from scaling past the center', () => {
+  const box = constrainTransformBox({
+    activeAnchor: 'middle-left',
+    baseBox: { x: 100, y: 80, width: 40, height: 20 },
+    limits: { minX: 0.5, maxX: 3, minY: 0.5, maxY: 3, keepRatio: true },
+    newBox: { x: 130, y: 80, width: 10, height: 20 },
+    oldBox: { x: 120, y: 85, width: 20, height: 10 },
+  })
+
+  assert.deepEqual(box, {
+    x: 120,
+    y: 85,
+    width: 20,
+    height: 10,
+    rotation: undefined,
+  })
+})
+
+test('constrainTransformBox clamps free scaling independently to the selected limits', () => {
+  const box = constrainTransformBox({
+    activeAnchor: 'bottom-right',
+    baseBox: { x: 100, y: 80, width: 40, height: 20 },
+    limits: { minX: 0.5, maxX: 2, minY: 0.25, maxY: 1.5, keepRatio: false },
+    newBox: { x: 100, y: 80, width: 120, height: 2 },
+    oldBox: { x: 100, y: 80, width: 40, height: 20 },
+  })
+
+  assert.deepEqual(box, {
+    x: 100,
+    y: 80,
+    width: 80,
+    height: 5,
+    rotation: undefined,
+  })
 })
 
 test('constrainObjectScale applies line AOE width and height limits independently', () => {

@@ -217,6 +217,7 @@ export function createStageRenderer({
   })
   const transformer = new Konva.Transformer({
     rotateEnabled: true,
+    flipEnabled: false,
     keepRatio: true,
     enabledAnchors: [
       'top-left',
