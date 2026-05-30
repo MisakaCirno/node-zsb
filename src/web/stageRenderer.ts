@@ -230,6 +230,8 @@ export function createStageRenderer({
   let suppressNextStageClick = false
   let isTransformingSelection = false
   let pendingTransformCommit = 0
+  let transformStartBox: TransformBox | null = null
+  let transformScaleLimits: { min: number, max: number } | null = null
   let textFontReady: Promise<unknown> | null = null
   const renderedNodesByIndex = new Map<number, KonvaNode>()
 
@@ -468,6 +470,8 @@ export function createStageRenderer({
     node.on('transformstart', () => {
       if (!isTransformingSelection) {
         recordHistory()
+        transformStartBox = null
+        transformScaleLimits = getSelectedScaleLimits()
       }
       isTransformingSelection = true
     })
@@ -501,6 +505,8 @@ export function createStageRenderer({
       hasCommittedTransform = true
     }
     isTransformingSelection = false
+    transformStartBox = null
+    transformScaleLimits = null
     if (!hasCommittedTransform) {
       return
     }
@@ -565,13 +571,25 @@ export function createStageRenderer({
     if (oldBox.width === 0 || oldBox.height === 0) return oldBox
     if (newBox.width <= 0 || newBox.height <= 0) return oldBox
 
+    transformStartBox ??= copyTransformBox(oldBox)
+    const baseBox = transformStartBox
     const scale = Math.max(
-      Math.abs(newBox.width / oldBox.width),
-      Math.abs(newBox.height / oldBox.height),
+      Math.abs(newBox.width / baseBox.width),
+      Math.abs(newBox.height / baseBox.height),
     )
-    const limits = getSelectedScaleLimits()
+    const limits = transformScaleLimits ?? getSelectedScaleLimits()
     if (!limits) return newBox
     return scale >= limits.min && scale <= limits.max ? newBox : oldBox
+  }
+
+  function copyTransformBox(box: TransformBox): TransformBox {
+    return {
+      x: box.x,
+      y: box.y,
+      width: box.width,
+      height: box.height,
+      rotation: box.rotation,
+    }
   }
 
   function getSelectedScaleLimits(): { min: number, max: number } | null {

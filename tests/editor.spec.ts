@@ -957,6 +957,38 @@ test('editor scales the selected object from the canvas transformer', async ({ p
   await expect(page.locator('#object-size')).toHaveValue('100')
 })
 
+test('editor keeps objects stationary when transformer scaling hits the size limit', async ({ page }) => {
+  await page.goto('/editor')
+  await expect(page.locator('#layers')).toContainText('tank')
+
+  await page.getByTitle('tank').first().click()
+  await page.locator('#object-size').fill('200')
+  await page.locator('#object-size').blur()
+  await expect(page.locator('#object-size')).toHaveValue('200')
+  await expect(page.locator('#object-x')).toHaveValue('256')
+  await expect(page.locator('#object-y')).toHaveValue('192')
+
+  const canvas = page.locator('#stage-host canvas').first()
+  const box = await canvas.boundingBox()
+  if (!box) throw new Error('Canvas is not visible')
+  const scale = box.width / 1024
+  const point = (x: number, y: number) => ({
+    x: box.x + x * 2 * scale,
+    y: box.y + y * 2 * scale,
+  })
+  const from = point(224, 160)
+  const to = point(176, 112)
+
+  await page.mouse.move(from.x, from.y)
+  await page.mouse.down()
+  await page.mouse.move(to.x, to.y, { steps: 10 })
+  await page.mouse.up()
+
+  await expect(page.locator('#object-size')).toHaveValue('200')
+  await expect(page.locator('#object-x')).toHaveValue('256')
+  await expect(page.locator('#object-y')).toHaveValue('192')
+})
+
 test('editor commits multi-selected canvas scaling in one stable batch', async ({ page }) => {
   await page.goto('/editor')
   await expect(page.locator('#layers')).toContainText('tank')
