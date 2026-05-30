@@ -49,6 +49,16 @@ import type {
 declare const Konva: KonvaFactory
 
 const MARQUEE_DRAG_THRESHOLD = 4
+const TRANSFORM_ANCHORS = [
+  'top-left',
+  'top-center',
+  'top-right',
+  'middle-left',
+  'middle-right',
+  'bottom-left',
+  'bottom-center',
+  'bottom-right',
+]
 const MARQUEE_THEMES = {
   contained: {
     fill: 'rgba(85, 170, 255, 0.16)',
@@ -61,6 +71,13 @@ const MARQUEE_THEMES = {
 }
 
 type MarqueeMode = 'contained' | 'intersect'
+type TransformScaleLimits = {
+  minX: number
+  maxX: number
+  minY: number
+  maxY: number
+  keepRatio: boolean
+}
 
 interface Point {
   x: number
@@ -97,6 +114,7 @@ interface KonvaNode {
   getActiveAnchor?(): string | null
   getLayer(): unknown
   getPointerPosition(): Point | null
+  keepRatio(value: boolean): void
   nodes(nodes: KonvaNode[]): void
   on(eventName: string, handler: (event: KonvaEvent) => void): void
   opacity(value: number): void
@@ -231,7 +249,7 @@ export function createStageRenderer({
   let isTransformingSelection = false
   let pendingTransformCommit = 0
   let transformStartBox: TransformBox | null = null
-  let transformScaleLimits: { min: number, max: number } | null = null
+  let transformScaleLimits: TransformScaleLimits | null = null
   let textFontReady: Promise<unknown> | null = null
   const renderedNodesByIndex = new Map<number, KonvaNode>()
 
@@ -337,13 +355,8 @@ export function createStageRenderer({
         return selectedIndexes.includes(index) && !state.board.objects[index]?.locked
       })
       : []
-    const canScaleSelection = canTransformSelection
-    transformer.enabledAnchors(canScaleSelection ? [
-      'top-left',
-      'top-right',
-      'bottom-left',
-      'bottom-right',
-    ] : [])
+    transformer.keepRatio(!canFreeScaleSelection(selectedObjects))
+    transformer.enabledAnchors(canTransformSelection ? TRANSFORM_ANCHORS : [])
     transformer.nodes(selectedNodes)
     transformerLayer.draw()
   }
@@ -573,13 +586,23 @@ export function createStageRenderer({
 
     transformStartBox ??= copyTransformBox(oldBox)
     const baseBox = transformStartBox
-    const scale = Math.max(
+    const scaleX = Math.abs(newBox.width / baseBox.width)
+    const scaleY = Math.abs(newBox.height / baseBox.height)
+    const uniformScale = Math.max(
       Math.abs(newBox.width / baseBox.width),
       Math.abs(newBox.height / baseBox.height),
     )
     const limits = transformScaleLimits ?? getSelectedScaleLimits()
     if (!limits) return newBox
-    return scale >= limits.min && scale <= limits.max ? newBox : oldBox
+    if (limits.keepRatio) {
+      return uniformScale >= limits.minX && uniformScale <= limits.maxX ? newBox : oldBox
+    }
+    return scaleX >= limits.minX
+      && scaleX <= limits.maxX
+      && scaleY >= limits.minY
+      && scaleY <= limits.maxY
+      ? newBox
+      : oldBox
   }
 
   function copyTransformBox(box: TransformBox): TransformBox {
@@ -592,37 +615,54 @@ export function createStageRenderer({
     }
   }
 
-  function getSelectedScaleLimits(): { min: number, max: number } | null {
-    let min = 0
-    let max = Infinity
+  function getSelectedScaleLimits(): TransformScaleLimits | null {
+    let minX = 0
+    let maxX = Infinity
+    let minY = 0
+    let maxY = Infinity
+    let keepRatio = true
     let hasTransformableObject = false
     for (const index of getSelectedIndexes(state)) {
       const object = state.board.objects[index]
       if (!object || object.locked || object.type === 'line' || object.type === 'text') continue
       const limits = getObjectScaleLimits(object)
-      min = Math.max(min, limits.min)
-      max = Math.min(max, limits.max)
+      minX = Math.max(minX, limits.minX)
+      maxX = Math.min(maxX, limits.maxX)
+      minY = Math.max(minY, limits.minY)
+      maxY = Math.min(maxY, limits.maxY)
+      keepRatio = keepRatio && limits.keepRatio
       hasTransformableObject = true
     }
     if (!hasTransformableObject) return null
-    return { min, max }
+    return { minX, maxX, minY, maxY, keepRatio }
   }
 
-  function getObjectScaleLimits(object: BoardObject): { min: number, max: number } {
+  function getObjectScaleLimits(object: BoardObject): TransformScaleLimits {
     if (object.type === 'line_aoe') {
       const width = normalizeLineAoeWidth(object.width ?? 128)
       const height = normalizeLineAoeHeight(object.height ?? 128)
       return {
-        min: Math.max(MIN_LINE_AOE_DIMENSION / width, MIN_LINE_AOE_DIMENSION / height),
-        max: Math.min(MAX_LINE_AOE_WIDTH / width, MAX_LINE_AOE_HEIGHT / height),
+        minX: MIN_LINE_AOE_DIMENSION / width,
+        maxX: MAX_LINE_AOE_WIDTH / width,
+        minY: MIN_LINE_AOE_DIMENSION / height,
+        maxY: MAX_LINE_AOE_HEIGHT / height,
+        keepRatio: false,
       }
     }
     const bounds = getObjectSizeBounds(object.type)
     const size = normalizeObjectSize(object.size, object.type)
     return {
-      min: bounds.min / size,
-      max: bounds.max / size,
+      minX: bounds.min / size,
+      maxX: bounds.max / size,
+      minY: bounds.min / size,
+      maxY: bounds.max / size,
+      keepRatio: true,
     }
+  }
+
+  function canFreeScaleSelection(objects: Array<BoardObject | undefined>): boolean {
+    return objects.length > 0
+      && objects.every((object) => object && !object.locked && object.type === 'line_aoe')
   }
 
   function constrainLineAoeScale(node: KonvaNode, object: BoardObject) {

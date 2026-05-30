@@ -989,6 +989,35 @@ test('editor keeps objects stationary when transformer scaling hits the size lim
   await expect(page.locator('#object-y')).toHaveValue('192')
 })
 
+test('editor free-scales line AOE objects from side transformer handles', async ({ page }) => {
+  await page.goto('/editor')
+  await expect(page.locator('#layers')).toContainText('tank')
+
+  await page.getByRole('tab', { name: '形状' }).click()
+  await page.locator('button[title="line_aoe"]').click()
+  await expect(page.locator('#object-width')).toHaveValue('128')
+  await expect(page.locator('#object-height')).toHaveValue('128')
+
+  const canvas = page.locator('#stage-host canvas').first()
+  const box = await canvas.boundingBox()
+  if (!box) throw new Error('Canvas is not visible')
+  const point = (x: number, y: number) => ({
+    x: box.x + (x / 512) * box.width,
+    y: box.y + (y / 384) * box.height,
+  })
+  const from = point(320, 192)
+  const to = point(360, 192)
+
+  await page.mouse.move(from.x, from.y)
+  await page.mouse.down()
+  await page.mouse.move(to.x, to.y, { steps: 8 })
+  await page.mouse.up()
+
+  await expect.poll(async () => Number(await page.locator('#object-width').inputValue()))
+    .toBeGreaterThan(128)
+  await expect(page.locator('#object-height')).toHaveValue('128')
+})
+
 test('editor commits multi-selected canvas scaling in one stable batch', async ({ page }) => {
   await page.goto('/editor')
   await expect(page.locator('#layers')).toContainText('tank')
