@@ -84,6 +84,13 @@ export function bindEditorEvents({
     }, '已生成预览图', {
       busyMessage: '正在生成预览图...',
     }))
+  elements.quickOpenExportImageDialog.addEventListener('click', () =>
+    runAction(async () => {
+      await actions.renderPreview()
+      openDialog(elements.exportImageDialog)
+    }, '已生成预览图', {
+      busyMessage: '正在生成预览图...',
+    }))
   elements.assetTabBackground.addEventListener('click', () => selectAssetTab(elements, 'background'))
   elements.assetTabObjects.addEventListener('click', () => selectAssetTab(elements, 'objects'))
   elements.assetTabPresets.addEventListener('click', () => {
@@ -108,6 +115,7 @@ export function bindEditorEvents({
     runAction(actions.copyExportImage, '已复制图片'))
   elements.downloadPreviewImage.addEventListener('click', actions.downloadPreviewImage)
   elements.boardName.addEventListener('change', actions.onBoardNameChange)
+  elements.boardName.addEventListener('input', () => syncShareNameCount(elements))
   elements.newLocalBoard.addEventListener('click', actions.newLocalBoard)
   elements.saveLocalBoard.addEventListener('click', actions.saveLocalBoard)
   elements.saveAsLocalBoard.addEventListener('click', actions.saveLocalBoardAs)
@@ -400,6 +408,11 @@ function openImportDialog(elements: EditorElements) {
   elements.codeInput.value = ''
   openDialog(elements.importDialog)
   elements.codeInput.focus()
+}
+
+function syncShareNameCount(elements: EditorElements) {
+  const maxLength = elements.boardName.maxLength > 0 ? elements.boardName.maxLength : 7
+  elements.shareNameCount.textContent = `${elements.boardName.value.length}/${maxLength}`
 }
 
 function getClosestElement(target: EventTarget | null, selector: string): HTMLElement | null {

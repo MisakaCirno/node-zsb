@@ -30,6 +30,7 @@ interface FeedbackElements {
   quickSaveAsLocalBoard: AsyncButtonElement
   quickOpenImportDialog: AsyncButtonElement
   quickOpenExportCodeDialog: AsyncButtonElement
+  quickOpenExportImageDialog: AsyncButtonElement
   savePreset: AsyncButtonElement
   savePresetFromLayers: AsyncButtonElement
   boardName: DisabledElement
@@ -110,6 +111,7 @@ export function createEditorFeedback({ state, getElements }: EditorFeedbackDeps)
       elements.quickSaveAsLocalBoard,
       elements.quickOpenImportDialog,
       elements.quickOpenExportCodeDialog,
+      elements.quickOpenExportImageDialog,
       elements.savePreset,
       elements.savePresetFromLayers,
     ]) {

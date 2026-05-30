@@ -42,7 +42,10 @@
             </label>
             <label class="document-name-field share-name-field" for="board-name">
               <span id="share-name-title" class="document-name-label">分享名</span>
-              <input id="board-name" maxlength="7" placeholder="分享名" aria-labelledby="share-name-title" />
+              <span class="share-name-input-wrap">
+                <input id="board-name" maxlength="7" placeholder="分享名" aria-labelledby="share-name-title share-name-count" />
+                <output id="share-name-count" class="share-name-count" for="board-name">0/7</output>
+              </span>
             </label>
           </div>
           <div class="stage-toolbar-row stage-toolbar-main">
@@ -71,6 +74,9 @@
               </button>
               <button id="quick-open-export-code-dialog" class="icon-tool" type="button" title="导出分享码" aria-label="导出分享码">
                 <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M8 7 4 12l4 5"/><path d="m16 7 4 5-4 5"/><path d="m14 4-4 16"/></svg>
+              </button>
+              <button id="quick-open-export-image-dialog" class="icon-tool" type="button" title="导出图片" aria-label="导出图片">
+                <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="2"/><circle cx="8" cy="10" r="2"/><path d="m21 15-4.5-4.5L9 18"/></svg>
               </button>
               <div class="toolbar-separator" role="separator" aria-hidden="true"></div>
               <button id="undo-action" class="icon-tool" type="button" title="撤销" aria-label="撤销" disabled>

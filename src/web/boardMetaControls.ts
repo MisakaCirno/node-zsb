@@ -1,6 +1,7 @@
 import { getBrowserDocument } from './browser.js'
 import type {
   EditorState,
+  TextElement,
   ValueElement,
 } from './types.js'
 
@@ -13,7 +14,8 @@ interface BoardMetaControlsDeps {
 
 interface BoardMetaElements {
   background: BackgroundListElement
-  boardName: ValueElement
+  boardName: ValueElement & { maxLength: number }
+  shareNameCount: TextElement
 }
 
 interface BackgroundListElement {
@@ -51,6 +53,7 @@ export function createBoardMetaControls({
 
   function syncBoardNameInput() {
     elements.boardName.value = state.board.name ?? ''
+    syncBoardNameCount()
   }
 
   function onBackgroundChange(background: string = state.board.boardBackground) {
@@ -64,13 +67,22 @@ export function createBoardMetaControls({
   function onBoardNameChange() {
     recordHistory()
     state.board.name = elements.boardName.value
+    syncBoardNameCount()
     renderAll()
+  }
+
+  function syncBoardNameCount() {
+    const maxLength = Number(elements.boardName.maxLength) > 0
+      ? elements.boardName.maxLength
+      : 7
+    elements.shareNameCount.textContent = `${elements.boardName.value.length}/${maxLength}`
   }
 
   return {
     onBackgroundChange,
     onBoardNameChange,
     renderBackgroundOptions,
+    syncBoardNameCount,
     syncBoardNameInput,
   }
 }

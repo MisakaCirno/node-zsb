@@ -57,8 +57,10 @@ export interface EditorElements {
   quickSaveAsLocalBoard: HTMLButtonElement
   quickOpenImportDialog: HTMLButtonElement
   quickOpenExportCodeDialog: HTMLButtonElement
+  quickOpenExportImageDialog: HTMLButtonElement
   fileName: HTMLInputElement
   boardName: HTMLInputElement
+  shareNameCount: HTMLOutputElement
   paletteTabs: HTMLElement
   palette: HTMLElement
   layers: HTMLElement
@@ -207,8 +209,10 @@ export function getEditorElements(): EditorElements {
     quickSaveAsLocalBoard: queryElement('#quick-save-as-local-board', HTMLButtonElement),
     quickOpenImportDialog: queryElement('#quick-open-import-dialog', HTMLButtonElement),
     quickOpenExportCodeDialog: queryElement('#quick-open-export-code-dialog', HTMLButtonElement),
+    quickOpenExportImageDialog: queryElement('#quick-open-export-image-dialog', HTMLButtonElement),
     fileName: queryElement('#file-name', HTMLInputElement),
     boardName: queryElement('#board-name', HTMLInputElement),
+    shareNameCount: queryElement('#share-name-count', HTMLOutputElement),
     paletteTabs: queryElement('#palette-tabs', HTMLElement),
     palette: queryElement('#palette', HTMLElement),
     layers: queryElement('#layers', HTMLElement),

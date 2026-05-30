@@ -352,9 +352,13 @@ textarea {
   flex: 0 0 auto;
 }
 
+.stage-toolbar-main {
+  justify-content: flex-start;
+}
+
 .stage-document-row {
   display: grid;
-  grid-template-columns: minmax(260px, 1fr) minmax(180px, 280px);
+  grid-template-columns: minmax(260px, 1fr) minmax(150px, max-content);
   min-width: 0;
   padding: 6px 8px;
   border: 1px solid #27313a;
@@ -520,6 +524,29 @@ textarea {
 
 .share-name-field {
   margin: 0;
+}
+
+.share-name-input-wrap {
+  position: relative;
+  display: block;
+  width: 13ch;
+  min-width: 128px;
+}
+
+.share-name-input-wrap input {
+  padding-right: 42px;
+  font-variant-numeric: tabular-nums;
+}
+
+.share-name-count {
+  position: absolute;
+  top: 50%;
+  right: 9px;
+  transform: translateY(-50%);
+  color: #81909a;
+  font-size: 11px;
+  font-variant-numeric: tabular-nums;
+  pointer-events: none;
 }
 
 .layers-title {
