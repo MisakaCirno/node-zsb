@@ -19,10 +19,6 @@ import {
   DEFAULT_LINE_COLOR,
   DEFAULT_TEXT_COLOR,
   flippedScale,
-  getObjectSizeBounds,
-  MAX_LINE_AOE_HEIGHT,
-  MAX_LINE_AOE_WIDTH,
-  MIN_LINE_AOE_DIMENSION,
   normalizeLineAoeHeight,
   normalizeLineAoeWidth,
   normalizeObjectAngle,
@@ -45,6 +41,14 @@ import type {
   EditorState,
   StageLike,
 } from './types.js'
+import {
+  constrainObjectScale,
+  constrainTransformBox,
+  copyTransformBox,
+  getSelectionScaleLimits,
+  type TransformBox,
+  type TransformScaleLimits,
+} from './transformGeometry.js'
 
 declare const Konva: KonvaFactory
 
@@ -71,23 +75,9 @@ const MARQUEE_THEMES = {
 }
 
 type MarqueeMode = 'contained' | 'intersect'
-type TransformScaleLimits = {
-  minX: number
-  maxX: number
-  minY: number
-  maxY: number
-  keepRatio: boolean
-}
-
 interface Point {
   x: number
   y: number
-}
-
-interface TransformBox extends Point {
-  width: number
-  height: number
-  rotation?: number
 }
 
 interface KonvaEvent {
@@ -484,7 +474,9 @@ export function createStageRenderer({
       if (!isTransformingSelection) {
         recordHistory()
         transformStartBox = null
-        transformScaleLimits = getSelectedScaleLimits()
+        transformScaleLimits = getSelectionScaleLimits(
+          getSelectedIndexes(state).map((selectedIndex) => state.board.objects[selectedIndex]),
+        )
       }
       isTransformingSelection = true
     })
@@ -570,180 +562,28 @@ export function createStageRenderer({
 
   function constrainNodeTransform(node: KonvaNode, object: BoardObject) {
     if (object.type === 'line' || object.type === 'text') return
-    if (object.type === 'line_aoe') {
-      constrainLineAoeScale(node, object)
-      return
-    }
-    const bounds = getObjectSizeBounds(object.type)
-    node.scaleX(clampSignedScale(node.scaleX(), bounds.min / 100, bounds.max / 100))
-    node.scaleY(clampSignedScale(node.scaleY(), bounds.min / 100, bounds.max / 100))
+    const scale = constrainObjectScale(object, node.scaleX(), node.scaleY())
+    node.scaleX(scale.scaleX)
+    node.scaleY(scale.scaleY)
   }
 
   function constrainTransformerBox(oldBox: TransformBox, newBox: TransformBox): TransformBox {
-    if (transformer.getActiveAnchor?.() === 'rotater') return newBox
-    if (oldBox.width === 0 || oldBox.height === 0) return oldBox
-    if (newBox.width <= 0 || newBox.height <= 0) return oldBox
-
     transformStartBox ??= copyTransformBox(oldBox)
-    const baseBox = transformStartBox
-    const scaleX = Math.abs(newBox.width / baseBox.width)
-    const scaleY = Math.abs(newBox.height / baseBox.height)
-    const activeAnchor = transformer.getActiveAnchor?.() ?? ''
-    const uniformScale = getUniformScaleForAnchor(activeAnchor, scaleX, scaleY)
-    const limits = transformScaleLimits ?? getSelectedScaleLimits()
-    if (!limits) return newBox
-    if (limits.keepRatio) {
-      return uniformScale >= limits.minX && uniformScale <= limits.maxX
-        ? createAnchoredFixedRatioBox(baseBox, uniformScale, activeAnchor, newBox)
-        : oldBox
-    }
-    return scaleX >= limits.minX
-      && scaleX <= limits.maxX
-      && scaleY >= limits.minY
-      && scaleY <= limits.maxY
-      ? newBox
-      : oldBox
-  }
-
-  function copyTransformBox(box: TransformBox): TransformBox {
-    return {
-      x: box.x,
-      y: box.y,
-      width: box.width,
-      height: box.height,
-      rotation: box.rotation,
-    }
-  }
-
-  function createAnchoredFixedRatioBox(
-    baseBox: TransformBox,
-    scale: number,
-    anchor: string,
-    sourceBox: TransformBox,
-  ): TransformBox {
-    const width = baseBox.width * scale
-    const height = baseBox.height * scale
-    const centerX = baseBox.x + baseBox.width / 2
-    const centerY = baseBox.y + baseBox.height / 2
-    const right = baseBox.x + baseBox.width
-    const bottom = baseBox.y + baseBox.height
-    const box = {
-      x: baseBox.x,
-      y: baseBox.y,
-      width,
-      height,
-      rotation: sourceBox.rotation,
-    }
-    switch (anchor) {
-      case 'top-left':
-        box.x = right - width
-        box.y = bottom - height
-        break
-      case 'top-center':
-        box.x = centerX - width / 2
-        box.y = bottom - height
-        break
-      case 'top-right':
-        box.y = bottom - height
-        break
-      case 'middle-left':
-        box.x = right - width
-        box.y = centerY - height / 2
-        break
-      case 'middle-right':
-        box.y = centerY - height / 2
-        break
-      case 'bottom-left':
-        box.x = right - width
-        break
-      case 'bottom-center':
-        box.x = centerX - width / 2
-        break
-    }
-    return {
-      x: box.x,
-      y: box.y,
-      width: box.width,
-      height: box.height,
-      rotation: box.rotation,
-    }
-  }
-
-  function getUniformScaleForAnchor(anchor: string, scaleX: number, scaleY: number): number {
-    if (anchor === 'top-center' || anchor === 'bottom-center') return scaleY
-    if (anchor === 'middle-left' || anchor === 'middle-right') return scaleX
-    return Math.max(scaleX, scaleY)
-  }
-
-  function getSelectedScaleLimits(): TransformScaleLimits | null {
-    let minX = 0
-    let maxX = Infinity
-    let minY = 0
-    let maxY = Infinity
-    let keepRatio = true
-    let hasTransformableObject = false
-    for (const index of getSelectedIndexes(state)) {
-      const object = state.board.objects[index]
-      if (!object || object.locked || object.type === 'line' || object.type === 'text') continue
-      const limits = getObjectScaleLimits(object)
-      minX = Math.max(minX, limits.minX)
-      maxX = Math.min(maxX, limits.maxX)
-      minY = Math.max(minY, limits.minY)
-      maxY = Math.min(maxY, limits.maxY)
-      keepRatio = keepRatio && limits.keepRatio
-      hasTransformableObject = true
-    }
-    if (!hasTransformableObject) return null
-    return { minX, maxX, minY, maxY, keepRatio }
-  }
-
-  function getObjectScaleLimits(object: BoardObject): TransformScaleLimits {
-    if (object.type === 'line_aoe') {
-      const width = normalizeLineAoeWidth(object.width ?? 128)
-      const height = normalizeLineAoeHeight(object.height ?? 128)
-      return {
-        minX: MIN_LINE_AOE_DIMENSION / width,
-        maxX: MAX_LINE_AOE_WIDTH / width,
-        minY: MIN_LINE_AOE_DIMENSION / height,
-        maxY: MAX_LINE_AOE_HEIGHT / height,
-        keepRatio: false,
-      }
-    }
-    const bounds = getObjectSizeBounds(object.type)
-    const size = normalizeObjectSize(object.size, object.type)
-    return {
-      minX: bounds.min / size,
-      maxX: bounds.max / size,
-      minY: bounds.min / size,
-      maxY: bounds.max / size,
-      keepRatio: true,
-    }
+    transformScaleLimits ??= getSelectionScaleLimits(
+      getSelectedIndexes(state).map((index) => state.board.objects[index]),
+    )
+    return constrainTransformBox({
+      activeAnchor: transformer.getActiveAnchor?.() ?? '',
+      baseBox: transformStartBox,
+      limits: transformScaleLimits,
+      newBox,
+      oldBox,
+    })
   }
 
   function canFreeScaleSelection(objects: Array<BoardObject | undefined>): boolean {
     return objects.length > 0
       && objects.every((object) => object && !object.locked && object.type === 'line_aoe')
-  }
-
-  function constrainLineAoeScale(node: KonvaNode, object: BoardObject) {
-    const width = object.width ?? 128
-    const height = object.height ?? 128
-    node.scaleX(clampSignedScale(
-      node.scaleX(),
-      MIN_LINE_AOE_DIMENSION / width,
-      MAX_LINE_AOE_WIDTH / width,
-    ))
-    node.scaleY(clampSignedScale(
-      node.scaleY(),
-      MIN_LINE_AOE_DIMENSION / height,
-      MAX_LINE_AOE_HEIGHT / height,
-    ))
-  }
-
-  function clampSignedScale(value: number, min: number, max: number): number {
-    const sign = value < 0 ? -1 : 1
-    const magnitude = Math.min(max, Math.max(min, Math.abs(value)))
-    return sign * magnitude
   }
 
   function createTextNode(object: BoardObject): KonvaNode {
