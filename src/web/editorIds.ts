@@ -3,8 +3,6 @@ import type { BoardObject } from './types.js'
 const EDITOR_ID_KEY = 'editorId'
 const PURE_BOARD_EDITOR_KEYS = [
   EDITOR_ID_KEY,
-  'hidden',
-  'locked',
 ] as const
 
 export function createEditorId(prefix = 'obj'): string {

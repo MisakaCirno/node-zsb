@@ -15,7 +15,7 @@ import {
   projectToJson,
 } from '../../src/web/project.js'
 
-test('normalizeBoard assigns stable editor ids and cleanBoard strips editor-only fields', () => {
+test('normalizeBoard assigns stable editor ids and cleanBoard preserves game object flags', () => {
   const board = normalizeBoard({
     boardBackground: 'checkered',
     objects: [
@@ -27,11 +27,11 @@ test('normalizeBoard assigns stable editor ids and cleanBoard strips editor-only
   assert.match(board.objects[0].editorId, /^obj_/)
   assert.equal(board.objects[1].editorId, 'obj_existing')
   assert.equal(cleanBoard(board).objects[0].editorId, undefined)
-  assert.equal(cleanBoard(board).objects[0].hidden, undefined)
-  assert.equal(cleanBoard(board).objects[1].locked, undefined)
+  assert.equal(cleanBoard(board).objects[0].hidden, true)
+  assert.equal(cleanBoard(board).objects[1].locked, true)
 })
 
-test('editor field stripping distinguishes project metadata from pure board metadata', () => {
+test('editor field stripping keeps game-native hidden and locked flags', () => {
   const object = {
     type: 'tank',
     x: 1,
@@ -52,6 +52,8 @@ test('editor field stripping distinguishes project metadata from pure board meta
     type: 'tank',
     x: 1,
     y: 2,
+    hidden: true,
+    locked: true,
   })
 })
 
