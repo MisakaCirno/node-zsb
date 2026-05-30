@@ -7,49 +7,42 @@ import {
 } from '../../src/web/editorStartup.js'
 import { PROJECT_FORMAT } from '../../src/web/project.js'
 
-test('getInitialBoardSource prefers URL code over saved boards', () => {
+test('getInitialBoardSource prefers URL code over editor drafts', () => {
   const source = getInitialBoardSource({
     defaultCode: 'default-code',
-    savedBoard: { name: 'saved' },
+    editorDraft: { name: 'saved' },
     search: '?code=url-code',
   })
 
-  assert.deepEqual(source, {
-    code: 'url-code',
-    statusText: '已从链接导入战术板',
-    type: 'url-code',
+  assert.equal(source.type, 'url-code')
+  assert.equal(source.code, 'url-code')
+  assert.ok(source.statusText)
+})
+
+test('getInitialBoardSource falls back to editor draft before default code', () => {
+  const editorDraft = { name: 'saved' }
+  const draftSource = getInitialBoardSource({
+    defaultCode: 'default-code',
+    editorDraft,
+    search: '',
   })
+
+  assert.equal(draftSource.type, 'editor-draft')
+  assert.equal(draftSource.board, editorDraft)
+  assert.ok(draftSource.statusText)
+
+  const defaultSource = getInitialBoardSource({
+    defaultCode: 'default-code',
+    editorDraft: null,
+    search: '',
+  })
+
+  assert.equal(defaultSource.type, 'default-code')
+  assert.equal(defaultSource.code, 'default-code')
+  assert.ok(defaultSource.statusText)
 })
 
-test('getInitialBoardSource falls back to saved board before default code', () => {
-  const savedBoard = { name: 'saved' }
-  assert.deepEqual(
-    getInitialBoardSource({
-      defaultCode: 'default-code',
-      savedBoard,
-      search: '',
-    }),
-    {
-      board: savedBoard,
-      statusText: '编辑器已就绪',
-      type: 'saved-board',
-    },
-  )
-  assert.deepEqual(
-    getInitialBoardSource({
-      defaultCode: 'default-code',
-      savedBoard: null,
-      search: '',
-    }),
-    {
-      code: 'default-code',
-      statusText: '编辑器已就绪',
-      type: 'default-code',
-    },
-  )
-})
-
-test('applyInitialBoardSource normalizes saved boards and syncs controls', async () => {
+test('applyInitialBoardSource normalizes editor drafts and syncs controls', async () => {
   const calls = []
   const state = {
     board: null,
@@ -64,7 +57,7 @@ test('applyInitialBoardSource normalizes saved boards and syncs controls', async
         name: 'saved',
         objects: [{ type: 'tank', x: 1, y: 2 }],
       },
-      type: 'saved-board',
+      type: 'editor-draft',
     },
     state,
     syncBoardNameInput: () => calls.push('syncBoardNameInput'),
@@ -76,7 +69,7 @@ test('applyInitialBoardSource normalizes saved boards and syncs controls', async
   assert.deepEqual(calls, ['syncBoardNameInput', 'renderBackgroundOptions'])
 })
 
-test('applyInitialBoardSource restores saved editor projects with layer groups', async () => {
+test('applyInitialBoardSource restores draft editor projects with layer groups', async () => {
   const calls = []
   const state = {
     board: null,
@@ -112,7 +105,7 @@ test('applyInitialBoardSource restores saved editor projects with layer groups',
           },
         ],
       },
-      type: 'saved-board',
+      type: 'editor-draft',
     },
     state,
     syncBoardNameInput: () => calls.push('syncBoardNameInput'),

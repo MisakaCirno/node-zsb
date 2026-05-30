@@ -47,8 +47,8 @@ export function bindEditorEvents({
     actions.renderLocalBoards()
     openDialog(elements.localBoardDialog)
   })
-  elements.openImportDialog.addEventListener('click', () => openDialog(elements.importDialog))
-  elements.quickOpenImportDialog.addEventListener('click', () => openDialog(elements.importDialog))
+  elements.openImportDialog.addEventListener('click', () => openImportDialog(elements))
+  elements.quickOpenImportDialog.addEventListener('click', () => openImportDialog(elements))
   elements.importProjectFile.addEventListener('click', () => {
     elements.projectFileInput.value = ''
     elements.projectFileInput.click()
@@ -394,6 +394,12 @@ function selectAssetTab(elements: EditorElements, tab: 'background' | 'objects' 
 function openDialog(dialog: HTMLDialogElement) {
   if (dialog.open) return
   dialog.showModal()
+}
+
+function openImportDialog(elements: EditorElements) {
+  elements.codeInput.value = ''
+  openDialog(elements.importDialog)
+  elements.codeInput.focus()
 }
 
 function getClosestElement(target: EventTarget | null, selector: string): HTMLElement | null {

@@ -1,5 +1,5 @@
 import { createProjectFromBoard } from './project.js'
-import { persistSavedBoard } from './storage.js'
+import { persistEditorDraft } from './storage.js'
 import { renderLayers as renderLayersPanel } from './layersPanel.js'
 import type {
   EditorState,
@@ -125,7 +125,7 @@ export function createEditorRenderLoop({
     })
     const snapshot = JSON.stringify(project)
     if (!force && snapshot === lastPersistedSnapshot) return
-    if (persistSavedBoard(project)) {
+    if (persistEditorDraft(project)) {
       lastPersistedSnapshot = snapshot
     }
   }

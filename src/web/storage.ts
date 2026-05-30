@@ -36,22 +36,22 @@ import type {
 const MIN_ZOOM = ZOOM_LEVELS[0]
 const MAX_ZOOM = ZOOM_LEVELS[ZOOM_LEVELS.length - 1] ?? 2
 
-export function loadSavedBoard(): unknown | null {
+export function loadEditorDraft(): unknown | null {
   try {
     const raw = getLocalStorage().getItem(STORAGE_KEY)
     return raw ? JSON.parse(raw) : null
   } catch (error) {
-    console.warn('Failed to load saved board', error)
+    console.warn('Failed to load editor draft', error)
     return null
   }
 }
 
-export function persistSavedBoard(board: unknown): boolean {
+export function persistEditorDraft(board: unknown): boolean {
   try {
     getLocalStorage().setItem(STORAGE_KEY, JSON.stringify(board))
     return true
   } catch (error) {
-    console.warn('Failed to save board', error)
+    console.warn('Failed to save editor draft', error)
     return false
   }
 }

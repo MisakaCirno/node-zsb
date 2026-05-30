@@ -1,6 +1,6 @@
 import { normalizeBoard } from './board.js'
 import { getOptionalBrowserWindow } from './browser.js'
-import { loadSavedBoard } from './storage.js'
+import { loadEditorDraft } from './storage.js'
 import { syncFlatLayerTree } from './layerTree.js'
 import {
   createProjectSnapshot,
@@ -19,11 +19,11 @@ const READY_STATUS = '编辑器已就绪'
 
 type InitialBoardSource =
   | { code: string, statusText: string, type: 'url-code' | 'default-code' }
-  | { board: unknown, statusText: string, type: 'saved-board' }
+  | { board: unknown, statusText: string, type: 'editor-draft' }
 
 interface InitialBoardSourceOptions {
   defaultCode?: string
-  savedBoard?: unknown | null
+  editorDraft?: unknown | null
   search?: string
 }
 
@@ -49,7 +49,7 @@ interface InitializeEditorBoardDeps extends Omit<ApplyInitialBoardSourceDeps, 'e
 
 export function getInitialBoardSource({
   defaultCode = '',
-  savedBoard = loadSavedBoard(),
+  editorDraft = loadEditorDraft(),
   search = getLocationSearch(),
 }: InitialBoardSourceOptions = {}): InitialBoardSource {
   const codeFromUrl = new URLSearchParams(search).get('code')
@@ -60,11 +60,11 @@ export function getInitialBoardSource({
       type: 'url-code',
     }
   }
-  if (savedBoard) {
+  if (editorDraft) {
     return {
-      board: savedBoard,
+      board: editorDraft,
       statusText: READY_STATUS,
-      type: 'saved-board',
+      type: 'editor-draft',
     }
   }
   return {
@@ -82,7 +82,7 @@ export async function applyInitialBoardSource({
   state,
   syncBoardNameInput,
 }: ApplyInitialBoardSourceDeps) {
-  if (source.type === 'saved-board') {
+  if (source.type === 'editor-draft') {
     const project = getSavedProject(source.board)
     if (project) {
       state.board = flattenProjectToBoard(project)
@@ -119,7 +119,7 @@ export async function initializeEditorBoard({
     state,
     syncBoardNameInput,
   })
-  const project = source.type === 'saved-board' ? getSavedProject(source.board) : null
+  const project = source.type === 'editor-draft' ? getSavedProject(source.board) : null
   state.currentFileName = project?.fileName ?? ''
   state.localFileSnapshot = createProjectSnapshot(state.board, {
     fileName: state.currentFileName,

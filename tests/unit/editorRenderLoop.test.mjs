@@ -65,6 +65,15 @@ test('createEditorRenderLoop serializes overlapping render requests', async () =
     assert.equal(globalThis.localStorageWrites.length, 2)
     const updated = JSON.parse(globalThis.localStorageWrites.at(-1).value)
     assert.equal(updated.board.name, 'changed')
+
+    state.currentFileName = ''
+    state.board.name = 'unsaved draft'
+    await loop.renderAll()
+    assert.equal(globalThis.localStorageWrites.length, 3)
+    const draft = JSON.parse(globalThis.localStorageWrites.at(-1).value)
+    assert.equal(draft.format, 'node-zsb-project')
+    assert.equal(draft.fileName, '')
+    assert.equal(draft.board.name, 'unsaved draft')
   } finally {
     restoreGlobals()
   }

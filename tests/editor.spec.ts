@@ -192,6 +192,9 @@ test('editor loads, edits an object, exports code, and renders a preview', async
   await openExportCodeDialog(page)
   await expect(page.locator('#code-output')).toHaveValue(/\[stgy:/)
   await page.locator('#export-code-dialog').evaluate((dialog) => dialog.close())
+  await openImportDialog(page)
+  await expect(page.locator('#code-input')).toHaveValue('')
+  await page.locator('#import-dialog').evaluate((dialog) => dialog.close())
 
   await openExportImageDialog(page)
   await expect(page.locator('#preview-image')).toBeVisible()

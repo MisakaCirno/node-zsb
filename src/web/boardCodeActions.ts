@@ -108,7 +108,6 @@ export function createBoardCodeActions({
   async function exportAndReturnCode(): Promise<string> {
     const code = await encodeBoardCode(cleanBoard(state.board))
     elements.codeOutput.value = code
-    elements.codeInput.value = code
     return code
   }
 
