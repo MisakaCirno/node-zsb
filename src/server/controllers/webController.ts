@@ -12,6 +12,8 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url))
 const rootDir = path.resolve(__dirname, '..', '..', '..')
 const webDir = path.join(rootDir, 'src', 'web')
 const sharedDir = path.join(rootDir, 'src', 'shared')
+const scriptAssetPattern = /^[A-Za-z][A-Za-z0-9]*\.js$/
+const webAssetPattern = /^(?:[A-Za-z][A-Za-z0-9]*\.js|styles\.css)$/
 
 export const webController = new Elysia()
   .get('/editor', () => file(path.join(webDir, 'index.html')))
@@ -20,7 +22,7 @@ export const webController = new Elysia()
     ({ params }) => serveScriptOrFile(webDir, params.asset),
     {
       params: t.Object({
-        asset: t.RegExp(/^(?:[A-Za-z][A-Za-z0-9]*\.js|styles\.css)$/),
+        asset: t.RegExp(webAssetPattern),
       }),
     },
   )
@@ -29,7 +31,7 @@ export const webController = new Elysia()
     ({ params }) => serveScriptOrFile(sharedDir, params.asset),
     {
       params: t.Object({
-        asset: t.RegExp(/^(?:boardGeometry|objectRendering|textRendering)\.js$/),
+        asset: t.RegExp(scriptAssetPattern),
       }),
     },
   )
