@@ -23,22 +23,23 @@ test('createEditorRenderLoop serializes overlapping render requests', async () =
         objectRenderCount += 1
       },
     }
+    const state = {
+      board: {
+        name: 'queued',
+        boardBackground: 'checkered',
+        objects: [],
+      },
+      currentFileName: 'queued-file',
+      layerTree: [],
+      selectedIndex: -1,
+    }
     const loop = createEditorRenderLoop({
       elements: createElements(),
       onSelectObject: () => {},
       onToggleLayerFlag: () => {},
       renderInspectorPanel: () => {},
       stageRenderer,
-      state: {
-        board: {
-          name: 'queued',
-          boardBackground: 'checkered',
-          objects: [],
-        },
-        currentFileName: 'queued-file',
-        layerTree: [],
-        selectedIndex: -1,
-      },
+      state,
     })
 
     const firstRender = loop.renderAll()
@@ -51,10 +52,19 @@ test('createEditorRenderLoop serializes overlapping render requests', async () =
 
     assert.equal(boardRenderCount, 2)
     assert.equal(objectRenderCount, 2)
-    assert.equal(globalThis.localStorageWrites.length, 2)
+    assert.equal(globalThis.localStorageWrites.length, 1)
     const saved = JSON.parse(globalThis.localStorageWrites.at(-1).value)
     assert.equal(saved.format, 'node-zsb-project')
     assert.equal(saved.fileName, 'queued-file')
+
+    await loop.renderAll()
+    assert.equal(globalThis.localStorageWrites.length, 1)
+
+    state.board.name = 'changed'
+    await loop.renderAll()
+    assert.equal(globalThis.localStorageWrites.length, 2)
+    const updated = JSON.parse(globalThis.localStorageWrites.at(-1).value)
+    assert.equal(updated.board.name, 'changed')
   } finally {
     restoreGlobals()
   }

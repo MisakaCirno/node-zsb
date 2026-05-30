@@ -57,6 +57,7 @@ export function createEditorRenderLoop({
   let isRendering = false
   let needsRender = false
   let currentRender = Promise.resolve()
+  let lastPersistedSnapshot = ''
 
   function renderAll() {
     needsRender = true
@@ -84,7 +85,7 @@ export function createEditorRenderLoop({
     await stageRenderer.renderObjects()
     renderLayers()
     renderInspector()
-    persistBoard()
+    persistBoardIfChanged()
   }
 
   function renderInspector() {
@@ -110,10 +111,23 @@ export function createEditorRenderLoop({
   }
 
   function persistBoard() {
-    persistSavedBoard(createProjectFromBoard(state.board, {
+    persistProjectSnapshot({ force: true })
+  }
+
+  function persistBoardIfChanged() {
+    persistProjectSnapshot({ force: false })
+  }
+
+  function persistProjectSnapshot({ force }: { force: boolean }) {
+    const project = createProjectFromBoard(state.board, {
       fileName: state.currentFileName,
       layerTree: state.layerTree,
-    }))
+    })
+    const snapshot = JSON.stringify(project)
+    if (!force && snapshot === lastPersistedSnapshot) return
+    if (persistSavedBoard(project)) {
+      lastPersistedSnapshot = snapshot
+    }
   }
 
   return {
