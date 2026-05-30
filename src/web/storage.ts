@@ -22,8 +22,10 @@ import {
   normalizeProject,
 } from './project.js'
 import { getBrowserLocalStorage } from './browser.js'
+import { sanitizeObject } from './board.js'
 import type {
   Board,
+  BoardObject,
   EditorSettings,
   LocalBoardSlot,
   LocalFile,
@@ -202,13 +204,14 @@ function normalizePresetObjects(objects: Record<string, unknown>): Record<string
   const normalized: Record<string, Board['objects'][number]> = {}
   for (const [id, object] of Object.entries(objects)) {
     if (!id || !isRecord(object) || typeof object.type !== 'string') continue
-    normalized[id] = {
+    const sanitized = sanitizeObject({
       ...object,
       type: object.type,
       x: Number(object.x) || 0,
       y: Number(object.y) || 0,
-    } as Board['objects'][number]
-    delete normalized[id].editorId
+    } as BoardObject)
+    delete sanitized.editorId
+    normalized[id] = sanitized
   }
   return normalized
 }

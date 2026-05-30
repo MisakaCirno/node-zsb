@@ -34,6 +34,60 @@ test('insertPresetIntoBoard rejects presets that would exceed the board object l
   assert.equal(state.board.objects.length, MAX_BOARD_OBJECTS - 1)
 })
 
+test('insertPresetIntoBoard sanitizes stale preset objects before insertion', () => {
+  const state = createState()
+  const preset = {
+    id: 'preset_dirty',
+    name: 'dirty',
+    objects: {
+      text_a: {
+        type: 'text',
+        x: 40,
+        y: 50,
+        size: 200,
+        angle: 45,
+        text: 'label',
+      },
+      tank_a: {
+        type: 'tank',
+        x: 80,
+        y: 50,
+        size: 20,
+        color: '#ff0000',
+      },
+      line_aoe_a: {
+        type: 'line_aoe',
+        x: 120,
+        y: 50,
+        width: 999,
+        height: 1,
+        transparency: 120,
+      },
+    },
+    layers: [
+      { type: 'object', id: 'text_a' },
+      { type: 'object', id: 'tank_a' },
+      { type: 'object', id: 'line_aoe_a' },
+    ],
+    objectCount: 3,
+    contentHash: 'hash',
+    createdAt: '2026-01-01T00:00:00.000Z',
+    updatedAt: '2026-01-01T00:00:00.000Z',
+  }
+
+  insertPresetIntoBoard(state, preset, { point: { x: 256, y: 192 } })
+
+  const [text, tank, lineAoe] = state.board.objects
+  assert.equal(text.type, 'text')
+  assert.equal(text.size, undefined)
+  assert.equal(text.angle, undefined)
+  assert.equal(tank.size, 50)
+  assert.equal(tank.color, undefined)
+  assert.equal(lineAoe.width, 512)
+  assert.equal(lineAoe.height, 16)
+  assert.equal(lineAoe.transparency, 100)
+})
+
 function createState(objects = []) {
   return {
     board: { objects },

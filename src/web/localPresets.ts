@@ -64,9 +64,13 @@ export function insertPresetIntoBoard(
   { point }: InsertPresetOptions,
 ): InsertPresetResult | null {
   const objectIds = collectLayerObjectIds(preset.layers)
-  const sourceObjects = objectIds
-    .map((id) => preset.objects[id])
-    .filter((object): object is BoardObject => Boolean(object))
+  const sourceObjectMap = new Map<string, BoardObject>()
+  for (const id of objectIds) {
+    const object = preset.objects[id]
+    if (!object || sourceObjectMap.has(id)) continue
+    sourceObjectMap.set(id, sanitizeObject(structuredClone(object)))
+  }
+  const sourceObjects = [...sourceObjectMap.values()]
   if (sourceObjects.length === 0) return null
   if (state.board.objects.length + sourceObjects.length > MAX_BOARD_OBJECTS) return null
 
@@ -79,14 +83,13 @@ export function insertPresetIntoBoard(
   const groupIdMap = new Map<string, string>()
   const clonedObjects = new Map<string, BoardObject>()
   for (const id of objectIds) {
-    const object = preset.objects[id]
+    const object = sourceObjectMap.get(id)
     if (!object || clonedObjects.has(id)) continue
     const nextId = createEditorId('obj')
     objectIdMap.set(id, nextId)
-    clonedObjects.set(id, translateObject({
-      ...structuredClone(object),
-      editorId: nextId,
-    }, delta))
+    const clonedObject = structuredClone(object)
+    clonedObject.editorId = nextId
+    clonedObjects.set(id, translateObject(clonedObject, delta))
   }
 
   const clonedLayers = clonePresetLayers(preset.layers, objectIdMap, groupIdMap)
