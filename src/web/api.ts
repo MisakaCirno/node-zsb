@@ -13,7 +13,6 @@ interface FetchInit {
 
 interface FetchResponse {
   ok: boolean
-  json(): Promise<unknown>
   text(): Promise<string>
 }
 
@@ -55,8 +54,9 @@ export async function renderPreviewImage(code: string): Promise<unknown> {
 
 async function getJson<T>(url: string): Promise<T> {
   const response = await fetch(url)
-  if (!response.ok) throw new Error(await response.text())
-  return response.json() as Promise<T>
+  const payload = await readResponsePayload(response)
+  if (!response.ok) throw new Error(getErrorMessage(payload))
+  return payload as T
 }
 
 async function postJson<T>(url: string, body: unknown): Promise<T> {
@@ -65,9 +65,32 @@ async function postJson<T>(url: string, body: unknown): Promise<T> {
     headers: { 'content-type': 'application/json' },
     body: JSON.stringify(body),
   })
-  const payload = await response.json() as T & ApiErrorPayload
-  if (!response.ok || payload.ok === false) {
-    throw new Error(payload.error ?? '请求失败')
+  const payload = await readResponsePayload(response) as T & ApiErrorPayload
+  if (!response.ok || isApiErrorPayload(payload)) {
+    throw new Error(getErrorMessage(payload))
   }
   return payload
+}
+
+async function readResponsePayload(response: FetchResponse): Promise<unknown> {
+  const text = await response.text()
+  if (!text) return {}
+  try {
+    return JSON.parse(text) as unknown
+  } catch {
+    return text
+  }
+}
+
+function isApiErrorPayload(payload: unknown): payload is ApiErrorPayload {
+  return Boolean(payload && typeof payload === 'object' && (payload as ApiErrorPayload).ok === false)
+}
+
+function getErrorMessage(payload: unknown): string {
+  if (typeof payload === 'string' && payload.trim()) return payload
+  if (payload && typeof payload === 'object') {
+    const error = (payload as ApiErrorPayload).error
+    if (typeof error === 'string' && error.trim()) return error
+  }
+  return 'Request failed'
 }
