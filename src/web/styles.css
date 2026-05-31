@@ -177,7 +177,8 @@ textarea {
 
 .property-section {
   min-height: 0;
-  overflow: auto;
+  overflow-x: hidden;
+  overflow-y: auto;
 }
 
 .panel-height-resizer {
@@ -1098,6 +1099,14 @@ textarea {
   align-items: center;
   gap: 8px;
   margin: 8px 0;
+  min-width: 0;
+  max-width: 100%;
+}
+
+.inspector-form,
+.inspector-form .field-grid {
+  min-width: 0;
+  max-width: 100%;
 }
 
 .inspector-form .field > span,
@@ -1193,10 +1202,10 @@ textarea {
 }
 
 .color-popover {
-  position: absolute;
-  right: 0;
-  top: 42px;
-  z-index: 12;
+  position: fixed;
+  left: 0;
+  top: 0;
+  z-index: 30;
   width: 236px;
   max-width: min(236px, calc(100vw - 24px));
   display: grid;

@@ -33,9 +33,14 @@ export function bindColorPicker({
   elements,
   onChange,
 }: ColorPickerDeps) {
+  mountColorPopover(elements)
   elements.colorTrigger.addEventListener('click', (event) => {
     event.stopPropagation()
-    elements.colorPopover.classList.toggle('hidden')
+    if (elements.colorPopover.classList.contains('hidden')) {
+      showColorPopover(elements)
+    } else {
+      hideColorPopover(elements)
+    }
   })
   elements.colorText.addEventListener('input', () => {
     setColorValue(elements, elements.colorText.value, onChange)
@@ -81,8 +86,17 @@ export function bindColorPicker({
   })
   document.addEventListener('click', (event) => {
     if (elements.colorPopover.classList.contains('hidden')) return
-    if (getClosestHTMLElement(event.target, '.color-control')) return
-    elements.colorPopover.classList.add('hidden')
+    if (getClosestHTMLElement(event.target, '.color-control, .color-popover')) return
+    hideColorPopover(elements)
+  })
+  window.addEventListener('resize', () => {
+    if (!elements.colorPopover.classList.contains('hidden')) positionColorPopover(elements)
+  })
+  document.addEventListener('scroll', () => {
+    if (!elements.colorPopover.classList.contains('hidden')) positionColorPopover(elements)
+  }, true)
+  elements.colorPopover.addEventListener('keydown', (event) => {
+    if (event.key === 'Escape') hideColorPopover(elements)
   })
 }
 
@@ -141,6 +155,43 @@ function updateSaturationFromPointer(
     v: clamp01(1 - ((event.clientY - rect.top) / rect.height)),
   }
   setColorValue(elements, hsvToHex(nextHsv), onChange, { hsv: nextHsv })
+}
+
+function mountColorPopover(elements: ColorPickerElements) {
+  const mount = document.querySelector('#editor-dialog-root') ?? document.body
+  if (elements.colorPopover.parentElement !== mount) {
+    mount.append(elements.colorPopover)
+  }
+}
+
+function showColorPopover(elements: ColorPickerElements) {
+  elements.colorPopover.classList.remove('hidden')
+  positionColorPopover(elements)
+}
+
+function hideColorPopover(elements: ColorPickerElements) {
+  elements.colorPopover.classList.add('hidden')
+}
+
+function positionColorPopover(elements: ColorPickerElements) {
+  const triggerRect = elements.colorTrigger.getBoundingClientRect()
+  const popoverRect = elements.colorPopover.getBoundingClientRect()
+  const gap = 8
+  const margin = 8
+  const width = popoverRect.width
+  const height = popoverRect.height
+  const left = clampNumber(
+    triggerRect.right - width,
+    margin,
+    window.innerWidth - width - margin,
+  )
+  const belowTop = triggerRect.bottom + gap
+  const aboveTop = triggerRect.top - height - gap
+  const top = belowTop + height <= window.innerHeight - margin
+    ? belowTop
+    : Math.max(margin, aboveTop)
+  elements.colorPopover.style.left = `${Math.round(left)}px`
+  elements.colorPopover.style.top = `${Math.round(top)}px`
 }
 
 function hexToHsv(hex: string | undefined): HsvColor {
@@ -232,6 +283,10 @@ function normalizeHue(value: number) {
 
 function clamp01(value: number) {
   return Math.max(0, Math.min(1, value))
+}
+
+function clampNumber(value: number, min: number, max: number) {
+  return Math.max(min, Math.min(max, value))
 }
 
 function getClosestHTMLElement(target: EventTarget | null, selector: string): HTMLElement | null {
