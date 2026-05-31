@@ -89,26 +89,14 @@ async function getGridCanvasStats(page: Page) {
 
 async function countPresetPreviewCache(page: Page) {
   return page.evaluate(async () => {
-    const database = await new Promise<unknown | null>((resolve) => {
-      const request = (globalThis as unknown as { indexedDB: {
-        open(name: string): {
-          onerror: (() => void) | null
-          onsuccess: (() => void) | null
-          result: unknown
-        }
-      } }).indexedDB.open('node-zsb-preview-cache')
+    const database = await new Promise<IDBDatabase | null>((resolve) => {
+      const request = indexedDB.open('node-zsb-preview-cache')
       request.onsuccess = () => resolve(request.result)
       request.onerror = () => resolve(null)
     })
     if (!database) return 0
     return new Promise<number>((resolve) => {
-      const request = (database as {
-        transaction(storeName: string, mode: string): {
-          objectStore(storeName: string): {
-            count(): { onsuccess: (() => void) | null, onerror: (() => void) | null, result: number }
-          }
-        }
-      })
+      const request = database
         .transaction('preset-previews', 'readonly')
         .objectStore('preset-previews')
         .count()
@@ -163,6 +151,12 @@ async function dragLayerIntoGroup(source: Locator, target: Locator) {
       y: box.height / 2,
     },
   })
+}
+
+function numberAt(values: number[], index: number): number {
+  const value = values[index]
+  if (value === undefined) throw new Error(`Missing numeric value at index ${index}`)
+  return value
 }
 
 test('editor loads, edits an object, exports code, and renders a preview', async ({
@@ -236,8 +230,7 @@ test('editor creates an object by dragging from the palette to the canvas', asyn
   })
 
   const draftObjectCount = await page.evaluate((key) => {
-    const browserWindow = globalThis as unknown as { localStorage: Storage }
-    const raw = browserWindow.localStorage.getItem(key)
+    const raw = localStorage.getItem(key)
     if (!raw) return 0
     const draft = JSON.parse(raw)
     return Array.isArray(draft?.layers) ? draft.layers.length : 0
@@ -399,13 +392,7 @@ test('editor saves reusable presets and inserts them from the preset tab', async
   await page.evaluate(async () => {
     localStorage.removeItem('node-zsb-editor-local-presets-v1')
     await new Promise<void>((resolve) => {
-      const request = (globalThis as unknown as { indexedDB: {
-        deleteDatabase(name: string): {
-          onblocked: (() => void) | null
-          onerror: (() => void) | null
-          onsuccess: (() => void) | null
-        }
-      } }).indexedDB.deleteDatabase('node-zsb-preview-cache')
+      const request = indexedDB.deleteDatabase('node-zsb-preview-cache')
       request.onsuccess = () => resolve()
       request.onerror = () => resolve()
       request.onblocked = () => resolve()
@@ -540,13 +527,12 @@ test('editor drags nested groups back to the layer root', async ({ page }) => {
   const innerGroupId = await innerGroup.evaluate((element) =>
     (element as { dataset: { groupId?: string } }).dataset.groupId)
   await page.locator('#layers').evaluate((element, groupId) => {
-    const browserWindow = globalThis as any
-    const dataTransfer = new browserWindow.DataTransfer()
+    const dataTransfer = new DataTransfer()
     dataTransfer.setData('application/x-node-zsb-layer', JSON.stringify({
       type: 'group',
       id: groupId,
     }))
-    element.dispatchEvent(new browserWindow.DragEvent('drop', {
+    element.dispatchEvent(new DragEvent('drop', {
       bubbles: true,
       cancelable: true,
       dataTransfer,
@@ -674,7 +660,7 @@ test('editor resizes side panels and keeps object tabs visible', async ({ page }
   await page.mouse.move(resetLeftHandle.x + resetLeftHandle.width / 2 + 120, resetLeftHandle.y + 40)
   await page.mouse.up()
   const widerLeftColumns = await shellColumns()
-  expect(widerLeftColumns[0]).toBeGreaterThan(initialColumns[0])
+  expect(numberAt(widerLeftColumns, 0)).toBeGreaterThan(numberAt(initialColumns, 0))
   expect(await paletteColumnCount()).toBeGreaterThan(initialPaletteColumns)
 
   const rightHandle = await page.locator('#right-panel-resizer').boundingBox()
@@ -684,7 +670,7 @@ test('editor resizes side panels and keeps object tabs visible', async ({ page }
   await page.mouse.move(rightHandle.x + rightHandle.width / 2 - 32, rightHandle.y + 40)
   await page.mouse.up()
   const widerRightColumns = await shellColumns()
-  expect(widerRightColumns[4]).toBeGreaterThan(widerLeftColumns[4])
+  expect(numberAt(widerRightColumns, 4)).toBeGreaterThan(numberAt(widerLeftColumns, 4))
 
   const initialPropertyHeight = await rightPropertyHeight()
   const heightHandle = await page.locator('#right-panel-height-resizer').boundingBox()
@@ -699,8 +685,8 @@ test('editor resizes side panels and keeps object tabs visible', async ({ page }
   await page.reload()
   await expect(page.locator('#layers')).toContainText('tank')
   const persistedColumns = await shellColumns()
-  expect(persistedColumns[0]).toBeCloseTo(widerRightColumns[0], 0)
-  expect(persistedColumns[4]).toBeCloseTo(widerRightColumns[4], 0)
+  expect(numberAt(persistedColumns, 0)).toBeCloseTo(numberAt(widerRightColumns, 0), 0)
+  expect(numberAt(persistedColumns, 4)).toBeCloseTo(numberAt(widerRightColumns, 4), 0)
   expect(await rightPropertyHeight()).toBeCloseTo(resizedPropertyHeight, 0)
 })
 
@@ -1381,14 +1367,11 @@ test('editor reorders layers by dragging rows', async ({ page }) => {
     const source = rows.find((row) => row.textContent?.includes('text'))
     const target = rows[targetIndex]
     if (!source || !target) throw new Error('Layer rows are not available')
-    const browserWindow = globalThis as any
-    const DataTransferCtor = browserWindow.DataTransfer
-    const DragEventCtor = browserWindow.DragEvent
-    const dataTransfer = new DataTransferCtor()
-    source.dispatchEvent(new DragEventCtor('dragstart', { bubbles: true, dataTransfer }))
-    target.dispatchEvent(new DragEventCtor('dragover', { bubbles: true, dataTransfer }))
-    target.dispatchEvent(new DragEventCtor('drop', { bubbles: true, dataTransfer }))
-    source.dispatchEvent(new DragEventCtor('dragend', { bubbles: true, dataTransfer }))
+    const dataTransfer = new DataTransfer()
+    source.dispatchEvent(new DragEvent('dragstart', { bubbles: true, dataTransfer }))
+    target.dispatchEvent(new DragEvent('dragover', { bubbles: true, dataTransfer }))
+    target.dispatchEvent(new DragEvent('drop', { bubbles: true, dataTransfer }))
+    source.dispatchEvent(new DragEvent('dragend', { bubbles: true, dataTransfer }))
   }, layerCount - 2)
   await expect(page.locator('#layers .layer-row').nth(layerCount - 2)).toContainText('text')
 
@@ -1965,7 +1948,7 @@ test('editor shows inspector fields that match the selected object type', async 
   await expect(page.locator('#object-text')).toHaveValue('A B')
   await expect(page.locator('#object-text-count')).toHaveText('3/30')
   const selectedTextBorderPixels = await page.evaluate(() => {
-    const canvases = Array.from((globalThis as any).document.querySelectorAll('#stage-host canvas')) as any[]
+    const canvases = Array.from(document.querySelectorAll<HTMLCanvasElement>('#stage-host canvas'))
     return canvases.reduce<number>((count, canvas) => {
       const context = canvas.getContext('2d')
       if (!context) return count

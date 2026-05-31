@@ -7,12 +7,35 @@ import {
   mountDialogOnce,
 } from '../../src/web/dialogBuilder.js'
 
-type FakeElement = any
+interface FakeElement {
+  attributes: Record<string, string>
+  children: FakeElement[]
+  className: string
+  disabled: boolean
+  id: string
+  method: string
+  parentElement: FakeElement | null
+  readOnly: boolean
+  spellcheck: boolean
+  tagName: string
+  textContent: string
+  type: string
+  value: string
+  append(...nodes: FakeElement[]): void
+  setAttribute(name: string, value: string): void
+}
+
+interface FakeDocument {
+  body: FakeElement
+  createElement(tagName: string): FakeElement
+  getElementById(id: string): FakeElement | null
+  querySelector(selector: string): FakeElement | null
+}
 
 test('createEditorDialog builds the shared dialog shell and close button contract', () => {
   withFakeDocument(() => {
     const body = document.createElement('div')
-    const dialog = createEditorDialog({
+    const dialog = asFakeElement(createEditorDialog({
       id: 'sample-dialog',
       title: '示例弹窗',
       titleId: 'sample-title',
@@ -26,38 +49,40 @@ test('createEditorDialog builds the shared dialog shell and close button contrac
           type: 'button',
         },
       ],
-    }) as unknown as FakeElement
+    }))
 
     assert.equal(dialog.tagName, 'DIALOG')
     assert.equal(dialog.id, 'sample-dialog')
     assert.equal(dialog.className, 'editor-dialog compact-dialog')
 
-    const [form] = dialog.children
+    const form = childAt(dialog, 0)
     assert.equal(form.tagName, 'FORM')
     assert.equal(form.method, 'dialog')
     assert.equal(form.className, 'dialog-panel')
 
-    const [header, content, footer] = form.children
+    const header = childAt(form, 0)
+    const content = childAt(form, 1)
+    const footer = childAt(form, 2)
     assert.equal(header.className, 'dialog-header')
-    assert.equal(header.children[0].tagName, 'H2')
-    assert.equal(header.children[0].id, 'sample-title')
-    assert.equal(header.children[0].textContent, '示例弹窗')
-    assert.equal(header.children[1].id, 'close-sample-dialog')
-    assert.equal(header.children[1].type, 'submit')
-    assert.equal(header.children[1].value, 'cancel')
-    assert.equal(header.children[1].attributes['aria-label'], '关闭')
+    assert.equal(header.children[0]!.tagName, 'H2')
+    assert.equal(header.children[0]!.id, 'sample-title')
+    assert.equal(header.children[0]!.textContent, '示例弹窗')
+    assert.equal(header.children[1]!.id, 'close-sample-dialog')
+    assert.equal(header.children[1]!.type, 'submit')
+    assert.equal(header.children[1]!.value, 'cancel')
+    assert.equal(header.children[1]!.attributes['aria-label'], '关闭')
 
     assert.equal(content, body)
     assert.equal(footer.className, 'dialog-actions')
-    assert.equal(footer.children[0].id, 'run-action')
-    assert.equal(footer.children[0].type, 'button')
-    assert.equal(footer.children[0].textContent, '执行')
+    assert.equal(footer.children[0]!.id, 'run-action')
+    assert.equal(footer.children[0]!.type, 'button')
+    assert.equal(footer.children[0]!.textContent, '执行')
   })
 })
 
 test('createEditorDialog defaults action buttons to submit', () => {
   withFakeDocument(() => {
-    const dialog = createEditorDialog({
+    const dialog = asFakeElement(createEditorDialog({
       id: 'submit-dialog',
       title: '提交弹窗',
       body: [],
@@ -68,10 +93,10 @@ test('createEditorDialog defaults action buttons to submit', () => {
           value: 'confirm',
         },
       ],
-    }) as unknown as FakeElement
+    }))
 
-    const footer = dialog.children[0].children[1]
-    const button = footer.children[0]
+    const footer = dialog.children[0]!.children[1]!
+    const button = footer.children[0]!
     assert.equal(button.type, 'submit')
     assert.equal(button.value, 'confirm')
   })
@@ -79,20 +104,20 @@ test('createEditorDialog defaults action buttons to submit', () => {
 
 test('createTextareaField preserves readonly and spellcheck contracts', () => {
   withFakeDocument(() => {
-    const field = createTextareaField({
+    const field = asFakeElement(createTextareaField({
       id: 'code-output',
       label: '分享码',
       readonly: true,
-    }) as unknown as FakeElement
+    }))
 
     assert.equal(field.tagName, 'LABEL')
     assert.equal(field.className, 'field')
-    assert.equal(field.children[0].tagName, 'SPAN')
-    assert.equal(field.children[0].textContent, '分享码')
-    assert.equal(field.children[1].tagName, 'TEXTAREA')
-    assert.equal(field.children[1].id, 'code-output')
-    assert.equal(field.children[1].readOnly, true)
-    assert.equal(field.children[1].spellcheck, false)
+    assert.equal(field.children[0]!.tagName, 'SPAN')
+    assert.equal(field.children[0]!.textContent, '分享码')
+    assert.equal(field.children[1]!.tagName, 'TEXTAREA')
+    assert.equal(field.children[1]!.id, 'code-output')
+    assert.equal(field.children[1]!.readOnly, true)
+    assert.equal(field.children[1]!.spellcheck, false)
   })
 })
 
@@ -112,21 +137,23 @@ test('mountDialogOnce appends a dialog only when the id is not already mounted',
 })
 
 function withFakeDocument(callback: () => void) {
-  const globals = globalThis as typeof globalThis & { document?: Document }
-  const previousDocument = globals.document
-  globals.document = createFakeDocument() as unknown as Document
+  const previousDocument = Object.getOwnPropertyDescriptor(globalThis, 'document')
+  Object.defineProperty(globalThis, 'document', {
+    configurable: true,
+    value: createFakeDocument(),
+  })
   try {
     callback()
   } finally {
-    if (previousDocument === undefined) {
-      delete globals.document
+    if (previousDocument) {
+      Object.defineProperty(globalThis, 'document', previousDocument)
     } else {
-      globals.document = previousDocument
+      Reflect.deleteProperty(globalThis, 'document')
     }
   }
 }
 
-function createFakeDocument() {
+function createFakeDocument(): FakeDocument {
   const body = createFakeElement('body')
   return {
     body,
@@ -140,7 +167,7 @@ function createFakeDocument() {
   }
 }
 
-function createFakeElement(tagName: string) {
+function createFakeElement(tagName: string): FakeElement {
   return {
     attributes: {} as Record<string, string>,
     children: [] as FakeElement[],
@@ -165,6 +192,16 @@ function createFakeElement(tagName: string) {
       this.attributes[name] = String(value)
     },
   }
+}
+
+function childAt(element: FakeElement, index: number): FakeElement {
+  const child = element.children[index]
+  assert.ok(child)
+  return child
+}
+
+function asFakeElement(element: Element): FakeElement {
+  return element as unknown as FakeElement
 }
 
 function findById(element: FakeElement, id: string): FakeElement | null {

@@ -1,6 +1,6 @@
 type MenuKey = 'ArrowDown' | 'ArrowUp' | 'Home' | 'End'
 
-export function bindMenuBar(elements: unknown) {
+export function bindMenuBar() {
   const triggers = getMenuTriggers()
   const menus = getMenus()
 
@@ -8,15 +8,15 @@ export function bindMenuBar(elements: unknown) {
     trigger.addEventListener('click', (event: MouseEvent) => {
       event.stopPropagation()
       if (isMenuOpen(trigger)) {
-        closeAllMenus(elements)
+        closeAllMenus()
         return
       }
-      openMenu(trigger, elements)
+      openMenu(trigger)
     })
     trigger.addEventListener('keydown', (event: KeyboardEvent) => {
       if (event.key !== 'ArrowDown') return
       event.preventDefault()
-      openMenu(trigger, elements)
+      openMenu(trigger)
       focusFirstMenuItem(getControlledMenu(trigger))
     })
   }
@@ -24,11 +24,11 @@ export function bindMenuBar(elements: unknown) {
   for (const menu of menus) {
     menu.addEventListener('click', (event: MouseEvent) => {
       const button = getClosestElement(event.target, 'button')
-      if (button && !button.disabled) closeAllMenus(elements)
+      if (button && !button.disabled) closeAllMenus()
     })
     menu.addEventListener('keydown', (event: KeyboardEvent) => {
       if (event.key === 'Escape') {
-        closeAllMenus(elements)
+        closeAllMenus()
         getOpenTrigger()?.focus()
         return
       }
@@ -42,10 +42,10 @@ export function bindMenuBar(elements: unknown) {
     if (!(event.target instanceof Node)) return
     const clickedMenu = menus.some((menu) => menu.contains(event.target as Node))
     const clickedTrigger = triggers.some((trigger) => trigger.contains(event.target as Node))
-    if (!clickedMenu && !clickedTrigger) closeAllMenus(elements)
+    if (!clickedMenu && !clickedTrigger) closeAllMenus()
   })
   document.addEventListener('keydown', (event: KeyboardEvent) => {
-    if (event.key === 'Escape') closeAllMenus(elements)
+    if (event.key === 'Escape') closeAllMenus()
   })
   window.addEventListener('resize', () => {
     const trigger = getOpenTrigger()
@@ -63,8 +63,8 @@ function getMenus(): HTMLElement[] {
     .filter((menu): menu is HTMLElement => Boolean(menu))
 }
 
-function openMenu(trigger: HTMLElement, elements: unknown) {
-  closeAllMenus(elements)
+function openMenu(trigger: HTMLElement) {
+  closeAllMenus()
   const menu = getControlledMenu(trigger)
   if (!menu) return
   menu.classList.remove('hidden')
@@ -72,7 +72,7 @@ function openMenu(trigger: HTMLElement, elements: unknown) {
   positionMenu(trigger)
 }
 
-function closeAllMenus(elements: unknown) {
+function closeAllMenus() {
   for (const trigger of getMenuTriggers()) {
     trigger.setAttribute('aria-expanded', 'false')
   }

@@ -2,25 +2,20 @@ import assert from 'node:assert/strict'
 import test from 'node:test'
 
 import { createEditorContext } from '../../src/web/editorContext.js'
+import { createEditorState } from '../../src/web/editorState.js'
 
 test('createEditorContext selects, deselects, and reads the current object', () => {
-  const state = {
-    board: {
-      objects: [
-        { type: 'tank', x: 1, y: 2 },
-        { type: 'text', x: 3, y: 4 },
-      ],
-    },
-    selectedIndex: -1,
-    selectedGroupId: 'grp_1',
-    revealSelectedLayer: true,
-    snapToGrid: false,
-    gridSize: 16,
-  }
-  const statuses = []
+  const state = createEditorState()
+  state.board.objects = [
+    { type: 'tank', x: 1, y: 2 },
+    { type: 'text', x: 3, y: 4 },
+  ]
+  state.selectedGroupId = 'grp_1'
+  state.revealSelectedLayer = true
+  const statuses: string[] = []
   let renderCount = 0
   const context = createEditorContext({
-    state: state as any,
+    state,
     renderAll: () => {
       renderCount += 1
     },
@@ -42,14 +37,9 @@ test('createEditorContext selects, deselects, and reads the current object', () 
 })
 
 test('createEditorContext normalizes coordinates with the snap toggle', () => {
-  const state = {
-    board: { objects: [] },
-    selectedIndex: -1,
-    snapToGrid: false,
-    gridSize: 16,
-  }
+  const state = createEditorState()
   const context = createEditorContext({
-    state: state as any,
+    state,
     renderAll: () => {},
     showStatus: () => {},
   })
@@ -67,22 +57,15 @@ test('createEditorContext normalizes coordinates with the snap toggle', () => {
 })
 
 test('createEditorContext range-selects objects from the primary selection', () => {
-  const state = {
-    board: {
-      objects: [
-        { type: 'tank' },
-        { type: 'healer' },
-        { type: 'dps' },
-        { type: 'text' },
-      ],
-    },
-    selectedIndex: -1,
-    selectedIndexes: [],
-    snapToGrid: false,
-    gridSize: 16,
-  }
+  const state = createEditorState()
+  state.board.objects = [
+    { type: 'tank', x: 0, y: 0 },
+    { type: 'healer', x: 0, y: 0 },
+    { type: 'dps', x: 0, y: 0 },
+    { type: 'text', x: 0, y: 0 },
+  ]
   const context = createEditorContext({
-    state: state as any,
+    state,
     renderAll: () => {},
     showStatus: () => {},
   })

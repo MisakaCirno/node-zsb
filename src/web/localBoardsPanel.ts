@@ -120,10 +120,6 @@ interface FileNameRequest {
   validate?: ((fileName: string) => string) | null
 }
 
-interface RenderPreviewResponse {
-  hash: string
-}
-
 export function createLocalBoardsPanel({
   state,
   elements,
@@ -585,7 +581,7 @@ export function createLocalBoardsPanel({
   async function createPreview(board: Board) {
     try {
       const code = await encodeBoardCode(board)
-      const data = await renderPreviewImage(code) as RenderPreviewResponse
+      const data = await renderPreviewImage(code)
       return `/preview/${data.hash}.webp`
     } catch (error) {
       console.warn('Failed to create local file preview', error)

@@ -47,13 +47,18 @@ test('loadLocalPresets sanitizes stale objects from local storage', () => {
   })
   try {
     const [preset] = loadLocalPresets()
+    assert.ok(preset)
 
-    assert.equal(preset.objects.text_a.editorId, undefined)
-    assert.equal(preset.objects.text_a.size, undefined)
-    assert.equal(preset.objects.text_a.angle, undefined)
-    assert.equal(preset.objects.line_aoe_a.width, 512)
-    assert.equal(preset.objects.line_aoe_a.height, 16)
-    assert.equal(preset.objects.line_aoe_a.transparency, 100)
+    const text = preset.objects.text_a
+    const lineAoe = preset.objects.line_aoe_a
+    assert.ok(text)
+    assert.ok(lineAoe)
+    assert.equal(text.editorId, undefined)
+    assert.equal(text.size, undefined)
+    assert.equal(text.angle, undefined)
+    assert.equal(lineAoe.width, 512)
+    assert.equal(lineAoe.height, 16)
+    assert.equal(lineAoe.transparency, 100)
   } finally {
     restoreLocalStorage()
   }
@@ -64,11 +69,11 @@ test('persistLocalFilesDetailed saves beyond the old fixed file count', () => {
   try {
     const files = Array.from({ length: 25 }, (_, index) => ({
       name: `File ${index + 1}`,
-      board: { objects: [] },
+      board: { objects: [] as never[] },
     }))
 
     assert.deepEqual(persistLocalFilesDetailed(files), { ok: true })
-    const stored = JSON.parse(window.localStorage.getItem(LOCAL_FILES_KEY))
+    const stored = JSON.parse(window.localStorage.getItem(LOCAL_FILES_KEY) ?? '[]')
     assert.equal(stored.length, 25)
   } finally {
     restoreLocalStorage()
@@ -90,7 +95,7 @@ test('persistLocalFilesDetailed reports browser quota failures', () => {
   console.warn = () => {}
   try {
     const result = persistLocalFilesDetailed([
-      { name: 'Full', board: { objects: [] } },
+      { name: 'Full', board: { objects: [] as never[] } },
     ])
 
     assert.deepEqual(result, { ok: false, reason: 'quota' })
@@ -134,13 +139,13 @@ function withLocalStorage(
         get length() {
           return Object.keys(entries).length
         },
-        key(index) {
+        key(index: number) {
           return Object.keys(entries)[index] ?? null
         },
-        getItem(key) {
+        getItem(key: string) {
           return entries[key] ?? null
         },
-        setItem(key, value) {
+        setItem(key: string, value: string) {
           if (overrides.setItem) {
             overrides.setItem(key, value)
             return
@@ -154,7 +159,7 @@ function withLocalStorage(
     if (originalWindow) {
       Object.defineProperty(globalThis, 'window', originalWindow)
     } else {
-      delete globalThis.window
+      delete (globalThis as { window?: unknown }).window
     }
   }
 }

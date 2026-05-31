@@ -24,8 +24,13 @@ interface EncodeBoardPayload {
   code: string
 }
 
+export interface RenderPreviewData {
+  hash: string
+  thumbhash: string
+}
+
 interface RenderPreviewPayload {
-  data: unknown
+  data: RenderPreviewData
 }
 
 interface ApiErrorPayload {
@@ -47,7 +52,7 @@ export async function encodeBoardCode(board: Board, key = 14): Promise<string> {
   return payload.code
 }
 
-export async function renderPreviewImage(code: string): Promise<unknown> {
+export async function renderPreviewImage(code: string): Promise<RenderPreviewData> {
   const payload = await postJson<RenderPreviewPayload>('/board/render', { code })
   return payload.data
 }

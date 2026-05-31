@@ -2,70 +2,76 @@ import assert from 'node:assert/strict'
 import test from 'node:test'
 
 import { createEditorActionRegistry } from '../../src/web/editorActionRegistry.js'
+import type { EditorActionRegistry } from '../../src/web/types.js'
+
+type ActionHandlers = {
+  [Key in keyof EditorActionRegistry]: EditorActionRegistry[Key]
+}
 
 test('createEditorActionRegistry exposes the event binding action surface', () => {
+  const actionNames = [
+    'applyFitZoom',
+    'applyFitZoomOnResize',
+    'addObjectAt',
+    'alignSelected',
+    'clearBoard',
+    'copyExportCode',
+    'copyExportImage',
+    'copySelected',
+    'deletePreset',
+    'deleteLocalBoard',
+    'deleteSelectedLocalBoards',
+    'deleteSelected',
+    'deselect',
+    'downloadPreviewImage',
+    'downloadProjectFile',
+    'duplicateSelected',
+    'exportCode',
+    'importProjectFile',
+    'insertPresetAt',
+    'getLastLayerIndex',
+    'groupSelected',
+    'moveLayerNodeAfter',
+    'moveLayerNodeBefore',
+    'moveLayerNodeIntoGroup',
+    'moveLayerNodeToRoot',
+    'ungroupSelectedGroup',
+    'toggleLayerGroup',
+    'toggleLayerGroupFlag',
+    'renameLayerGroup',
+    'loadFromCode',
+    'loadLocalBoard',
+    'moveSelected',
+    'moveSelectedTo',
+    'newLocalBoard',
+    'nudgeSelected',
+    'onBackgroundChange',
+    'onBoardNameChange',
+    'pasteObject',
+    'redo',
+    'renderLocalBoards',
+    'renderLocalPresets',
+    'renderPreview',
+    'saveLocalBoard',
+    'saveLocalBoardAs',
+    'saveSelectedPreset',
+    'selectLayerGroup',
+    'selectObject',
+    'setGridDensity',
+    'setGridOpacity',
+    'setStageZoom',
+    'stepZoom',
+    'toggleGrid',
+    'toggleLayerFlagForSelection',
+    'toggleSnapToGrid',
+    'undo',
+    'updateLocalBoardButtons',
+    'updatePresetButtons',
+    'updateSelectedFromInspector',
+  ] as const satisfies readonly (keyof EditorActionRegistry)[]
   const handlers = Object.fromEntries(
-    [
-      'applyFitZoom',
-      'applyFitZoomOnResize',
-      'addObjectAt',
-      'alignSelected',
-      'clearBoard',
-      'copyExportCode',
-      'copyExportImage',
-      'copySelected',
-      'deletePreset',
-      'deleteLocalBoard',
-      'deleteSelectedLocalBoards',
-      'deleteSelected',
-      'deselect',
-      'downloadPreviewImage',
-      'downloadProjectFile',
-      'duplicateSelected',
-      'exportCode',
-      'importProjectFile',
-      'insertPresetAt',
-      'getLastLayerIndex',
-      'groupSelected',
-      'moveLayerNodeAfter',
-      'moveLayerNodeBefore',
-      'moveLayerNodeIntoGroup',
-      'moveLayerNodeToRoot',
-      'ungroupSelectedGroup',
-      'toggleLayerGroup',
-      'toggleLayerGroupFlag',
-      'renameLayerGroup',
-      'loadFromCode',
-      'loadLocalBoard',
-      'moveSelected',
-      'moveSelectedTo',
-      'newLocalBoard',
-      'nudgeSelected',
-      'onBackgroundChange',
-      'onBoardNameChange',
-      'pasteObject',
-      'redo',
-      'renderLocalBoards',
-      'renderLocalPresets',
-      'renderPreview',
-      'saveLocalBoard',
-      'saveLocalBoardAs',
-      'saveSelectedPreset',
-      'selectLayerGroup',
-      'selectObject',
-      'setGridDensity',
-      'setGridOpacity',
-      'setStageZoom',
-      'stepZoom',
-      'toggleGrid',
-      'toggleLayerFlagForSelection',
-      'toggleSnapToGrid',
-      'undo',
-      'updateLocalBoardButtons',
-      'updatePresetButtons',
-      'updateSelectedFromInspector',
-    ].map((name) => [name, () => name]),
-  ) as Record<string, any>
+    actionNames.map((name) => [name, () => name]),
+  ) as unknown as ActionHandlers
 
   const actions = createEditorActionRegistry({
     boardCodeActions: {
@@ -79,24 +85,35 @@ test('createEditorActionRegistry exposes the event binding action surface', () =
     boardMetaControls: {
       onBackgroundChange: handlers.onBackgroundChange,
       onBoardNameChange: handlers.onBoardNameChange,
+      renderBackgroundOptions: () => {},
+      syncBoardNameInput: () => {},
     },
     editorContext: {
       deselect: handlers.deselect,
+      getSelected: () => undefined,
+      getSelectedList: () => [],
+      getSnapStep: () => 0,
+      normalizeCoordinate: (value: number) => value,
+      normalizePoint: (x: number, y: number) => ({ x, y }),
       selectLayerGroup: handlers.selectLayerGroup,
       selectObject: handlers.selectObject,
+      selectObjects: () => {},
     },
     historyControls: {
       redo: handlers.redo,
       undo: handlers.undo,
     },
     inspectorControls: {
+      renderInspector: () => {},
       updateSelectedFromInspector: handlers.updateSelectedFromInspector,
+      updateSelectionActions: () => {},
     },
     localBoardsPanel: {
       deleteLocalBoard: handlers.deleteLocalBoard,
       deleteSelectedLocalBoards: handlers.deleteSelectedLocalBoards,
       loadLocalBoard: handlers.loadLocalBoard,
       newLocalBoard: handlers.newLocalBoard,
+      renameLocalBoard: async () => true,
       renderLocalBoards: handlers.renderLocalBoards,
       saveLocalBoard: handlers.saveLocalBoard,
       saveLocalBoardAs: handlers.saveLocalBoardAs,
@@ -110,6 +127,7 @@ test('createEditorActionRegistry exposes the event binding action surface', () =
       updatePresetButtons: handlers.updatePresetButtons,
     },
     objectCommands: {
+      addObject: () => {},
       alignSelected: handlers.alignSelected,
       clearBoard: handlers.clearBoard,
       copySelected: handlers.copySelected,
@@ -130,6 +148,8 @@ test('createEditorActionRegistry exposes the event binding action surface', () =
       moveSelectedTo: handlers.moveSelectedTo,
       nudgeSelected: handlers.nudgeSelected,
       pasteObject: handlers.pasteObject,
+      reorderLayer: () => {},
+      toggleLayerFlag: () => {},
       toggleSelectedLayerFlag: handlers.toggleLayerFlagForSelection,
     },
     projectFileActions: {
@@ -139,17 +159,20 @@ test('createEditorActionRegistry exposes the event binding action surface', () =
     viewportControls: {
       applyFitZoom: handlers.applyFitZoom,
       applyFitZoomOnResize: handlers.applyFitZoomOnResize,
+      applyInitialZoom: () => {},
       setGridDensity: handlers.setGridDensity,
       setGridOpacity: handlers.setGridOpacity,
       setStageZoom: handlers.setStageZoom,
       stepZoom: handlers.stepZoom,
       toggleGrid: handlers.toggleGrid,
       toggleSnapToGrid: handlers.toggleSnapToGrid,
+      syncControlStateFromDom: () => {},
     },
-  } as any) as unknown as Record<string, unknown>
+  })
 
   assert.deepEqual(Object.keys(actions).sort(), Object.keys(handlers).sort())
-  for (const [name, handler] of Object.entries(handlers)) {
+  for (const name of actionNames) {
+    const handler = handlers[name]
     assert.equal(actions[name], handler)
   }
 })

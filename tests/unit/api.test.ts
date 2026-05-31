@@ -6,6 +6,19 @@ import {
   encodeBoardCode,
 } from '../../src/web/api.js'
 
+interface TestFetchInit {
+  body: string
+  headers?: Record<string, string>
+  method?: string
+}
+
+interface TestResponse {
+  ok: boolean
+  text(): Promise<string>
+}
+
+type TestFetch = (url: string, init: TestFetchInit) => Promise<TestResponse>
+
 test('decodeBoardCode parses JSON responses and sends the input code', async () => {
   const restoreFetch = withFetch(async (url, init) => {
     assert.equal(url, '/utils/code2json')
@@ -44,7 +57,7 @@ test('encodeBoardCode reports plain text server errors', async () => {
   }
 })
 
-function createResponse(ok, text) {
+function createResponse(ok: boolean, text: string): TestResponse {
   return {
     ok,
     async text() {
@@ -53,7 +66,8 @@ function createResponse(ok, text) {
   }
 }
 
-function withFetch(fetchImpl) {
+function withFetch(fetchImpl: TestFetch) {
+  const globals = globalThis as { fetch?: unknown }
   const originalFetch = Object.getOwnPropertyDescriptor(globalThis, 'fetch')
   Object.defineProperty(globalThis, 'fetch', {
     configurable: true,
@@ -63,7 +77,7 @@ function withFetch(fetchImpl) {
     if (originalFetch) {
       Object.defineProperty(globalThis, 'fetch', originalFetch)
     } else {
-      delete globalThis.fetch
+      delete globals.fetch
     }
   }
 }

@@ -3,12 +3,40 @@ import test from 'node:test'
 
 import { createNameDialogController } from '../../src/web/nameDialog.js'
 
+type NameDialogElements = Parameters<typeof createNameDialogController>[0]['elements']
+type DialogCloseListener = () => void
+type InputListener = () => void
+
+interface FakeSubmitEvent {
+  preventDefault(): void
+  submitter?: { value?: string } | null
+}
+
+type SubmitListener = (event: FakeSubmitEvent) => void
+
+type FakeDialog = NameDialogElements['dialog'] & {
+  dispatchClose(): void
+  showModalCount: number
+}
+
+interface FakeForm {
+  addEventListener(type: 'submit', listener: SubmitListener): void
+  dispatchSubmit(event: FakeSubmitEvent): void
+}
+
+type FakeInput = NameDialogElements['input'] & {
+  attributes: Record<string, string>
+  dispatchInput(): void
+  focusCount: number
+  selectCount: number
+}
+
 test('createNameDialogController validates input and resolves confirmed names', async () => {
   const form = createFakeForm()
   const dialog = createFakeDialog(form)
   const input = createFakeInput()
-  const error = { textContent: null }
-  const title = { textContent: null }
+  const error: NameDialogElements['error'] = { textContent: null }
+  const title: NonNullable<NameDialogElements['title']> = { textContent: null }
   const controller = createNameDialogController({
     elements: {
       dialog,
@@ -83,18 +111,18 @@ test('createNameDialogController resolves an empty name when cancelled', async (
   assert.equal(await request, '')
 })
 
-function createFakeDialog(form) {
-  const listeners = new Map()
+function createFakeDialog(form: FakeForm): FakeDialog {
+  const listeners = new Map<string, DialogCloseListener>()
   return {
     returnValue: '',
     showModalCount: 0,
     showModal() {
       this.showModalCount += 1
     },
-    querySelector(selector) {
-      return selector === 'form' ? form : null
+    querySelector() {
+      return form
     },
-    addEventListener(type, listener) {
+    addEventListener(type: 'close', listener: DialogCloseListener) {
       listeners.set(type, listener)
     },
     dispatchClose() {
@@ -103,28 +131,28 @@ function createFakeDialog(form) {
   }
 }
 
-function createFakeForm() {
-  let submitListener = null
+function createFakeForm(): FakeForm {
+  let submitListener: SubmitListener | null = null
   return {
-    addEventListener(type, listener) {
+    addEventListener(type: 'submit', listener: SubmitListener) {
       if (type === 'submit') {
         submitListener = listener
       }
     },
-    dispatchSubmit(event) {
+    dispatchSubmit(event: FakeSubmitEvent) {
       submitListener?.(event)
     },
   }
 }
 
-function createFakeInput() {
-  const listeners = new Map()
+function createFakeInput(): FakeInput {
+  const listeners = new Map<string, InputListener>()
   return {
     attributes: {},
     focusCount: 0,
     selectCount: 0,
     value: '',
-    addEventListener(type, listener) {
+    addEventListener(type: 'input', listener: InputListener) {
       listeners.set(type, listener)
     },
     dispatchInput() {
@@ -136,7 +164,7 @@ function createFakeInput() {
     select() {
       this.selectCount += 1
     },
-    setAttribute(name, value) {
+    setAttribute(name: string, value: string) {
       this.attributes[name] = value
     },
   }

@@ -2,18 +2,33 @@ import assert from 'node:assert/strict'
 import test from 'node:test'
 
 import { createEditorRenderLoop } from '../../src/web/editorRenderLoop.js'
+import { createEditorState } from '../../src/web/editorState.js'
+
+type RenderLoopDeps = Parameters<typeof createEditorRenderLoop>[0]
+
+interface FakeElement {
+  children: unknown[]
+  classList: {
+    toggle(): void
+  }
+  innerHTML: string
+  textContent: string
+  append(child: unknown): void
+}
 
 test('createEditorRenderLoop serializes overlapping render requests', async () => {
   const restoreGlobals = installBrowserMocks()
   try {
-    let releaseFirstBoard
+    let releaseFirstBoard: () => void = () => {
+      throw new Error('First board render was not queued')
+    }
     let boardRenderCount = 0
     let objectRenderCount = 0
-    const stageRenderer = {
+    const stageRenderer: RenderLoopDeps['stageRenderer'] = {
       async renderBoard() {
         boardRenderCount += 1
         if (boardRenderCount === 1) {
-          await new Promise((resolve) => {
+          await new Promise<void>((resolve) => {
             releaseFirstBoard = resolve
           })
         }
@@ -23,24 +38,26 @@ test('createEditorRenderLoop serializes overlapping render requests', async () =
         objectRenderCount += 1
       },
     }
-    const state = {
-      board: {
-        name: 'queued',
-        boardBackground: 'checkered',
-        objects: [],
-      },
-      currentFileName: 'queued-file',
-      layerTree: [],
-      selectedIndex: -1,
-    }
+    const state = createEditorState()
+    state.board.name = 'queued'
+    state.currentFileName = 'queued-file'
     const loop = createEditorRenderLoop({
       elements: createElements(),
+      onMoveLayerNodeAfter: () => {},
+      onMoveLayerNodeBefore: () => {},
+      onMoveLayerNodeIntoGroup: () => {},
+      onMoveLayerNodeToRoot: () => {},
+      onRenameLayerGroup: () => {},
+      onReorderLayer: () => {},
+      onSelectGroup: () => {},
       onSelectObject: () => {},
+      onToggleLayerGroup: () => {},
+      onToggleLayerGroupFlag: () => {},
       onToggleLayerFlag: () => {},
       renderInspectorPanel: () => {},
       stageRenderer,
       state,
-    } as any)
+    })
 
     const firstRender = loop.renderAll()
     const secondRender = loop.renderAll()
@@ -48,7 +65,7 @@ test('createEditorRenderLoop serializes overlapping render requests', async () =
     assert.equal(boardRenderCount, 1)
     const writes = (globalThis as typeof globalThis & { localStorageWrites: Array<{ value: string }> }).localStorageWrites
     assert.equal(writes.length, 1)
-    const immediateDraft = JSON.parse(writes.at(-1).value)
+    const immediateDraft = JSON.parse(writes.at(-1)?.value ?? '{}')
     assert.equal(immediateDraft.board.name, 'queued')
 
     releaseFirstBoard()
@@ -57,7 +74,7 @@ test('createEditorRenderLoop serializes overlapping render requests', async () =
     assert.equal(boardRenderCount, 2)
     assert.equal(objectRenderCount, 2)
     assert.equal(writes.length, 1)
-    const saved = JSON.parse(writes.at(-1).value)
+    const saved = JSON.parse(writes.at(-1)?.value ?? '{}')
     assert.equal(saved.format, 'node-zsb-project')
     assert.equal(saved.fileName, 'queued-file')
 
@@ -67,14 +84,14 @@ test('createEditorRenderLoop serializes overlapping render requests', async () =
     state.board.name = 'changed'
     await loop.renderAll()
     assert.equal(writes.length, 2)
-    const updated = JSON.parse(writes.at(-1).value)
+    const updated = JSON.parse(writes.at(-1)?.value ?? '{}')
     assert.equal(updated.board.name, 'changed')
 
     state.currentFileName = ''
     state.board.name = 'unsaved draft'
     await loop.renderAll()
     assert.equal(writes.length, 3)
-    const draft = JSON.parse(writes.at(-1).value)
+    const draft = JSON.parse(writes.at(-1)?.value ?? '{}')
     assert.equal(draft.format, 'node-zsb-project')
     assert.equal(draft.fileName, '')
     assert.equal(draft.board.name, 'unsaved draft')
@@ -83,14 +100,14 @@ test('createEditorRenderLoop serializes overlapping render requests', async () =
   }
 })
 
-function createElements() {
+function createElements(): RenderLoopDeps['elements'] {
   return {
-    layers: createElement(),
-    layerCount: createElement(),
+    layers: document.createElement('div'),
+    layerCount: document.createElement('span'),
   }
 }
 
-function createElement() {
+function createElement(): FakeElement {
   return {
     children: [],
     classList: {
@@ -105,10 +122,20 @@ function createElement() {
 }
 
 function installBrowserMocks() {
-  const globals = globalThis as typeof globalThis & {
-    document?: Document
+  interface FakeDocument {
+    createElement(tagName: string): FakeElement
+  }
+
+  interface FakeWindow {
+    localStorage: {
+      setItem(key: string, value: string): void
+    }
+  }
+
+  const globals = globalThis as {
+    document?: FakeDocument
     localStorageWrites?: Array<{ key: string, value: string }>
-    window?: any
+    window?: FakeWindow
   }
   const previousDocument = globals.document
   const previousWindow = globals.window
@@ -123,8 +150,8 @@ function installBrowserMocks() {
       },
     },
   }
-  globals.document = document as unknown as Document
-  globals.window = window as unknown as Window
+  globals.document = document
+  globals.window = window
   globals.localStorageWrites = writes
 
   return () => {

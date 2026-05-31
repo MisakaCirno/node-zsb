@@ -2,7 +2,13 @@ import assert from 'node:assert/strict'
 import test from 'node:test'
 
 import { MAX_BOARD_OBJECTS } from '../../src/web/constants.js'
+import { createEditorState } from '../../src/web/editorState.js'
 import { insertPresetIntoBoard } from '../../src/web/localPresets.js'
+import type {
+  BoardObject,
+  EditorState,
+  LocalLayerPreset,
+} from '../../src/web/types.js'
 
 test('insertPresetIntoBoard keeps preset objects together when inserted near an edge', () => {
   const state = createState()
@@ -12,9 +18,9 @@ test('insertPresetIntoBoard keeps preset objects together when inserted near an 
 
   assert.equal(result?.objectCount, 2)
   assert.equal(state.board.objects.length, 2)
-  assert.equal(state.board.objects[1].x - state.board.objects[0].x, 100)
-  assert.equal(state.board.objects[0].x, 16)
-  assert.equal(state.board.objects[1].x, 116)
+  assert.equal(state.board.objects[1]!.x - state.board.objects[0]!.x, 100)
+  assert.equal(state.board.objects[0]!.x, 16)
+  assert.equal(state.board.objects[1]!.x, 116)
   assert.deepEqual(state.selectedIndexes, [0, 1])
 })
 
@@ -36,7 +42,7 @@ test('insertPresetIntoBoard rejects presets that would exceed the board object l
 
 test('insertPresetIntoBoard sanitizes stale preset objects before insertion', () => {
   const state = createState()
-  const preset: any = {
+  const preset: LocalLayerPreset = {
     id: 'preset_dirty',
     name: 'dirty',
     objects: {
@@ -77,7 +83,9 @@ test('insertPresetIntoBoard sanitizes stale preset objects before insertion', ()
 
   insertPresetIntoBoard(state, preset, { point: { x: 256, y: 192 } })
 
-  const [text, tank, lineAoe] = state.board.objects
+  const text = state.board.objects[0]!
+  const tank = state.board.objects[1]!
+  const lineAoe = state.board.objects[2]!
   assert.equal(text.type, 'text')
   assert.equal(text.size, undefined)
   assert.equal(text.angle, undefined)
@@ -88,18 +96,13 @@ test('insertPresetIntoBoard sanitizes stale preset objects before insertion', ()
   assert.equal(lineAoe.transparency, 100)
 })
 
-function createState(objects: any[] = []): any {
-  return {
-    board: { objects },
-    iconConfigs: {},
-    layerTree: [],
-    selectedGroupId: '',
-    selectedIndex: -1,
-    selectedIndexes: [],
-  }
+function createState(objects: BoardObject[] = []): EditorState {
+  const state = createEditorState()
+  state.board.objects = objects
+  return state
 }
 
-function createTwoObjectPreset(): any {
+function createTwoObjectPreset(): LocalLayerPreset {
   return {
     id: 'preset_1',
     name: '边缘测试',

@@ -14,6 +14,7 @@ import {
   normalizeProject,
   projectToJson,
 } from '../../src/web/project.js'
+import type { LayerNode } from '../../src/web/types.js'
 
 test('normalizeBoard assigns stable editor ids and cleanBoard preserves game object flags', () => {
   const board = normalizeBoard({
@@ -24,11 +25,12 @@ test('normalizeBoard assigns stable editor ids and cleanBoard preserves game obj
     ],
   })
 
-  assert.match(board.objects[0].editorId, /^obj_/)
-  assert.equal(board.objects[1].editorId, 'obj_existing')
-  assert.equal(cleanBoard(board).objects[0].editorId, undefined)
-  assert.equal(cleanBoard(board).objects[0].hidden, true)
-  assert.equal(cleanBoard(board).objects[1].locked, true)
+  assert.match(board.objects[0]?.editorId ?? '', /^obj_/)
+  assert.equal(board.objects[1]!.editorId, 'obj_existing')
+  const cleaned = cleanBoard(board)
+  assert.equal(cleaned.objects[0]!.editorId, undefined)
+  assert.equal(cleaned.objects[0]!.hidden, true)
+  assert.equal(cleaned.objects[1]!.locked, true)
 })
 
 test('editor field stripping keeps game-native hidden and locked flags', () => {
@@ -109,12 +111,12 @@ test('project files keep editor metadata separate from pure boards', () => {
     { type: 'object', id: 'obj_a' },
     { type: 'object', id: 'obj_b' },
   ])
-  assert.equal(project.objects.obj_a.editorId, undefined)
-  assert.equal(project.objects.obj_a.hidden, true)
+  assert.equal(project.objects.obj_a!.editorId, undefined)
+  assert.equal(project.objects.obj_a!.hidden, true)
 
   const board = flattenProjectToBoard(project)
-  assert.equal(board.objects[0].editorId, 'obj_a')
-  assert.equal(createPureBoardFromProject(project).objects[0].editorId, undefined)
+  assert.equal(board.objects[0]!.editorId, 'obj_a')
+  assert.equal(createPureBoardFromProject(project).objects[0]!.editorId, undefined)
 })
 
 test('createProjectFromBoard preserves a supplied layer tree', () => {
@@ -138,7 +140,7 @@ test('createProjectFromBoard preserves a supplied layer tree', () => {
     ],
   })
 
-  assert.equal(project.layers[0].type, 'group')
+  assert.equal(project.layers[0]!.type, 'group')
   assert.deepEqual(
     flattenProjectToBoard(project).objects.map((object) => object.editorId),
     ['obj_b', 'obj_a'],
@@ -169,7 +171,7 @@ test('project normalization supports nested groups and preserves flattened order
     ],
   })
 
-  assert.equal(project.layers[0].type, 'group')
+  assert.equal(project.layers[0]!.type, 'group')
   assert.deepEqual(
     flattenProjectToBoard(project).objects.map((object) => object.editorId),
     ['obj_b', 'obj_a', 'obj_c'],
@@ -226,7 +228,7 @@ test('project normalization deduplicates object references and group ids', () =>
   )
 })
 
-function collectGroupIds(nodes) {
+function collectGroupIds(nodes: LayerNode[]): string[] {
   return nodes.flatMap((node) =>
     node.type === 'group'
       ? [node.id, ...collectGroupIds(node.children)]

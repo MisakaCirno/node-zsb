@@ -34,10 +34,6 @@ interface BoardCodeActionsDeps {
   renderBackgroundOptions: () => void
 }
 
-interface PreviewPayload {
-  hash: string
-}
-
 interface ClipboardWindow extends Window {
   ClipboardItem?: new (items: Record<string, Blob>) => ClipboardItem
 }
@@ -69,7 +65,7 @@ export function createBoardCodeActions({
 
   async function renderPreview() {
     const code = await exportAndReturnCode()
-    const data = await renderPreviewImage(code) as PreviewPayload
+    const data = await renderPreviewImage(code)
     const src = `/preview/${data.hash}.webp?${Date.now()}`
     elements.preview.src = src
     elements.preview.style.display = 'block'

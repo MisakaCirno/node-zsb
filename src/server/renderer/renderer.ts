@@ -44,6 +44,7 @@ const FONT_PATH = path.resolve(
 FontLibrary.use(STRATEGY_TEXT_FONT_PRIMARY, [FONT_PATH])
 
 type RenderedObjectNode = Konva.Group | Konva.Rect | Konva.Text | Konva.Image
+type SkiaImage = Awaited<ReturnType<typeof loadImage>>
 
 async function createBoardLayer(backgroundType?: BackgroundType) {
   const layer = new Konva.Layer()
@@ -51,7 +52,7 @@ async function createBoardLayer(backgroundType?: BackgroundType) {
 
   const imageObj = await loadImage(imageUrl)
   const konvaImage = new Konva.Image({
-    image: imageObj as unknown as Konva.ImageConfig['image'],
+    image: toKonvaImageSource(imageObj),
     width: SCENE_WIDTH,
     height: SCENE_HEIGHT,
   })
@@ -178,7 +179,7 @@ async function createCircleAoeNode(data: StrategyObject): Promise<Konva.Group> {
   const circleSrc = getIconUrl('circle_aoe')
   const imageObj = await loadImage(circleSrc)
   const konvaImage = new Konva.Image({
-    image: imageObj as unknown as Konva.ImageConfig['image'],
+    image: toKonvaImageSource(imageObj),
     width: spec.imageWidth,
     height: spec.imageHeight,
   })
@@ -199,7 +200,7 @@ async function createIconNode(data: StrategyObject): Promise<Konva.Image | null>
   const imageObj = await loadImage(iconUrl)
   const spec = createIconRenderSpec(data, config.size)
   const imageNode = new Konva.Image({
-    image: imageObj as unknown as Konva.ImageConfig['image'],
+    image: toKonvaImageSource(imageObj),
     width: spec.width,
     height: spec.height,
     offsetX: spec.offsetX,
@@ -261,4 +262,8 @@ export async function renderBoard(
   stage.add(objectLayer)
 
   return stage
+}
+
+function toKonvaImageSource(image: SkiaImage): Konva.ImageConfig['image'] {
+  return image as unknown as Konva.ImageConfig['image']
 }

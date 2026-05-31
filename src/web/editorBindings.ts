@@ -39,7 +39,7 @@ export function bindEditorEvents({
   runAction,
   actions,
 }: EditorBindingsDeps) {
-  bindMenuBar(elements)
+  bindMenuBar()
   syncDocumentNameCounters(elements)
   elements.openLocalBoardDialog.addEventListener('click', () => {
     actions.renderLocalBoards()

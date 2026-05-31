@@ -47,7 +47,7 @@ export interface EditorState extends EditorStateSlice {
   gridOpacity: number
   zoom: number
   zoomMode: ZoomMode
-  images: Map<string, Promise<unknown>>
+  images: Map<string, Promise<HTMLImageElement>>
   history: HistorySnapshot[]
   future: HistorySnapshot[]
   clipboard: BoardObject | null

@@ -2,7 +2,9 @@ import assert from 'node:assert/strict'
 import test from 'node:test'
 
 import { MAX_BOARD_OBJECTS } from '../../src/web/constants.js'
+import { createEditorState } from '../../src/web/editorState.js'
 import { createObjectCommands } from '../../src/web/objectCommands.js'
+import type { BoardObject, EditorState } from '../../src/web/types.js'
 
 test('object commands do not record history for rejected layer mutations', () => {
   const state = createCommandState()
@@ -86,8 +88,8 @@ test('object commands record history when grouping selected objects', () => {
 
   assert.equal(historyCount, 1)
   assert.equal(renderCount, 1)
-  assert.equal(state.layerTree[0].type, 'group')
-  assert.equal(state.selectedGroupId, state.layerTree[0].id)
+  assert.equal(state.layerTree[0]!.type, 'group')
+  assert.equal(state.selectedGroupId, state.layerTree[0]!.id)
 })
 
 test('object commands toggle layer flags for the full selection', () => {
@@ -106,7 +108,7 @@ test('object commands toggle layer flags for the full selection', () => {
     },
     selectObject: () => {},
     getSelected: () => state.board.objects[state.selectedIndex],
-    getSelectedList: () => state.selectedIndexes.map((index) => state.board.objects[index]),
+    getSelectedList: () => getSelectedObjects(state),
     normalizePoint: (x, y) => ({ x, y }),
     showStatus: () => {},
     confirmAction: () => true,
@@ -116,16 +118,16 @@ test('object commands toggle layer flags for the full selection', () => {
 
   assert.equal(historyCount, 1)
   assert.equal(renderCount, 1)
-  assert.equal(state.board.objects[0].hidden, true)
-  assert.equal(state.board.objects[1].hidden, true)
+  assert.equal(state.board.objects[0]!.hidden, true)
+  assert.equal(state.board.objects[1]!.hidden, true)
 })
 
 test('object commands nudge the full selection with one center-constrained delta', () => {
   const state = createCommandState()
   state.selectedIndex = 1
   state.selectedIndexes = [0, 1]
-  state.board.objects[0].x = 20
-  state.board.objects[1].x = 480
+  state.board.objects[0]!.x = 20
+  state.board.objects[1]!.x = 480
   let historyCount = 0
   let renderCount = 0
   const commands = createObjectCommands({
@@ -138,7 +140,7 @@ test('object commands nudge the full selection with one center-constrained delta
     },
     selectObject: () => {},
     getSelected: () => state.board.objects[state.selectedIndex],
-    getSelectedList: () => state.selectedIndexes.map((index) => state.board.objects[index]),
+    getSelectedList: () => getSelectedObjects(state),
     normalizePoint: (x, y) => ({ x, y }),
     showStatus: () => {},
     confirmAction: () => true,
@@ -148,23 +150,23 @@ test('object commands nudge the full selection with one center-constrained delta
 
   assert.equal(historyCount, 1)
   assert.equal(renderCount, 1)
-  assert.equal(state.board.objects[0].x, 40)
-  assert.equal(state.board.objects[1].x, 500)
+  assert.equal(state.board.objects[0]!.x, 40)
+  assert.equal(state.board.objects[1]!.x, 500)
 })
 
 test('object commands preserve selection spacing when the group reaches the board edge', () => {
   const state = createCommandState()
   state.selectedIndex = 1
   state.selectedIndexes = [0, 1]
-  state.board.objects[0].x = 20
-  state.board.objects[1].x = 500
+  state.board.objects[0]!.x = 20
+  state.board.objects[1]!.x = 500
   const commands = createObjectCommands({
     state,
     recordHistory: () => {},
     renderAll: () => {},
     selectObject: () => {},
     getSelected: () => state.board.objects[state.selectedIndex],
-    getSelectedList: () => state.selectedIndexes.map((index) => state.board.objects[index]),
+    getSelectedList: () => getSelectedObjects(state),
     normalizePoint: (x, y) => ({ x, y }),
     showStatus: () => {},
     confirmAction: () => true,
@@ -172,8 +174,8 @@ test('object commands preserve selection spacing when the group reaches the boar
 
   commands.nudgeSelected('ArrowRight', 20)
 
-  assert.equal(state.board.objects[0].x, 32)
-  assert.equal(state.board.objects[1].x, 512)
+  assert.equal(state.board.objects[0]!.x, 32)
+  assert.equal(state.board.objects[1]!.x, 512)
 })
 
 test('object commands reject additions when the board object limit is reached', () => {
@@ -186,7 +188,7 @@ test('object commands reject additions when the board object limit is reached', 
   }))
   state.layerTree = state.board.objects.map((object) => ({
     type: 'object',
-    id: object.editorId,
+    id: object.editorId!,
   }))
   state.selectedIndex = 0
   state.clipboard = { type: 'tank', x: 10, y: 10, editorId: 'clipboard' }
@@ -200,7 +202,7 @@ test('object commands reject additions when the board object limit is reached', 
     renderAll: () => {},
     selectObject: () => {},
     getSelected: () => state.board.objects[state.selectedIndex],
-    getSelectedList: () => [state.board.objects[state.selectedIndex]],
+    getSelectedList: () => [state.board.objects[state.selectedIndex]!],
     normalizePoint: (x, y) => ({ x, y }),
     showStatus: (message) => {
       status = message
@@ -217,37 +219,35 @@ test('object commands reject additions when the board object limit is reached', 
   assert.equal(status.includes(String(MAX_BOARD_OBJECTS)), true)
 })
 
-function createCommandState(): any {
-  return {
-    board: {
-      name: '',
-      boardBackground: 'checkered',
-      objects: [
-        { type: 'tank', x: 1, y: 2, editorId: 'obj_a' },
-        { type: 'healer', x: 3, y: 4, editorId: 'obj_b' },
+function createCommandState(): EditorState {
+  const state = createEditorState()
+  state.board.objects = [
+    { type: 'tank', x: 1, y: 2, editorId: 'obj_a' },
+    { type: 'healer', x: 3, y: 4, editorId: 'obj_b' },
+  ]
+  state.layerTree = [
+    {
+      type: 'group',
+      id: 'grp_outer',
+      name: 'Outer',
+      children: [
+        {
+          type: 'group',
+          id: 'grp_inner',
+          name: 'Inner',
+          children: [
+            { type: 'object', id: 'obj_a' },
+          ],
+        },
+        { type: 'object', id: 'obj_b' },
       ],
     },
-    selectedGroupId: '',
-    selectedIndex: -1,
-    selectedIndexes: [],
-    iconConfigs: {},
-    layerTree: [
-      {
-        type: 'group',
-        id: 'grp_outer',
-        name: 'Outer',
-        children: [
-          {
-            type: 'group',
-            id: 'grp_inner',
-            name: 'Inner',
-            children: [
-              { type: 'object', id: 'obj_a' },
-            ],
-          },
-          { type: 'object', id: 'obj_b' },
-        ],
-      },
-    ],
-  }
+  ]
+  return state
+}
+
+function getSelectedObjects(state: EditorState): BoardObject[] {
+  return state.selectedIndexes
+    .map((index) => state.board.objects[index])
+    .filter((object): object is BoardObject => Boolean(object))
 }

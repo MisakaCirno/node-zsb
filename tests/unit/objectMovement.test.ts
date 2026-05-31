@@ -7,17 +7,16 @@ import {
   moveObjectBy,
   moveObjectsBy,
 } from '../../src/web/objectMovement.js'
-import type { EditorState } from '../../src/web/types.js'
+import { createEditorState } from '../../src/web/editorState.js'
 
-const state = {
-  iconConfigs: {
-    tank: {
-      src: 'tank',
-      crop: { x: 0, y: 0, width: 32, height: 32 },
-      size: 32,
-    },
+const state = createEditorState()
+state.iconConfigs = {
+  tank: {
+    src: 'tank',
+    crop: { x: 0, y: 0, width: 32, height: 32 },
+    size: 32,
   },
-} as unknown as EditorState
+}
 
 test('moveObjectBy keeps line endpoints in sync with the object origin', () => {
   const object = {

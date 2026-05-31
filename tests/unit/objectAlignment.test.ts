@@ -1,18 +1,17 @@
 import assert from 'node:assert/strict'
 import test from 'node:test'
 
+import { createEditorState } from '../../src/web/editorState.js'
 import { getObjectBounds } from '../../src/web/objectAlignment.js'
-import type { EditorState } from '../../src/web/types.js'
 
-const state = {
-  iconConfigs: {
-    enemy: {
-      src: 'enemy',
-      crop: { x: 0, y: 0, width: 32, height: 32 },
-      size: 32,
-    },
+const state = createEditorState()
+state.iconConfigs = {
+  enemy: {
+    src: 'enemy',
+    crop: { x: 0, y: 0, width: 32, height: 32 },
+    size: 32,
   },
-} as unknown as EditorState
+}
 
 test('getObjectBounds accounts for rotated rectangular aoe dimensions', () => {
   const bounds = getObjectBounds({

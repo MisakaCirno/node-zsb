@@ -2,10 +2,7 @@
   "extends": "./tsconfig.base.json",
   "compilerOptions": {
     "lib": ["ESNext", "DOM", "DOM.Iterable"],
-    "types": ["node"],
-    "noImplicitAny": false,
-    "noUncheckedIndexedAccess": false,
-    "strictNullChecks": false
+    "types": ["node"]
   },
   "include": [
     "playwright.config.ts",

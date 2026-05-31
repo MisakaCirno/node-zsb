@@ -964,10 +964,10 @@ export function createStageRenderer({
     }
   }
 
-  function loadImage(src: string): Promise<unknown> {
+  function loadImage(src: string): Promise<HTMLImageElement> {
     const cached = state.images.get(src)
     if (cached) return cached
-    const promise = new Promise((resolve, reject) => {
+    const promise = new Promise<HTMLImageElement>((resolve, reject) => {
       const image = new Image()
       image.onload = () => resolve(image)
       image.onerror = reject
