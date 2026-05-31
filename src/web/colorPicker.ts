@@ -23,6 +23,12 @@ interface HsvColor {
   v: number
 }
 
+interface SyncColorOptions {
+  hsv?: HsvColor
+}
+
+const pickerStates = new WeakMap<ColorPickerElements, HsvColor>()
+
 export function bindColorPicker({
   elements,
   onChange,
@@ -40,12 +46,13 @@ export function bindColorPicker({
     })
   }
   elements.colorHue.addEventListener('input', () => {
-    const hsv = hexToHsv(elements.color.value)
-    setColorValue(elements, hsvToHex({
+    const hsv = getPickerState(elements)
+    const nextHsv = {
       h: Number(elements.colorHue.value),
       s: hsv.s,
       v: hsv.v,
-    }), onChange)
+    }
+    setColorValue(elements, hsvToHex(nextHsv), onChange, { hsv: nextHsv })
   })
   elements.colorSaturation.addEventListener('pointerdown', (event) => {
     elements.colorSaturation.setPointerCapture(event.pointerId)
@@ -64,12 +71,13 @@ export function bindColorPicker({
     }[event.key]
     if (!delta) return
     event.preventDefault()
-    const hsv = hexToHsv(elements.color.value)
-    setColorValue(elements, hsvToHex({
+    const hsv = getPickerState(elements)
+    const nextHsv = {
       h: hsv.h,
       s: clamp01(hsv.s + delta.s),
       v: clamp01(hsv.v + delta.v),
-    }), onChange)
+    }
+    setColorValue(elements, hsvToHex(nextHsv), onChange, { hsv: nextHsv })
   })
   document.addEventListener('click', (event) => {
     if (elements.colorPopover.classList.contains('hidden')) return
@@ -82,17 +90,19 @@ export function setColorValue(
   elements: ColorPickerElements,
   value: string | undefined,
   onChange?: () => void,
+  options: SyncColorOptions = {},
 ) {
   const color = normalizeHexColor(value)
   if (!color) return
   elements.color.value = color
-  syncColorControl(elements)
+  syncColorControl(elements, options)
   onChange?.()
 }
 
-export function syncColorControl(elements: ColorPickerElements) {
+export function syncColorControl(elements: ColorPickerElements, options: SyncColorOptions = {}) {
   const color = normalizeHexColor(elements.color.value) || '#FF7F00'
-  const hsv = hexToHsv(color)
+  const hsv = options.hsv ?? getSyncHsv(elements, color)
+  pickerStates.set(elements, hsv)
   elements.color.value = color
   elements.colorText.value = color
   elements.colorPreview.style.background = color
@@ -100,7 +110,7 @@ export function syncColorControl(elements: ColorPickerElements) {
   elements.colorRed.value = String(rgb.r)
   elements.colorGreen.value = String(rgb.g)
   elements.colorBlue.value = String(rgb.b)
-  elements.colorHue.value = String(Math.round(hsv.h))
+  elements.colorHue.value = String(Math.round(normalizeHue(hsv.h)))
   elements.colorSaturation.style.setProperty('--picker-hue-color', hsvToHex({
     h: hsv.h,
     s: 1,
@@ -124,12 +134,13 @@ function updateSaturationFromPointer(
   onChange?: () => void,
 ) {
   const rect = elements.colorSaturation.getBoundingClientRect()
-  const hsv = hexToHsv(elements.color.value)
-  setColorValue(elements, hsvToHex({
+  const hsv = getPickerState(elements)
+  const nextHsv = {
     h: hsv.h,
     s: clamp01((event.clientX - rect.left) / rect.width),
     v: clamp01(1 - ((event.clientY - rect.top) / rect.height)),
-  }), onChange)
+  }
+  setColorValue(elements, hsvToHex(nextHsv), onChange, { hsv: nextHsv })
 }
 
 function hexToHsv(hex: string | undefined): HsvColor {
@@ -179,6 +190,7 @@ function hsvToHex({
   s,
   v,
 }: HsvColor) {
+  h = normalizeHue(h)
   const c = v * s
   const x = c * (1 - Math.abs(((h / 60) % 2) - 1))
   const m = v - c
@@ -199,6 +211,23 @@ function getRgbPrime(h: number, c: number, x: number): [number, number, number] 
 
 function toHex(value: number) {
   return value.toString(16).padStart(2, '0')
+}
+
+function getPickerState(elements: ColorPickerElements) {
+  return pickerStates.get(elements) ?? hexToHsv(elements.color.value)
+}
+
+function getSyncHsv(elements: ColorPickerElements, color: string) {
+  const state = pickerStates.get(elements)
+  if (state && hsvToHex(state) === color) return state
+  return hexToHsv(color)
+}
+
+function normalizeHue(value: number) {
+  if (!Number.isFinite(value)) return 0
+  if (value === 360) return 360
+  const hue = value % 360
+  return hue < 0 ? hue + 360 : hue
 }
 
 function clamp01(value: number) {

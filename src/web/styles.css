@@ -1236,10 +1236,17 @@ textarea {
 }
 
 .color-hue {
+  appearance: none;
   height: 18px;
   min-height: 0;
   padding: 0;
   border: 0;
+  border-radius: 999px;
+  background: transparent;
+}
+
+.color-hue::-webkit-slider-runnable-track {
+  height: 12px;
   border-radius: 999px;
   background: linear-gradient(
     to right,
@@ -1251,7 +1258,41 @@ textarea {
     #ff00ff,
     #ff0000
   );
-  accent-color: #66c2a5;
+}
+
+.color-hue::-webkit-slider-thumb {
+  appearance: none;
+  width: 16px;
+  height: 16px;
+  margin-top: -2px;
+  border: 2px solid #fff;
+  border-radius: 999px;
+  background: #151a1f;
+  box-shadow: 0 0 0 1px #111820, 0 2px 6px rgba(0, 0, 0, 0.44);
+}
+
+.color-hue::-moz-range-track {
+  height: 12px;
+  border-radius: 999px;
+  background: linear-gradient(
+    to right,
+    #ff0000,
+    #ffff00,
+    #00ff00,
+    #00ffff,
+    #0000ff,
+    #ff00ff,
+    #ff0000
+  );
+}
+
+.color-hue::-moz-range-thumb {
+  width: 16px;
+  height: 16px;
+  border: 2px solid #fff;
+  border-radius: 999px;
+  background: #151a1f;
+  box-shadow: 0 0 0 1px #111820, 0 2px 6px rgba(0, 0, 0, 0.44);
 }
 
 .color-hex-input,
