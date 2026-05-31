@@ -1,4 +1,4 @@
-const LAYOUT_KEY = 'node-zsb-editor-layout-v1'
+import { LAYOUT_SETTINGS_KEY } from './constants.js'
 const DEFAULT_LEFT_WIDTH = 390
 const DEFAULT_RIGHT_WIDTH = 300
 const MIN_LEFT_WIDTH = 276
@@ -292,7 +292,7 @@ function getInspectorContentRect(elements: LayoutElements) {
 
 function loadLayout(): LayoutState {
   try {
-    const raw = window.localStorage.getItem(LAYOUT_KEY)
+    const raw = window.localStorage.getItem(LAYOUT_SETTINGS_KEY)
     return raw ? JSON.parse(raw) : {}
   } catch {
     return {}
@@ -301,7 +301,7 @@ function loadLayout(): LayoutState {
 
 function saveLayout(layout: NormalizedLayout) {
   try {
-    window.localStorage.setItem(LAYOUT_KEY, JSON.stringify(layout))
+    window.localStorage.setItem(LAYOUT_SETTINGS_KEY, JSON.stringify(layout))
   } catch {
     // Layout persistence is a convenience; resizing should still work without storage.
   }

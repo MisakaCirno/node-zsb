@@ -13,10 +13,10 @@ export const ZOOM_LEVELS = [0.25, 0.5, 0.75, 1, 1.25, 1.5, 1.75, 2] as const
 
 export const STORAGE_KEY = 'node-zsb-editor-board-v1'
 export const EDITOR_SETTINGS_KEY = 'node-zsb-editor-settings-v1'
+export const LAYOUT_SETTINGS_KEY = 'node-zsb-editor-layout-v1'
 export const LOCAL_BOARDS_KEY = 'node-zsb-editor-local-boards-v1'
 export const LOCAL_FILES_KEY = 'node-zsb-editor-local-files-v1'
 export const LOCAL_PRESETS_KEY = 'node-zsb-editor-local-presets-v1'
-export const MAX_LOCAL_BOARDS = 20
 export const MAX_BOARD_OBJECTS = 50
 export const MAX_LOCAL_PRESETS = 50
 export const MAX_TEXT_LENGTH = 30

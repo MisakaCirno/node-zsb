@@ -1,4 +1,5 @@
 import { clamp } from './geometry.js'
+import { MAX_BOARD_OBJECTS } from './constants.js'
 import { createEditorId } from './editorIds.js'
 import { getSelectedIndexes } from './editorState.js'
 import { getDefaultObjectColor } from '../shared/boardGeometry.js'
@@ -74,6 +75,7 @@ export function createObjectCommands({
 }: ObjectCommandsDeps): ObjectCommands {
   return {
     addObject(type: string) {
+      if (!canAddObjects(state, 1, showStatus)) return
       recordHistory()
       const object = createDefaultObject(type)
       state.board.objects.push(object)
@@ -82,6 +84,7 @@ export function createObjectCommands({
     },
 
     addObjectAt(type: string, point: { x: number, y: number }) {
+      if (!canAddObjects(state, 1, showStatus)) return
       recordHistory()
       const object = createDefaultObject(type, normalizePoint(point.x, point.y))
       state.board.objects.push(object)
@@ -154,6 +157,7 @@ export function createObjectCommands({
       syncFlatLayerTree(state)
       state.selectedIndex = -1
       state.selectedIndexes = []
+      state.selectedGroupId = ''
       renderAll()
       showStatus('已清空画板')
     },
@@ -161,6 +165,7 @@ export function createObjectCommands({
     duplicateSelected() {
       const object = getSelected()
       if (!object) return
+      if (!canAddObjects(state, 1, showStatus)) return
       recordHistory()
       const copy = createPastedObject(object)
       state.board.objects.push(copy)
@@ -329,6 +334,7 @@ export function createObjectCommands({
 
     pasteObject() {
       if (!state.clipboard) return
+      if (!canAddObjects(state, 1, showStatus)) return
       recordHistory()
       const object = createPastedObject(state.clipboard)
       state.board.objects.push(object)
@@ -364,6 +370,16 @@ export function createObjectCommands({
       renderAll()
     },
   }
+}
+
+function canAddObjects(
+  state: EditorState,
+  count: number,
+  showStatus: (message: string) => void,
+): boolean {
+  if (state.board.objects.length + count <= MAX_BOARD_OBJECTS) return true
+  showStatus(`对象数量已达上限 ${MAX_BOARD_OBJECTS}`)
+  return false
 }
 
 function getAlignmentDelta(alignment: Alignment, objectBounds: Bounds, selectionBounds: Bounds) {

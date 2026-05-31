@@ -79,6 +79,8 @@ export function createEditorContext({
 
   function deselect() {
     setSelection([])
+    state.selectedGroupId = ''
+    state.revealSelectedLayer = false
     renderAll()
     showStatus('已取消选择')
   }

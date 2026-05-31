@@ -317,6 +317,7 @@ textarea {
 .stage-wrap {
   min-width: 0;
   display: grid;
+  grid-template-columns: minmax(0, 1fr);
   grid-template-rows: auto 1fr auto;
   background: #0f1215;
   overflow: hidden;
@@ -324,6 +325,7 @@ textarea {
 
 .stage-body {
   min-height: 0;
+  min-width: 0;
   display: grid;
   grid-template-columns: 48px minmax(0, 1fr);
   overflow: hidden;
@@ -778,21 +780,29 @@ textarea {
   place-items: center;
   overflow: auto;
   padding: 24px;
+  min-width: 0;
 }
 
 .stage-statusbar {
   display: flex;
-  justify-content: flex-end;
+  justify-content: flex-start;
   align-items: center;
   gap: 8px;
   min-height: 42px;
   padding: 5px 12px;
   border-top: 1px solid #27313a;
   background: #151a1f;
+  overflow-x: auto;
+  overflow-y: hidden;
 }
 
 .stage-statusbar .toolbar-group {
+  flex: 0 0 auto;
   padding-right: 0;
+}
+
+.stage-statusbar .toolbar-toggle {
+  flex: 0 0 auto;
 }
 
 .status-toggle {
@@ -1562,6 +1572,92 @@ textarea {
   gap: 8px;
   max-height: 420px;
   overflow-y: auto;
+}
+
+.local-storage-summary {
+  display: grid;
+  gap: 10px;
+  padding: 12px;
+  border: 1px solid #303b43;
+  border-radius: 6px;
+  background: #101519;
+  color: #dbe4e7;
+  font-size: 12px;
+}
+
+.local-storage-overview {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: 8px;
+}
+
+.local-storage-metric {
+  min-width: 0;
+  display: grid;
+  gap: 3px;
+  padding: 8px;
+  border: 1px solid #27313a;
+  border-radius: 6px;
+  background: #151a1f;
+}
+
+.local-storage-metric span,
+.local-storage-note,
+.local-storage-usage-row span {
+  color: #9aa8b2;
+}
+
+.local-storage-metric strong {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: #eef2f3;
+  font-size: 13px;
+  font-weight: 650;
+}
+
+.local-storage-usage-list {
+  display: grid;
+  gap: 7px;
+}
+
+.local-storage-usage-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 6px 10px;
+  align-items: center;
+}
+
+.local-storage-usage-row span,
+.local-storage-usage-row strong {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.local-storage-usage-row strong {
+  color: #eef2f3;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.local-storage-usage-bar {
+  grid-column: 1 / -1;
+  height: 4px;
+  border-radius: 999px;
+  background: #26313a;
+  overflow: hidden;
+}
+
+.local-storage-usage-bar span {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: #66c2a5;
+}
+
+.local-storage-note {
+  margin: 0;
 }
 
 .local-board-bulk-actions {

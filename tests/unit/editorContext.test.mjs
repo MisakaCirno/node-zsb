@@ -12,6 +12,8 @@ test('createEditorContext selects, deselects, and reads the current object', () 
       ],
     },
     selectedIndex: -1,
+    selectedGroupId: 'grp_1',
+    revealSelectedLayer: true,
     snapToGrid: false,
     gridSize: 16,
   }
@@ -32,6 +34,8 @@ test('createEditorContext selects, deselects, and reads the current object', () 
 
   context.deselect()
   assert.equal(state.selectedIndex, -1)
+  assert.equal(state.selectedGroupId, '')
+  assert.equal(state.revealSelectedLayer, false)
   assert.equal(context.getSelected(), undefined)
   assert.equal(renderCount, 2)
   assert.deepEqual(statuses, ['已取消选择'])

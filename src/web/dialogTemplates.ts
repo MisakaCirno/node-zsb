@@ -26,6 +26,12 @@ const EDITOR_DIALOG_TEMPLATES = [
 
 function createLocalBoardDialog() {
   const document = getBrowserDocument()
+  const storageSummary = document.createElement('section')
+  storageSummary.id = 'local-storage-summary'
+  storageSummary.className = 'local-storage-summary'
+  storageSummary.setAttribute('aria-label', '本地存储空间')
+  storageSummary.textContent = '正在统计存储空间...'
+
   const bulkActions = document.createElement('div')
   bulkActions.className = 'local-board-bulk-actions'
   bulkActions.append(
@@ -59,7 +65,7 @@ function createLocalBoardDialog() {
     id: 'local-board-dialog',
     title: '本地文件',
     closeButtonId: 'close-local-board-dialog',
-    body: [bulkActions, list],
+    body: [storageSummary, bulkActions, list],
   })
 }
 

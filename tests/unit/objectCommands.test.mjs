@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict'
 import test from 'node:test'
 
+import { MAX_BOARD_OBJECTS } from '../../src/web/constants.js'
 import { createObjectCommands } from '../../src/web/objectCommands.js'
 
 test('object commands do not record history for rejected layer mutations', () => {
@@ -173,6 +174,47 @@ test('object commands preserve selection spacing when the group reaches the boar
 
   assert.equal(state.board.objects[0].x, 32)
   assert.equal(state.board.objects[1].x, 512)
+})
+
+test('object commands reject additions when the board object limit is reached', () => {
+  const state = createCommandState()
+  state.board.objects = Array.from({ length: MAX_BOARD_OBJECTS }, (_, index) => ({
+    type: 'tank',
+    x: index,
+    y: index,
+    editorId: `obj_${index}`,
+  }))
+  state.layerTree = state.board.objects.map((object) => ({
+    type: 'object',
+    id: object.editorId,
+  }))
+  state.selectedIndex = 0
+  state.clipboard = { type: 'tank', x: 10, y: 10, editorId: 'clipboard' }
+  let historyCount = 0
+  let status = ''
+  const commands = createObjectCommands({
+    state,
+    recordHistory: () => {
+      historyCount += 1
+    },
+    renderAll: () => {},
+    selectObject: () => {},
+    getSelected: () => state.board.objects[state.selectedIndex],
+    getSelectedList: () => [state.board.objects[state.selectedIndex]],
+    normalizePoint: (x, y) => ({ x, y }),
+    showStatus: (message) => {
+      status = message
+    },
+    confirmAction: () => true,
+  })
+
+  commands.addObject('tank')
+  commands.duplicateSelected()
+  commands.pasteObject()
+
+  assert.equal(state.board.objects.length, MAX_BOARD_OBJECTS)
+  assert.equal(historyCount, 0)
+  assert.equal(status.includes(String(MAX_BOARD_OBJECTS)), true)
 })
 
 function createCommandState() {

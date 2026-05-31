@@ -89,9 +89,13 @@ interface KonvaEvent {
   cancelBubble?: boolean
   evt?: {
     button?: number
+    changedTouches?: ArrayLike<{ clientX: number, clientY: number }>
+    clientX?: number
+    clientY?: number
     ctrlKey?: boolean
     metaKey?: boolean
     shiftKey?: boolean
+    touches?: ArrayLike<{ clientX: number, clientY: number }>
   }
   target: KonvaNode
 }
@@ -188,6 +192,7 @@ interface ActiveDrag {
     y: number
   }>
   objectSnapshots: BoardObject[]
+  pointerStart: Point
   referenceIndex: number
   referenceStart: Point
 }
@@ -263,6 +268,8 @@ export function createStageRenderer({
   let transformScaleLimits: TransformScaleLimits | null = null
   let textFontReady: Promise<unknown> | null = null
   let activeDrag: ActiveDrag | null = null
+  let ignoredDragEndIndexes = new Set<number>()
+  let pendingDragPointerStart: Point | null = null
   const renderedNodesByIndex = new Map<number, KonvaNode>()
 
   void ensureStrategyTextFontLoaded()
@@ -491,15 +498,20 @@ export function createStageRenderer({
         toggle: Boolean(event.evt?.shiftKey || event.evt?.ctrlKey || event.evt?.metaKey),
       })
     })
-    node.on('dragstart', () => {
+    node.on('mousedown touchstart', (event: KonvaEvent) => {
+      if (event.evt?.button && event.evt.button !== 0) return
+      pendingDragPointerStart = getLogicalPointerPoint(event)
+    })
+    node.on('dragstart', (event: KonvaEvent) => {
+      if (activeDrag?.referenceIndex !== index && activeDrag?.indexes.includes(index)) return
       recordHistory()
-      beginNodeDrag(object, index)
+      beginNodeDrag(object, index, event)
     })
-    node.on('dragmove', () => {
-      updateNodeDrag(node, object, index)
+    node.on('dragmove', (event: KonvaEvent) => {
+      updateNodeDrag(node, object, index, event)
     })
-    node.on('dragend', () => {
-      handleDragEnd(node, object, index)
+    node.on('dragend', (event: KonvaEvent) => {
+      handleDragEnd(node, object, index, event)
     })
     node.on('transformstart', () => {
       if (!isTransformingSelection) {
@@ -593,7 +605,8 @@ export function createStageRenderer({
     })
   }
 
-  function beginNodeDrag(object: BoardObject, index: number) {
+  function beginNodeDrag(object: BoardObject, index: number, event?: KonvaEvent) {
+    ignoredDragEndIndexes = new Set()
     const selectedIndexes = getSelectedIndexes(state)
     const dragIndexes = (selectedIndexes.includes(index) ? selectedIndexes : [index])
       .filter((selectedIndex) => !state.board.objects[selectedIndex]?.locked)
@@ -614,18 +627,23 @@ export function createStageRenderer({
       lastDelta: { x: 0, y: 0 },
       nodeSnapshots,
       objectSnapshots,
+      pointerStart: pendingDragPointerStart ?? getLogicalPointerPoint(event) ?? { x: object.x, y: object.y },
       referenceIndex: index,
       referenceStart: { x: object.x, y: object.y },
     }
+    pendingDragPointerStart = null
   }
 
-  function updateNodeDrag(node: KonvaNode, object: BoardObject, index: number) {
+  function updateNodeDrag(node: KonvaNode, object: BoardObject, index: number, event?: KonvaEvent) {
     const dragState = activeDrag
+    if (dragState?.referenceIndex !== index && dragState?.indexes.includes(index)) {
+      return
+    }
     if (!dragState || dragState.referenceIndex !== index) {
       constrainNodePosition(node)
       return
     }
-    const delta = getNodeDragDelta(node, dragState)
+    const delta = getNodeDragDelta(node, dragState, event)
     dragState.lastDelta = { x: delta.dx, y: delta.dy }
     for (const snapshot of dragState.nodeSnapshots) {
       snapshot.node.position({
@@ -640,7 +658,24 @@ export function createStageRenderer({
     transformerLayer.batchDraw()
   }
 
-  function getNodeDragDelta(node: KonvaNode, dragState: ActiveDrag) {
+  function getNodeDragDelta(node: KonvaNode, dragState: ActiveDrag, event?: KonvaEvent) {
+    const pointer = getLogicalPointerPoint(event)
+    if (pointer) {
+      const point = normalizePoint(
+        dragState.referenceStart.x + Math.round(pointer.x - dragState.pointerStart.x),
+        dragState.referenceStart.y + Math.round(pointer.y - dragState.pointerStart.y),
+      )
+      return getConstrainedObjectsMoveDelta(
+        dragState.objectSnapshots,
+        state,
+        point.x - dragState.referenceStart.x,
+        point.y - dragState.referenceStart.y,
+      )
+    }
+    return getNodePositionDragDelta(node, dragState)
+  }
+
+  function getNodePositionDragDelta(node: KonvaNode, dragState: ActiveDrag) {
     const point = normalizePoint(
       toLogicalCoordinate(node.x()),
       toLogicalCoordinate(node.y()),
@@ -886,21 +921,34 @@ export function createStageRenderer({
     })
   }
 
-  function handleDragEnd(node: KonvaNode, object: BoardObject, index: number) {
+  function handleDragEnd(node: KonvaNode, object: BoardObject, index: number, event?: KonvaEvent) {
+    if (ignoredDragEndIndexes.delete(index)) {
+      return
+    }
     const dragState = activeDrag
+    if (dragState?.referenceIndex !== index && dragState?.indexes.includes(index)) {
+      return
+    }
+    if (dragState?.referenceIndex === index) {
+      ignoredDragEndIndexes = new Set(
+        dragState.indexes.filter((dragIndex) => dragIndex !== index),
+      )
+    }
     activeDrag = null
+    pendingDragPointerStart = null
     const objectsToMove = dragState?.referenceIndex === index
       ? dragState.indexes
         .map((selectedIndex) => state.board.objects[selectedIndex])
         .filter((entry): entry is BoardObject => Boolean(entry && !entry.locked))
       : [object]
     const delta = dragState?.referenceIndex === index
-      ? { dx: dragState.lastDelta.x, dy: dragState.lastDelta.y }
-      : getNodeDragDelta(node, {
+      ? getNodeDragDelta(node, dragState, event)
+      : getNodePositionDragDelta(node, {
         indexes: [index],
         lastDelta: { x: 0, y: 0 },
         nodeSnapshots: [],
         objectSnapshots: [cloneMoveObject(object)],
+        pointerStart: { x: object.x, y: object.y },
         referenceIndex: index,
         referenceStart: { x: object.x, y: object.y },
       })
@@ -927,6 +975,29 @@ export function createStageRenderer({
     })
     state.images.set(src, promise)
     return promise
+  }
+
+  function getLogicalPointerPoint(event?: KonvaEvent): Point | null {
+    const client = getEventClientPoint(event)
+    if (!client) return null
+    const canvas = document.querySelector<HTMLCanvasElement>('#stage-host canvas')
+    if (!canvas) return null
+    const rect = canvas.getBoundingClientRect()
+    if (rect.width <= 0 || rect.height <= 0) return null
+    return {
+      x: ((client.x - rect.left) / rect.width) * (SCENE_WIDTH / LOGICAL_SCALE),
+      y: ((client.y - rect.top) / rect.height) * (SCENE_HEIGHT / LOGICAL_SCALE),
+    }
+  }
+
+  function getEventClientPoint(event?: KonvaEvent): Point | null {
+    const source = event?.evt
+    if (!source) return null
+    if (typeof source.clientX === 'number' && typeof source.clientY === 'number') {
+      return { x: source.clientX, y: source.clientY }
+    }
+    const touch = source.touches?.[0] ?? source.changedTouches?.[0]
+    return touch ? { x: touch.clientX, y: touch.clientY } : null
   }
 
   function ensureStrategyTextFontLoaded(): Promise<unknown> {

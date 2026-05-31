@@ -79,7 +79,10 @@ export function createBoardCodeActions({
 
   async function copyExportCode() {
     const code = elements.codeOutput.value || await exportAndReturnCode()
-    await browserNavigator.clipboard?.writeText(code)
+    if (!browserNavigator.clipboard?.writeText) {
+      throw new Error('当前浏览器不支持复制文本')
+    }
+    await browserNavigator.clipboard.writeText(code)
   }
 
   async function copyExportImage() {

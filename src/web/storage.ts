@@ -4,6 +4,7 @@ import {
   EDITOR_SETTINGS_KEY,
   GRID_OPACITY_STEP,
   GRID_SIZE_STEP,
+  LAYOUT_SETTINGS_KEY,
   LOCAL_BOARDS_KEY,
   LOCAL_FILES_KEY,
   LOCAL_PRESETS_KEY,
@@ -15,13 +16,14 @@ import {
   ZOOM_LEVELS,
 } from './constants.js'
 import { clamp } from './geometry.js'
+import { estimatePresetPreviewCacheBytes } from './presetPreviewCache.js'
 import {
   createProjectFromBoard,
   createPureBoardFromProject,
   isProject,
   normalizeProject,
 } from './project.js'
-import { getBrowserLocalStorage } from './browser.js'
+import { getBrowserLocalStorage, getOptionalBrowserWindow } from './browser.js'
 import { sanitizeObject } from './board.js'
 import type {
   Board,
@@ -118,13 +120,141 @@ export function loadLocalFiles(): LocalFile[] {
 }
 
 export function persistLocalFiles(files: unknown[]): boolean {
+  return persistLocalFilesDetailed(files).ok
+}
+
+export type StorageWriteResult =
+  | { ok: true }
+  | { ok: false, reason: 'quota' | 'unknown' }
+
+export function persistLocalFilesDetailed(files: unknown[]): StorageWriteResult {
   try {
     getLocalStorage().setItem(LOCAL_FILES_KEY, JSON.stringify(normalizeLocalFiles(files)))
-    return true
+    return { ok: true }
   } catch (error) {
     console.warn('Failed to save local files', error)
-    return false
+    return {
+      ok: false,
+      reason: isStorageQuotaError(error) ? 'quota' : 'unknown',
+    }
   }
+}
+
+export interface BrowserStorageEstimateSummary {
+  supported: boolean
+  usageBytes: number | null
+  quotaBytes: number | null
+  availableBytes: number | null
+}
+
+export interface ProjectStorageUsageEntry {
+  id: string
+  label: string
+  bytes: number
+}
+
+export interface ProjectStorageUsage {
+  totalBytes: number
+  entries: ProjectStorageUsageEntry[]
+}
+
+const PROJECT_LOCAL_STORAGE_KEYS = [
+  { id: 'local-files', label: '本地文件', key: LOCAL_FILES_KEY },
+  { id: 'local-presets', label: '本地预设', key: LOCAL_PRESETS_KEY },
+  { id: 'editor-draft', label: '自动草稿', key: STORAGE_KEY },
+  { id: 'view-settings', label: '视图设置', key: EDITOR_SETTINGS_KEY },
+  { id: 'layout-settings', label: '面板布局', key: LAYOUT_SETTINGS_KEY },
+  { id: 'legacy-local-files', label: '旧版本地文件', key: LOCAL_BOARDS_KEY },
+] as const
+
+export async function getBrowserStorageEstimate(): Promise<BrowserStorageEstimateSummary> {
+  try {
+    const estimate = await getOptionalBrowserWindow()?.navigator.storage?.estimate?.()
+    const usageBytes = numberOrNull(estimate?.usage)
+    const quotaBytes = numberOrNull(estimate?.quota)
+    return {
+      supported: Boolean(estimate),
+      usageBytes,
+      quotaBytes,
+      availableBytes: usageBytes === null || quotaBytes === null
+        ? null
+        : Math.max(0, quotaBytes - usageBytes),
+    }
+  } catch (error) {
+    console.warn('Failed to estimate browser storage', error)
+    return {
+      supported: false,
+      usageBytes: null,
+      quotaBytes: null,
+      availableBytes: null,
+    }
+  }
+}
+
+export async function getProjectStorageUsage(): Promise<ProjectStorageUsage> {
+  const localStorage = getLocalStorage()
+  const entries: ProjectStorageUsageEntry[] = PROJECT_LOCAL_STORAGE_KEYS.map(({ id, label, key }) => ({
+    id,
+    label,
+    bytes: getLocalStorageItemBytes(localStorage, key),
+  }))
+  const knownKeys = new Set(PROJECT_LOCAL_STORAGE_KEYS.map((entry) => entry.key))
+  const otherBytes = getOtherProjectLocalStorageBytes(localStorage, knownKeys)
+  if (otherBytes > 0) {
+    entries.push({
+      id: 'other-local-storage',
+      label: '其他本地数据',
+      bytes: otherBytes,
+    })
+  }
+  const presetPreviewBytes = await estimatePresetPreviewCacheBytes()
+  if (presetPreviewBytes !== null) {
+    entries.push({
+      id: 'preset-preview-cache',
+      label: '预设缩略图缓存',
+      bytes: presetPreviewBytes,
+    })
+  }
+  return {
+    entries,
+    totalBytes: entries.reduce((total, entry) => total + entry.bytes, 0),
+  }
+}
+
+function isStorageQuotaError(error: unknown): boolean {
+  if (!error || typeof error !== 'object') return false
+  const value = error as { name?: unknown, code?: unknown }
+  return value.name === 'QuotaExceededError'
+    || value.name === 'NS_ERROR_DOM_QUOTA_REACHED'
+    || value.code === 22
+    || value.code === 1014
+}
+
+function getLocalStorageItemBytes(storage: Storage, key: string): number {
+  const value = storage.getItem(key)
+  return value ? getStringByteLength(value) : 0
+}
+
+function getOtherProjectLocalStorageBytes(storage: Storage, knownKeys: Set<string>): number {
+  if (typeof storage.key !== 'function') return 0
+  let total = 0
+  for (let index = 0; index < storage.length; index += 1) {
+    const key = storage.key(index)
+    if (!key || knownKeys.has(key) || !key.startsWith('node-zsb-')) continue
+    total += getLocalStorageItemBytes(storage, key)
+  }
+  return total
+}
+
+function getStringByteLength(value: string): number {
+  if (typeof Blob !== 'undefined') {
+    return new Blob([value]).size
+  }
+  return new TextEncoder().encode(value).length
+}
+
+function numberOrNull(value: unknown): number | null {
+  return typeof value === 'number' && Number.isFinite(value) ? value : null
 }
 
 export function loadLocalPresets(): LocalLayerPreset[] {

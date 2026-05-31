@@ -49,6 +49,29 @@ export async function deletePresetPreview(cacheKey: string): Promise<void> {
   })
 }
 
+export async function estimatePresetPreviewCacheBytes(): Promise<number | null> {
+  const database = await openPreviewDatabase()
+  if (!database) return null
+  return new Promise((resolve) => {
+    let total = 0
+    const request = database
+      .transaction(STORE_NAME, 'readonly')
+      .objectStore(STORE_NAME)
+      .openCursor()
+    request.onsuccess = () => {
+      const cursor = request.result
+      if (!cursor) {
+        resolve(total)
+        return
+      }
+      const value = cursor.value as { blob?: Blob } | undefined
+      total += value?.blob instanceof Blob ? value.blob.size : 0
+      cursor.continue()
+    }
+    request.onerror = () => resolve(null)
+  })
+}
+
 async function readPresetPreviewBlob(cacheKey: string): Promise<Blob | null> {
   const database = await openPreviewDatabase()
   if (!database) return null

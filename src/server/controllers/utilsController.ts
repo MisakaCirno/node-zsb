@@ -1,5 +1,6 @@
 import Elysia, { status, t } from 'elysia'
-import { decode, encode, type StrategyBoard } from 'xiv-strat-board'
+import { encode, type StrategyBoard } from 'xiv-strat-board'
+import { getCode } from '../utils/getCode.ts'
 
 export const utilsController = new Elysia({ prefix: '/utils' })
   .post(
@@ -7,7 +8,7 @@ export const utilsController = new Elysia({ prefix: '/utils' })
     async ({ body }) => {
       const { code } = body
       try {
-        const board = decode(code)
+        const board = getCode(code)
         return {
           ok: true,
           data: board,

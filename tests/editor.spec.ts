@@ -1572,6 +1572,9 @@ test('editor saves, loads, and deletes local browser board slots', async ({
   await page.reload()
   await expect(page.locator('#layers')).toContainText('tank')
   await openLocalBoardDialog(page)
+  await expect(page.locator('#local-storage-summary')).toContainText('本项目')
+  await expect(page.locator('#local-storage-summary')).toContainText('本地文件')
+  await expect(page.locator('#local-storage-summary')).toContainText(/可用空间|不可用/)
   await expect(page.locator('#local-board-list')).toContainText('暂无本地文件')
   await page.locator('#local-board-dialog').evaluate((dialog) => {
     if ('close' in dialog) dialog.close()

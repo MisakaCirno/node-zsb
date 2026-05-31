@@ -39,6 +39,7 @@ export interface EditorElements {
   assetPanelBackground: HTMLElement
   assetPanelObjects: HTMLElement
   assetPanelPresets: HTMLElement
+  localStorageSummary: HTMLElement
   localBoardList: HTMLElement
   localBoardNameInput: HTMLInputElement
   localBoardNameError: HTMLElement
@@ -196,6 +197,7 @@ export function getEditorElements(): EditorElements {
     assetPanelBackground: queryElement('#asset-panel-background', HTMLElement),
     assetPanelObjects: queryElement('#asset-panel-objects', HTMLElement),
     assetPanelPresets: queryElement('#asset-panel-presets', HTMLElement),
+    localStorageSummary: queryElement('#local-storage-summary', HTMLElement),
     localBoardList: queryElement('#local-board-list', HTMLElement),
     localBoardNameInput: queryElement('#local-board-name-input', HTMLInputElement),
     localBoardNameError: queryElement('#local-board-name-error', HTMLElement),

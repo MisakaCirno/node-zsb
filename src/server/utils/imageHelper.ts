@@ -1,17 +1,19 @@
 import { file } from 'elysia'
-import { existsSync, mkdirSync } from 'fs'
+import { existsSync, mkdirSync, readdirSync, statSync, unlinkSync } from 'fs'
 import sharp, { type Sharp } from 'sharp'
 import { renderBoard } from '../renderer/renderer.ts'
 import { createHash } from 'crypto'
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
-import { defaultCode, getCode } from './getCode.ts'
+import { defaultCode, getCode, validateBoardCodeInput } from './getCode.ts'
 import type { DecodeResult } from 'xiv-strat-board'
 import { rgbaToThumbHash } from 'thumbhash'
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
 const cacheDir = path.resolve(__dirname, '..', '..', '..', 'cache')
 const rendererCache = new Map<string, Promise<Buffer>>()
+const MAX_CACHE_FILES = 500
+const cacheFilePattern = /^[a-f0-9]{64}\.webp$/
 
 // 外部调用接口
 export function renderImage(code = defaultCode) {
@@ -21,13 +23,7 @@ export function renderImage(code = defaultCode) {
     return cache
   }
 
-  const renderPromise = stageLoader(code, hash, filePath).catch((err) => {
-    console.error(`code: ${code} render error. clean cache`)
-    rendererCache.delete(hash)
-    throw err
-  })
-  rendererCache.set(hash, renderPromise)
-  return renderPromise
+  return renderImageToCache(code, hash, filePath)
 }
 
 export function getCache(hash: string) {
@@ -58,9 +54,22 @@ async function stageLoader(code: string, hash: string, filePath: string) {
   ensureCacheDir()
   const result = await webp.toBuffer()
   await sharp(result).toFile(filePath)
+  pruneCacheDir()
   rendererCache.delete(hash)
 
   return result
+}
+
+function renderImageToCache(code: string, hash: string, filePath: string): Promise<Buffer> {
+  const existing = rendererCache.get(hash)
+  if (existing) return existing
+  const renderPromise = stageLoader(code, hash, filePath).catch((err) => {
+    console.error(`code hash: ${hash} render error. clean cache`)
+    rendererCache.delete(hash)
+    throw err
+  })
+  rendererCache.set(hash, renderPromise)
+  return renderPromise
 }
 
 async function renderStage(boardData: DecodeResult) {
@@ -75,6 +84,7 @@ async function renderStage(boardData: DecodeResult) {
 }
 
 export function getHashKey(code: string) {
+  validateBoardCodeInput(code)
   const hash = createHash('sha256').update(code).digest('hex')
 
   const filePath = getCachePath(hash)
@@ -88,21 +98,16 @@ export function getCachePath(hash: string) {
 // 离线渲染用
 export async function renderImageOffline(code = defaultCode) {
   const { hash, filePath } = getHashKey(code)
-  const boardData = getCode(code)
-
   let image: Sharp
   // 如果缓存存在,读文件
   if (existsSync(filePath)) {
     image = sharp(filePath)
   } else {
     // 否则渲染并保存
-    const buffer = await renderStage(boardData)
-    const img = sharp(buffer)
-    image = img.clone().webp({ quality: 80 })
+    const webp = await renderImageToCache(code, hash, filePath)
+    image = sharp(webp)
 
     // 保存文件
-    ensureCacheDir()
-    await image.clone().toFile(filePath)
   }
 
   //生成缩略图
@@ -122,5 +127,27 @@ export async function renderImageOffline(code = defaultCode) {
 function ensureCacheDir() {
   if (!existsSync(cacheDir)) {
     mkdirSync(cacheDir, { recursive: true })
+  }
+}
+
+function pruneCacheDir() {
+  try {
+    const entries = readdirSync(cacheDir)
+      .filter((name) => cacheFilePattern.test(name))
+      .map((name) => {
+        const filePath = path.join(cacheDir, name)
+        return {
+          filePath,
+          mtimeMs: statSync(filePath).mtimeMs,
+        }
+      })
+      .sort((a, b) => a.mtimeMs - b.mtimeMs)
+    const overflow = entries.length - MAX_CACHE_FILES
+    if (overflow <= 0) return
+    for (const entry of entries.slice(0, overflow)) {
+      unlinkSync(entry.filePath)
+    }
+  } catch (error) {
+    console.warn('Failed to prune render cache', error)
   }
 }

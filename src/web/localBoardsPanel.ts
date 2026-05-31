@@ -1,4 +1,3 @@
-import { MAX_LOCAL_BOARDS } from './constants.js'
 import { normalizeBoard } from './board.js'
 import { encodeBoardCode, renderPreviewImage } from './api.js'
 import {
@@ -11,7 +10,14 @@ import {
 import { getBrowserDocument } from './browser.js'
 import { syncFlatLayerTree } from './layerTree.js'
 import { createNameDialogController } from './nameDialog.js'
-import { loadLocalFiles, persistLocalFiles } from './storage.js'
+import {
+  getBrowserStorageEstimate,
+  getProjectStorageUsage,
+  loadLocalFiles,
+  persistLocalFilesDetailed,
+  type BrowserStorageEstimateSummary,
+  type ProjectStorageUsage,
+} from './storage.js'
 import { DEFAULT_BOARD_BACKGROUND } from '../shared/backgrounds.js'
 import type {
   Board,
@@ -34,6 +40,7 @@ interface LocalBoardsPanelDeps {
 interface LocalBoardsPanelElements {
   localBoardDialog: DialogElement
   localBoardNameDialog: DialogElement
+  localStorageSummary: HTMLElement
   localBoardList: ListElement
   localBoardNameInput: InputElement
   localBoardNameError: TextElement
@@ -128,6 +135,7 @@ export function createLocalBoardsPanel({
   stage,
 }: LocalBoardsPanelDeps) {
   const browserDocument = getBrowserDocument()
+  let storageSummaryRequestId = 0
   const fileNameDialog = createNameDialogController({
     elements: {
       dialog: elements.localBoardNameDialog,
@@ -139,6 +147,7 @@ export function createLocalBoardsPanel({
   })
 
   function renderLocalBoards() {
+    void updateLocalStorageSummary()
     const files = loadLocalFiles()
     elements.localBoardList.innerHTML = ''
     if (files.length === 0) {
@@ -211,6 +220,7 @@ export function createLocalBoardsPanel({
     syncFlatLayerTree(state)
     state.selectedIndex = -1
     state.selectedIndexes = []
+    state.selectedGroupId = ''
     state.history = []
     state.future = []
     updateHistoryButtons()
@@ -240,6 +250,7 @@ export function createLocalBoardsPanel({
     })).filter((node): node is LayerNode => Boolean(node.id))
     state.selectedIndex = -1
     state.selectedIndexes = []
+    state.selectedGroupId = ''
     state.history = []
     state.future = []
     updateHistoryButtons()
@@ -356,7 +367,7 @@ export function createLocalBoardsPanel({
     }
     const nextFiles = existingIndex >= 0
       ? files.map((entry, index) => index === existingIndex ? file : entry)
-      : [file, ...files].slice(0, MAX_LOCAL_BOARDS)
+      : [file, ...files]
     if (!saveLocalFiles(nextFiles)) return false
     setCurrentFile(name)
     renderLocalBoards()
@@ -456,9 +467,82 @@ export function createLocalBoardsPanel({
     return currentProjectSnapshot() !== state.localFileSnapshot
   }
 
+  async function updateLocalStorageSummary() {
+    const requestId = ++storageSummaryRequestId
+    elements.localStorageSummary.textContent = '正在统计存储空间...'
+    const [browserEstimate, projectUsage] = await Promise.all([
+      getBrowserStorageEstimate(),
+      getProjectStorageUsage(),
+    ])
+    if (requestId !== storageSummaryRequestId) return
+    renderLocalStorageSummary(browserEstimate, projectUsage)
+  }
+
+  function renderLocalStorageSummary(
+    browserEstimate: BrowserStorageEstimateSummary,
+    projectUsage: ProjectStorageUsage,
+  ) {
+    const overview = browserDocument.createElement('div')
+    overview.className = 'local-storage-overview'
+    overview.append(
+      createStorageMetric('可用空间', formatOptionalBytes(browserEstimate.availableBytes)),
+      createStorageMetric(
+        '浏览器已用',
+        browserEstimate.usageBytes !== null && browserEstimate.quotaBytes !== null
+          ? `${formatBytes(browserEstimate.usageBytes)} / ${formatBytes(browserEstimate.quotaBytes)}`
+          : '不可用',
+      ),
+      createStorageMetric('本项目', formatBytes(projectUsage.totalBytes)),
+    )
+
+    const usageList = browserDocument.createElement('div')
+    usageList.className = 'local-storage-usage-list'
+    for (const entry of projectUsage.entries) {
+      const row = browserDocument.createElement('div')
+      row.className = 'local-storage-usage-row'
+      const label = browserDocument.createElement('span')
+      label.textContent = entry.label
+      const value = browserDocument.createElement('strong')
+      value.textContent = formatBytes(entry.bytes)
+      const bar = browserDocument.createElement('span')
+      bar.className = 'local-storage-usage-bar'
+      const fill = browserDocument.createElement('span')
+      fill.style.width = projectUsage.totalBytes > 0
+        ? `${Math.max(2, Math.round((entry.bytes / projectUsage.totalBytes) * 100))}%`
+        : '0%'
+      bar.append(fill)
+      row.append(label, value, bar)
+      usageList.append(row)
+    }
+
+    const note = browserDocument.createElement('p')
+    note.className = 'local-storage-note'
+    note.textContent = browserEstimate.supported
+      ? '空间为浏览器估算值，保存时以实际写入结果为准。'
+      : '当前浏览器不支持存储空间估算，保存时以实际写入结果为准。'
+
+    elements.localStorageSummary.replaceChildren(overview, usageList, note)
+  }
+
+  function createStorageMetric(label: string, value: string) {
+    const metric = browserDocument.createElement('span')
+    metric.className = 'local-storage-metric'
+    const labelNode = browserDocument.createElement('span')
+    labelNode.textContent = label
+    const valueNode = browserDocument.createElement('strong')
+    valueNode.textContent = value
+    metric.append(labelNode, valueNode)
+    return metric
+  }
+
   function saveLocalFiles(files: LocalFile[]) {
-    if (persistLocalFiles(files)) {
+    const result = persistLocalFilesDetailed(files)
+    if (result.ok) {
       return true
+    }
+    if (result.reason === 'quota') {
+      showStatus('浏览器本地存储空间不足，请删除旧文件后再保存', { type: 'error' })
+      return false
     }
     showStatus('保存本地文件失败', { type: 'error' })
     return false
@@ -524,4 +608,21 @@ function formatLocalFileTime(file: LocalFile) {
 
 function normalizeFileName(name: unknown) {
   return String(name ?? '').trim()
+}
+
+function formatOptionalBytes(bytes: number | null) {
+  return bytes === null ? '不可用' : formatBytes(bytes)
+}
+
+function formatBytes(bytes: number) {
+  if (!Number.isFinite(bytes) || bytes <= 0) return '0 B'
+  const units = ['B', 'KB', 'MB', 'GB']
+  let value = bytes
+  let unitIndex = 0
+  while (value >= 1024 && unitIndex < units.length - 1) {
+    value /= 1024
+    unitIndex += 1
+  }
+  const digits = unitIndex === 0 || value >= 10 ? 0 : 1
+  return `${value.toFixed(digits)} ${units[unitIndex]}`
 }
