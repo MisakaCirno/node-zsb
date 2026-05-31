@@ -1574,7 +1574,78 @@ textarea {
   overflow-y: auto;
 }
 
+.local-storage-divider {
+  width: 100%;
+  height: 1px;
+  border: 0;
+  margin: 2px 0;
+  background: #303b43;
+}
+
 .local-storage-summary {
+  padding: 10px 12px;
+  border: 1px solid #303b43;
+  border-radius: 6px;
+  background: #101519;
+  color: #dbe4e7;
+  font-size: 12px;
+}
+
+.local-storage-preview {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 8px 14px;
+  align-items: center;
+}
+
+.local-storage-preview-main {
+  min-width: 0;
+  display: grid;
+  gap: 2px;
+}
+
+.local-storage-preview-main span,
+.local-storage-preview-meta {
+  color: #9aa8b2;
+}
+
+.local-storage-preview-main strong {
+  overflow: hidden;
+  color: #eef2f3;
+  font-size: 14px;
+  font-weight: 650;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.local-storage-preview-meta {
+  grid-column: 1 / -1;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 14px;
+}
+
+.local-storage-preview-bar {
+  grid-column: 1 / -1;
+  height: 5px;
+  border-radius: 999px;
+  background: #26313a;
+  overflow: hidden;
+}
+
+.local-storage-preview-bar span {
+  display: block;
+  height: 100%;
+  border-radius: inherit;
+  background: #66c2a5;
+}
+
+.local-storage-preview button {
+  grid-row: 1;
+  grid-column: 2;
+}
+
+.local-storage-details {
   display: grid;
   gap: 10px;
   padding: 12px;
@@ -1623,7 +1694,7 @@ textarea {
 
 .local-storage-usage-row {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) auto;
+  grid-template-columns: minmax(0, 1fr) auto auto;
   gap: 6px 10px;
   align-items: center;
 }
@@ -1639,6 +1710,15 @@ textarea {
   color: #eef2f3;
   font-size: 12px;
   font-weight: 600;
+}
+
+.local-storage-detail-actions {
+  display: flex;
+  justify-content: flex-end;
+}
+
+.local-storage-usage-row button {
+  min-width: 64px;
 }
 
 .local-storage-usage-bar {

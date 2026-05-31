@@ -17,6 +17,7 @@ export function mountEditorDialogTemplates() {
 
 const EDITOR_DIALOG_TEMPLATES = [
   createLocalBoardDialog,
+  createLocalStorageDetailsDialog,
   createLocalBoardNameDialog,
   createPresetNameDialog,
   createImportDialog,
@@ -61,11 +62,31 @@ function createLocalBoardDialog() {
   list.className = 'local-board-list'
   list.setAttribute('aria-label', '本地文件列表')
 
+  const storageDivider = document.createElement('hr')
+  storageDivider.className = 'local-storage-divider'
+  storageDivider.setAttribute('aria-hidden', 'true')
+
   return createEditorDialog({
     id: 'local-board-dialog',
     title: '本地文件',
     closeButtonId: 'close-local-board-dialog',
-    body: [storageSummary, bulkActions, list],
+    body: [bulkActions, list, storageDivider, storageSummary],
+  })
+}
+
+function createLocalStorageDetailsDialog() {
+  const document = getBrowserDocument()
+  const details = document.createElement('section')
+  details.id = 'local-storage-details'
+  details.className = 'local-storage-details'
+  details.setAttribute('aria-label', '本地存储空间详情')
+  details.textContent = '正在统计存储空间...'
+
+  return createEditorDialog({
+    id: 'local-storage-details-dialog',
+    title: '存储空间详情',
+    closeButtonId: 'close-local-storage-details-dialog',
+    body: [details],
   })
 }
 

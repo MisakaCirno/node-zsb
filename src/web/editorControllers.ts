@@ -103,6 +103,15 @@ export function createEditorControllers({
     showStatus,
   })
 
+  const localPresetsPanel = createLocalPresetsPanel({
+    state,
+    elements,
+    recordHistory,
+    renderAll,
+    showStatus,
+    confirmAction,
+  })
+
   const localBoardsPanel = createLocalBoardsPanel({
     state,
     elements,
@@ -111,16 +120,8 @@ export function createEditorControllers({
     updateHistoryButtons,
     showStatus,
     confirmAction,
+    renderLocalPresets: localPresetsPanel.renderLocalPresets,
     stage,
-  })
-
-  const localPresetsPanel = createLocalPresetsPanel({
-    state,
-    elements,
-    recordHistory,
-    renderAll,
-    showStatus,
-    confirmAction,
   })
 
   return {

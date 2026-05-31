@@ -11,12 +11,16 @@ import { getBrowserDocument } from './browser.js'
 import { syncFlatLayerTree } from './layerTree.js'
 import { createNameDialogController } from './nameDialog.js'
 import {
+  clearAllProjectStorage,
+  clearProjectStorageTarget,
   getBrowserStorageEstimate,
   getProjectStorageUsage,
   loadLocalFiles,
   persistLocalFilesDetailed,
   type BrowserStorageEstimateSummary,
+  type ProjectStorageClearTarget,
   type ProjectStorageUsage,
+  type ProjectStorageUsageEntry,
 } from './storage.js'
 import { DEFAULT_BOARD_BACKGROUND } from '../shared/backgrounds.js'
 import type {
@@ -34,13 +38,16 @@ interface LocalBoardsPanelDeps {
   updateHistoryButtons(): void
   showStatus(message: string, options?: { type?: string }): void
   confirmAction(message: string): boolean
+  renderLocalPresets(): void
   stage: StagePreview
 }
 
 interface LocalBoardsPanelElements {
   localBoardDialog: DialogElement
+  localStorageDetailsDialog: DialogElement
   localBoardNameDialog: DialogElement
   localStorageSummary: HTMLElement
+  localStorageDetails: HTMLElement
   localBoardList: ListElement
   localBoardNameInput: InputElement
   localBoardNameError: TextElement
@@ -120,6 +127,55 @@ interface FileNameRequest {
   validate?: ((fileName: string) => string) | null
 }
 
+interface StorageStats {
+  browserEstimate: BrowserStorageEstimateSummary
+  projectUsage: ProjectStorageUsage
+}
+
+interface StorageClearConfig {
+  message: string
+  success: string
+}
+
+const STORAGE_CLEAR_CONFIGS: Record<ProjectStorageClearTarget, StorageClearConfig> = {
+  'editor-draft': {
+    message: '清理自动草稿？当前画布不会立即改变，但刷新后不会恢复该草稿。',
+    success: '已清理自动草稿',
+  },
+  'layout-settings': {
+    message: '清理面板布局设置？刷新后会恢复默认布局。',
+    success: '已清理面板布局设置',
+  },
+  'legacy-local-files': {
+    message: '清理旧版本地文件数据？此操作无法恢复。',
+    success: '已清理旧版本地文件数据',
+  },
+  'local-files': {
+    message: '删除所有本地文件？此操作无法恢复。',
+    success: '已删除所有本地文件',
+  },
+  'local-presets': {
+    message: '删除所有本地预设？此操作无法恢复。',
+    success: '已删除所有本地预设',
+  },
+  'other-local-storage': {
+    message: '清理其他本项目本地数据？此操作无法恢复。',
+    success: '已清理其他本项目本地数据',
+  },
+  'preset-preview-cache': {
+    message: '清理预设缩略图缓存？需要时会重新生成。',
+    success: '已清理预设缩略图缓存',
+  },
+  'view-settings': {
+    message: '清理视图设置？刷新后会恢复默认视图设置。',
+    success: '已清理视图设置',
+  },
+}
+
+const CLEARABLE_STORAGE_TARGETS = new Set<ProjectStorageClearTarget>(
+  Object.keys(STORAGE_CLEAR_CONFIGS) as ProjectStorageClearTarget[],
+)
+
 export function createLocalBoardsPanel({
   state,
   elements,
@@ -128,10 +184,12 @@ export function createLocalBoardsPanel({
   updateHistoryButtons,
   showStatus,
   confirmAction,
+  renderLocalPresets,
   stage,
 }: LocalBoardsPanelDeps) {
   const browserDocument = getBrowserDocument()
   let storageSummaryRequestId = 0
+  let currentStorageStats: StorageStats | null = null
   const fileNameDialog = createNameDialogController({
     elements: {
       dialog: elements.localBoardNameDialog,
@@ -140,6 +198,13 @@ export function createLocalBoardsPanel({
       title: elements.localBoardNameDialog.querySelector('h2'),
     },
     normalizeName: normalizeFileName,
+  })
+  elements.localStorageSummary.addEventListener('click', (event) => {
+    const trigger = event.target instanceof Element
+      ? event.target.closest<HTMLButtonElement>('#open-local-storage-details')
+      : null
+    if (!trigger) return
+    openLocalStorageDetails()
   })
 
   function renderLocalBoards() {
@@ -404,9 +469,11 @@ export function createLocalBoardsPanel({
     name.textContent = file.name
     const shareName = browserDocument.createElement('span')
     shareName.textContent = `分享名：${file.project?.board?.name || file.board?.name || '未命名'}`
+    const size = browserDocument.createElement('span')
+    size.textContent = `占用：${formatBytes(getSerializedBytes(file))}`
     const time = browserDocument.createElement('span')
     time.textContent = formatLocalFileTime(file)
-    meta.append(name, shareName, time)
+    meta.append(name, shareName, size, time)
 
     const actions = browserDocument.createElement('div')
     actions.className = 'local-board-actions'
@@ -465,16 +532,88 @@ export function createLocalBoardsPanel({
 
   async function updateLocalStorageSummary() {
     const requestId = ++storageSummaryRequestId
-    elements.localStorageSummary.textContent = '正在统计存储空间...'
+    renderLocalStoragePreviewLoading()
+    if (elements.localStorageDetailsDialog.open) {
+      elements.localStorageDetails.textContent = '正在统计存储空间...'
+    }
     const [browserEstimate, projectUsage] = await Promise.all([
       getBrowserStorageEstimate(),
       getProjectStorageUsage(),
     ])
     if (requestId !== storageSummaryRequestId) return
-    renderLocalStorageSummary(browserEstimate, projectUsage)
+    currentStorageStats = { browserEstimate, projectUsage }
+    renderLocalStoragePreview(browserEstimate, projectUsage)
+    if (elements.localStorageDetailsDialog.open) {
+      renderLocalStorageDetails(browserEstimate, projectUsage)
+    }
   }
 
-  function renderLocalStorageSummary(
+  function renderLocalStoragePreviewLoading() {
+    elements.localStorageSummary.textContent = '正在统计存储空间...'
+  }
+
+  function renderLocalStoragePreview(
+    browserEstimate: BrowserStorageEstimateSummary,
+    projectUsage: ProjectStorageUsage,
+  ) {
+    const wrapper = browserDocument.createElement('div')
+    wrapper.className = 'local-storage-preview'
+
+    const main = browserDocument.createElement('div')
+    main.className = 'local-storage-preview-main'
+    const label = browserDocument.createElement('span')
+    label.textContent = '本项目已用'
+    const value = browserDocument.createElement('strong')
+    value.textContent = formatBytes(projectUsage.totalBytes)
+    main.append(label, value)
+
+    const meta = browserDocument.createElement('div')
+    meta.className = 'local-storage-preview-meta'
+    const localFiles = projectUsage.entries.find((entry) => entry.id === 'local-files')
+    const localFilesText = browserDocument.createElement('span')
+    localFilesText.textContent = `本地文件 ${formatBytes(localFiles?.bytes ?? 0)}`
+    const browserUsageText = browserDocument.createElement('span')
+    browserUsageText.textContent = browserEstimate.usageBytes !== null && browserEstimate.quotaBytes !== null
+      ? `浏览器已用 ${formatBytes(browserEstimate.usageBytes)} / ${formatBytes(browserEstimate.quotaBytes)}`
+      : '浏览器已用不可用'
+    const availableText = browserDocument.createElement('span')
+    availableText.textContent = browserEstimate.supported
+      ? `可用 ${formatOptionalBytes(browserEstimate.availableBytes)}`
+      : '可用空间不可用'
+    meta.append(localFilesText, browserUsageText, availableText)
+
+    const bar = browserDocument.createElement('span')
+    bar.className = 'local-storage-preview-bar'
+    bar.setAttribute('aria-label', '浏览器存储已用比例')
+    const fill = browserDocument.createElement('span')
+    fill.style.width = browserEstimate.usageBytes !== null && browserEstimate.quotaBytes !== null && browserEstimate.quotaBytes > 0
+      ? `${Math.max(2, Math.min(100, Math.round((browserEstimate.usageBytes / browserEstimate.quotaBytes) * 100)))}%`
+      : '0%'
+    bar.append(fill)
+
+    const button = browserDocument.createElement('button')
+    button.id = 'open-local-storage-details'
+    button.type = 'button'
+    button.textContent = '查看详情'
+
+    wrapper.append(main, meta, bar, button)
+    elements.localStorageSummary.replaceChildren(wrapper)
+  }
+
+  function openLocalStorageDetails() {
+    if (elements.localBoardDialog.open) {
+      elements.localBoardDialog.close()
+    }
+    if (currentStorageStats) {
+      renderLocalStorageDetails(currentStorageStats.browserEstimate, currentStorageStats.projectUsage)
+    } else {
+      elements.localStorageDetails.textContent = '正在统计存储空间...'
+    }
+    elements.localStorageDetailsDialog.showModal()
+    void updateLocalStorageSummary()
+  }
+
+  function renderLocalStorageDetails(
     browserEstimate: BrowserStorageEstimateSummary,
     projectUsage: ProjectStorageUsage,
   ) {
@@ -491,6 +630,18 @@ export function createLocalBoardsPanel({
       createStorageMetric('本项目', formatBytes(projectUsage.totalBytes)),
     )
 
+    const actions = browserDocument.createElement('div')
+    actions.className = 'local-storage-detail-actions'
+    const clearAllButton = browserDocument.createElement('button')
+    clearAllButton.type = 'button'
+    clearAllButton.className = 'danger-button'
+    clearAllButton.disabled = projectUsage.totalBytes === 0
+    clearAllButton.textContent = '清理全部'
+    clearAllButton.addEventListener('click', () => {
+      void clearAllStorage()
+    })
+    actions.append(clearAllButton)
+
     const usageList = browserDocument.createElement('div')
     usageList.className = 'local-storage-usage-list'
     for (const entry of projectUsage.entries) {
@@ -500,6 +651,7 @@ export function createLocalBoardsPanel({
       label.textContent = entry.label
       const value = browserDocument.createElement('strong')
       value.textContent = formatBytes(entry.bytes)
+      const action = createStorageClearButton(entry)
       const bar = browserDocument.createElement('span')
       bar.className = 'local-storage-usage-bar'
       const fill = browserDocument.createElement('span')
@@ -507,7 +659,7 @@ export function createLocalBoardsPanel({
         ? `${Math.max(2, Math.round((entry.bytes / projectUsage.totalBytes) * 100))}%`
         : '0%'
       bar.append(fill)
-      row.append(label, value, bar)
+      row.append(label, value, action, bar)
       usageList.append(row)
     }
 
@@ -517,7 +669,21 @@ export function createLocalBoardsPanel({
       ? '空间为浏览器估算值，保存时以实际写入结果为准。'
       : '当前浏览器不支持存储空间估算，保存时以实际写入结果为准。'
 
-    elements.localStorageSummary.replaceChildren(overview, usageList, note)
+    elements.localStorageDetails.replaceChildren(overview, actions, usageList, note)
+  }
+
+  function createStorageClearButton(entry: ProjectStorageUsageEntry) {
+    const button = browserDocument.createElement('button')
+    button.type = 'button'
+    button.textContent = '清理'
+    const target = isStorageClearTarget(entry.id) ? entry.id : null
+    button.disabled = entry.bytes === 0 || !target
+    if (target) {
+      button.addEventListener('click', () => {
+        void clearStorageTarget(target)
+      })
+    }
+    return button
   }
 
   function createStorageMetric(label: string, value: string) {
@@ -529,6 +695,56 @@ export function createLocalBoardsPanel({
     valueNode.textContent = value
     metric.append(labelNode, valueNode)
     return metric
+  }
+
+  function getSerializedBytes(value: unknown): number {
+    return new TextEncoder().encode(JSON.stringify(value)).length
+  }
+
+  async function clearStorageTarget(target: ProjectStorageClearTarget) {
+    const config = STORAGE_CLEAR_CONFIGS[target]
+    if (!confirmAction(config.message)) return
+    const ok = await clearProjectStorageTarget(target)
+    if (!ok) {
+      showStatus('清理存储失败', { type: 'error' })
+      return
+    }
+    refreshAfterStorageClear(target)
+    showStatus(config.success)
+  }
+
+  async function clearAllStorage() {
+    if (!confirmAction('清理所有本项目本地存储？这会删除本地文件、本地预设、自动草稿、视图设置、面板布局、旧数据和预设缩略图缓存，且无法恢复。')) {
+      return
+    }
+    const ok = await clearAllProjectStorage()
+    if (!ok) {
+      showStatus('清理存储失败', { type: 'error' })
+      return
+    }
+    refreshAfterStorageClear('local-files', { clearedAll: true })
+    showStatus('已清理所有本项目本地存储')
+  }
+
+  function refreshAfterStorageClear(
+    target: ProjectStorageClearTarget,
+    options: { clearedAll?: boolean } = {},
+  ) {
+    const shouldRefreshLocalFiles = options.clearedAll || target === 'local-files'
+    const shouldRefreshLocalPresets = options.clearedAll || target === 'local-presets'
+    if (shouldRefreshLocalFiles) {
+      setCurrentFile('')
+      renderLocalBoards()
+    } else {
+      void updateLocalStorageSummary()
+    }
+    if (shouldRefreshLocalPresets) {
+      renderLocalPresets()
+    }
+  }
+
+  function isStorageClearTarget(id: string): id is ProjectStorageClearTarget {
+    return CLEARABLE_STORAGE_TARGETS.has(id as ProjectStorageClearTarget)
   }
 
   function saveLocalFiles(files: LocalFile[]) {

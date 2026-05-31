@@ -3,11 +3,14 @@ import test from 'node:test'
 
 import {
   EDITOR_SETTINGS_KEY,
+  LAYOUT_SETTINGS_KEY,
   LOCAL_FILES_KEY,
   LOCAL_PRESETS_KEY,
   STORAGE_KEY,
 } from '../../src/web/constants.js'
 import {
+  clearAllProjectStorage,
+  clearProjectStorageTarget,
   getProjectStorageUsage,
   loadLocalPresets,
   persistLocalFilesDetailed,
@@ -127,6 +130,46 @@ test('getProjectStorageUsage groups local project storage bytes', async () => {
   }
 })
 
+test('clearProjectStorageTarget clears a single tracked storage bucket', async () => {
+  const restoreLocalStorage = withLocalStorage({
+    [LOCAL_FILES_KEY]: 'file-data',
+    [LOCAL_PRESETS_KEY]: 'preset',
+  })
+  try {
+    assert.equal(await clearProjectStorageTarget('local-files'), true)
+
+    assert.equal(window.localStorage.getItem(LOCAL_FILES_KEY), null)
+    assert.equal(window.localStorage.getItem(LOCAL_PRESETS_KEY), 'preset')
+  } finally {
+    restoreLocalStorage()
+  }
+})
+
+test('clearAllProjectStorage clears tracked and project-prefixed local storage', async () => {
+  const restoreLocalStorage = withLocalStorage({
+    [LOCAL_FILES_KEY]: 'file-data',
+    [LOCAL_PRESETS_KEY]: 'preset',
+    [STORAGE_KEY]: 'draft',
+    [EDITOR_SETTINGS_KEY]: '{}',
+    [LAYOUT_SETTINGS_KEY]: '{}',
+    'node-zsb-extra': 'extra',
+    unrelated: 'keep',
+  })
+  try {
+    assert.equal(await clearAllProjectStorage(), true)
+
+    assert.equal(window.localStorage.getItem(LOCAL_FILES_KEY), null)
+    assert.equal(window.localStorage.getItem(LOCAL_PRESETS_KEY), null)
+    assert.equal(window.localStorage.getItem(STORAGE_KEY), null)
+    assert.equal(window.localStorage.getItem(EDITOR_SETTINGS_KEY), null)
+    assert.equal(window.localStorage.getItem(LAYOUT_SETTINGS_KEY), null)
+    assert.equal(window.localStorage.getItem('node-zsb-extra'), null)
+    assert.equal(window.localStorage.getItem('unrelated'), 'keep')
+  } finally {
+    restoreLocalStorage()
+  }
+})
+
 function withLocalStorage(
   entries: Record<string, string>,
   overrides: { setItem?: (key: string, value: string) => void } = {},
@@ -151,6 +194,9 @@ function withLocalStorage(
             return
           }
           entries[key] = value
+        },
+        removeItem(key: string) {
+          delete entries[key]
         },
       },
     },

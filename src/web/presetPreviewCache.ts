@@ -49,6 +49,24 @@ export async function deletePresetPreview(cacheKey: string): Promise<void> {
   })
 }
 
+export async function clearPresetPreviewCache(): Promise<boolean> {
+  for (const entry of memoryCache.values()) {
+    URL.revokeObjectURL(entry.url)
+  }
+  memoryCache.clear()
+
+  const database = await openPreviewDatabase()
+  if (!database) return true
+  return new Promise((resolve) => {
+    const request = database
+      .transaction(STORE_NAME, 'readwrite')
+      .objectStore(STORE_NAME)
+      .clear()
+    request.onsuccess = () => resolve(true)
+    request.onerror = () => resolve(false)
+  })
+}
+
 export async function estimatePresetPreviewCacheBytes(): Promise<number | null> {
   const database = await openPreviewDatabase()
   if (!database) return null

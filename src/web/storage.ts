@@ -16,7 +16,10 @@ import {
   ZOOM_LEVELS,
 } from './constants.js'
 import { clamp } from './geometry.js'
-import { estimatePresetPreviewCacheBytes } from './presetPreviewCache.js'
+import {
+  clearPresetPreviewCache,
+  estimatePresetPreviewCacheBytes,
+} from './presetPreviewCache.js'
 import {
   createProjectFromBoard,
   createPureBoardFromProject,
@@ -158,6 +161,19 @@ export interface ProjectStorageUsage {
   entries: ProjectStorageUsageEntry[]
 }
 
+export type ProjectStorageClearTarget =
+  | ProjectLocalStorageTarget
+  | 'other-local-storage'
+  | 'preset-preview-cache'
+
+type ProjectLocalStorageTarget =
+  | 'local-files'
+  | 'local-presets'
+  | 'editor-draft'
+  | 'view-settings'
+  | 'layout-settings'
+  | 'legacy-local-files'
+
 const PROJECT_LOCAL_STORAGE_KEYS = [
   { id: 'local-files', label: '本地文件', key: LOCAL_FILES_KEY },
   { id: 'local-presets', label: '本地预设', key: LOCAL_PRESETS_KEY },
@@ -166,6 +182,10 @@ const PROJECT_LOCAL_STORAGE_KEYS = [
   { id: 'layout-settings', label: '面板布局', key: LAYOUT_SETTINGS_KEY },
   { id: 'legacy-local-files', label: '旧版本地文件', key: LOCAL_BOARDS_KEY },
 ] as const
+
+const PROJECT_LOCAL_STORAGE_KEY_BY_ID = new Map<ProjectLocalStorageTarget, string>(
+  PROJECT_LOCAL_STORAGE_KEYS.map((entry) => [entry.id, entry.key]),
+)
 
 export async function getBrowserStorageEstimate(): Promise<BrowserStorageEstimateSummary> {
   try {
@@ -221,6 +241,36 @@ export async function getProjectStorageUsage(): Promise<ProjectStorageUsage> {
   }
 }
 
+export async function clearProjectStorageTarget(target: ProjectStorageClearTarget): Promise<boolean> {
+  if (target === 'preset-preview-cache') {
+    return clearPresetPreviewCache()
+  }
+
+  const localStorage = getLocalStorage()
+  const knownKeys = new Set(PROJECT_LOCAL_STORAGE_KEYS.map((entry) => entry.key))
+  if (target === 'other-local-storage') {
+    removeOtherProjectLocalStorage(localStorage, knownKeys)
+    return true
+  }
+
+  const key = PROJECT_LOCAL_STORAGE_KEY_BY_ID.get(target)
+  if (!key) return false
+  localStorage.removeItem(key)
+  return true
+}
+
+export async function clearAllProjectStorage(): Promise<boolean> {
+  const localStorage = getLocalStorage()
+  for (const { key } of PROJECT_LOCAL_STORAGE_KEYS) {
+    localStorage.removeItem(key)
+  }
+  removeOtherProjectLocalStorage(
+    localStorage,
+    new Set(PROJECT_LOCAL_STORAGE_KEYS.map((entry) => entry.key)),
+  )
+  return clearPresetPreviewCache()
+}
+
 function isStorageQuotaError(error: unknown): boolean {
   if (!error || typeof error !== 'object') return false
   const value = error as { name?: unknown, code?: unknown }
@@ -244,6 +294,19 @@ function getOtherProjectLocalStorageBytes(storage: Storage, knownKeys: Set<strin
     total += getLocalStorageItemBytes(storage, key)
   }
   return total
+}
+
+function removeOtherProjectLocalStorage(storage: Storage, knownKeys: Set<string>): void {
+  if (typeof storage.key !== 'function') return
+  const keys: string[] = []
+  for (let index = 0; index < storage.length; index += 1) {
+    const key = storage.key(index)
+    if (!key || knownKeys.has(key) || !key.startsWith('node-zsb-')) continue
+    keys.push(key)
+  }
+  for (const key of keys) {
+    storage.removeItem(key)
+  }
 }
 
 function getStringByteLength(value: string): number {

@@ -1,6 +1,6 @@
 import { expect, test, type Dialog, type Locator, type Page } from '@playwright/test'
 import { readFile } from 'node:fs/promises'
-import { MAX_BOARD_OBJECTS, STORAGE_KEY } from '../src/web/constants.js'
+import { LOCAL_PRESETS_KEY, MAX_BOARD_OBJECTS, STORAGE_KEY } from '../src/web/constants.js'
 
 async function openImportDialog(page: Page) {
   await clickFileMenuAction(page, '#open-import-dialog')
@@ -1560,13 +1560,73 @@ test('editor saves, loads, and deletes local browser board slots', async ({
   await page.evaluate(() =>
     localStorage.removeItem('node-zsb-editor-board-v1'),
   )
+  await page.evaluate((key) => {
+    const now = new Date().toISOString()
+    localStorage.setItem(key, JSON.stringify([{
+      id: 'storage-cleanup-preset',
+      name: '清理测试预设',
+      objects: {
+        storageCleanupObject: {
+          type: 'tank',
+          x: 512,
+          y: 384,
+        },
+      },
+      layers: [{ type: 'object', id: 'storageCleanupObject' }],
+      createdAt: now,
+      updatedAt: now,
+    }]))
+  }, LOCAL_PRESETS_KEY)
   await page.reload()
   await expect(page.locator('#layers')).toContainText('tank')
+  await page.locator('#asset-tab-presets').click()
+  const cleanupPresetCard = page.locator('.preset-card').filter({ hasText: '清理测试预设' })
+  await expect(cleanupPresetCard).toHaveCount(1)
   await openLocalBoardDialog(page)
-  await expect(page.locator('#local-storage-summary')).toContainText('本项目')
-  await expect(page.locator('#local-storage-summary')).toContainText('本地文件')
-  await expect(page.locator('#local-storage-summary')).toContainText(/可用空间|不可用/)
+  const localBoardDialogOrder = await page.locator('#local-board-dialog .dialog-panel').evaluate((panel) =>
+    [...panel.children].map((child) => (child as HTMLElement).id || (child as HTMLElement).className),
+  )
+  const localBoardListIndex = localBoardDialogOrder.indexOf('local-board-list')
+  const localStorageDividerIndex = localBoardDialogOrder.indexOf('local-storage-divider')
+  const localStorageSummaryIndex = localBoardDialogOrder.indexOf('local-storage-summary')
+  expect(localBoardListIndex).toBeGreaterThan(-1)
+  expect(localStorageDividerIndex).toBeGreaterThan(localBoardListIndex)
+  expect(localStorageSummaryIndex).toBeGreaterThan(localStorageDividerIndex)
+  await expect(page.locator('#local-storage-summary')).toContainText('本项目已用')
+  await expect(page.locator('#local-storage-summary')).toContainText('浏览器已用')
+  await expect(page.locator('#local-storage-summary .local-storage-preview-bar span')).toHaveCount(1)
+  await expect(page.locator('#local-storage-summary')).toContainText('查看详情')
   await expect(page.locator('#local-board-list')).toContainText('暂无本地文件')
+  await page.locator('#open-local-storage-details').click()
+  await expect(page.locator('#local-board-dialog')).toBeHidden()
+  await expect(page.locator('#local-storage-details-dialog')).toBeVisible()
+  await expect(page.locator('#local-storage-details')).toContainText('本地文件')
+  await expect(page.locator('#local-storage-details')).toContainText(/可用空间|不可用/)
+  await expect(page.locator('#local-storage-details')).toContainText('清理全部')
+  await expect(page.locator('#local-storage-details .local-storage-usage-row button')).toHaveCount(7)
+  page.once('dialog', async (dialog) => {
+    expect(dialog.message()).toContain('删除所有本地预设')
+    await dialog.accept()
+  })
+  await page.locator('#local-storage-details .local-storage-usage-row')
+    .filter({ hasText: '本地预设' })
+    .getByRole('button', { name: '清理' })
+    .click()
+  await expect.poll(() => page.evaluate((key) => localStorage.getItem(key), LOCAL_PRESETS_KEY)).toBeNull()
+  await expect(cleanupPresetCard).toHaveCount(0)
+  await expect(page.locator('#preset-list')).toContainText('暂无预设')
+  await expect(page.locator('#local-storage-details')).toContainText('自动草稿')
+  page.once('dialog', async (dialog) => {
+    expect(dialog.message()).toContain('清理自动草稿')
+    await dialog.accept()
+  })
+  await page.locator('#local-storage-details .local-storage-usage-row')
+    .filter({ hasText: '自动草稿' })
+    .getByRole('button', { name: '清理' })
+    .click()
+  await expect.poll(() => page.evaluate((key) => localStorage.getItem(key), STORAGE_KEY)).toBeNull()
+  await closeDialog(page, '#local-storage-details-dialog')
+  await openLocalBoardDialog(page)
   await closeDialog(page, '#local-board-dialog')
 
   await page.locator('#file-name').fill('本地草稿')
@@ -1577,6 +1637,7 @@ test('editor saves, loads, and deletes local browser board slots', async ({
   await openLocalBoardDialog(page)
   await expect(page.locator('#local-board-list')).toContainText('本地草稿')
   await expect(page.locator('#local-board-list')).toContainText('分享名：分享草稿')
+  await expect(page.locator('#local-board-list')).toContainText(/占用：\d/)
   await expect(page.locator('#local-board-list .local-board-preview img')).toHaveCount(1)
   await expect(page.locator('#local-board-list .local-board-preview img').first()).toHaveCSS('object-fit', 'contain')
   await expect(page.locator('#local-board-list .local-board-select span')).toHaveCount(0)

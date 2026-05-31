@@ -19,6 +19,7 @@ export interface EditorElements {
   exportProjectFile: HTMLButtonElement
   openExportImageDialog: HTMLButtonElement
   localBoardDialog: HTMLDialogElement
+  localStorageDetailsDialog: HTMLDialogElement
   localBoardNameDialog: HTMLDialogElement
   importDialog: HTMLDialogElement
   exportCodeDialog: HTMLDialogElement
@@ -40,6 +41,7 @@ export interface EditorElements {
   assetPanelObjects: HTMLElement
   assetPanelPresets: HTMLElement
   localStorageSummary: HTMLElement
+  localStorageDetails: HTMLElement
   localBoardList: HTMLElement
   localBoardNameInput: HTMLInputElement
   localBoardNameError: HTMLElement
@@ -177,6 +179,7 @@ export function getEditorElements(): EditorElements {
     exportProjectFile: queryElement('#export-project-file', HTMLButtonElement),
     openExportImageDialog: queryElement('#open-export-image-dialog', HTMLButtonElement),
     localBoardDialog: queryElement('#local-board-dialog', HTMLDialogElement),
+    localStorageDetailsDialog: queryElement('#local-storage-details-dialog', HTMLDialogElement),
     localBoardNameDialog: queryElement('#local-board-name-dialog', HTMLDialogElement),
     importDialog: queryElement('#import-dialog', HTMLDialogElement),
     exportCodeDialog: queryElement('#export-code-dialog', HTMLDialogElement),
@@ -198,6 +201,7 @@ export function getEditorElements(): EditorElements {
     assetPanelObjects: queryElement('#asset-panel-objects', HTMLElement),
     assetPanelPresets: queryElement('#asset-panel-presets', HTMLElement),
     localStorageSummary: queryElement('#local-storage-summary', HTMLElement),
+    localStorageDetails: queryElement('#local-storage-details', HTMLElement),
     localBoardList: queryElement('#local-board-list', HTMLElement),
     localBoardNameInput: queryElement('#local-board-name-input', HTMLInputElement),
     localBoardNameError: queryElement('#local-board-name-error', HTMLElement),
