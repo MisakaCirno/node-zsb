@@ -244,9 +244,12 @@
                 </div>
               </label>
             </div>
-            <label class="field" data-field="text">
+            <label class="field text-field" data-field="text">
               <span>文字</span>
-              <input id="object-text" maxlength="30" />
+              <div class="text-control">
+                <textarea id="object-text" maxlength="30" rows="1" spellcheck="false" aria-describedby="object-text-count"></textarea>
+                <output id="object-text-count" class="field-count" for="object-text">0/30</output>
+              </div>
             </label>
             <div class="field-grid parameter-field-grid" data-field="dimensions">
               <label class="field slider-field">

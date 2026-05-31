@@ -61,7 +61,7 @@ test('cleanBoard applies game-compatible object fields', () => {
   const board = normalizeBoard({
     boardBackground: 'checkered',
     objects: [
-      { type: 'text', x: 100, y: 120, text: 'label', size: 160, angle: 45 },
+      { type: 'text', x: 100, y: 120, text: '123456789012345678901234567890X\nnext', size: 160, angle: 45 },
       { type: 'line', x: 120, y: 140, endX: 200, endY: 180, size: 20, angle: 45 },
       { type: 'circle_aoe', x: 150, y: 150, size: 5, color: '#123456', transparency: 120 },
       { type: 'line_aoe', x: 160, y: 160, size: 250, width: 1, height: 500, angle: 315, transparency: 150 },
@@ -78,15 +78,16 @@ test('cleanBoard applies game-compatible object fields', () => {
     width: object.width,
     height: object.height,
     color: object.color,
+    text: object.text,
     donutRadius: object.donutRadius,
     transparency: object.transparency,
   })), [
-    { type: 'text', size: undefined, angle: undefined, arcAngle: undefined, width: undefined, height: undefined, color: '#FFFFFF', donutRadius: undefined, transparency: 0 },
-    { type: 'line', size: 50, angle: undefined, arcAngle: undefined, width: undefined, height: undefined, color: '#FF7F00', donutRadius: undefined, transparency: 0 },
-    { type: 'circle_aoe', size: 10, angle: undefined, arcAngle: undefined, width: undefined, height: undefined, color: undefined, donutRadius: undefined, transparency: 100 },
-    { type: 'line_aoe', size: 100, angle: -45, arcAngle: undefined, width: 16, height: 384, color: '#FF7F00', donutRadius: undefined, transparency: 100 },
-    { type: 'donut', size: 10, angle: 179, arcAngle: 360, width: undefined, height: undefined, color: undefined, donutRadius: 240, transparency: 0 },
-    { type: 'donut', size: 100, angle: undefined, arcAngle: 180, width: undefined, height: undefined, color: undefined, donutRadius: 80, transparency: 0 },
+    { type: 'text', size: undefined, angle: undefined, arcAngle: undefined, width: undefined, height: undefined, color: '#FFFFFF', text: '123456789012345678901234567890', donutRadius: undefined, transparency: 0 },
+    { type: 'line', size: 50, angle: undefined, arcAngle: undefined, width: undefined, height: undefined, color: '#FF7F00', text: undefined, donutRadius: undefined, transparency: 0 },
+    { type: 'circle_aoe', size: 10, angle: undefined, arcAngle: undefined, width: undefined, height: undefined, color: undefined, text: undefined, donutRadius: undefined, transparency: 100 },
+    { type: 'line_aoe', size: 100, angle: -45, arcAngle: undefined, width: 16, height: 384, color: '#FF7F00', text: undefined, donutRadius: undefined, transparency: 100 },
+    { type: 'donut', size: 10, angle: 179, arcAngle: 360, width: undefined, height: undefined, color: undefined, text: undefined, donutRadius: 240, transparency: 0 },
+    { type: 'donut', size: 100, angle: undefined, arcAngle: 180, width: undefined, height: undefined, color: undefined, text: undefined, donutRadius: 80, transparency: 0 },
   ])
 })
 

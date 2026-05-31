@@ -116,6 +116,7 @@ interface KonvaNode {
   points(points: number[]): void
   position(value?: Point): Point
   rotation(): number
+  rotateEnabled?(value: boolean): void
   scale(value: { x: number, y: number }): void
   scaleX(value?: number): number
   scaleY(value?: number): number
@@ -365,13 +366,16 @@ export function createStageRenderer({
     const selectedObjects = selectedIndexes.map((index) => state.board.objects[index])
     const canTransformSelection = selectedObjects.length > 0
       && selectedObjects.every((object) => object && !['line', 'text'].includes(object.type))
-    const selectedNodes = canTransformSelection
+    const canShowSelectionBounds = selectedObjects.length > 0
+      && selectedObjects.every((object) => object && object.type !== 'line')
+    const selectedNodes = canShowSelectionBounds
       ? nodes.filter((node) => {
         const index = Number(node.getAttr('objectIndex'))
         return selectedIndexes.includes(index) && !state.board.objects[index]?.locked
       })
       : []
     transformer.keepRatio(!canFreeScaleSelection(selectedObjects))
+    transformer.rotateEnabled?.(canTransformSelection)
     transformer.enabledAnchors(canTransformSelection ? TRANSFORM_ANCHORS : [])
     transformer.nodes(selectedNodes)
     transformerLayer.draw()

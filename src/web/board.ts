@@ -3,6 +3,7 @@ import {
   stripEditorFields,
   stripPureBoardEditorFields,
 } from './editorIds.js'
+import { normalizeObjectText } from './textInputControl.js'
 import { DEFAULT_BOARD_BACKGROUND } from '../shared/backgrounds.js'
 import {
   getDefaultObjectColor,
@@ -78,6 +79,8 @@ export function sanitizeObject(object: BoardObject): BoardObject {
   }
   if (!capabilities.text) {
     delete copy.text
+  } else {
+    copy.text = normalizeObjectText(copy.text)
   }
   if (!capabilities.line) {
     delete copy.endX

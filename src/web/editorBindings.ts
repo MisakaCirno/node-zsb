@@ -9,6 +9,7 @@ import { bindLayoutResizers } from './layoutResizers.js'
 import { bindAdaptiveSidebarTabs } from './sidebarTabLayout.js'
 import { bindMenuBar } from './menuBar.js'
 import { getPresetDragType } from './localPresetsPanel.js'
+import { bindTextInput } from './textInputControl.js'
 import type {
   EditorActionRegistry,
 } from './types.js'
@@ -198,7 +199,6 @@ export function bindEditorEvents({
   for (const input of [
     elements.x,
     elements.y,
-    elements.text,
     elements.endX,
     elements.endY,
     elements.hidden,
@@ -206,6 +206,7 @@ export function bindEditorEvents({
   ]) {
     input.addEventListener('input', actions.updateSelectedFromInspector)
   }
+  bindTextInput(elements, actions.updateSelectedFromInspector)
   bindSyncedSlider(elements.size, elements.sizeRange, actions.updateSelectedFromInspector)
   bindSyncedSlider(elements.angle, elements.angleRange, actions.updateSelectedFromInspector)
   bindSyncedSlider(elements.transparency, elements.transparencyRange, actions.updateSelectedFromInspector)

@@ -1,5 +1,6 @@
 import { getObjectCapabilities } from './board.js'
 import { syncColorControl } from './colorPicker.js'
+import { syncTextInput } from './textInputControl.js'
 import {
   DEFAULT_LINE_COLOR,
   getDefaultObjectColor,
@@ -8,6 +9,9 @@ import {
 import type {
   ColorPickerElements,
 } from './colorPicker.js'
+import type {
+  TextInputElements,
+} from './textInputControl.js'
 import type {
   BoardObject,
   CheckedElement,
@@ -21,7 +25,7 @@ export interface RenderInspectorDeps {
   updateSelectionActions(): void
 }
 
-export interface InspectorPanelElements extends ColorPickerElements {
+export interface InspectorPanelElements extends ColorPickerElements, TextInputElements {
   emptyState: ClassListElement
   inspector: QueryElement
   type: ValueElement
@@ -33,7 +37,6 @@ export interface InspectorPanelElements extends ColorPickerElements {
   angleRange: ValueElement & DisabledElement
   transparency: ValueElement
   transparencyRange: ValueElement
-  text: ValueElement
   objectWidth: ValueElement & DisabledElement
   objectWidthRange: ValueElement & DisabledElement
   objectHeight: ValueElement & DisabledElement
@@ -95,7 +98,7 @@ export function renderInspector({
   syncColorControl(elements)
   elements.transparency.value = String(object.transparency ?? 0)
   elements.transparencyRange.value = elements.transparency.value
-  elements.text.value = object.text ?? ''
+  syncTextInput(elements, object.text ?? '')
   elements.objectWidth.value = String(object.width ?? 128)
   elements.objectWidthRange.value = elements.objectWidth.value
   elements.objectHeight.value = String(object.height ?? 128)

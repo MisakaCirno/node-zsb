@@ -2,6 +2,7 @@ import { getObjectCapabilities } from './board.js'
 import { getSelectedIndexes } from './editorState.js'
 import { numberValue } from './geometry.js'
 import { renderInspector as renderInspectorPanel } from './inspectorPanel.js'
+import { normalizeObjectText, syncTextInput } from './textInputControl.js'
 import {
   getObjectSizeBounds,
   MAX_GAME_ROTATION_ANGLE,
@@ -114,7 +115,13 @@ export function createInspectorControls({
     object.transparency = capabilities.transparency
       ? numberValue(elements.transparency, 0, 100)
       : undefined
-    object.text = capabilities.text ? elements.text.value || undefined : undefined
+    if (capabilities.text) {
+      const text = normalizeObjectText(elements.text.value)
+      syncTextInput(elements, text)
+      object.text = text || undefined
+    } else {
+      object.text = undefined
+    }
     object.width = capabilities.dimensions
       ? numberValue(elements.objectWidth, 16, 512)
       : undefined

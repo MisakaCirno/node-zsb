@@ -134,7 +134,8 @@ export interface EditorElements {
   colorText: HTMLInputElement
   transparency: HTMLInputElement
   transparencyRange: HTMLInputElement
-  text: HTMLInputElement
+  text: HTMLTextAreaElement
+  textCount: HTMLOutputElement
   objectWidth: HTMLInputElement
   objectWidthRange: HTMLInputElement
   objectHeight: HTMLInputElement
@@ -290,7 +291,8 @@ export function getEditorElements(): EditorElements {
     colorText: queryElement('#object-color-text', HTMLInputElement),
     transparency: queryElement('#object-transparency', HTMLInputElement),
     transparencyRange: queryElement('#object-transparency-range', HTMLInputElement),
-    text: queryElement('#object-text', HTMLInputElement),
+    text: queryElement('#object-text', HTMLTextAreaElement),
+    textCount: queryElement('#object-text-count', HTMLOutputElement),
     objectWidth: queryElement('#object-width', HTMLInputElement),
     objectWidthRange: queryElement('#object-width-range', HTMLInputElement),
     objectHeight: queryElement('#object-height', HTMLInputElement),

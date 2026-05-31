@@ -19,3 +19,4 @@ export const LOCAL_PRESETS_KEY = 'node-zsb-editor-local-presets-v1'
 export const MAX_LOCAL_BOARDS = 20
 export const MAX_BOARD_OBJECTS = 50
 export const MAX_LOCAL_PRESETS = 50
+export const MAX_TEXT_LENGTH = 30

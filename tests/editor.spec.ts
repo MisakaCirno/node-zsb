@@ -1952,6 +1952,37 @@ test('editor shows inspector fields that match the selected object type', async 
   await expect(page.locator('[data-field="text"]')).toBeVisible()
   await expect(page.locator('[data-field="line"]')).toBeHidden()
   await expect(page.locator('[data-field="transform"]')).toBeHidden()
+  await expect(page.locator('#object-text')).toHaveAttribute('maxlength', '30')
+  await expect(page.locator('#object-text-count')).toHaveText(/\d+\/30/)
+  const textInputBox = await page.locator('#object-text').boundingBox()
+  await page.locator('#object-text').fill('123456789012345678901234567890')
+  await expect(page.locator('#object-text')).toHaveValue('123456789012345678901234567890')
+  await expect(page.locator('#object-text-count')).toHaveText('30/30')
+  const expandedTextInputBox = await page.locator('#object-text').boundingBox()
+  expect(expandedTextInputBox?.height ?? 0).toBeGreaterThan(textInputBox?.height ?? 0)
+  await page.locator('#object-text').fill('A\nB')
+  await expect(page.locator('#object-text')).toHaveValue('A B')
+  await expect(page.locator('#object-text-count')).toHaveText('3/30')
+  const selectedTextBorderPixels = await page.evaluate(() => {
+    const canvases = Array.from((globalThis as any).document.querySelectorAll('#stage-host canvas')) as any[]
+    return canvases.reduce<number>((count, canvas) => {
+      const context = canvas.getContext('2d')
+      if (!context) return count
+      const data = context.getImageData(0, 0, canvas.width, canvas.height).data
+      let nextCount = count
+      for (let index = 0; index < data.length; index += 4) {
+        const red = data[index] ?? 0
+        const green = data[index + 1] ?? 0
+        const blue = data[index + 2] ?? 0
+        const alpha = data[index + 3] ?? 0
+        if (alpha > 120 && red > 80 && red < 140 && green > 165 && green < 220 && blue > 135 && blue < 190) {
+          nextCount += 1
+        }
+      }
+      return nextCount
+    }, 0)
+  })
+  expect(selectedTextBorderPixels).toBeGreaterThan(0)
 
   await page.locator('button[title="line"]').click()
   await expect(page.locator('[data-field="line"]')).toBeVisible()
