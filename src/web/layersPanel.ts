@@ -123,6 +123,7 @@ export function renderLayers({
     row.style.setProperty('--layer-depth', String(depth))
     row.classList.toggle('active', state.selectedGroupId === group.id)
     row.classList.toggle('muted', Boolean(group.hidden))
+    row.classList.toggle('locked', Boolean(group.locked))
     const toggle = document.createElement('button')
     toggle.className = 'layer-group-toggle'
     toggle.type = 'button'
@@ -228,6 +229,7 @@ export function renderLayers({
     row.classList.toggle('primary', index === state.selectedIndex)
     if (index === state.selectedIndex) primaryRow = row
     row.classList.toggle('muted', Boolean(object.hidden))
+    row.classList.toggle('locked', Boolean(object.locked))
     const preview = createObjectPreview({
       iconConfigs: state.iconConfigs,
       size: 24,
@@ -324,6 +326,7 @@ function createLayerToggle({
   button.className = 'layer-toggle'
   button.type = 'button'
   button.dataset.action = action
+  button.classList.toggle('active', active)
   button.title = active ? onLabel : offLabel
   button.setAttribute('aria-label', active ? onLabel : offLabel)
   button.innerHTML = active ? onIcon : offIcon

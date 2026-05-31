@@ -1500,6 +1500,33 @@ textarea {
   box-shadow: inset 3px 0 0 #66c2a5;
 }
 
+.layer-row.locked {
+  border-color: #4e5963;
+  background:
+    repeating-linear-gradient(
+      -45deg,
+      rgb(255 255 255 / 4%) 0,
+      rgb(255 255 255 / 4%) 6px,
+      transparent 6px,
+      transparent 12px
+    ),
+    #171d22;
+  color: #87939d;
+}
+
+.layer-row.locked.active {
+  border-color: #7a8792;
+  background:
+    repeating-linear-gradient(
+      -45deg,
+      rgb(255 255 255 / 5%) 0,
+      rgb(255 255 255 / 5%) 6px,
+      transparent 6px,
+      transparent 12px
+    ),
+    #202832;
+}
+
 .layer-row.muted {
   opacity: 0.65;
 }
@@ -1530,6 +1557,12 @@ textarea {
   stroke-linecap: round;
   stroke-linejoin: round;
   stroke-width: 2;
+}
+
+.layer-toggle.active[data-action="locked"] {
+  color: #f2c879;
+  border-color: #7b6333;
+  background: #302819;
 }
 
 .layer-preview {

@@ -72,7 +72,7 @@ export function createEditorContext({
     const ids = getGroupObjectIds(state.layerTree, groupId)
     const indexById = new Map(state.board.objects.map((object, index) => [object.editorId, index]))
     setSelection(ids.map((id) => indexById.get(id)).filter((index): index is number => index !== undefined))
-    state.selectedGroupId = groupId
+    state.selectedGroupId = state.selectedIndexes.length > 0 ? groupId : ''
     state.revealSelectedLayer = false
     renderAll()
   }
@@ -96,7 +96,9 @@ export function createEditorContext({
   function setSelection(indexes: number[], primaryIndex = indexes.at(-1) ?? -1) {
     const unique = [...new Set(indexes)]
       .filter((selectedIndex) =>
-        selectedIndex >= 0 && selectedIndex < state.board.objects.length)
+        selectedIndex >= 0
+        && selectedIndex < state.board.objects.length
+        && !state.board.objects[selectedIndex]?.locked)
     state.selectedIndexes = unique
     state.selectedIndex = unique.includes(primaryIndex)
       ? primaryIndex

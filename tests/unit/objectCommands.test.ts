@@ -122,6 +122,46 @@ test('object commands toggle layer flags for the full selection', () => {
   assert.equal(state.board.objects[1]!.hidden, true)
 })
 
+test('object commands clear selection when locking and never delete locked objects', () => {
+  const state = createCommandState()
+  state.selectedIndex = 1
+  state.selectedIndexes = [0, 1]
+  let historyCount = 0
+  let renderCount = 0
+  const commands = createObjectCommands({
+    state,
+    recordHistory: () => {
+      historyCount += 1
+    },
+    renderAll: () => {
+      renderCount += 1
+    },
+    selectObject: () => {},
+    getSelected: () => state.board.objects[state.selectedIndex],
+    getSelectedList: () => getSelectedObjects(state),
+    normalizePoint: (x, y) => ({ x, y }),
+    showStatus: () => {},
+    confirmAction: () => true,
+  })
+
+  commands.toggleSelectedLayerFlag('locked')
+
+  assert.equal(historyCount, 1)
+  assert.equal(renderCount, 1)
+  assert.equal(state.board.objects[0]!.locked, true)
+  assert.equal(state.board.objects[1]!.locked, true)
+  assert.deepEqual(state.selectedIndexes, [])
+  assert.equal(state.selectedIndex, -1)
+
+  state.selectedIndex = 1
+  state.selectedIndexes = [0, 1]
+  commands.deleteSelected()
+
+  assert.equal(historyCount, 1)
+  assert.equal(renderCount, 1)
+  assert.equal(state.board.objects.length, 2)
+})
+
 test('object commands nudge the full selection with one center-constrained delta', () => {
   const state = createCommandState()
   state.selectedIndex = 1

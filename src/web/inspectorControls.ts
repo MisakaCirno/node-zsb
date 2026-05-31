@@ -141,10 +141,10 @@ export function createInspectorControls({
 
   function updateSelectionActions() {
     const object = getSelected()
-    const hasSelection = Boolean(object)
     const selectedIndexes = getSelectedIndexes(state)
     const hasMovableSelection = selectedIndexes
       .some((index) => !state.board.objects[index]?.locked)
+    const hasSelection = Boolean(object && !object.locked && hasMovableSelection)
     elements.clearBoard.disabled = state.board.objects.length === 0
     elements.menuClearBoard.disabled = state.board.objects.length === 0
     elements.copyObject.disabled = !hasSelection

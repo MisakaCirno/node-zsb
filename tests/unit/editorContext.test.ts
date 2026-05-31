@@ -76,3 +76,26 @@ test('createEditorContext range-selects objects from the primary selection', () 
   assert.deepEqual(state.selectedIndexes, [1, 2, 3])
   assert.equal(state.selectedIndex, 3)
 })
+
+test('createEditorContext skips locked objects when selecting', () => {
+  const state = createEditorState()
+  state.board.objects = [
+    { type: 'tank', x: 0, y: 0 },
+    { type: 'healer', x: 0, y: 0, locked: true },
+    { type: 'dps', x: 0, y: 0 },
+  ]
+  const context = createEditorContext({
+    state,
+    renderAll: () => {},
+    showStatus: () => {},
+  })
+
+  context.selectObject(1)
+  assert.deepEqual(state.selectedIndexes, [])
+  assert.equal(state.selectedIndex, -1)
+
+  context.selectObject(0)
+  context.selectObject(2, { range: true })
+  assert.deepEqual(state.selectedIndexes, [0, 2])
+  assert.equal(state.selectedIndex, 2)
+})

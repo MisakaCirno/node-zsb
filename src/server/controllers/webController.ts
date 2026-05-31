@@ -126,13 +126,17 @@ async function serveScriptOrFile(
 }
 
 function getWebAssetDir() {
-  return existsSync(path.join(distWebDir, 'app.js')) ? distWebDir : webDir
+  return shouldServeBuiltAssets() && existsSync(path.join(distWebDir, 'app.js')) ? distWebDir : webDir
 }
 
 function getSharedAssetDir() {
-  return existsSync(path.join(distSharedDir, 'backgrounds.js')) ? distSharedDir : sharedDir
+  return shouldServeBuiltAssets() && existsSync(path.join(distSharedDir, 'backgrounds.js')) ? distSharedDir : sharedDir
 }
 
 function setNoStore(headers: ResponseHeaders) {
   headers['cache-control'] = 'no-store'
+}
+
+function shouldServeBuiltAssets() {
+  return process.env.NODE_ENV === 'production' || process.env.NODE_ZSB_SERVE_DIST === '1'
 }

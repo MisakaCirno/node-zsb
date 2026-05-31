@@ -424,6 +424,7 @@ export function createStageRenderer({
   function getMarqueeSelectedIndexes(rect: Bounds, mode: MarqueeMode): number[] {
     const selected: number[] = []
     state.board.objects.forEach((object, index) => {
+      if (object.locked) return
       if (objectMatchesMarquee(getObjectBounds(object, state), rect, mode)) {
         selected.push(index)
       }
@@ -494,6 +495,7 @@ export function createStageRenderer({
     node.on('click tap', (event: KonvaEvent) => {
       if (event.evt?.button && event.evt.button !== 0) return
       event.cancelBubble = true
+      if (object.locked) return
       selectObject(index, {
         revealInLayers: true,
         toggle: Boolean(event.evt?.shiftKey || event.evt?.ctrlKey || event.evt?.metaKey),

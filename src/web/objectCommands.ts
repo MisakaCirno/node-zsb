@@ -97,8 +97,14 @@ export function createObjectCommands({
       if (!object) return
       recordHistory()
       object[key] = object[key] ? undefined : true
-      state.selectedIndex = index
-      state.selectedIndexes = [index]
+      if (key === 'locked' && object.locked) {
+        state.selectedIndex = -1
+        state.selectedIndexes = []
+        state.selectedGroupId = ''
+      } else {
+        state.selectedIndex = index
+        state.selectedIndexes = [index]
+      }
       renderAll()
     },
 
@@ -113,7 +119,13 @@ export function createObjectCommands({
           object[key] = result.active || undefined
         }
       }
-      state.selectedGroupId = groupId
+      if (key === 'locked' && result.active) {
+        state.selectedIndex = -1
+        state.selectedIndexes = []
+        state.selectedGroupId = ''
+      } else {
+        state.selectedGroupId = groupId
+      }
       renderAll()
     },
 
@@ -125,14 +137,20 @@ export function createObjectCommands({
       for (const object of selectedObjects) {
         object[key] = shouldEnable || undefined
       }
+      if (key === 'locked' && shouldEnable) {
+        state.selectedIndex = -1
+        state.selectedIndexes = []
+        state.selectedGroupId = ''
+      }
       renderAll()
     },
 
     deleteSelected() {
       const selectedIndexes = getSelectedIndexes(state)
+        .filter((index) => !state.board.objects[index]?.locked)
       if (selectedIndexes.length === 0) return
       recordHistory()
-      const object = getSelected()
+      const object = state.board.objects[selectedIndexes.at(-1) ?? -1]
       const selectedIds = selectedIndexes
         .map((index) => state.board.objects[index]?.editorId)
         .filter((id): id is string => Boolean(id))

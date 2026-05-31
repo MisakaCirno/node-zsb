@@ -1945,6 +1945,7 @@ test('editor toggles hidden and locked states from the layer list', async ({
   await expect(page.locator('#layers')).toContainText('tank')
 
   const firstLayer = page.locator('#layers .layer-row').first()
+  const layerCount = await page.locator('#layers .layer-row').count()
   await firstLayer.click()
   const beforeX = await page.locator('#object-x').inputValue()
   await expect(page.locator('.inspector-toggle')).toHaveCount(0)
@@ -1954,17 +1955,23 @@ test('editor toggles hidden and locked states from the layer list', async ({
   await expect(firstLayer).toHaveClass(/muted/)
 
   await firstLayer.locator('[data-action="locked"]').click()
-  await expect(page.locator('#object-locked')).toBeChecked()
-  await expect(page.locator('#object-x')).toBeDisabled()
-  await expect(page.locator('#object-size')).toBeDisabled()
-  await expect(page.locator('#object-color')).toBeEnabled()
+  await expect(firstLayer).toHaveClass(/locked/)
+  await expect(page.locator('#inspector-form')).toBeHidden()
+  await expect(page.locator('#delete-object')).toBeDisabled()
 
+  await firstLayer.click()
+  await expect(page.locator('#inspector-form')).toBeHidden()
+  await page.keyboard.press('Delete')
+  await expect(page.locator('#layers .layer-row')).toHaveCount(layerCount)
   await page.keyboard.press('ArrowRight')
+  await firstLayer.locator('[data-action="locked"]').click()
+  await expect(firstLayer).not.toHaveClass(/locked/)
+  await expect(page.locator('#object-locked')).not.toBeChecked()
+  await expect(page.locator('#object-x')).toBeEnabled()
   await expect(page.locator('#object-x')).toHaveValue(beforeX)
 
   await page.getByRole('button', { name: '撤销' }).click()
-  await expect(page.locator('#object-locked')).not.toBeChecked()
-  await expect(page.locator('#object-x')).toBeEnabled()
+  await expect(firstLayer).toHaveClass(/locked/)
 })
 
 test('editor shows inspector fields that match the selected object type', async ({
