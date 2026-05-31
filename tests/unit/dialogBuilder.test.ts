@@ -7,6 +7,8 @@ import {
   mountDialogOnce,
 } from '../../src/web/dialogBuilder.js'
 
+type FakeElement = any
+
 test('createEditorDialog builds the shared dialog shell and close button contract', () => {
   withFakeDocument(() => {
     const body = document.createElement('div')
@@ -24,7 +26,7 @@ test('createEditorDialog builds the shared dialog shell and close button contrac
           type: 'button',
         },
       ],
-    })
+    }) as unknown as FakeElement
 
     assert.equal(dialog.tagName, 'DIALOG')
     assert.equal(dialog.id, 'sample-dialog')
@@ -66,7 +68,7 @@ test('createEditorDialog defaults action buttons to submit', () => {
           value: 'confirm',
         },
       ],
-    })
+    }) as unknown as FakeElement
 
     const footer = dialog.children[0].children[1]
     const button = footer.children[0]
@@ -81,7 +83,7 @@ test('createTextareaField preserves readonly and spellcheck contracts', () => {
       id: 'code-output',
       label: '分享码',
       readonly: true,
-    })
+    }) as unknown as FakeElement
 
     assert.equal(field.tagName, 'LABEL')
     assert.equal(field.className, 'field')
@@ -109,16 +111,17 @@ test('mountDialogOnce appends a dialog only when the id is not already mounted',
   })
 })
 
-function withFakeDocument(callback) {
-  const previousDocument = globalThis.document
-  globalThis.document = createFakeDocument()
+function withFakeDocument(callback: () => void) {
+  const globals = globalThis as typeof globalThis & { document?: Document }
+  const previousDocument = globals.document
+  globals.document = createFakeDocument() as unknown as Document
   try {
     callback()
   } finally {
     if (previousDocument === undefined) {
-      delete globalThis.document
+      delete globals.document
     } else {
-      globalThis.document = previousDocument
+      globals.document = previousDocument
     }
   }
 }
@@ -128,19 +131,19 @@ function createFakeDocument() {
   return {
     body,
     createElement: createFakeElement,
-    getElementById(id) {
+    getElementById(id: string) {
       return findById(body, id)
     },
-    querySelector(selector) {
+    querySelector(selector: string) {
       return selector === 'body' ? body : null
     },
   }
 }
 
-function createFakeElement(tagName) {
+function createFakeElement(tagName: string) {
   return {
-    attributes: {},
-    children: [],
+    attributes: {} as Record<string, string>,
+    children: [] as FakeElement[],
     className: '',
     disabled: false,
     id: '',
@@ -152,19 +155,19 @@ function createFakeElement(tagName) {
     textContent: '',
     type: '',
     value: '',
-    append(...nodes) {
+    append(...nodes: FakeElement[]) {
       for (const node of nodes) {
         node.parentElement = this
         this.children.push(node)
       }
     },
-    setAttribute(name, value) {
+    setAttribute(name: string, value: string) {
       this.attributes[name] = String(value)
     },
   }
 }
 
-function findById(element, id) {
+function findById(element: FakeElement, id: string): FakeElement | null {
   if (element.id === id) {
     return element
   }

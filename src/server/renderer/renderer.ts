@@ -51,7 +51,7 @@ async function createBoardLayer(backgroundType?: BackgroundType) {
 
   const imageObj = await loadImage(imageUrl)
   const konvaImage = new Konva.Image({
-    image: imageObj,
+    image: imageObj as unknown as Konva.ImageConfig['image'],
     width: SCENE_WIDTH,
     height: SCENE_HEIGHT,
   })
@@ -178,7 +178,7 @@ async function createCircleAoeNode(data: StrategyObject): Promise<Konva.Group> {
   const circleSrc = getIconUrl('circle_aoe')
   const imageObj = await loadImage(circleSrc)
   const konvaImage = new Konva.Image({
-    image: imageObj,
+    image: imageObj as unknown as Konva.ImageConfig['image'],
     width: spec.imageWidth,
     height: spec.imageHeight,
   })
@@ -199,7 +199,7 @@ async function createIconNode(data: StrategyObject): Promise<Konva.Image | null>
   const imageObj = await loadImage(iconUrl)
   const spec = createIconRenderSpec(data, config.size)
   const imageNode = new Konva.Image({
-    image: imageObj,
+    image: imageObj as unknown as Konva.ImageConfig['image'],
     width: spec.width,
     height: spec.height,
     offsetX: spec.offsetX,

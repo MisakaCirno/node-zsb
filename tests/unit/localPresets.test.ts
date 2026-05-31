@@ -36,7 +36,7 @@ test('insertPresetIntoBoard rejects presets that would exceed the board object l
 
 test('insertPresetIntoBoard sanitizes stale preset objects before insertion', () => {
   const state = createState()
-  const preset = {
+  const preset: any = {
     id: 'preset_dirty',
     name: 'dirty',
     objects: {
@@ -88,7 +88,7 @@ test('insertPresetIntoBoard sanitizes stale preset objects before insertion', ()
   assert.equal(lineAoe.transparency, 100)
 })
 
-function createState(objects = []) {
+function createState(objects: any[] = []): any {
   return {
     board: { objects },
     iconConfigs: {},
@@ -99,7 +99,7 @@ function createState(objects = []) {
   }
 }
 
-function createTwoObjectPreset() {
+function createTwoObjectPreset(): any {
   return {
     id: 'preset_1',
     name: '边缘测试',

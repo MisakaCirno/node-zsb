@@ -1,8 +1,9 @@
 import { spawn } from 'node:child_process'
+import type { ChildProcess } from 'node:child_process'
 
 const baseUrl = process.env.PLAYWRIGHT_BASE_URL ?? 'http://localhost:3000/editor'
 const args = process.argv.slice(2)
-let serverProcess = null
+let serverProcess: ChildProcess | null = null
 
 async function main() {
   const hadServer = await isServerReady()
@@ -12,8 +13,8 @@ async function main() {
       stdio: ['ignore', 'pipe', 'pipe'],
       windowsHide: true,
     })
-    serverProcess.stdout?.on('data', (chunk) => process.stdout.write(chunk))
-    serverProcess.stderr?.on('data', (chunk) => process.stderr.write(chunk))
+    serverProcess.stdout?.on('data', (chunk: Buffer) => process.stdout.write(chunk))
+    serverProcess.stderr?.on('data', (chunk: Buffer) => process.stderr.write(chunk))
     await waitForServer()
   }
 
@@ -22,10 +23,10 @@ async function main() {
   process.exit(exitCode)
 }
 
-async function runPlaywright() {
+async function runPlaywright(): Promise<number> {
   return new Promise((resolve) => {
     const child = spawn(
-      process.execPath,
+      'node',
       ['node_modules/@playwright/test/cli.js', 'test', ...args],
       {
         cwd: process.cwd(),
@@ -76,7 +77,7 @@ async function stopServer() {
   }
 }
 
-function waitForExit(child, timeout) {
+function waitForExit(child: ChildProcess, timeout: number): Promise<boolean> {
   return new Promise((resolve) => {
     const timer = setTimeout(() => resolve(false), timeout)
     child.once('exit', () => {
@@ -86,7 +87,7 @@ function waitForExit(child, timeout) {
   })
 }
 
-function delay(ms) {
+function delay(ms: number): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, ms))
 }
 

@@ -26,6 +26,14 @@ async function openLocalBoardDialog(page: Page) {
   await expect(page.locator('#editor-dialog-root > #local-board-dialog')).toHaveCount(1)
 }
 
+async function closeDialog(page: Page, selector: string) {
+  await page.locator(selector).evaluate((dialog) => {
+    if (dialog instanceof HTMLDialogElement) {
+      dialog.close()
+    }
+  })
+}
+
 async function openFileMenu(page: Page) {
   const menu = page.locator('#file-menu')
   if (await menu.isVisible()) return
@@ -191,10 +199,10 @@ test('editor loads, edits an object, exports code, and renders a preview', async
 
   await openExportCodeDialog(page)
   await expect(page.locator('#code-output')).toHaveValue(/\[stgy:/)
-  await page.locator('#export-code-dialog').evaluate((dialog) => dialog.close())
+  await closeDialog(page, '#export-code-dialog')
   await openImportDialog(page)
   await expect(page.locator('#code-input')).toHaveValue('')
-  await page.locator('#import-dialog').evaluate((dialog) => dialog.close())
+  await closeDialog(page, '#import-dialog')
 
   await openExportImageDialog(page)
   await expect(page.locator('#preview-image')).toBeVisible()
@@ -781,7 +789,7 @@ test('editor renders readable Chinese labels', async ({ page }) => {
   await openExportCodeDialog(page)
   await expect(page.locator('#copy-export-code')).toBeVisible()
   await expect(page.getByPlaceholder('战术板名称')).toBeVisible()
-  await page.locator('#export-code-dialog').evaluate((dialog) => dialog.close())
+  await closeDialog(page, '#export-code-dialog')
   await expect(page.locator('#layers')).toContainText('tank')
   await expect(page.locator('#layer-count')).not.toHaveText('0')
   await expect(page.getByTitle('tank').first().locator('.object-preview')).toHaveCSS(
@@ -840,12 +848,12 @@ test('editor opens share code dialogs from toolbar shortcuts', async ({ page }) 
 
   await page.locator('#quick-open-import-dialog').click()
   await expect(page.locator('#import-dialog')).toBeVisible()
-  await page.locator('#import-dialog').evaluate((dialog) => dialog.close())
+  await closeDialog(page, '#import-dialog')
 
   await page.locator('#quick-open-export-code-dialog').click()
   await expect(page.locator('#export-code-dialog')).toBeVisible()
   await expect(page.locator('#code-output')).toHaveValue(/\[stgy:/)
-  await page.locator('#export-code-dialog').evaluate((dialog) => dialog.close())
+  await closeDialog(page, '#export-code-dialog')
   await page.locator('#quick-open-export-image-dialog').click()
   await expect(page.locator('#export-image-dialog')).toBeVisible()
   await expect(page.locator('#preview-image')).toHaveAttribute('src', /^(data:image\/png|\/preview\/.+\.webp)/)
@@ -893,7 +901,7 @@ test('editor imports code, changes background, and edits text and line objects',
   await expect(page.locator('#layers')).toContainText('tank')
 
   const initialCode = await exportBoardCode(page)
-  await page.locator('#export-code-dialog').evaluate((dialog) => dialog.close())
+  await closeDialog(page, '#export-code-dialog')
   await openImportDialog(page)
   await page.locator('#code-input').fill(initialCode)
   await page.locator('#load-code').click()
@@ -943,7 +951,7 @@ test('editor imports code, changes background, and edits text and line objects',
   await expect(page.locator('#layers')).toContainText('line')
 
   const exported = await exportBoardCode(page)
-  await page.locator('#export-code-dialog').evaluate((dialog) => dialog.close())
+  await closeDialog(page, '#export-code-dialog')
   await openImportDialog(page)
   await page.locator('#code-input').fill(exported)
   await page.locator('#load-code').click()
@@ -1576,9 +1584,7 @@ test('editor saves, loads, and deletes local browser board slots', async ({
   await expect(page.locator('#local-storage-summary')).toContainText('本地文件')
   await expect(page.locator('#local-storage-summary')).toContainText(/可用空间|不可用/)
   await expect(page.locator('#local-board-list')).toContainText('暂无本地文件')
-  await page.locator('#local-board-dialog').evaluate((dialog) => {
-    if ('close' in dialog) dialog.close()
-  })
+  await closeDialog(page, '#local-board-dialog')
 
   await page.locator('#file-name').fill('本地草稿')
   await page.locator('#board-name').fill('分享草稿')
@@ -1595,9 +1601,7 @@ test('editor saves, loads, and deletes local browser board slots', async ({
   await expect(page.locator('#clear-selected-local-boards')).toBeDisabled()
   await expect(page.locator('#delete-selected-local-boards')).toBeDisabled()
 
-  await page.locator('#local-board-dialog').evaluate((dialog) => {
-    if ('close' in dialog) dialog.close()
-  })
+  await closeDialog(page, '#local-board-dialog')
   await clickFileMenuAction(page, '#save-as-local-board')
   await expect(page.locator('#local-board-name-dialog')).toBeVisible()
   await expect(page.locator('#editor-dialog-root > #local-board-name-dialog')).toHaveCount(1)
@@ -1618,9 +1622,7 @@ test('editor saves, loads, and deletes local browser board slots', async ({
   await page.locator('#local-board-name-input').fill('重命名草稿')
   await page.locator('#confirm-local-board-name').click()
   await expect(page.locator('#local-board-list')).toContainText('重命名草稿')
-  await page.locator('#local-board-dialog').evaluate((dialog) => {
-    if ('close' in dialog) dialog.close()
-  })
+  await closeDialog(page, '#local-board-dialog')
 
   await page.locator('#board-name').fill('临时修改')
   await page.locator('#board-name').dispatchEvent('change')
@@ -1718,9 +1720,7 @@ test('editor does not mark the current local file dirty after renaming it', asyn
   await page.locator('#local-board-name-input').fill('重命名后')
   await page.locator('#confirm-local-board-name').click()
   await expect(page.locator('#file-name')).toHaveValue('重命名后')
-  await page.locator('#local-board-dialog').evaluate((dialog) => {
-    if ('close' in dialog) dialog.close()
-  })
+  await closeDialog(page, '#local-board-dialog')
 
   let unexpectedDialog = ''
   const rejectUnexpectedDialog = async (dialog: Dialog) => {
@@ -1754,9 +1754,7 @@ test('editor saves local files with keyboard shortcuts', async ({ page }) => {
 
   await openLocalBoardDialog(page)
   await expect(page.locator('#local-board-list')).toContainText('快捷保存草稿')
-  await page.locator('#local-board-dialog').evaluate((dialog) => {
-    if ('close' in dialog) dialog.close()
-  })
+  await closeDialog(page, '#local-board-dialog')
 
   await page.keyboard.press('Control+Shift+S')
   await expect(page.locator('#local-board-name-dialog')).toBeVisible()

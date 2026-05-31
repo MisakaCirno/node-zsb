@@ -20,7 +20,7 @@ test('createEditorContext selects, deselects, and reads the current object', () 
   const statuses = []
   let renderCount = 0
   const context = createEditorContext({
-    state,
+    state: state as any,
     renderAll: () => {
       renderCount += 1
     },
@@ -49,7 +49,7 @@ test('createEditorContext normalizes coordinates with the snap toggle', () => {
     gridSize: 16,
   }
   const context = createEditorContext({
-    state,
+    state: state as any,
     renderAll: () => {},
     showStatus: () => {},
   })
@@ -82,7 +82,7 @@ test('createEditorContext range-selects objects from the primary selection', () 
     gridSize: 16,
   }
   const context = createEditorContext({
-    state,
+    state: state as any,
     renderAll: () => {},
     showStatus: () => {},
   })

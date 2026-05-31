@@ -65,7 +65,7 @@ test('createEditorActionRegistry exposes the event binding action surface', () =
       'updatePresetButtons',
       'updateSelectedFromInspector',
     ].map((name) => [name, () => name]),
-  )
+  ) as Record<string, any>
 
   const actions = createEditorActionRegistry({
     boardCodeActions: {
@@ -146,7 +146,7 @@ test('createEditorActionRegistry exposes the event binding action surface', () =
       toggleGrid: handlers.toggleGrid,
       toggleSnapToGrid: handlers.toggleSnapToGrid,
     },
-  })
+  } as any) as unknown as Record<string, unknown>
 
   assert.deepEqual(Object.keys(actions).sort(), Object.keys(handlers).sort())
   for (const [name, handler] of Object.entries(handlers)) {

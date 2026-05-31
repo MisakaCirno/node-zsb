@@ -12,7 +12,7 @@ import {
 } from '../../src/web/layerTree.js'
 
 test('moveLayerNodeIntoGroup moves object nodes into groups', () => {
-  const layerTree = [
+  const layerTree: any[] = [
     { type: 'group', id: 'grp_1', name: 'Group', children: [{ type: 'object', id: 'obj_a' }] },
     { type: 'object', id: 'obj_b' },
   ]
@@ -34,7 +34,7 @@ test('moveLayerNodeIntoGroup moves object nodes into groups', () => {
 })
 
 test('moveLayerNodeBefore reorders nested nodes without flattening groups', () => {
-  const layerTree = [
+  const layerTree: any[] = [
     { type: 'object', id: 'obj_a' },
     {
       type: 'group',
@@ -66,7 +66,7 @@ test('moveLayerNodeBefore reorders nested nodes without flattening groups', () =
 })
 
 test('appendObjectLayerNode and removeObjectLayerNodes preserve unrelated groups', () => {
-  const layerTree = [
+  const layerTree: any[] = [
     {
       type: 'group',
       id: 'grp_1',
@@ -95,7 +95,7 @@ test('appendObjectLayerNode and removeObjectLayerNodes preserve unrelated groups
 })
 
 test('moveLayerNodeAfter moves nodes after flat targets', () => {
-  const layerTree = [
+  const layerTree: any[] = [
     { type: 'object', id: 'obj_a' },
     { type: 'object', id: 'obj_b' },
     { type: 'object', id: 'obj_c' },
@@ -113,7 +113,7 @@ test('moveLayerNodeAfter moves nodes after flat targets', () => {
 })
 
 test('moveLayerNodeIntoGroup rejects moving a group into itself or its descendant', () => {
-  const layerTree = [
+  const layerTree: any[] = [
     {
       type: 'group',
       id: 'grp_1',
@@ -129,7 +129,7 @@ test('moveLayerNodeIntoGroup rejects moving a group into itself or its descendan
 })
 
 test('moveLayerNodeToRoot lifts nested groups back to the root', () => {
-  const layerTree = [
+  const layerTree: any[] = [
     {
       type: 'group',
       id: 'grp_1',

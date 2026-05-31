@@ -40,14 +40,15 @@ test('createEditorRenderLoop serializes overlapping render requests', async () =
       renderInspectorPanel: () => {},
       stageRenderer,
       state,
-    })
+    } as any)
 
     const firstRender = loop.renderAll()
     const secondRender = loop.renderAll()
     assert.equal(firstRender, secondRender)
     assert.equal(boardRenderCount, 1)
-    assert.equal(globalThis.localStorageWrites.length, 1)
-    const immediateDraft = JSON.parse(globalThis.localStorageWrites.at(-1).value)
+    const writes = (globalThis as typeof globalThis & { localStorageWrites: Array<{ value: string }> }).localStorageWrites
+    assert.equal(writes.length, 1)
+    const immediateDraft = JSON.parse(writes.at(-1).value)
     assert.equal(immediateDraft.board.name, 'queued')
 
     releaseFirstBoard()
@@ -55,25 +56,25 @@ test('createEditorRenderLoop serializes overlapping render requests', async () =
 
     assert.equal(boardRenderCount, 2)
     assert.equal(objectRenderCount, 2)
-    assert.equal(globalThis.localStorageWrites.length, 1)
-    const saved = JSON.parse(globalThis.localStorageWrites.at(-1).value)
+    assert.equal(writes.length, 1)
+    const saved = JSON.parse(writes.at(-1).value)
     assert.equal(saved.format, 'node-zsb-project')
     assert.equal(saved.fileName, 'queued-file')
 
     await loop.renderAll()
-    assert.equal(globalThis.localStorageWrites.length, 1)
+    assert.equal(writes.length, 1)
 
     state.board.name = 'changed'
     await loop.renderAll()
-    assert.equal(globalThis.localStorageWrites.length, 2)
-    const updated = JSON.parse(globalThis.localStorageWrites.at(-1).value)
+    assert.equal(writes.length, 2)
+    const updated = JSON.parse(writes.at(-1).value)
     assert.equal(updated.board.name, 'changed')
 
     state.currentFileName = ''
     state.board.name = 'unsaved draft'
     await loop.renderAll()
-    assert.equal(globalThis.localStorageWrites.length, 3)
-    const draft = JSON.parse(globalThis.localStorageWrites.at(-1).value)
+    assert.equal(writes.length, 3)
+    const draft = JSON.parse(writes.at(-1).value)
     assert.equal(draft.format, 'node-zsb-project')
     assert.equal(draft.fileName, '')
     assert.equal(draft.board.name, 'unsaved draft')
@@ -97,41 +98,46 @@ function createElement() {
     },
     innerHTML: '',
     textContent: '',
-    append(child) {
+    append(child: unknown) {
       this.children.push(child)
     },
   }
 }
 
 function installBrowserMocks() {
-  const previousDocument = globalThis.document
-  const previousWindow = globalThis.window
-  const writes = []
+  const globals = globalThis as typeof globalThis & {
+    document?: Document
+    localStorageWrites?: Array<{ key: string, value: string }>
+    window?: any
+  }
+  const previousDocument = globals.document
+  const previousWindow = globals.window
+  const writes: Array<{ key: string, value: string }> = []
   const document = {
     createElement,
   }
   const window = {
     localStorage: {
-      setItem(key, value) {
+      setItem(key: string, value: string) {
         writes.push({ key, value })
       },
     },
   }
-  globalThis.document = document
-  globalThis.window = window
-  globalThis.localStorageWrites = writes
+  globals.document = document as unknown as Document
+  globals.window = window as unknown as Window
+  globals.localStorageWrites = writes
 
   return () => {
     if (previousDocument === undefined) {
-      delete globalThis.document
+      delete globals.document
     } else {
-      globalThis.document = previousDocument
+      globals.document = previousDocument
     }
     if (previousWindow === undefined) {
-      delete globalThis.window
+      delete globals.window
     } else {
-      globalThis.window = previousWindow
+      globals.window = previousWindow
     }
-    delete globalThis.localStorageWrites
+    delete globals.localStorageWrites
   }
 }

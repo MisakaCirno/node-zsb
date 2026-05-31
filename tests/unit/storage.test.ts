@@ -122,7 +122,10 @@ test('getProjectStorageUsage groups local project storage bytes', async () => {
   }
 })
 
-function withLocalStorage(entries, overrides = {}) {
+function withLocalStorage(
+  entries: Record<string, string>,
+  overrides: { setItem?: (key: string, value: string) => void } = {},
+) {
   const originalWindow = Object.getOwnPropertyDescriptor(globalThis, 'window')
   Object.defineProperty(globalThis, 'window', {
     configurable: true,

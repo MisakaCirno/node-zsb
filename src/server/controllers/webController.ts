@@ -4,7 +4,6 @@ import { existsSync } from 'node:fs'
 import { readFile } from 'node:fs/promises'
 import path from 'node:path'
 import { fileURLToPath } from 'node:url'
-import ts from 'typescript'
 import { defaultCode } from '../utils/getCode.ts'
 import { getAllIconConfigs, iconGroups } from '../utils/iconMap.ts'
 import { getBoardUrl, getIconUrl } from '../utils/staticImage.ts'
@@ -14,6 +13,8 @@ const __dirname = path.dirname(fileURLToPath(import.meta.url))
 const rootDir = path.resolve(__dirname, '..', '..', '..')
 const webDir = path.join(rootDir, 'src', 'web')
 const sharedDir = path.join(rootDir, 'src', 'shared')
+const distWebDir = path.join(rootDir, 'dist', 'web')
+const distSharedDir = path.join(rootDir, 'dist', 'shared')
 const scriptAssetPattern = /^[A-Za-z][A-Za-z0-9]*\.js$/
 const webAssetPattern = /^(?:[A-Za-z][A-Za-z0-9]*\.js|styles\.css)$/
 
@@ -22,11 +23,11 @@ type ResponseHeaders = NonNullable<Context['set']['headers']>
 export const webController = new Elysia()
   .get('/editor', ({ set }) => {
     setNoStore(set.headers)
-    return file(path.join(webDir, 'index.html'))
+    return file(path.join(getWebAssetDir(), 'index.html'))
   })
   .get(
     '/editor/:asset',
-    ({ params, set }) => serveScriptOrFile(webDir, params.asset, set.headers),
+    ({ params, set }) => serveScriptOrFile(getWebAssetDir(), webDir, params.asset, set.headers),
     {
       params: t.Object({
         asset: t.RegExp(webAssetPattern),
@@ -35,7 +36,7 @@ export const webController = new Elysia()
   )
   .get(
     '/shared/:asset',
-    ({ params, set }) => serveScriptOrFile(sharedDir, params.asset, set.headers),
+    ({ params, set }) => serveScriptOrFile(getSharedAssetDir(), sharedDir, params.asset, set.headers),
     {
       params: t.Object({
         asset: t.RegExp(scriptAssetPattern),
@@ -90,20 +91,23 @@ export const webController = new Elysia()
   )
 
 async function serveScriptOrFile(
-  directory: string,
+  assetDirectory: string,
+  sourceDirectory: string,
   asset: string,
   headers: ResponseHeaders,
 ) {
   setNoStore(headers)
-  const filePath = path.join(directory, asset)
-  if (!asset.endsWith('.js') || existsSync(filePath)) {
+  const filePath = path.join(assetDirectory, asset)
+  if (existsSync(filePath)) {
     return file(filePath)
   }
+  if (!asset.endsWith('.js')) return file(filePath)
 
-  const sourcePath = path.join(directory, asset.replace(/\.js$/, '.ts'))
+  const sourcePath = path.join(sourceDirectory, asset.replace(/\.js$/, '.ts'))
   if (!existsSync(sourcePath)) return file(filePath)
 
   const source = await readFile(sourcePath, 'utf8')
+  const ts = await import('typescript')
   const output = ts.transpileModule(source, {
     compilerOptions: {
       module: ts.ModuleKind.ESNext,
@@ -119,6 +123,14 @@ async function serveScriptOrFile(
       'content-type': 'application/javascript; charset=utf-8',
     },
   })
+}
+
+function getWebAssetDir() {
+  return existsSync(path.join(distWebDir, 'app.js')) ? distWebDir : webDir
+}
+
+function getSharedAssetDir() {
+  return existsSync(path.join(distSharedDir, 'backgrounds.js')) ? distSharedDir : sharedDir
 }
 
 function setNoStore(headers: ResponseHeaders) {

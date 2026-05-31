@@ -58,11 +58,12 @@ test('applyInitialBoardSource normalizes editor drafts and syncs controls', asyn
         name: 'saved',
         objects: [{ type: 'tank', x: 1, y: 2 }],
       },
+      statusText: 'restored',
       type: 'editor-draft',
     },
     state,
     syncBoardNameInput: () => calls.push('syncBoardNameInput'),
-  })
+  } as any)
 
   assert.equal(state.board.name, 'saved')
   assert.equal(state.board.boardBackground, 'checkered')
@@ -106,11 +107,12 @@ test('applyInitialBoardSource restores draft editor projects with layer groups',
           },
         ],
       },
+      statusText: 'restored',
       type: 'editor-draft',
     },
     state,
     syncBoardNameInput: () => calls.push('syncBoardNameInput'),
-  })
+  } as any)
 
   assert.equal(state.board.name, 'saved project')
   assert.deepEqual(
@@ -132,20 +134,22 @@ test('applyInitialBoardSource imports code sources without recording history', a
     renderBackgroundOptions: () => {},
     source: {
       code: 'share-code',
+      statusText: 'loaded',
       type: 'default-code',
     },
     state: {},
     syncBoardNameInput: () => {},
-  })
+  } as any)
 
   assert.equal(elements.codeInput.value, 'share-code')
   assert.deepEqual(calls, [['share-code', { record: false }]])
 })
 
 test('clearUrlCodeParameter removes only the imported share code from the address', () => {
-  const previousWindow = globalThis.window
+  const globals = globalThis as typeof globalThis & { window?: any }
+  const previousWindow = globals.window
   const calls = []
-  globalThis.window = {
+  globals.window = {
     history: {
       state: { keep: true },
       replaceState: (...args) => calls.push(args),
@@ -154,15 +158,15 @@ test('clearUrlCodeParameter removes only the imported share code from the addres
       href: 'http://localhost:3000/editor?code=share-code&tab=objects#canvas',
       search: '?code=share-code&tab=objects',
     },
-  }
+  } as unknown as Window
 
   try {
     clearUrlCodeParameter()
   } finally {
     if (previousWindow === undefined) {
-      delete globalThis.window
+      delete globals.window
     } else {
-      globalThis.window = previousWindow
+      globals.window = previousWindow
     }
   }
 

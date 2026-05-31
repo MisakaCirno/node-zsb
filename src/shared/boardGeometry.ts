@@ -1,4 +1,4 @@
-import type { BoardObject } from '../web/types.js'
+import type { BoardObject } from './boardTypes.js'
 
 export const BOARD_SCALE = 2
 export const DEFAULT_TEXT_FONT_SIZE = 28

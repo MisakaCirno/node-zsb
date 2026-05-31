@@ -217,7 +217,7 @@ test('object commands reject additions when the board object limit is reached', 
   assert.equal(status.includes(String(MAX_BOARD_OBJECTS)), true)
 })
 
-function createCommandState() {
+function createCommandState(): any {
   return {
     board: {
       name: '',
