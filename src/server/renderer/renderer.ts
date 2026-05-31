@@ -29,7 +29,10 @@ import {
   traceCircleAoeClipPath,
   traceDonutPath,
 } from '../../shared/objectRendering.js'
-import { createStrategyTextStyle } from '../../shared/textRendering.js'
+import {
+  applyMeasuredStrategyTextOffset,
+  createStrategyTextStyle,
+} from '../../shared/textRendering.js'
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
 const FONT_PATH = path.resolve(
@@ -38,7 +41,7 @@ const FONT_PATH = path.resolve(
   '..',
   'assets',
   'fonts',
-  'AlibabaPuHuiTi-3-55-Regular.ttf',
+  'MiSans-Semibold.ttf',
 )
 
 FontLibrary.use(STRATEGY_TEXT_FONT_PRIMARY, [FONT_PATH])
@@ -63,13 +66,14 @@ async function createBoardLayer(backgroundType?: BackgroundType) {
 function createTextNode(data: StrategyObject): Konva.Text {
   const style = createStrategyTextStyle(data.text ?? '', data.color ?? DEFAULT_TEXT_COLOR)
   const spec = createTextRenderSpec(data)
-  return new Konva.Text({
+  const node = new Konva.Text({
     ...style,
     x: spec.x,
     y: spec.y,
     opacity: spec.opacity,
     shadowOpacity: 1,
   })
+  return applyMeasuredStrategyTextOffset(node)
 }
 
 function createLineNode(data: StrategyObject): Konva.Group {

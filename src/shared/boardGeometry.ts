@@ -2,11 +2,14 @@ import type { BoardObject } from './boardTypes.js'
 
 export const BOARD_SCALE = 2
 export const DEFAULT_TEXT_FONT_SIZE = 28
-export const STRATEGY_TEXT_FONT_PRIMARY = 'AlibabaPuHuiTi'
+export const STRATEGY_TEXT_FONT_PRIMARY = 'MiSans'
+export const STRATEGY_TEXT_FONT_WEIGHT = 600
 export const STRATEGY_TEXT_FONT_FAMILY = `${STRATEGY_TEXT_FONT_PRIMARY}, Arial, "Microsoft YaHei", sans-serif`
 export const STRATEGY_TEXT_STROKE_WIDTH = 0.6
 export const STRATEGY_TEXT_SHADOW_BLUR = 1.5
 export const STRATEGY_TEXT_SHADOW_OFFSET = 1
+export const STRATEGY_TEXT_VISUAL_OFFSET_X = 0
+export const STRATEGY_TEXT_VISUAL_OFFSET_Y = 0
 export const DEFAULT_TEXT_COLOR = '#FFFFFF'
 export const DEFAULT_LINE_COLOR = '#FF7F00'
 export const DEFAULT_AOE_COLOR = '#FF7F00'

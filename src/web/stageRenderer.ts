@@ -30,6 +30,7 @@ import {
 } from '../shared/objectRendering.js'
 import { DEFAULT_BOARD_BACKGROUND, getBoardBackgroundId } from '../shared/backgrounds.js'
 import {
+  applyMeasuredStrategyTextOffset,
   createStrategyTextStyle,
   getStrategyTextFontLoadSpec,
 } from '../shared/textRendering.js'
@@ -128,8 +129,8 @@ interface KonvaNode {
   setAttrs(attrs: Record<string, unknown>): void
   toDataURL(options?: { pixelRatio?: number }): string
   visible(value: boolean): void
-  width(value: number): void
-  height(value: number): void
+  width(value?: number): number
+  height(value?: number): number
   x(): number
   y(): number
 }
@@ -721,11 +722,12 @@ export function createStageRenderer({
   function createTextNode(object: BoardObject): KonvaNode {
     const style = createStrategyTextStyle(object.text ?? '', object.color ?? DEFAULT_TEXT_COLOR)
     const spec = createTextRenderSpec(object)
-    return new Konva.Text({
+    const node = new Konva.Text({
       ...style,
       x: spec.x,
       y: spec.y,
     })
+    return applyMeasuredStrategyTextOffset(node)
   }
 
   function createLineNode(object: BoardObject): KonvaNode {
