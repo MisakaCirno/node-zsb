@@ -471,6 +471,127 @@ test('editor exports and imports project JSON files', async ({ page }) => {
   await expect(page.locator('#board-name')).toHaveValue('JSON')
 })
 
+test('editor applies inherited group flags from project files and local presets', async ({ page }) => {
+  await page.goto('/editor')
+  const project = {
+    format: 'node-zsb-project',
+    version: 1,
+    fileName: 'locked-group-project',
+    board: {
+      name: 'Locked Group Project',
+      boardBackground: 'none',
+    },
+    objects: {
+      obj_locked_a: {
+        type: 'tank',
+        x: 96,
+        y: 96,
+      },
+      obj_locked_b: {
+        type: 'healer',
+        x: 160,
+        y: 96,
+      },
+    },
+    layers: [
+      {
+        type: 'group',
+        id: 'grp_locked_project',
+        name: 'Locked External Group',
+        hidden: true,
+        locked: true,
+        children: [
+          { type: 'object', id: 'obj_locked_a' },
+          { type: 'object', id: 'obj_locked_b' },
+        ],
+      },
+    ],
+  }
+
+  await page.locator('#project-file-input').setInputFiles({
+    name: 'locked-group-project.zsb.json',
+    mimeType: 'application/json',
+    buffer: Buffer.from(JSON.stringify(project)),
+  })
+
+  const projectGroup = page.locator('#layers .layer-group-row').filter({ hasText: 'Locked External Group' })
+  const projectObjectRows = page.locator('#layers .layer-row:not(.layer-group-row)')
+  await expect(projectGroup).toHaveClass(/muted/)
+  await expect(projectGroup).toHaveClass(/locked/)
+  await expect(projectObjectRows).toHaveCount(2)
+  await expect(projectObjectRows.first()).toHaveClass(/muted/)
+  await expect(projectObjectRows.first()).toHaveClass(/locked/)
+  await expect(projectObjectRows.first()).toHaveAttribute('draggable', 'false')
+
+  await projectObjectRows.first().click()
+  await expect(page.locator('#inspector-form')).toBeHidden()
+  await expect(page.locator('#layers .layer-row:not(.layer-group-row).active')).toHaveCount(0)
+  await page.keyboard.press('Delete')
+  await expect(projectObjectRows).toHaveCount(2)
+
+  const lockedPreset = {
+    id: 'preset_locked_group',
+    name: 'Locked External Preset',
+    objects: {
+      preset_a: {
+        type: 'tank',
+        x: 96,
+        y: 96,
+      },
+      preset_b: {
+        type: 'healer',
+        x: 160,
+        y: 96,
+      },
+    },
+    layers: [
+      {
+        type: 'group',
+        id: 'preset_group_locked',
+        name: 'Locked Preset Group',
+        hidden: true,
+        locked: true,
+        children: [
+          { type: 'object', id: 'preset_a' },
+          { type: 'object', id: 'preset_b' },
+        ],
+      },
+    ],
+    objectCount: 2,
+    contentHash: 'external',
+    createdAt: '2026-01-01T00:00:00.000Z',
+    updatedAt: '2026-01-01T00:00:00.000Z',
+  }
+  await page.evaluate(({ key, preset }) => {
+    localStorage.setItem(key, JSON.stringify([preset]))
+  }, { key: LOCAL_PRESETS_KEY, preset: lockedPreset })
+
+  page.once('dialog', async (dialog) => {
+    await dialog.accept()
+  })
+  await page.locator('#clear-board').click()
+  await expect(page.locator('#layer-count')).toHaveText(`0 / ${MAX_BOARD_OBJECTS}`)
+
+  await page.locator('#asset-tab-presets').click()
+  const presetCard = page.locator('.preset-card').filter({ hasText: 'Locked External Preset' })
+  await expect(presetCard).toHaveCount(1)
+  await presetCard.locator('.preset-preview').click()
+
+  const presetGroup = page.locator('#layers .layer-group-row').filter({ hasText: 'Locked Preset Group' })
+  const presetObjectRows = page.locator('#layers .layer-row:not(.layer-group-row)')
+  await expect(page.locator('#layer-count')).toHaveText(`2 / ${MAX_BOARD_OBJECTS}`)
+  await expect(presetGroup).toHaveClass(/muted/)
+  await expect(presetGroup).toHaveClass(/locked/)
+  await expect(presetObjectRows).toHaveCount(2)
+  await expect(presetObjectRows.first()).toHaveClass(/muted/)
+  await expect(presetObjectRows.first()).toHaveClass(/locked/)
+  await expect(presetObjectRows.first()).toHaveAttribute('draggable', 'false')
+  await expect(page.locator('#layers .layer-row:not(.layer-group-row).active')).toHaveCount(0)
+  await expect(page.locator('#inspector-form')).toBeHidden()
+  await page.keyboard.press('Delete')
+  await expect(presetObjectRows).toHaveCount(2)
+})
+
 test('editor groups selected layers and exports the group in project JSON', async ({ page }) => {
   await page.goto('/editor')
   await expect(page.locator('#layers')).toContainText('tank')
