@@ -253,6 +253,7 @@ export function createStageRenderer({
   const hoverOuterTransformer = new Konva.Transformer({
     rotateEnabled: false,
     enabledAnchors: [],
+    borderDash: [5, 4],
     borderStroke: 'rgba(7, 16, 24, 0.88)',
     borderStrokeWidth: 4,
     listening: false,
