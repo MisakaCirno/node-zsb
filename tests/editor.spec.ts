@@ -2094,11 +2094,15 @@ test('editor toggles hidden and locked states from the layer list', async ({
 
   await firstLayer.locator('[data-action="locked"]').click()
   await expect(firstLayer).toHaveClass(/locked/)
+  await expect(firstLayer).toHaveAttribute('draggable', 'false')
   await expect(page.locator('#inspector-form')).toBeHidden()
   await expect(page.locator('#delete-object')).toBeDisabled()
 
   await firstLayer.click()
   await expect(page.locator('#inspector-form')).toBeHidden()
+  await firstLayer.locator('[data-action="hidden"]').click()
+  await expect(page.locator('#inspector-form')).toBeHidden()
+  await expect(page.locator('#layers .layer-row.active')).toHaveCount(0)
   await page.keyboard.press('Delete')
   await expect(page.locator('#layers .layer-row')).toHaveCount(layerCount)
   await page.keyboard.press('ArrowRight')

@@ -118,8 +118,9 @@ export function renderLayers({
 
   function renderGroupRow(group: GroupLayerNode, depth: number) {
     const row = document.createElement('div')
+    const dragLocked = isGroupDragLocked(group)
     row.className = 'layer-row layer-group-row'
-    row.draggable = true
+    row.draggable = !dragLocked
     row.dataset.groupId = group.id
     row.style.setProperty('--layer-depth', String(depth))
     row.classList.toggle('active', state.selectedGroupId === group.id)
@@ -223,7 +224,7 @@ export function renderLayers({
   function renderObjectRow(object: BoardObject, index: number, depth: number) {
     const row = document.createElement('div')
     row.className = 'layer-row'
-    row.draggable = true
+    row.draggable = !object.locked
     row.dataset.index = String(index)
     row.style.setProperty('--layer-depth', String(depth))
     row.classList.toggle('active', selectedIndexes.includes(index))
@@ -312,6 +313,15 @@ export function renderLayers({
       toggle: event.ctrlKey || event.metaKey,
     }))
     elements.layers.append(row)
+  }
+
+  function isGroupDragLocked(group: GroupLayerNode): boolean {
+    if (group.locked) return true
+    return (group.children ?? []).some((child) => {
+      if (child.type === 'group') return isGroupDragLocked(child)
+      const index = objectIndexById.get(child.id)
+      return index !== undefined && Boolean(state.board.objects[index]?.locked)
+    })
   }
 }
 

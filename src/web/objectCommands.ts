@@ -97,13 +97,13 @@ export function createObjectCommands({
       if (!object) return
       recordHistory()
       object[key] = object[key] ? undefined : true
-      if (key === 'locked' && object.locked) {
-        state.selectedIndex = -1
-        state.selectedIndexes = []
+      if (object.locked) {
+        removeObjectFromSelection(state, index)
         state.selectedGroupId = ''
       } else {
         state.selectedIndex = index
         state.selectedIndexes = [index]
+        state.selectedGroupId = ''
       }
       renderAll()
     },
@@ -119,7 +119,8 @@ export function createObjectCommands({
           object[key] = result.active || undefined
         }
       }
-      if (key === 'locked' && result.active) {
+      const groupLocked = isLayerGroupLocked(state.layerTree, groupId)
+      if (groupLocked) {
         state.selectedIndex = -1
         state.selectedIndexes = []
         state.selectedGroupId = ''
@@ -236,6 +237,7 @@ export function createObjectCommands({
     },
 
     moveLayerNodeBefore(dragged: LayerNodeRef, target: LayerNodeRef) {
+      if (isLayerNodeLocked(state, dragged)) return
       if (!canMutateLayerTree(state, (layerTree) =>
         moveLayerNodeBefore(layerTree, dragged, target))) return
       recordHistory()
@@ -246,6 +248,7 @@ export function createObjectCommands({
     },
 
     moveLayerNodeAfter(dragged: LayerNodeRef, target: LayerNodeRef) {
+      if (isLayerNodeLocked(state, dragged)) return
       if (!canMutateLayerTree(state, (layerTree) =>
         moveLayerNodeAfter(layerTree, dragged, target))) return
       recordHistory()
@@ -256,6 +259,7 @@ export function createObjectCommands({
     },
 
     moveLayerNodeIntoGroup(dragged: LayerNodeRef, groupId: string) {
+      if (isLayerNodeLocked(state, dragged) || isLayerGroupLocked(state.layerTree, groupId)) return
       if (!canMutateLayerTree(state, (layerTree) =>
         moveLayerNodeIntoGroup(layerTree, dragged, groupId))) return
       recordHistory()
@@ -266,6 +270,7 @@ export function createObjectCommands({
     },
 
     moveLayerNodeToRoot(dragged: LayerNodeRef) {
+      if (isLayerNodeLocked(state, dragged)) return
       if (!canMutateLayerTree(state, (layerTree) =>
         moveLayerNodeToRoot(layerTree, dragged))) return
       recordHistory()
@@ -452,6 +457,62 @@ function canMutateLayerTree(
   mutate: (layerTree: LayerNode[]) => unknown,
 ): boolean {
   return Boolean(mutate(structuredClone(state.layerTree)))
+}
+
+function removeObjectFromSelection(state: EditorState, index: number): void {
+  const selectedIndexes = getSelectedIndexes(state)
+    .filter((selectedIndex) =>
+      selectedIndex !== index && !state.board.objects[selectedIndex]?.locked)
+  state.selectedIndexes = selectedIndexes
+  state.selectedIndex = selectedIndexes.includes(state.selectedIndex)
+    ? state.selectedIndex
+    : selectedIndexes.at(-1) ?? -1
+}
+
+function isLayerNodeLocked(state: EditorState, node: LayerNodeRef): boolean {
+  if (node.type === 'object') {
+    return Boolean(state.board.objects.find((object) => object.editorId === node.id)?.locked)
+  }
+  const groupInfo = findGroupLockInfo(state.layerTree, node.id)
+  if (!groupInfo) return false
+  if (groupInfo.locked) return true
+  const lockedObjectIds = new Set(
+    state.board.objects
+      .filter((object) => object.locked && object.editorId)
+      .map((object) => object.editorId as string),
+  )
+  return containsLockedLayerNode(groupInfo.group.children, lockedObjectIds)
+}
+
+function isLayerGroupLocked(layerTree: LayerNode[], groupId: string): boolean {
+  return Boolean(findGroupLockInfo(layerTree, groupId)?.locked)
+}
+
+function findGroupLockInfo(
+  nodes: LayerNode[],
+  groupId: string,
+  inheritedLocked = false,
+): { group: Extract<LayerNode, { type: 'group' }>, locked: boolean } | null {
+  for (const node of nodes) {
+    if (node.type !== 'group') continue
+    const locked = inheritedLocked || Boolean(node.locked)
+    if (node.id === groupId) return { group: node, locked }
+    const nested = findGroupLockInfo(node.children ?? [], groupId, locked)
+    if (nested) return nested
+  }
+  return null
+}
+
+function containsLockedLayerNode(nodes: LayerNode[], lockedObjectIds: Set<string>): boolean {
+  for (const node of nodes) {
+    if (node.type === 'object' && lockedObjectIds.has(node.id)) return true
+    if (node.type === 'group') {
+      if (node.locked || containsLockedLayerNode(node.children ?? [], lockedObjectIds)) {
+        return true
+      }
+    }
+  }
+  return false
 }
 
 function createDefaultObject(type: string, point = BOARD_CENTER): BoardObject {

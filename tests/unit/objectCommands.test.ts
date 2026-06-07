@@ -162,6 +162,69 @@ test('object commands clear selection when locking and never delete locked objec
   assert.equal(state.board.objects.length, 2)
 })
 
+test('object commands do not reselect locked layers when toggling visibility', () => {
+  const state = createCommandState()
+  state.board.objects[1]!.locked = true
+  state.selectedIndex = 0
+  state.selectedIndexes = [0]
+  let renderCount = 0
+  const commands = createObjectCommands({
+    state,
+    recordHistory: () => {},
+    renderAll: () => {
+      renderCount += 1
+    },
+    selectObject: () => {},
+    getSelected: () => state.board.objects[state.selectedIndex],
+    getSelectedList: () => getSelectedObjects(state),
+    normalizePoint: (x, y) => ({ x, y }),
+    showStatus: () => {},
+    confirmAction: () => true,
+  })
+
+  commands.toggleLayerFlag(1, 'hidden')
+
+  assert.equal(renderCount, 1)
+  assert.equal(state.board.objects[1]!.hidden, true)
+  assert.deepEqual(state.selectedIndexes, [0])
+  assert.equal(state.selectedIndex, 0)
+  assert.equal(state.selectedGroupId, '')
+})
+
+test('object commands reject layer moves for locked nodes and locked target groups', () => {
+  const state = createCommandState()
+  state.board.objects[0]!.locked = true
+  const outerGroup = state.layerTree[0]
+  if (outerGroup?.type !== 'group') throw new Error('Expected outer group')
+  outerGroup.locked = true
+  const before = JSON.stringify(state.layerTree)
+  let historyCount = 0
+  let renderCount = 0
+  const commands = createObjectCommands({
+    state,
+    recordHistory: () => {
+      historyCount += 1
+    },
+    renderAll: () => {
+      renderCount += 1
+    },
+    selectObject: () => {},
+    getSelected: () => undefined,
+    getSelectedList: () => [],
+    normalizePoint: (x, y) => ({ x, y }),
+    showStatus: () => {},
+    confirmAction: () => true,
+  })
+
+  commands.moveLayerNodeToRoot({ type: 'object', id: 'obj_a' })
+  commands.moveLayerNodeToRoot({ type: 'group', id: 'grp_inner' })
+  commands.moveLayerNodeIntoGroup({ type: 'object', id: 'obj_b' }, 'grp_inner')
+
+  assert.equal(historyCount, 0)
+  assert.equal(renderCount, 0)
+  assert.equal(JSON.stringify(state.layerTree), before)
+})
+
 test('object commands nudge the full selection with one center-constrained delta', () => {
   const state = createCommandState()
   state.selectedIndex = 1
