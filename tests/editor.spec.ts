@@ -87,26 +87,30 @@ async function getGridCanvasStats(page: Page) {
   } | null>
 }
 
-async function getHoverHighlightPixelCount(page: Page) {
+async function getHoverHighlightStats(page: Page) {
   return page.evaluate(`(() => {
     const transformerCanvas = document.querySelectorAll('#stage-host canvas')[3]
     const data = transformerCanvas
       ?.getContext('2d')
       ?.getImageData(0, 0, transformerCanvas.width, transformerCanvas.height)
       .data
-    if (!data) return 0
-    let highlightedPixels = 0
+    if (!data) return { darkPixels: 0, lightPixels: 0 }
+    let darkPixels = 0
+    let lightPixels = 0
     for (let index = 0; index < data.length; index += 4) {
       const red = data[index]
       const green = data[index + 1]
       const blue = data[index + 2]
       const alpha = data[index + 3]
-      if (alpha > 80 && red > 220 && green > 160 && green < 230 && blue < 120) {
-        highlightedPixels += 1
+      if (alpha > 80 && red < 80 && green < 90 && blue < 110) {
+        darkPixels += 1
+      }
+      if (alpha > 80 && red > 220 && green > 230 && blue > 235) {
+        lightPixels += 1
       }
     }
-    return highlightedPixels
-  })()`) as Promise<number>
+    return { darkPixels, lightPixels }
+  })()`) as Promise<{ darkPixels: number, lightPixels: number }>
 }
 
 async function countPresetPreviewCache(page: Page) {
@@ -293,7 +297,10 @@ test('editor shows a hover preselection outline without selecting the object', a
   await page.goto('/editor')
   await expect(page.locator('#layers')).toContainText('tank')
   await expect(page.locator('#layers .layer-row.active')).toHaveCount(0)
-  await expect.poll(() => getHoverHighlightPixelCount(page)).toBe(0)
+  await expect.poll(() => getHoverHighlightStats(page)).toEqual({
+    darkPixels: 0,
+    lightPixels: 0,
+  })
 
   const positionText = await page.locator('#layers .layer-row').first().locator('.layer-position').innerText()
   const match = positionText.match(/(-?\d+(?:\.\d+)?),\s*(-?\d+(?:\.\d+)?)/)
@@ -306,7 +313,8 @@ test('editor shows a hover preselection outline without selecting the object', a
     box.y + (Number(match[2]) / 384) * box.height,
   )
 
-  await expect.poll(() => getHoverHighlightPixelCount(page)).toBeGreaterThan(0)
+  await expect.poll(async () => (await getHoverHighlightStats(page)).darkPixels).toBeGreaterThan(0)
+  await expect.poll(async () => (await getHoverHighlightStats(page)).lightPixels).toBeGreaterThan(0)
   await expect(page.locator('#layers .layer-row.active')).toHaveCount(0)
   await expect(page.locator('#inspector-form')).toBeHidden()
 })

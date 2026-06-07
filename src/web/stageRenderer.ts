@@ -250,11 +250,18 @@ export function createStageRenderer({
     anchorStroke: '#66c2a5',
     boundBoxFunc: constrainTransformerBox,
   })
-  const hoverTransformer = new Konva.Transformer({
+  const hoverOuterTransformer = new Konva.Transformer({
+    rotateEnabled: false,
+    enabledAnchors: [],
+    borderStroke: 'rgba(7, 16, 24, 0.88)',
+    borderStrokeWidth: 4,
+    listening: false,
+  })
+  const hoverInnerTransformer = new Konva.Transformer({
     rotateEnabled: false,
     enabledAnchors: [],
     borderDash: [5, 4],
-    borderStroke: '#f7c948',
+    borderStroke: '#f3fbff',
     borderStrokeWidth: 1.5,
     listening: false,
   })
@@ -264,7 +271,8 @@ export function createStageRenderer({
   stage.add(objectLayer)
   stage.add(transformerLayer)
   stage.add(marqueeLayer)
-  transformerLayer.add(hoverTransformer)
+  transformerLayer.add(hoverOuterTransformer)
+  transformerLayer.add(hoverInnerTransformer)
   transformerLayer.add(transformer)
   marqueeLayer.add(marqueeRect)
 
@@ -623,7 +631,9 @@ export function createStageRenderer({
       && !selectedIndexes.includes(hoveredObjectIndex ?? -1)
       && !activeDrag,
     )
-    hoverTransformer.nodes(canHighlight && hoveredNode ? [hoveredNode] : [])
+    const nodes = canHighlight && hoveredNode ? [hoveredNode] : []
+    hoverOuterTransformer.nodes(nodes)
+    hoverInnerTransformer.nodes(nodes)
     if (draw) transformerLayer.batchDraw()
   }
 
