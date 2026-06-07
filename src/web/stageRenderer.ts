@@ -223,6 +223,7 @@ export function createStageRenderer({
     width: SCENE_WIDTH,
     height: SCENE_HEIGHT,
   })
+  const stageHost = document.getElementById(container)
   const boardLayer = new Konva.Layer()
   const gridLayer = new Konva.Layer({ listening: false })
   const objectLayer = new Konva.Layer()
@@ -285,36 +286,83 @@ export function createStageRenderer({
       selectObject(-1)
     }
   })
+  bindHostMarqueeEvents()
+
   stage.on('mousedown touchstart', (event: KonvaEvent) => {
     if (event.evt?.button && event.evt.button !== 0) return
     if (event.target !== stage && event.target.getLayer() !== boardLayer) return
-    marqueeStart = getPointerScenePoint()
-    marqueeCurrent = marqueeStart
-    didMarqueeDrag = false
-    marqueeRect.visible(false)
+    beginMarquee(getPointerScenePoint())
   })
   stage.on('mousemove touchmove', () => {
     if (!marqueeStart) return
     const current = getPointerScenePoint()
-    if (!current) return
-    marqueeCurrent = current
-    updateMarqueeRect(marqueeStart, current)
+    updateMarquee(current)
   })
   stage.on('mouseup touchend', () => {
     if (!marqueeStart) return
-    const current = getPointerScenePoint() ?? marqueeCurrent
+    finishMarquee(getPointerScenePoint())
+  })
+
+  function bindHostMarqueeEvents() {
+    if (!stageHost) return
+    stageHost.addEventListener('mousedown', (event: MouseEvent) => {
+      if (event.button !== 0 || isCanvasEventTarget(event.target)) return
+      beginMarquee(getScenePointFromClient({ x: event.clientX, y: event.clientY }))
+    })
+    stageHost.addEventListener('mousemove', (event: MouseEvent) => {
+      if (!marqueeStart) return
+      updateMarquee(getScenePointFromClient({ x: event.clientX, y: event.clientY }))
+    })
+    stageHost.addEventListener('mouseup', (event: MouseEvent) => {
+      if (!marqueeStart) return
+      finishMarquee(getScenePointFromClient({ x: event.clientX, y: event.clientY }))
+    })
+    stageHost.addEventListener('touchstart', (event: TouchEvent) => {
+      if (isCanvasEventTarget(event.target)) return
+      beginMarquee(getScenePointFromTouchList(event.touches))
+    })
+    stageHost.addEventListener('touchmove', (event: TouchEvent) => {
+      if (!marqueeStart) return
+      updateMarquee(getScenePointFromTouchList(event.touches))
+    })
+    stageHost.addEventListener('touchend', (event: TouchEvent) => {
+      if (!marqueeStart) return
+      finishMarquee(getScenePointFromTouchList(event.changedTouches))
+    })
+  }
+
+  function beginMarquee(point: Point | null) {
+    if (!point) return
+    marqueeStart = point
+    marqueeCurrent = point
+    didMarqueeDrag = false
+    marqueeRect.visible(false)
+  }
+
+  function updateMarquee(current: Point | null) {
+    if (!current || !marqueeStart) return
+    marqueeCurrent = current
+    updateMarqueeRect(marqueeStart, current)
+  }
+
+  function finishMarquee(currentPoint: Point | null) {
+    const start = marqueeStart
+    if (!start) return
+    const current = currentPoint ?? marqueeCurrent
     if (current && didMarqueeDrag) {
-      const rect = getLogicalRect(marqueeStart, current)
-      const mode = getMarqueeMode(marqueeStart, current)
+      const rect = getLogicalRect(start, current)
+      const mode = getMarqueeMode(start, current)
       selectObjects(getMarqueeSelectedIndexes(rect, mode))
       suppressNextStageClick = true
+    } else {
+      selectObject(-1)
     }
     marqueeStart = null
     marqueeCurrent = null
     didMarqueeDrag = false
     marqueeRect.visible(false)
     marqueeLayer.batchDraw()
-  })
+  }
 
   async function renderBoard() {
     const backgroundId = state.backgrounds[state.board.boardBackground ?? DEFAULT_BOARD_BACKGROUND]
@@ -983,15 +1031,38 @@ export function createStageRenderer({
 
   function getLogicalPointerPoint(event?: KonvaEvent): Point | null {
     const client = getEventClientPoint(event)
+    return getLogicalPointFromClient(client)
+  }
+
+  function getLogicalPointFromClient(client: Point | null): Point | null {
+    const scenePoint = getScenePointFromClient(client)
+    return scenePoint
+      ? {
+        x: toLogicalCoordinate(scenePoint.x),
+        y: toLogicalCoordinate(scenePoint.y),
+      }
+      : null
+  }
+
+  function getScenePointFromClient(client: Point | null): Point | null {
     if (!client) return null
     const canvas = document.querySelector<HTMLCanvasElement>('#stage-host canvas')
     if (!canvas) return null
     const rect = canvas.getBoundingClientRect()
     if (rect.width <= 0 || rect.height <= 0) return null
     return {
-      x: ((client.x - rect.left) / rect.width) * (SCENE_WIDTH / LOGICAL_SCALE),
-      y: ((client.y - rect.top) / rect.height) * (SCENE_HEIGHT / LOGICAL_SCALE),
+      x: ((client.x - rect.left) / rect.width) * SCENE_WIDTH,
+      y: ((client.y - rect.top) / rect.height) * SCENE_HEIGHT,
     }
+  }
+
+  function getScenePointFromTouchList(touches: ArrayLike<{ clientX: number, clientY: number }>): Point | null {
+    const touch = touches[0]
+    return touch ? getScenePointFromClient({ x: touch.clientX, y: touch.clientY }) : null
+  }
+
+  function isCanvasEventTarget(target: EventTarget | null): boolean {
+    return target instanceof HTMLCanvasElement
   }
 
   function getEventClientPoint(event?: KonvaEvent): Point | null {

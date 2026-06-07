@@ -244,8 +244,22 @@ test('editor creates an object by dragging from the palette to the canvas', asyn
   expect(Math.abs(objectX - Math.round((target.x / box.width) * 512))).toBeLessThanOrEqual(1)
   expect(Math.abs(objectY - Math.round((target.y / box.height) * 384))).toBeLessThanOrEqual(1)
 
+  const stageHost = page.locator('#stage-host')
+  const hostBox = await stageHost.boundingBox()
+  const canvasBox = await canvas.boundingBox()
+  if (!hostBox || !canvasBox) throw new Error('Stage host is not visible')
+  await page.getByTitle('tank').first().dragTo(stageHost, {
+    force: true,
+    targetPosition: {
+      x: Math.max(2, canvasBox.x - hostBox.x - 8),
+      y: canvasBox.y - hostBox.y + canvasBox.height / 2,
+    },
+  })
+  await expect(page.locator('#layers .layer-row')).toHaveCount(before + 2)
+  await expect(page.locator('#object-x')).toHaveValue('0')
+
   await page.reload()
-  await expect(page.locator('#layers .layer-row')).toHaveCount(before + 1)
+  await expect(page.locator('#layers .layer-row')).toHaveCount(before + 2)
 })
 
 test('editor exports and imports project JSON files', async ({ page }) => {
@@ -804,6 +818,10 @@ test('editor renders readable Chinese labels', async ({ page }) => {
   await expect(page.locator('.stage-statusbar #grid-opacity')).toHaveAttribute('min', '0.15')
   await expect(page.locator('.stage-statusbar #grid-opacity')).toHaveAttribute('max', '1')
   await expect(page.locator('.stage-statusbar #grid-opacity-value')).toHaveText('55%')
+  const statusbarBox = await page.locator('.stage-statusbar').boundingBox()
+  const zoomActionsBox = await page.locator('.stage-statusbar .zoom-actions').boundingBox()
+  if (!statusbarBox || !zoomActionsBox) throw new Error('Statusbar controls are not visible')
+  expect((statusbarBox.x + statusbarBox.width) - (zoomActionsBox.x + zoomActionsBox.width)).toBeLessThan(24)
   await expect(page.locator('.top-command-icons #undo-action')).toHaveCount(1)
   await expect(page.locator('.editor-toolrail #align-left')).toHaveCount(1)
   await expect(page.locator('.editor-toolrail #tool-save-preset')).toHaveCount(1)
@@ -1324,6 +1342,8 @@ test('editor uses CAD-style marquee direction for contained and intersect select
   const canvas = page.locator('#stage-host canvas').first()
   const box = await canvas.boundingBox()
   if (!box) throw new Error('Canvas is not visible')
+  const hostBox = await page.locator('#stage-host').boundingBox()
+  if (!hostBox) throw new Error('Stage host is not visible')
   const point = (x: number, y: number) => ({
     x: box.x + (x / 512) * box.width,
     y: box.y + (y / 384) * box.height,
@@ -1337,6 +1357,20 @@ test('editor uses CAD-style marquee direction for contained and intersect select
   await page.mouse.move(containedEnd.x, containedEnd.y, { steps: 6 })
   await page.waitForTimeout(50)
   await page.mouse.up()
+  await expect(page.locator('#layers .layer-row.active')).toHaveCount(0)
+
+  const hostStart = {
+    x: Math.max(hostBox.x + 2, box.x - 10),
+    y: point(0, 40).y,
+  }
+  const hostEnd = point(230, 130)
+  await page.mouse.move(hostStart.x, hostStart.y)
+  await page.mouse.down()
+  await page.mouse.move(hostEnd.x, hostEnd.y, { steps: 6 })
+  await page.waitForTimeout(50)
+  await page.mouse.up()
+  await expect(page.locator('#layers .layer-row.active')).toHaveCount(1)
+  await page.mouse.click(point(500, 370).x, point(500, 370).y)
   await expect(page.locator('#layers .layer-row.active')).toHaveCount(0)
 
   const intersectStart = point(220, 40)

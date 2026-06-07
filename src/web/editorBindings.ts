@@ -8,6 +8,7 @@ import {
 import { bindLayoutResizers } from './layoutResizers.js'
 import { bindAdaptiveSidebarTabs } from './sidebarTabLayout.js'
 import { bindMenuBar } from './menuBar.js'
+import { clamp } from './geometry.js'
 import { getPresetDragType } from './localPresetsPanel.js'
 import { bindTextInput } from './textInputControl.js'
 import type {
@@ -301,15 +302,9 @@ function getStageDropPoint(elements: EditorElements, event: DragEvent): Point | 
   const canvas = elements.stageHost.querySelector('canvas')
   if (!canvas) return null
   const rect = canvas.getBoundingClientRect()
-  if (
-    event.clientX < rect.left
-    || event.clientX > rect.right
-    || event.clientY < rect.top
-    || event.clientY > rect.bottom
-  ) return null
   return {
-    x: Math.round(((event.clientX - rect.left) / rect.width) * (SCENE_WIDTH / LOGICAL_SCALE)),
-    y: Math.round(((event.clientY - rect.top) / rect.height) * (SCENE_HEIGHT / LOGICAL_SCALE)),
+    x: clamp(Math.round(((event.clientX - rect.left) / rect.width) * (SCENE_WIDTH / LOGICAL_SCALE)), 0, 512),
+    y: clamp(Math.round(((event.clientY - rect.top) / rect.height) * (SCENE_HEIGHT / LOGICAL_SCALE)), 0, 384),
   }
 }
 
