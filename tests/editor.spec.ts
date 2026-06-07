@@ -139,6 +139,16 @@ async function clickCanvasLogical(
   })
 }
 
+async function getCanvasLogicalScreenPoint(page: Page, x: number, y: number) {
+  const canvas = page.locator('#stage-host canvas').first()
+  const box = await canvas.boundingBox()
+  if (!box) throw new Error('Canvas is not visible')
+  return {
+    x: box.x + (x * LOGICAL_SCALE / SCENE_WIDTH) * box.width,
+    y: box.y + (y * LOGICAL_SCALE / SCENE_HEIGHT) * box.height,
+  }
+}
+
 async function countPresetPreviewCache(page: Page) {
   return page.evaluate(async () => {
     const database = await new Promise<IDBDatabase | null>((resolve) => {
@@ -317,6 +327,32 @@ test('editor creates an object by dragging from the palette to the canvas', asyn
 
   await page.reload()
   await expect(page.locator('#layers .layer-row')).toHaveCount(before + 2)
+})
+
+test('editor preserves fractional coordinates when dragging on the canvas', async ({ page }) => {
+  await page.goto('/editor')
+  await expect(page.locator('#layers')).toContainText('tank')
+
+  await page.getByTitle('tank').first().click()
+  await page.locator('#object-x').fill('260.2')
+  await page.locator('#object-y').fill('196.3')
+  await expect(page.locator('#object-x')).toHaveValue('260.2')
+  await expect(page.locator('#object-y')).toHaveValue('196.3')
+
+  const from = await getCanvasLogicalScreenPoint(page, 260.2, 196.3)
+  const to = await getCanvasLogicalScreenPoint(page, 264.7, 199.1)
+  await page.mouse.move(from.x, from.y)
+  await page.mouse.down()
+  await page.mouse.move(to.x, to.y, { steps: 6 })
+  await page.mouse.up()
+
+  const movedX = Number(await page.locator('#object-x').inputValue())
+  const movedY = Number(await page.locator('#object-y').inputValue())
+  expect(movedX).toBeGreaterThan(260.2)
+  expect(movedY).toBeGreaterThan(196.3)
+  expect(Number.isInteger(movedX)).toBe(false)
+  expect(Number.isInteger(movedY)).toBe(false)
+  await expect(page.locator('#layers .layer-row.primary .layer-position')).toHaveText(/\d+\.\d, \d+\.\d/)
 })
 
 test('editor shows a hover preselection outline without selecting the object', async ({ page }) => {

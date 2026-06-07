@@ -53,7 +53,7 @@ export function toSceneCoordinate(value: number): number {
 }
 
 export function toLogicalCoordinate(value: number): number {
-  return Math.round(value / BOARD_SCALE)
+  return value / BOARD_SCALE
 }
 
 export function objectScale(object: Pick<BoardObject, 'size' | 'type'>): number {

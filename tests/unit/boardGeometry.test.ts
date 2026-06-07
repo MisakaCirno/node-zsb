@@ -13,6 +13,7 @@ import {
   STRATEGY_TEXT_FONT_FAMILY,
   STRATEGY_TEXT_FONT_PRIMARY,
   STRATEGY_TEXT_FONT_WEIGHT,
+  toLogicalCoordinate,
 } from '../../src/shared/boardGeometry.js'
 
 test('calculateCircleOffset follows strategy board sector crop center', () => {
@@ -37,6 +38,10 @@ test('calculateDonutOffset returns crop center relative to the donut origin', ()
 test('flippedScale mirrors a rendered object without changing its stored size', () => {
   assert.equal(flippedScale(1.5, false), 1.5)
   assert.equal(flippedScale(1.5, true), -1.5)
+})
+
+test('toLogicalCoordinate preserves fractional editor coordinates', () => {
+  assert.equal(toLogicalCoordinate(521.5), 260.75)
 })
 
 test('objectScale follows game size ranges by object type', () => {
