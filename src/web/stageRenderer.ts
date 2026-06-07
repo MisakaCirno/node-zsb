@@ -250,12 +250,21 @@ export function createStageRenderer({
     anchorStroke: '#66c2a5',
     boundBoxFunc: constrainTransformerBox,
   })
+  const hoverTransformer = new Konva.Transformer({
+    rotateEnabled: false,
+    enabledAnchors: [],
+    borderDash: [5, 4],
+    borderStroke: '#f7c948',
+    borderStrokeWidth: 1.5,
+    listening: false,
+  })
 
   stage.add(boardLayer)
   stage.add(gridLayer)
   stage.add(objectLayer)
   stage.add(transformerLayer)
   stage.add(marqueeLayer)
+  transformerLayer.add(hoverTransformer)
   transformerLayer.add(transformer)
   marqueeLayer.add(marqueeRect)
 
@@ -272,6 +281,7 @@ export function createStageRenderer({
   let activeDrag: ActiveDrag | null = null
   let ignoredDragEndIndexes = new Set<number>()
   let pendingDragPointerStart: Point | null = null
+  let hoveredObjectIndex: number | null = null
   const renderedNodesByIndex = new Map<number, KonvaNode>()
 
   void ensureStrategyTextFontLoaded()
@@ -434,6 +444,7 @@ export function createStageRenderer({
     transformer.rotateEnabled?.(canTransformSelection)
     transformer.enabledAnchors(canTransformSelection ? TRANSFORM_ANCHORS : [])
     transformer.nodes(selectedNodes)
+    syncHoverTransformer({ draw: false })
     transformerLayer.draw()
   }
 
@@ -540,6 +551,12 @@ export function createStageRenderer({
     node.setAttr('objectIndex', index)
     node.draggable(!object.locked)
     node.opacity(objectOpacity(object, { hiddenOpacity: 0.15 }))
+    node.on('mouseenter', () => {
+      setHoveredObject(index)
+    })
+    node.on('mouseleave', () => {
+      if (hoveredObjectIndex === index) setHoveredObject(null)
+    })
     node.on('click tap', (event: KonvaEvent) => {
       if (event.evt?.button && event.evt.button !== 0) return
       event.cancelBubble = true
@@ -555,6 +572,7 @@ export function createStageRenderer({
     })
     node.on('dragstart', (event: KonvaEvent) => {
       if (activeDrag?.referenceIndex !== index && activeDrag?.indexes.includes(index)) return
+      setHoveredObject(null)
       recordHistory()
       beginNodeDrag(object, index, event)
     })
@@ -582,6 +600,31 @@ export function createStageRenderer({
       scheduleSelectedTransformCommit()
     })
     return node
+  }
+
+  function setHoveredObject(index: number | null) {
+    if (hoveredObjectIndex === index) return
+    hoveredObjectIndex = index
+    syncHoverTransformer()
+  }
+
+  function syncHoverTransformer({ draw = true }: { draw?: boolean } = {}) {
+    const hoveredObject = hoveredObjectIndex === null
+      ? undefined
+      : state.board.objects[hoveredObjectIndex]
+    const hoveredNode = hoveredObjectIndex === null
+      ? undefined
+      : renderedNodesByIndex.get(hoveredObjectIndex)
+    const selectedIndexes = getSelectedIndexes(state)
+    const canHighlight = Boolean(
+      hoveredObject
+      && hoveredNode
+      && !hoveredObject.locked
+      && !selectedIndexes.includes(hoveredObjectIndex ?? -1)
+      && !activeDrag,
+    )
+    hoverTransformer.nodes(canHighlight && hoveredNode ? [hoveredNode] : [])
+    if (draw) transformerLayer.batchDraw()
   }
 
   function scheduleSelectedTransformCommit() {

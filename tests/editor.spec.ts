@@ -87,6 +87,28 @@ async function getGridCanvasStats(page: Page) {
   } | null>
 }
 
+async function getHoverHighlightPixelCount(page: Page) {
+  return page.evaluate(`(() => {
+    const transformerCanvas = document.querySelectorAll('#stage-host canvas')[3]
+    const data = transformerCanvas
+      ?.getContext('2d')
+      ?.getImageData(0, 0, transformerCanvas.width, transformerCanvas.height)
+      .data
+    if (!data) return 0
+    let highlightedPixels = 0
+    for (let index = 0; index < data.length; index += 4) {
+      const red = data[index]
+      const green = data[index + 1]
+      const blue = data[index + 2]
+      const alpha = data[index + 3]
+      if (alpha > 80 && red > 220 && green > 160 && green < 230 && blue < 120) {
+        highlightedPixels += 1
+      }
+    }
+    return highlightedPixels
+  })()`) as Promise<number>
+}
+
 async function countPresetPreviewCache(page: Page) {
   return page.evaluate(async () => {
     const database = await new Promise<IDBDatabase | null>((resolve) => {
@@ -265,6 +287,28 @@ test('editor creates an object by dragging from the palette to the canvas', asyn
 
   await page.reload()
   await expect(page.locator('#layers .layer-row')).toHaveCount(before + 2)
+})
+
+test('editor shows a hover preselection outline without selecting the object', async ({ page }) => {
+  await page.goto('/editor')
+  await expect(page.locator('#layers')).toContainText('tank')
+  await expect(page.locator('#layers .layer-row.active')).toHaveCount(0)
+  await expect.poll(() => getHoverHighlightPixelCount(page)).toBe(0)
+
+  const positionText = await page.locator('#layers .layer-row').first().locator('.layer-position').innerText()
+  const match = positionText.match(/(-?\d+(?:\.\d+)?),\s*(-?\d+(?:\.\d+)?)/)
+  if (!match) throw new Error(`Invalid layer position: ${positionText}`)
+  const canvas = page.locator('#stage-host canvas').first()
+  const box = await canvas.boundingBox()
+  if (!box) throw new Error('Canvas is not visible')
+  await page.mouse.move(
+    box.x + (Number(match[1]) / 512) * box.width,
+    box.y + (Number(match[2]) / 384) * box.height,
+  )
+
+  await expect.poll(() => getHoverHighlightPixelCount(page)).toBeGreaterThan(0)
+  await expect(page.locator('#layers .layer-row.active')).toHaveCount(0)
+  await expect(page.locator('#inspector-form')).toBeHidden()
 })
 
 test('editor exports and imports project JSON files', async ({ page }) => {
