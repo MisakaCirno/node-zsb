@@ -419,14 +419,12 @@ export function createStageRenderer({
     if (state.board.objects.some((object) => object.type === 'text')) {
       await ensureStrategyTextFontLoaded()
     }
-    const nodes: KonvaNode[] = []
     const nextRenderedNodesByIndex = new Map<number, KonvaNode>()
     for (let index = state.board.objects.length - 1; index >= 0; index--) {
       const object = state.board.objects[index]
       if (!object) continue
       const node = await createNode(object, index)
       if (node) {
-        nodes.push(node)
         nextRenderedNodesByIndex.set(index, node)
       }
     }
@@ -437,23 +435,7 @@ export function createStageRenderer({
       objectLayer.add(node)
     }
     objectLayer.draw()
-    const selectedIndexes = getSelectedIndexes(state)
-    const selectedObjects = selectedIndexes.map((index) => state.board.objects[index])
-    const canTransformSelection = selectedObjects.length > 0
-      && selectedObjects.every((object) => object && !['line', 'text'].includes(object.type))
-    const canShowSelectionBounds = selectedObjects.length > 0
-      && selectedObjects.every((object) => object && object.type !== 'line')
-    const selectedNodes = canShowSelectionBounds
-      ? nodes.filter((node) => {
-        const index = Number(node.getAttr('objectIndex'))
-        return selectedIndexes.includes(index) && !state.board.objects[index]?.locked
-      })
-      : []
-    transformer.keepRatio(!canFreeScaleSelection(selectedObjects))
-    transformer.rotateEnabled?.(canTransformSelection)
-    transformer.enabledAnchors(canTransformSelection ? TRANSFORM_ANCHORS : [])
-    transformer.nodes(selectedNodes)
-    syncHoverTransformer({ draw: false })
+    syncSelectionTransformer({ draw: false })
     transformerLayer.draw()
   }
 
@@ -581,6 +563,7 @@ export function createStageRenderer({
     })
     node.on('dragstart', (event: KonvaEvent) => {
       if (activeDrag?.referenceIndex !== index && activeDrag?.indexes.includes(index)) return
+      selectDragTarget(index)
       setHoveredObject(null)
       recordHistory()
       beginNodeDrag(object, index, event)
@@ -635,6 +618,42 @@ export function createStageRenderer({
     const nodes = canHighlight && hoveredNode ? [hoveredNode] : []
     hoverOuterTransformer.nodes(nodes)
     hoverInnerTransformer.nodes(nodes)
+    if (draw) transformerLayer.batchDraw()
+  }
+
+  function selectDragTarget(index: number) {
+    const object = state.board.objects[index]
+    if (!object || object.locked || getSelectedIndexes(state).includes(index)) return
+    state.selectedIndexes = [index]
+    state.selectedIndex = index
+    state.selectedGroupId = ''
+    state.revealSelectedLayer = true
+    renderInspector()
+    renderLayers()
+    syncSelectionTransformer()
+  }
+
+  function syncSelectionTransformer({ draw = true }: { draw?: boolean } = {}) {
+    const selectedIndexes = getSelectedIndexes(state)
+    const selectedObjects = selectedIndexes.map((index) => state.board.objects[index])
+    const canTransformSelection = selectedObjects.length > 0
+      && selectedObjects.every((object) => object && !['line', 'text'].includes(object.type))
+    const canShowSelectionBounds = selectedObjects.length > 0
+      && selectedObjects.every((object) => object && object.type !== 'line')
+    const selectedNodes = canShowSelectionBounds
+      ? selectedIndexes
+        .map((index) => {
+          const node = renderedNodesByIndex.get(index)
+          const object = state.board.objects[index]
+          return node && object && !object.locked ? node : null
+        })
+        .filter((node): node is KonvaNode => Boolean(node))
+      : []
+    transformer.keepRatio(!canFreeScaleSelection(selectedObjects))
+    transformer.rotateEnabled?.(canTransformSelection)
+    transformer.enabledAnchors(canTransformSelection ? TRANSFORM_ANCHORS : [])
+    transformer.nodes(selectedNodes)
+    syncHoverTransformer({ draw: false })
     if (draw) transformerLayer.batchDraw()
   }
 

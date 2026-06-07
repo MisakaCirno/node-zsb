@@ -319,6 +319,41 @@ test('editor shows a hover preselection outline without selecting the object', a
   await expect(page.locator('#inspector-form')).toBeHidden()
 })
 
+test('editor selects an unselected object as soon as canvas drag starts', async ({ page }) => {
+  await page.goto('/editor')
+  await expect(page.locator('#layers')).toContainText('tank')
+  await expect(page.locator('#layers .layer-row.active')).toHaveCount(0)
+
+  const positionText = await page.locator('#layers .layer-row').first().locator('.layer-position').innerText()
+  const match = positionText.match(/(-?\d+(?:\.\d+)?),\s*(-?\d+(?:\.\d+)?)/)
+  if (!match) throw new Error(`Invalid layer position: ${positionText}`)
+  const start = {
+    x: Number(match[1]),
+    y: Number(match[2]),
+  }
+  const canvas = page.locator('#stage-host canvas').first()
+  const box = await canvas.boundingBox()
+  if (!box) throw new Error('Canvas is not visible')
+  const point = (x: number, y: number) => ({
+    x: box.x + (x / 512) * box.width,
+    y: box.y + (y / 384) * box.height,
+  })
+
+  await page.mouse.move(point(start.x, start.y).x, point(start.x, start.y).y)
+  await page.mouse.down()
+  await page.mouse.move(point(start.x + 20, start.y + 16).x, point(start.x + 20, start.y + 16).y, {
+    steps: 6,
+  })
+
+  await expect(page.locator('#layers .layer-row.active')).toHaveCount(1)
+  await expect(page.locator('#inspector-form')).toBeVisible()
+  await expect(page.locator('#object-type')).toHaveValue('tank')
+
+  await page.mouse.up()
+  await expect.poll(async () => Number(await page.locator('#object-x').inputValue()))
+    .toBeGreaterThan(start.x)
+})
+
 test('editor exports and imports project JSON files', async ({ page }) => {
   await page.goto('/editor')
   await expect(page.locator('#layers')).toContainText('tank')
@@ -1342,8 +1377,20 @@ test('editor drags multi-selected objects together on the canvas', async ({ page
   await page.mouse.move(point(340, 240).x, point(340, 240).y, { steps: 8 })
   await page.mouse.up()
 
-  await expect(page.locator('#layers .layer-row').nth(0).locator('.layer-position')).toHaveText('240, 180')
-  await expect(page.locator('#layers .layer-row').nth(1).locator('.layer-position')).toHaveText('340, 240')
+  const readLayerPosition = async (index: number) => {
+    const text = await page.locator('#layers .layer-row').nth(index).locator('.layer-position').innerText()
+    const match = text.match(/(-?\d+(?:\.\d+)?),\s*(-?\d+(?:\.\d+)?)/)
+    if (!match) throw new Error(`Invalid layer position: ${text}`)
+    return { x: Number(match[1]), y: Number(match[2]) }
+  }
+  const firstAfter = await readLayerPosition(0)
+  const secondAfter = await readLayerPosition(1)
+  expect(firstAfter.x).toBeGreaterThanOrEqual(239)
+  expect(firstAfter.x).toBeLessThanOrEqual(240)
+  expect(firstAfter.y).toBeGreaterThanOrEqual(179)
+  expect(firstAfter.y).toBeLessThanOrEqual(180)
+  expect(secondAfter.x - firstAfter.x).toBe(100)
+  expect(secondAfter.y - firstAfter.y).toBe(60)
 })
 
 test('editor range-selects layer rows with shift click', async ({ page }) => {
