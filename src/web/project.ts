@@ -19,6 +19,11 @@ interface NormalizeLayerContext {
   usedObjectIds: Set<string>
 }
 
+interface InheritedLayerFlags {
+  hidden?: boolean
+  locked?: boolean
+}
+
 export function createProjectFromBoard(
   board: Partial<Board>,
   options: CreateProjectOptions = {},
@@ -218,22 +223,32 @@ function appendLayerObjects(
   objects: ProjectObjects,
   result: BoardObject[],
   usedIds: Set<string>,
+  inheritedFlags: InheritedLayerFlags = {},
 ): void {
   for (const node of nodes) {
     if (node.type === 'object') {
       const object = objects[node.id]
       if (usedIds.has(node.id) || !object) continue
-      result.push({
+      result.push(applyInheritedLayerFlags({
         ...structuredClone(object),
         editorId: node.id,
-      })
+      }, inheritedFlags))
       usedIds.add(node.id)
       continue
     }
     if (node.type === 'group') {
-      appendLayerObjects(node.children ?? [], objects, result, usedIds)
+      appendLayerObjects(node.children ?? [], objects, result, usedIds, {
+        hidden: inheritedFlags.hidden || Boolean(node.hidden),
+        locked: inheritedFlags.locked || Boolean(node.locked),
+      })
     }
   }
+}
+
+function applyInheritedLayerFlags(object: BoardObject, flags: InheritedLayerFlags): BoardObject {
+  if (flags.hidden) object.hidden = true
+  if (flags.locked) object.locked = true
+  return object
 }
 
 function collectLayerObjectIds(nodes: LayerNode[], result: Set<string>): void {

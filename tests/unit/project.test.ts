@@ -162,6 +162,36 @@ test('createProjectFromBoard preserves a supplied layer tree', () => {
   )
 })
 
+test('flattenProjectToBoard applies inherited group hidden and locked flags', () => {
+  const board = flattenProjectToBoard({
+    format: PROJECT_FORMAT,
+    version: 1,
+    board: { name: 'Flags', boardBackground: 'checkered' },
+    objects: {
+      obj_a: { type: 'tank', x: 1, y: 2 },
+      obj_b: { type: 'healer', x: 3, y: 4, hidden: true },
+    },
+    layers: [
+      {
+        type: 'group',
+        id: 'grp_1',
+        name: 'Locked',
+        hidden: true,
+        locked: true,
+        children: [
+          { type: 'object', id: 'obj_a' },
+          { type: 'object', id: 'obj_b' },
+        ],
+      },
+    ],
+  })
+
+  assert.equal(board.objects[0]!.hidden, true)
+  assert.equal(board.objects[0]!.locked, true)
+  assert.equal(board.objects[1]!.hidden, true)
+  assert.equal(board.objects[1]!.locked, true)
+})
+
 test('project normalization supports nested groups and preserves flattened order', () => {
   const project = normalizeProject({
     format: PROJECT_FORMAT,

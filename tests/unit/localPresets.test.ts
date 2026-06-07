@@ -24,6 +24,34 @@ test('insertPresetIntoBoard keeps preset objects together when inserted near an 
   assert.deepEqual(state.selectedIndexes, [0, 1])
 })
 
+test('insertPresetIntoBoard applies inherited group flags and avoids selecting locked objects', () => {
+  const state = createState()
+  const preset = createTwoObjectPreset()
+  preset.layers = [
+    {
+      type: 'group',
+      id: 'source_group',
+      name: 'Locked preset',
+      hidden: true,
+      locked: true,
+      children: preset.layers,
+    },
+  ]
+
+  const result = insertPresetIntoBoard(state, preset, { point: { x: 256, y: 192 } })
+
+  assert.equal(result?.objectCount, 2)
+  assert.deepEqual(result?.indexes, [0, 1])
+  assert.equal(result?.groupId, '')
+  assert.equal(state.board.objects[0]!.hidden, true)
+  assert.equal(state.board.objects[0]!.locked, true)
+  assert.equal(state.board.objects[1]!.hidden, true)
+  assert.equal(state.board.objects[1]!.locked, true)
+  assert.deepEqual(state.selectedIndexes, [])
+  assert.equal(state.selectedIndex, -1)
+  assert.equal(state.selectedGroupId, '')
+})
+
 test('insertPresetIntoBoard rejects presets that would exceed the board object limit', () => {
   const existingObjects = Array.from({ length: MAX_BOARD_OBJECTS - 1 }, (_, index) => ({
     editorId: `existing_${index}`,

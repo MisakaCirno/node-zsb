@@ -26,6 +26,11 @@ interface InsertPresetResult {
   objectCount: number
 }
 
+interface InheritedLayerFlags {
+  hidden?: boolean
+  locked?: boolean
+}
+
 const BOARD_BOUNDS = {
   bottom: 384,
   left: 0,
@@ -70,6 +75,7 @@ export function insertPresetIntoBoard(
     if (!object || sourceObjectMap.has(id)) continue
     sourceObjectMap.set(id, sanitizeObject(structuredClone(object)))
   }
+  applyLayerFlagsToObjects(preset.layers, sourceObjectMap)
   const sourceObjects = [...sourceObjectMap.values()]
   if (sourceObjects.length === 0) return null
   if (state.board.objects.length + sourceObjects.length > MAX_BOARD_OBJECTS) return null
@@ -105,12 +111,15 @@ export function insertPresetIntoBoard(
   const indexes = state.board.objects
     .map((object, index) => insertedIdSet.has(object.editorId) ? index : -1)
     .filter((index) => index >= 0)
-  state.selectedIndexes = indexes
-  state.selectedIndex = indexes.at(-1) ?? -1
+  const selectableIndexes = indexes.filter((index) => !state.board.objects[index]?.locked)
+  state.selectedIndexes = selectableIndexes
+  state.selectedIndex = selectableIndexes.at(-1) ?? -1
   const rootGroup = clonedLayers.length === 1 && clonedLayers[0]?.type === 'group'
     ? clonedLayers[0]
     : null
-  state.selectedGroupId = rootGroup?.id ?? ''
+  state.selectedGroupId = rootGroup && !rootGroup.locked && selectableIndexes.length > 0
+    ? rootGroup.id
+    : ''
   state.revealSelectedLayer = true
   return {
     groupId: state.selectedGroupId,
@@ -159,6 +168,26 @@ function collectPresetObjects(
     }
   }
   return objects
+}
+
+function applyLayerFlagsToObjects(
+  layers: LayerNode[],
+  objects: Map<string, BoardObject>,
+  inheritedFlags: InheritedLayerFlags = {},
+): void {
+  for (const node of layers) {
+    if (node.type === 'object') {
+      const object = objects.get(node.id)
+      if (!object) continue
+      if (inheritedFlags.hidden) object.hidden = true
+      if (inheritedFlags.locked) object.locked = true
+      continue
+    }
+    applyLayerFlagsToObjects(node.children ?? [], objects, {
+      hidden: inheritedFlags.hidden || Boolean(node.hidden),
+      locked: inheritedFlags.locked || Boolean(node.locked),
+    })
+  }
 }
 
 function cloneLayerNode(node: LayerNode): LayerNode {
