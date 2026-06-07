@@ -95,6 +95,7 @@ interface KonvaEvent {
     clientY?: number
     ctrlKey?: boolean
     metaKey?: boolean
+    preventDefault?(): void
     shiftKey?: boolean
     touches?: ArrayLike<{ clientX: number, clientY: number }>
   }
@@ -556,6 +557,16 @@ export function createStageRenderer({
         revealInLayers: true,
         toggle: Boolean(event.evt?.shiftKey || event.evt?.ctrlKey || event.evt?.metaKey),
       })
+    })
+    node.on('contextmenu', (event: KonvaEvent) => {
+      event.cancelBubble = true
+      event.evt?.preventDefault?.()
+      if (object.locked) {
+        selectObject(-1)
+        return
+      }
+      if (getSelectedIndexes(state).includes(index)) return
+      selectObject(index, { revealInLayers: true })
     })
     node.on('mousedown touchstart', (event: KonvaEvent) => {
       if (event.evt?.button && event.evt.button !== 0) return

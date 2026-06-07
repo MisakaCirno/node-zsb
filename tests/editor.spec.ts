@@ -1,6 +1,13 @@
 import { expect, test, type Dialog, type Locator, type Page } from '@playwright/test'
 import { readFile } from 'node:fs/promises'
-import { LOCAL_PRESETS_KEY, MAX_BOARD_OBJECTS, STORAGE_KEY } from '../src/web/constants.js'
+import {
+  LOCAL_PRESETS_KEY,
+  LOGICAL_SCALE,
+  MAX_BOARD_OBJECTS,
+  SCENE_HEIGHT,
+  SCENE_WIDTH,
+  STORAGE_KEY,
+} from '../src/web/constants.js'
 
 async function openImportDialog(page: Page) {
   await clickFileMenuAction(page, '#open-import-dialog')
@@ -111,6 +118,25 @@ async function getHoverHighlightStats(page: Page) {
     }
     return { darkPixels, lightPixels }
   })()`) as Promise<{ darkPixels: number, lightPixels: number }>
+}
+
+async function clickCanvasLogical(
+  page: Page,
+  x: number,
+  y: number,
+  button: 'left' | 'right' = 'left',
+) {
+  const canvas = page.locator('#stage-host canvas').first()
+  const box = await canvas.boundingBox()
+  if (!box) throw new Error('Canvas is not visible')
+  await canvas.click({
+    button,
+    force: true,
+    position: {
+      x: (x * LOGICAL_SCALE / SCENE_WIDTH) * box.width,
+      y: (y * LOGICAL_SCALE / SCENE_HEIGHT) * box.height,
+    },
+  })
 }
 
 async function countPresetPreviewCache(page: Page) {
@@ -1539,6 +1565,26 @@ test('editor opens custom context menus for canvas and layers', async ({ page })
   await textRow.click({ button: 'right' })
   await page.getByRole('menuitem', { name: '上移图层' }).click()
   await expect(page.locator('#layers .layer-row').nth(layerCount - 2)).toContainText('text')
+})
+
+test('editor selects the canvas right-click target before opening object actions', async ({ page }) => {
+  await page.goto('/editor')
+  await expect(page.locator('#layers')).toContainText('tank')
+
+  await page.getByTitle('tank').first().click()
+  await page.locator('#object-x').fill('120')
+  await page.locator('#object-y').fill('120')
+  await page.getByTitle('healer').first().click()
+  await page.locator('#object-x').fill('360')
+  await page.locator('#object-y').fill('120')
+
+  await clickCanvasLogical(page, 120, 120)
+  await expect(page.locator('#object-type')).toHaveValue('tank')
+
+  await clickCanvasLogical(page, 360, 120, 'right')
+  await expect(page.locator('#context-menu')).toBeVisible()
+  await expect(page.locator('#object-type')).toHaveValue('healer')
+  await expect(page.locator('#layers .layer-row.primary')).toContainText('healer')
 })
 
 test('editor selects layer groups without opening the object context menu', async ({ page }) => {
