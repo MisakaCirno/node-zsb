@@ -3,7 +3,7 @@ import { MAX_BOARD_OBJECTS } from './constants.js'
 import { createEditorId } from './editorIds.js'
 import { getSelectedIndexes } from './editorState.js'
 import { syncBoardOrderFromLayerTree } from './layerTree.js'
-import { clamp } from './geometry.js'
+import { normalizeCoordinate } from './geometry.js'
 import {
   getBoundsCenterX,
   getBoundsCenterY,
@@ -230,11 +230,11 @@ function findGroupNode(layers: LayerNode[], groupId: string): Extract<LayerNode,
 }
 
 function translateObject(object: BoardObject, delta: { x: number, y: number }): BoardObject {
-  object.x = clamp(Math.round(object.x + delta.x), 0, 512)
-  object.y = clamp(Math.round(object.y + delta.y), 0, 384)
+  object.x = normalizeCoordinate(object.x + delta.x, 0, 512)
+  object.y = normalizeCoordinate(object.y + delta.y, 0, 384)
   if (object.type === 'line' && object.endX !== undefined && object.endY !== undefined) {
-    object.endX = clamp(Math.round(object.endX + delta.x), 0, 512)
-    object.endY = clamp(Math.round(object.endY + delta.y), 0, 384)
+    object.endX = normalizeCoordinate(object.endX + delta.x, 0, 512)
+    object.endY = normalizeCoordinate(object.endY + delta.y, 0, 384)
   }
   return object
 }

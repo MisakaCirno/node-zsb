@@ -63,16 +63,17 @@ test('cleanBoard applies game-compatible object fields', () => {
   const board = normalizeBoard({
     boardBackground: 'checkered',
     objects: [
-      { type: 'text', x: 100, y: 120, text: '123456789012345678901234567890X\nnext', size: 160, angle: 45 },
-      { type: 'line', x: 120, y: 140, endX: 200, endY: 180, size: 20, angle: 45 },
+      { type: 'text', x: 100.24, y: 120.26, text: '123456789012345678901234567890X\nnext', size: 160, angle: 45 },
+      { type: 'line', x: 120.24, y: 140.26, endX: 200.24, endY: 180.26, size: 20, angle: 45 },
       { type: 'circle_aoe', x: 150, y: 150, size: 5, color: '#123456', transparency: 120 },
       { type: 'line_aoe', x: 160, y: 160, size: 250, width: 1, height: 500, angle: 315, transparency: 150 },
       { type: 'donut', x: 220, y: 180, size: 5, angle: -181, color: '#123456', donutRadius: 500 },
       { type: 'donut', x: 320, y: 180, donutRadius: 80, arcAngle: 180 },
     ],
   })
+  const cleaned = cleanBoard(board)
 
-  assert.deepEqual(cleanBoard(board).objects.map((object) => ({
+  assert.deepEqual(cleaned.objects.map((object) => ({
     type: object.type,
     size: object.size,
     angle: object.angle,
@@ -90,6 +91,20 @@ test('cleanBoard applies game-compatible object fields', () => {
     { type: 'line_aoe', size: 100, angle: -45, arcAngle: undefined, width: 16, height: 384, color: '#FF7F00', text: undefined, donutRadius: undefined, transparency: 100 },
     { type: 'donut', size: 10, angle: 179, arcAngle: 360, width: undefined, height: undefined, color: undefined, text: undefined, donutRadius: 240, transparency: 0 },
     { type: 'donut', size: 100, angle: undefined, arcAngle: 180, width: undefined, height: undefined, color: undefined, text: undefined, donutRadius: 80, transparency: 0 },
+  ])
+  assert.deepEqual(cleaned.objects.map((object) => ({
+    type: object.type,
+    x: object.x,
+    y: object.y,
+    endX: object.endX,
+    endY: object.endY,
+  })), [
+    { type: 'text', x: 100.2, y: 120.3, endX: undefined, endY: undefined },
+    { type: 'line', x: 120.2, y: 140.3, endX: 200.2, endY: 180.3 },
+    { type: 'circle_aoe', x: 150, y: 150, endX: undefined, endY: undefined },
+    { type: 'line_aoe', x: 160, y: 160, endX: undefined, endY: undefined },
+    { type: 'donut', x: 220, y: 180, endX: undefined, endY: undefined },
+    { type: 'donut', x: 320, y: 180, endX: undefined, endY: undefined },
   ])
 })
 

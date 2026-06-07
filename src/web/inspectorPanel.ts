@@ -1,5 +1,6 @@
 import { getObjectCapabilities } from './board.js'
 import { syncColorControl } from './colorPicker.js'
+import { formatCoordinate } from './geometry.js'
 import { syncTextInput } from './textInputControl.js'
 import {
   DEFAULT_LINE_COLOR,
@@ -83,8 +84,8 @@ export function renderInspector({
   if (!object) return
   updateInspectorVisibility(object, elements)
   elements.type.value = object.type
-  elements.x.value = String(object.x ?? 256)
-  elements.y.value = String(object.y ?? 192)
+  elements.x.value = formatCoordinate(object.x ?? 256)
+  elements.y.value = formatCoordinate(object.y ?? 192)
   elements.size.value = String(object.size ?? 100)
   const sizeBounds = getObjectSizeBounds(object.type)
   elements.size.min = String(sizeBounds.min)
@@ -103,8 +104,8 @@ export function renderInspector({
   elements.objectWidthRange.value = elements.objectWidth.value
   elements.objectHeight.value = String(object.height ?? 128)
   elements.objectHeightRange.value = elements.objectHeight.value
-  elements.endX.value = String(object.endX ?? object.x ?? 256)
-  elements.endY.value = String(object.endY ?? object.y ?? 192)
+  elements.endX.value = formatCoordinate(object.endX ?? object.x ?? 256)
+  elements.endY.value = formatCoordinate(object.endY ?? object.y ?? 192)
   elements.arc.value = String(object.arcAngle ?? (object.type === 'fan_aoe' ? 90 : 360))
   elements.arcRange.value = elements.arc.value
   elements.donut.value = String(object.donutRadius ?? 80)

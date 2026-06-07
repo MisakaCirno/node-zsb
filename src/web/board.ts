@@ -4,6 +4,7 @@ import {
   stripPureBoardEditorFields,
 } from './editorIds.js'
 import { normalizeObjectText } from './textInputControl.js'
+import { normalizeCoordinate } from './geometry.js'
 import { DEFAULT_BOARD_BACKGROUND } from '../shared/backgrounds.js'
 import {
   getDefaultObjectColor,
@@ -48,6 +49,8 @@ export function cleanBoard(board: NormalizedBoard): Board {
 export function sanitizeObject(object: BoardObject): BoardObject {
   const capabilities = getObjectCapabilities(object.type)
   const copy = stripEditorFields(object)
+  copy.x = normalizeCoordinate(Number(copy.x ?? 0), 0, 512)
+  copy.y = normalizeCoordinate(Number(copy.y ?? 0), 0, 384)
   if (copy.type === 'text') {
     delete copy.size
     delete copy.angle
@@ -85,6 +88,9 @@ export function sanitizeObject(object: BoardObject): BoardObject {
   if (!capabilities.line) {
     delete copy.endX
     delete copy.endY
+  } else {
+    copy.endX = normalizeCoordinate(Number(copy.endX ?? copy.x), 0, 512)
+    copy.endY = normalizeCoordinate(Number(copy.endY ?? copy.y), 0, 384)
   }
   if (!capabilities.dimensions) {
     delete copy.width

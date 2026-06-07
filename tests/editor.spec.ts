@@ -190,6 +190,11 @@ test('editor loads, edits an object, exports code, and renders a preview', async
   await page.locator('#object-x').fill('260')
   await page.locator('#object-y').fill('196')
   await expect(page.locator('#layers')).toContainText('tank')
+  await page.locator('#object-x').fill('260.24')
+  await page.locator('#object-y').fill('196.26')
+  await expect(page.locator('#object-x')).toHaveValue('260.2')
+  await expect(page.locator('#object-y')).toHaveValue('196.3')
+  await expect(page.locator('#layers .layer-row.primary').locator('.layer-position')).toHaveText('260.2, 196.3')
 
   await openExportCodeDialog(page)
   await expect(page.locator('#code-output')).toHaveValue(/\[stgy:/)
@@ -1912,7 +1917,7 @@ test('editor nudges multi-selected objects with arrow keys', async ({ page }) =>
 
   const readPosition = async (row: Locator) => {
     const text = await row.locator('.layer-position').innerText()
-    const match = text.match(/(-?\d+),\s*(-?\d+)/)
+    const match = text.match(/(-?\d+(?:\.\d+)?),\s*(-?\d+(?:\.\d+)?)/)
     if (!match) throw new Error(`Invalid layer position: ${text}`)
     return { x: Number(match[1]), y: Number(match[2]) }
   }

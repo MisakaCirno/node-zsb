@@ -21,6 +21,7 @@ interface EditorControllersDeps {
   elements: EditorElements
   getSelected(): BoardObject | undefined
   getSelectedList(): BoardObject[]
+  normalizeCoordinate(value: number, min: number, max: number): number
   normalizePoint(x: number, y: number): { x: number, y: number }
   recordHistory(): void
   renderAll(): Promise<void>
@@ -37,6 +38,7 @@ export function createEditorControllers({
   elements,
   getSelected,
   getSelectedList,
+  normalizeCoordinate,
   normalizePoint,
   recordHistory,
   renderAll,
@@ -74,6 +76,7 @@ export function createEditorControllers({
     state,
     elements,
     getSelected,
+    normalizeCoordinate,
     normalizePoint,
     recordHistory,
     renderAll,

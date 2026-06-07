@@ -713,8 +713,8 @@ export function createStageRenderer({
     const pointer = getLogicalPointerPoint(event)
     if (pointer) {
       const point = normalizePoint(
-        dragState.referenceStart.x + Math.round(pointer.x - dragState.pointerStart.x),
-        dragState.referenceStart.y + Math.round(pointer.y - dragState.pointerStart.y),
+        dragState.referenceStart.x + pointer.x - dragState.pointerStart.x,
+        dragState.referenceStart.y + pointer.y - dragState.pointerStart.y,
       )
       return getConstrainedObjectsMoveDelta(
         dragState.objectSnapshots,

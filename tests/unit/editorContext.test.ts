@@ -44,8 +44,8 @@ test('createEditorContext normalizes coordinates with the snap toggle', () => {
     showStatus: () => {},
   })
 
-  assert.deepEqual(context.normalizePoint(263, 199), { x: 263, y: 199 })
-  assert.equal(context.normalizeCoordinate(263, 0, 512), 263)
+  assert.deepEqual(context.normalizePoint(263.24, 199.26), { x: 263.2, y: 199.3 })
+  assert.equal(context.normalizeCoordinate(263.26, 0, 512), 263.3)
 
   state.snapToGrid = true
   assert.deepEqual(context.normalizePoint(263, 199), { x: 256, y: 192 })

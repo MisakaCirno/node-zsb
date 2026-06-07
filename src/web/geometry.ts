@@ -11,6 +11,8 @@ export function clamp(value: number, min: number, max: number): number {
   return Math.min(max, Math.max(min, value))
 }
 
+export const COORDINATE_DECIMALS = 1
+
 export function numberValue(input: NumericInput, min: number, max: number): number {
   return clamp(Number(input.value || 0), min, max)
 }
@@ -27,7 +29,7 @@ export function normalizeCoordinate(
 ): number {
   const rounded = snapStep
     ? Math.round(value / snapStep) * snapStep
-    : Math.round(value)
+    : roundCoordinate(value)
   return clamp(rounded, min, max)
 }
 
@@ -46,4 +48,14 @@ export function rotatePoint(point: Point, degrees: number): Point {
     x: point.x * cos - point.y * sin,
     y: point.x * sin + point.y * cos,
   }
+}
+
+export function roundCoordinate(value: number): number {
+  const scale = 10 ** COORDINATE_DECIMALS
+  return Math.round(value * scale) / scale
+}
+
+export function formatCoordinate(value: number): string {
+  const rounded = roundCoordinate(value)
+  return Number.isInteger(rounded) ? String(rounded) : rounded.toFixed(COORDINATE_DECIMALS)
 }

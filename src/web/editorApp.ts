@@ -94,6 +94,7 @@ export function createEditorApp({
     elements: els,
     getSelected,
     getSelectedList,
+    normalizeCoordinate,
     normalizePoint,
     recordHistory,
     renderAll,

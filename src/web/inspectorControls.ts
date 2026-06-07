@@ -75,6 +75,7 @@ interface InspectorControlsDeps {
   state: EditorState
   elements: InspectorElements
   getSelected: () => BoardObject | undefined
+  normalizeCoordinate: EditorContext['normalizeCoordinate']
   normalizePoint: EditorContext['normalizePoint']
   recordHistory: () => void
   renderAll: () => void
@@ -84,6 +85,7 @@ export function createInspectorControls({
   state,
   elements,
   getSelected,
+  normalizeCoordinate,
   normalizePoint,
   recordHistory,
   renderAll,
@@ -128,8 +130,12 @@ export function createInspectorControls({
     object.height = capabilities.dimensions
       ? numberValue(elements.objectHeight, 16, 384)
       : undefined
-    object.endX = capabilities.line ? numberValue(elements.endX, 0, 512) : undefined
-    object.endY = capabilities.line ? numberValue(elements.endY, 0, 384) : undefined
+    object.endX = capabilities.line
+      ? normalizeCoordinate(numberValue(elements.endX, 0, 512), 0, 512)
+      : undefined
+    object.endY = capabilities.line
+      ? normalizeCoordinate(numberValue(elements.endY, 0, 384), 0, 384)
+      : undefined
     object.arcAngle = capabilities.arcAngle ? numberValue(elements.arc, 10, 360) : undefined
     object.donutRadius = capabilities.donutRadius
       ? numberValue(elements.donut, 0, 240)

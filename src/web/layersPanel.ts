@@ -1,6 +1,7 @@
 import { createObjectPreview } from './iconPreview.js'
 import { MAX_BOARD_OBJECTS } from './constants.js'
 import { getSelectedIndexes } from './editorState.js'
+import { formatCoordinate } from './geometry.js'
 import type {
   BoardObject,
   EditorState,
@@ -255,7 +256,7 @@ export function renderLayers({
       }),
       preview,
       createLayerText('layer-name', `${index + 1}. ${object.type}`),
-      createLayerText('layer-position', `${Math.round(object.x)}, ${Math.round(object.y)}`),
+      createLayerText('layer-position', `${formatCoordinate(object.x)}, ${formatCoordinate(object.y)}`),
     )
     getRequiredLayerAction(row, 'hidden').addEventListener('click', (event: MouseEvent) => {
       event.stopPropagation()

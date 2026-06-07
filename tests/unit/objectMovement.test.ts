@@ -21,20 +21,20 @@ state.iconConfigs = {
 test('moveObjectBy keeps line endpoints in sync with the object origin', () => {
   const object = {
     type: 'line',
-    x: 20,
-    y: 30,
-    endX: 80,
-    endY: 90,
+    x: 20.2,
+    y: 30.3,
+    endX: 80.4,
+    endY: 90.5,
   }
 
-  moveObjectBy(object, 12, -8)
+  moveObjectBy(object, 12.26, -8.18)
 
   assert.deepEqual(object, {
     type: 'line',
-    x: 32,
-    y: 22,
-    endX: 92,
-    endY: 82,
+    x: 32.5,
+    y: 22.1,
+    endX: 92.7,
+    endY: 82.3,
   })
 })
 
@@ -70,14 +70,14 @@ test('getConstrainedObjectsMoveDelta also keeps line endpoints on the board', ()
 
 test('moveObjectsBy moves a selection with line endpoints in one batch', () => {
   const objects = [
-    { type: 'tank', x: 100, y: 120 },
-    { type: 'line', x: 20, y: 30, endX: 80, endY: 90 },
+    { type: 'tank', x: 100.2, y: 120.3 },
+    { type: 'line', x: 20.2, y: 30.3, endX: 80.4, endY: 90.5 },
   ]
 
-  moveObjectsBy(objects, 8, -4)
+  moveObjectsBy(objects, 8.25, -4.15)
 
   assert.deepEqual(objects, [
-    { type: 'tank', x: 108, y: 116 },
-    { type: 'line', x: 28, y: 26, endX: 88, endY: 86 },
+    { type: 'tank', x: 108.5, y: 116.2 },
+    { type: 'line', x: 28.5, y: 26.2, endX: 88.7, endY: 86.4 },
   ])
 })
