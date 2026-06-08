@@ -5,6 +5,7 @@ import {
   calculateCircleOffset,
   calculateDonutOffset,
   flippedScale,
+  normalizeArcAngle,
   normalizeLineAoeHeight,
   normalizeLineAoeWidth,
   objectOpacity,
@@ -203,7 +204,7 @@ export function createCircleAoeRenderSpec(
   object: RenderObjectLike,
   options: RenderOpacityOptions = {},
 ): CircleAoeRenderSpec {
-  const arcAngle = object.type === 'fan_aoe' ? (object.arcAngle ?? 90) : 360
+  const arcAngle = object.type === 'fan_aoe' ? normalizeArcAngle(object.arcAngle ?? 90) : 360
   const scale = objectScale(object)
   const startAngle = -Math.PI / 2
   const offset = calculateCircleOffset(arcAngle)
@@ -230,7 +231,7 @@ export function createDonutRenderSpec(
   options: RenderOpacityOptions = {},
 ): DonutRenderSpec {
   const scale = objectScale(object)
-  const arcAngle = object.arcAngle ?? 360
+  const arcAngle = normalizeArcAngle(object.arcAngle ?? 360)
   const startAngle = -Math.PI / 2
   const innerRadius = toSceneCoordinate(object.donutRadius ?? 80)
   const offset = calculateDonutOffset({

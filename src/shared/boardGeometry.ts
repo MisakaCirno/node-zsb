@@ -21,6 +21,8 @@ export const MAX_GAME_OBJECT_SIZE = 200
 export const MIN_LINE_AOE_DIMENSION = 16
 export const MAX_LINE_AOE_HEIGHT = 384
 export const MAX_LINE_AOE_WIDTH = 512
+export const MIN_GAME_ARC_ANGLE = 10
+export const MAX_GAME_ARC_ANGLE = 360
 export const MIN_GAME_ROTATION_ANGLE = -180
 export const MAX_GAME_ROTATION_ANGLE = 180
 export const AOE_RADIUS = 512
@@ -91,6 +93,10 @@ export function normalizeLineAoeWidth(value = 128): number {
 
 export function normalizeDonutRadius(value = 80): number {
   return normalizeBoundedNumber(value, 0, 240, 80)
+}
+
+export function normalizeArcAngle(value = MAX_GAME_ARC_ANGLE): number {
+  return normalizeBoundedNumber(value, MIN_GAME_ARC_ANGLE, MAX_GAME_ARC_ANGLE, MAX_GAME_ARC_ANGLE)
 }
 
 export function normalizeObjectAngle(value = 0): number {

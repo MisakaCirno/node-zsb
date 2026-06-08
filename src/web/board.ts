@@ -8,6 +8,7 @@ import { normalizeCoordinate } from './geometry.js'
 import { DEFAULT_BOARD_BACKGROUND } from '../shared/backgrounds.js'
 import {
   getDefaultObjectColor,
+  normalizeArcAngle,
   normalizeDonutRadius,
   normalizeLineAoeHeight,
   normalizeLineAoeWidth,
@@ -65,9 +66,6 @@ export function sanitizeObject(object: BoardObject): BoardObject {
   } else if (copy.angle !== undefined) {
     copy.angle = normalizeObjectAngle(Number(copy.angle))
   }
-  if (copy.type === 'donut' && copy.arcAngle === undefined) {
-    copy.arcAngle = 360
-  }
   if (!capabilities.color) {
     delete copy.color
   } else {
@@ -101,6 +99,8 @@ export function sanitizeObject(object: BoardObject): BoardObject {
   }
   if (!capabilities.arcAngle) {
     delete copy.arcAngle
+  } else {
+    copy.arcAngle = normalizeArcAngle(copy.arcAngle ?? (copy.type === 'fan_aoe' ? 90 : 360))
   }
   if (!capabilities.donutRadius) {
     delete copy.donutRadius

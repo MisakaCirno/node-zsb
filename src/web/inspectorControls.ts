@@ -5,8 +5,11 @@ import { renderInspector as renderInspectorPanel } from './inspectorPanel.js'
 import { normalizeObjectText, syncTextInput } from './textInputControl.js'
 import {
   getObjectSizeBounds,
+  MAX_GAME_ARC_ANGLE,
   MAX_GAME_ROTATION_ANGLE,
+  MIN_GAME_ARC_ANGLE,
   MIN_GAME_ROTATION_ANGLE,
+  normalizeArcAngle,
   normalizeObjectAngle,
   normalizeObjectSize,
 } from '../shared/boardGeometry.js'
@@ -136,7 +139,9 @@ export function createInspectorControls({
     object.endY = capabilities.line
       ? normalizeCoordinate(numberValue(elements.endY, 0, 384), 0, 384)
       : undefined
-    object.arcAngle = capabilities.arcAngle ? numberValue(elements.arc, 10, 360) : undefined
+    object.arcAngle = capabilities.arcAngle
+      ? normalizeArcAngle(numberValue(elements.arc, MIN_GAME_ARC_ANGLE, MAX_GAME_ARC_ANGLE))
+      : undefined
     object.donutRadius = capabilities.donutRadius
       ? numberValue(elements.donut, 0, 240)
       : undefined

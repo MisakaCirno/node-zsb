@@ -67,6 +67,7 @@ test('cleanBoard applies game-compatible object fields', () => {
       { type: 'line', x: 120.24, y: 140.26, endX: 200.24, endY: 180.26, size: 20, angle: 45 },
       { type: 'circle_aoe', x: 150, y: 150, size: 5, color: '#123456', transparency: 120 },
       { type: 'line_aoe', x: 160, y: 160, size: 250, width: 1, height: 500, angle: 315, transparency: 150 },
+      { type: 'fan_aoe', x: 200, y: 180, arcAngle: 999 },
       { type: 'donut', x: 220, y: 180, size: 5, angle: -181, color: '#123456', donutRadius: 500 },
       { type: 'donut', x: 320, y: 180, donutRadius: 80, arcAngle: 180 },
     ],
@@ -89,6 +90,7 @@ test('cleanBoard applies game-compatible object fields', () => {
     { type: 'line', size: 50, angle: undefined, arcAngle: undefined, width: undefined, height: undefined, color: '#FF7F00', text: undefined, donutRadius: undefined, transparency: 0 },
     { type: 'circle_aoe', size: 10, angle: undefined, arcAngle: undefined, width: undefined, height: undefined, color: undefined, text: undefined, donutRadius: undefined, transparency: 100 },
     { type: 'line_aoe', size: 100, angle: -45, arcAngle: undefined, width: 16, height: 384, color: '#FF7F00', text: undefined, donutRadius: undefined, transparency: 100 },
+    { type: 'fan_aoe', size: 100, angle: undefined, arcAngle: 360, width: undefined, height: undefined, color: undefined, text: undefined, donutRadius: undefined, transparency: 0 },
     { type: 'donut', size: 10, angle: 179, arcAngle: 360, width: undefined, height: undefined, color: undefined, text: undefined, donutRadius: 240, transparency: 0 },
     { type: 'donut', size: 100, angle: undefined, arcAngle: 180, width: undefined, height: undefined, color: undefined, text: undefined, donutRadius: 80, transparency: 0 },
   ])
@@ -103,6 +105,7 @@ test('cleanBoard applies game-compatible object fields', () => {
     { type: 'line', x: 120.2, y: 140.3, endX: 200.2, endY: 180.3 },
     { type: 'circle_aoe', x: 150, y: 150, endX: undefined, endY: undefined },
     { type: 'line_aoe', x: 160, y: 160, endX: undefined, endY: undefined },
+    { type: 'fan_aoe', x: 200, y: 180, endX: undefined, endY: undefined },
     { type: 'donut', x: 220, y: 180, endX: undefined, endY: undefined },
     { type: 'donut', x: 320, y: 180, endX: undefined, endY: undefined },
   ])

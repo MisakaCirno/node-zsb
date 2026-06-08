@@ -5,6 +5,7 @@ import {
   calculateCircleOffset,
   calculateDonutOffset,
   flippedScale,
+  normalizeArcAngle,
   normalizeObjectAngle,
   normalizeObjectSize,
   normalizeTransparency,
@@ -63,6 +64,13 @@ test('normalizeObjectAngle follows the game -180 to 180 rotation range', () => {
   assert.equal(normalizeObjectAngle(-181), 179)
   assert.equal(normalizeObjectAngle(180), 180)
   assert.equal(normalizeObjectAngle(-180), -180)
+})
+
+test('normalizeArcAngle follows the game 10 to 360 arc range', () => {
+  assert.equal(normalizeArcAngle(5), 10)
+  assert.equal(normalizeArcAngle(90), 90)
+  assert.equal(normalizeArcAngle(999), 360)
+  assert.equal(normalizeArcAngle(Number.NaN), 360)
 })
 
 test('objectOpacity follows the game 0-100 transparency scale', () => {

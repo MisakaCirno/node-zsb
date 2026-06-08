@@ -131,6 +131,27 @@ test('createCircleAoeRenderSpec shares fan crop offsets and arc angles', () => {
   assert.equal(spec.scaleY, 0.5)
 })
 
+test('range render specs normalize external arc angles before tracing paths', () => {
+  assert.equal(createCircleAoeRenderSpec({
+    type: 'fan_aoe',
+    x: 0,
+    y: 0,
+    arcAngle: 999,
+  }).arcAngle, 360)
+  assert.equal(createCircleAoeRenderSpec({
+    type: 'fan_aoe',
+    x: 0,
+    y: 0,
+    arcAngle: -20,
+  }).arcAngle, 10)
+  assert.equal(createDonutRenderSpec({
+    type: 'donut',
+    x: 0,
+    y: 0,
+    arcAngle: 999,
+  }).arcAngle, 360)
+})
+
 test('createDonutRenderSpec shares inner radius, crop offset and fill color', () => {
   const spec = createDonutRenderSpec({
     type: 'donut',
