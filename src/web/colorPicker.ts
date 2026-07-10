@@ -1,6 +1,7 @@
 interface ColorPickerDeps {
   elements: ColorPickerElements
   onChange?: () => void
+  onCommit?: () => void
 }
 
 export interface ColorPickerElements {
@@ -32,6 +33,7 @@ const pickerStates = new WeakMap<ColorPickerElements, HsvColor>()
 export function bindColorPicker({
   elements,
   onChange,
+  onCommit = () => {},
 }: ColorPickerDeps) {
   mountColorPopover(elements)
   elements.colorTrigger.addEventListener('click', (event) => {
@@ -45,10 +47,12 @@ export function bindColorPicker({
   elements.colorText.addEventListener('input', () => {
     setColorValue(elements, elements.colorText.value, onChange)
   })
+  bindTextCommit(elements.colorText, onCommit)
   for (const input of [elements.colorRed, elements.colorGreen, elements.colorBlue]) {
     input.addEventListener('input', () => {
       setColorValue(elements, rgbInputsToHex(elements), onChange)
     })
+    bindTextCommit(input, onCommit)
   }
   elements.colorHue.addEventListener('input', () => {
     const hsv = getPickerState(elements)
@@ -59,6 +63,10 @@ export function bindColorPicker({
     }
     setColorValue(elements, hsvToHex(nextHsv), onChange, { hsv: nextHsv })
   })
+  elements.colorHue.addEventListener('change', onCommit)
+  elements.colorHue.addEventListener('pointercancel', onCommit)
+  elements.colorHue.addEventListener('pointerup', onCommit)
+  elements.colorHue.addEventListener('blur', onCommit)
   elements.colorSaturation.addEventListener('pointerdown', (event) => {
     elements.colorSaturation.setPointerCapture(event.pointerId)
     updateSaturationFromPointer(elements, event, onChange)
@@ -67,6 +75,8 @@ export function bindColorPicker({
     if (!elements.colorSaturation.hasPointerCapture(event.pointerId)) return
     updateSaturationFromPointer(elements, event, onChange)
   })
+  elements.colorSaturation.addEventListener('pointercancel', onCommit)
+  elements.colorSaturation.addEventListener('pointerup', onCommit)
   elements.colorSaturation.addEventListener('keydown', (event) => {
     const delta = {
       ArrowUp: { s: 0, v: 0.03 },
@@ -84,6 +94,9 @@ export function bindColorPicker({
     }
     setColorValue(elements, hsvToHex(nextHsv), onChange, { hsv: nextHsv })
   })
+  elements.colorSaturation.addEventListener('keyup', (event) => {
+    if (event.key.startsWith('Arrow')) onCommit()
+  })
   document.addEventListener('click', (event) => {
     if (elements.colorPopover.classList.contains('hidden')) return
     if (getClosestHTMLElement(event.target, '.color-control, .color-popover')) return
@@ -97,6 +110,14 @@ export function bindColorPicker({
   }, true)
   elements.colorPopover.addEventListener('keydown', (event) => {
     if (event.key === 'Escape') hideColorPopover(elements)
+  })
+}
+
+function bindTextCommit(input: HTMLInputElement, onCommit: () => void) {
+  input.addEventListener('change', onCommit)
+  input.addEventListener('blur', onCommit)
+  input.addEventListener('keydown', (event) => {
+    if (event.key === 'Enter') input.blur()
   })
 }
 

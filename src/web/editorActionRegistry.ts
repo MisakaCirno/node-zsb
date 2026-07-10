@@ -54,6 +54,7 @@ export function createEditorActionRegistry({
     downloadPreviewImage: boardCodeActions.downloadPreviewImage,
     downloadProjectFile: projectFileActions.downloadProjectFile,
     exportCode: boardCodeActions.exportCode,
+    finishInspectorEdit: inspectorControls.finishInspectorEdit,
     importProjectFile: projectFileActions.importProjectFile,
     loadFromCode: boardCodeActions.loadFromCode,
     loadLocalBoard: localBoardsPanel.loadLocalBoard,

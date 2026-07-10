@@ -15,10 +15,13 @@ export function normalizeObjectText(value: unknown): string {
 export function bindTextInput(
   elements: TextInputElements,
   onChange: () => void,
+  onCommit: () => void = () => {},
 ): void {
   syncTextInput(elements)
   elements.text.addEventListener('keydown', (event) => {
-    if (event.key === 'Enter') event.preventDefault()
+    if (event.key !== 'Enter') return
+    event.preventDefault()
+    elements.text.blur()
   })
   elements.text.addEventListener('input', () => {
     const normalized = normalizeObjectText(elements.text.value)
@@ -28,6 +31,7 @@ export function bindTextInput(
     syncTextInput(elements)
     onChange()
   })
+  elements.text.addEventListener('blur', onCommit)
 }
 
 export function syncTextInput(elements: TextInputElements, value = elements.text.value): void {

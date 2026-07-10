@@ -93,6 +93,8 @@ export function createInspectorControls({
   recordHistory,
   renderAll,
 }: InspectorControlsDeps): InspectorControls {
+  let inspectorEditActive = false
+
   function renderInspector() {
     renderInspectorPanel({
       object: getSelected(),
@@ -101,11 +103,19 @@ export function createInspectorControls({
     })
   }
 
-  function updateSelectedFromInspector() {
+  function updateSelectedFromInspector({
+    continuous = false,
+  }: { continuous?: boolean } = {}) {
     const object = getSelected()
     if (!object) return
     const capabilities = getObjectCapabilities(object.type)
-    recordHistory()
+    if (continuous) {
+      if (!inspectorEditActive) recordHistory()
+      inspectorEditActive = true
+    } else {
+      inspectorEditActive = false
+      recordHistory()
+    }
     const point = normalizePoint(numberValue(elements.x, 0, 512), numberValue(elements.y, 0, 384))
     object.x = point.x
     object.y = point.y
@@ -148,6 +158,10 @@ export function createInspectorControls({
     object.hidden = elements.hidden.checked || undefined
     object.locked = elements.locked.checked || undefined
     renderAll()
+  }
+
+  function finishInspectorEdit() {
+    inspectorEditActive = false
   }
 
   function updateSelectionActions() {
@@ -195,6 +209,7 @@ export function createInspectorControls({
   }
 
   return {
+    finishInspectorEdit,
     renderInspector,
     updateSelectedFromInspector,
     updateSelectionActions,

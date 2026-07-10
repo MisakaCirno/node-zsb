@@ -102,7 +102,8 @@ export function bindEditorEvents({
   })
   bindColorPicker({
     elements,
-    onChange: actions.updateSelectedFromInspector,
+    onChange: () => actions.updateSelectedFromInspector({ continuous: true }),
+    onCommit: actions.finishInspectorEdit,
   })
   elements.loadCode.addEventListener('click', () =>
     runAction(async () => {
@@ -196,30 +197,51 @@ export function bindEditorEvents({
       undo: actions.undo,
     }),
   )
+  const updateInspectorContinuously = () =>
+    actions.updateSelectedFromInspector({ continuous: true })
   for (const input of [
     elements.x,
     elements.y,
     elements.endX,
     elements.endY,
-    elements.hidden,
-    elements.locked,
   ]) {
-    input.addEventListener('input', actions.updateSelectedFromInspector)
+    bindContinuousValueInput(
+      input,
+      updateInspectorContinuously,
+      actions.finishInspectorEdit,
+    )
   }
-  bindTextInput(elements, actions.updateSelectedFromInspector)
-  bindSyncedSlider(elements.size, elements.sizeRange, actions.updateSelectedFromInspector)
-  bindSyncedSlider(elements.angle, elements.angleRange, actions.updateSelectedFromInspector)
-  bindSyncedSlider(elements.transparency, elements.transparencyRange, actions.updateSelectedFromInspector)
-  bindSyncedSlider(elements.objectWidth, elements.objectWidthRange, actions.updateSelectedFromInspector)
-  bindSyncedSlider(elements.objectHeight, elements.objectHeightRange, actions.updateSelectedFromInspector)
-  bindSyncedSlider(elements.arc, elements.arcRange, actions.updateSelectedFromInspector)
-  bindSyncedSlider(elements.donut, elements.donutRange, actions.updateSelectedFromInspector)
+  for (const input of [elements.hidden, elements.locked]) {
+    input.addEventListener('input', () => actions.updateSelectedFromInspector())
+  }
+  bindTextInput(elements, updateInspectorContinuously, actions.finishInspectorEdit)
+  bindSyncedSlider(elements.size, elements.sizeRange, updateInspectorContinuously, actions.finishInspectorEdit)
+  bindSyncedSlider(elements.angle, elements.angleRange, updateInspectorContinuously, actions.finishInspectorEdit)
+  bindSyncedSlider(elements.transparency, elements.transparencyRange, updateInspectorContinuously, actions.finishInspectorEdit)
+  bindSyncedSlider(elements.objectWidth, elements.objectWidthRange, updateInspectorContinuously, actions.finishInspectorEdit)
+  bindSyncedSlider(elements.objectHeight, elements.objectHeightRange, updateInspectorContinuously, actions.finishInspectorEdit)
+  bindSyncedSlider(elements.arc, elements.arcRange, updateInspectorContinuously, actions.finishInspectorEdit)
+  bindSyncedSlider(elements.donut, elements.donutRange, updateInspectorContinuously, actions.finishInspectorEdit)
+}
+
+function bindContinuousValueInput(
+  input: HTMLInputElement,
+  onChange: () => void,
+  onCommit: () => void,
+) {
+  input.addEventListener('input', onChange)
+  input.addEventListener('change', onCommit)
+  input.addEventListener('blur', onCommit)
+  input.addEventListener('keydown', (event: KeyboardEvent) => {
+    if (event.key === 'Enter') input.blur()
+  })
 }
 
 function bindSyncedSlider(
   numberInput: HTMLInputElement,
   rangeInput: HTMLInputElement,
   onChange: () => void,
+  onCommit: () => void,
 ) {
   numberInput.addEventListener('input', () => {
     const value = getNumericInputValue(numberInput)
@@ -235,7 +257,9 @@ function bindSyncedSlider(
     numberInput.value = clamped
     rangeInput.value = clamped
     onChange()
+    onCommit()
   })
+  numberInput.addEventListener('blur', onCommit)
   numberInput.addEventListener('keydown', (event: KeyboardEvent) => {
     if (event.key === 'Enter') numberInput.blur()
   })
@@ -243,6 +267,15 @@ function bindSyncedSlider(
     numberInput.value = rangeInput.value
     onChange()
   })
+  rangeInput.addEventListener('change', () => {
+    const valueChangedWithoutInput = numberInput.value !== rangeInput.value
+    numberInput.value = rangeInput.value
+    if (valueChangedWithoutInput) onChange()
+    onCommit()
+  })
+  rangeInput.addEventListener('pointercancel', onCommit)
+  rangeInput.addEventListener('pointerup', onCommit)
+  rangeInput.addEventListener('blur', onCommit)
 }
 
 function getNumericInputValue(input: HTMLInputElement): string | undefined {

@@ -42,8 +42,9 @@ export interface ObjectCommands {
 }
 
 export interface InspectorControls {
+  finishInspectorEdit(): void
   renderInspector(): void
-  updateSelectedFromInspector(): void
+  updateSelectedFromInspector(options?: { continuous?: boolean }): void
   updateSelectionActions(): void
 }
 
@@ -112,6 +113,7 @@ export interface EditorActionRegistry {
   downloadProjectFile: ProjectFileActions['downloadProjectFile']
   duplicateSelected: ObjectCommands['duplicateSelected']
   exportCode: BoardCodeActions['exportCode']
+  finishInspectorEdit: InspectorControls['finishInspectorEdit']
   getLastLayerIndex: ObjectCommands['getLastLayerIndex']
   groupSelected: ObjectCommands['groupSelected']
   importProjectFile: ProjectFileActions['importProjectFile']

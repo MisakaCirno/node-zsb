@@ -27,6 +27,7 @@ test('createEditorActionRegistry exposes the event binding action surface', () =
     'downloadProjectFile',
     'duplicateSelected',
     'exportCode',
+    'finishInspectorEdit',
     'importProjectFile',
     'insertPresetAt',
     'getLastLayerIndex',
@@ -105,6 +106,7 @@ test('createEditorActionRegistry exposes the event binding action surface', () =
       undo: handlers.undo,
     },
     inspectorControls: {
+      finishInspectorEdit: handlers.finishInspectorEdit,
       renderInspector: () => {},
       updateSelectedFromInspector: handlers.updateSelectedFromInspector,
       updateSelectionActions: () => {},

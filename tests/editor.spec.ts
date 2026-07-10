@@ -1860,6 +1860,106 @@ test('editor supports undo and redo for object creation', async ({ page }) => {
   await expect(page.locator('#status')).toContainText('已重做')
 })
 
+test('editor coalesces continuous inspector edits into single undo records', async ({ page }) => {
+  await page.goto('/editor')
+  const project = {
+    format: 'node-zsb-project',
+    version: 1,
+    fileName: 'history-transactions',
+    board: {
+      name: 'History transactions',
+      boardBackground: 'checkered',
+    },
+    objects: {
+      obj_text: {
+        type: 'text',
+        x: 100,
+        y: 120,
+        text: 'Start',
+        color: '#112233',
+      },
+    },
+    layers: [{ type: 'object', id: 'obj_text' }],
+  }
+  await page.locator('#project-file-input').setInputFiles({
+    name: 'history-transactions.zsb.json',
+    mimeType: 'application/json',
+    buffer: Buffer.from(JSON.stringify(project)),
+  })
+  await page.locator('#layers .layer-row').click()
+  await expect(page.locator('#undo-action')).toBeDisabled()
+
+  const textInput = page.locator('#object-text')
+  await textInput.focus()
+  await textInput.evaluate((input: HTMLTextAreaElement) => {
+    for (const value of ['Start A', 'Start AB', 'Start ABC']) {
+      input.value = value
+      input.dispatchEvent(new InputEvent('input', { bubbles: true }))
+    }
+  })
+  await textInput.blur()
+  await expect(textInput).toHaveValue('Start ABC')
+  await page.locator('#undo-action').click()
+  await expect(textInput).toHaveValue('Start')
+  await expect(page.locator('#undo-action')).toBeDisabled()
+
+  const xInput = page.locator('#object-x')
+  await xInput.focus()
+  await xInput.evaluate((input: HTMLInputElement) => {
+    for (const value of ['110', '120', '130']) {
+      input.value = value
+      input.dispatchEvent(new InputEvent('input', { bubbles: true }))
+    }
+  })
+  await xInput.blur()
+  await expect(xInput).toHaveValue('130')
+  await page.locator('#undo-action').click()
+  await expect(xInput).toHaveValue('100')
+  await expect(page.locator('#undo-action')).toBeDisabled()
+
+  const transparencyRange = page.locator('#object-transparency-range')
+  await transparencyRange.evaluate((input: HTMLInputElement) => {
+    for (const value of ['10', '20', '30']) {
+      input.value = value
+      input.dispatchEvent(new InputEvent('input', { bubbles: true }))
+    }
+    input.dispatchEvent(new Event('change', { bubbles: true }))
+  })
+  await expect(page.locator('#object-transparency')).toHaveValue('30')
+  await page.locator('#undo-action').click()
+  await expect(page.locator('#object-transparency')).toHaveValue('0')
+  await expect(page.locator('#undo-action')).toBeDisabled()
+
+  const originalColor = await page.locator('#object-color').inputValue()
+  const hueRange = page.locator('#object-color-hue')
+  await hueRange.evaluate((input: HTMLInputElement) => {
+    for (const value of ['60', '120', '180']) {
+      input.value = value
+      input.dispatchEvent(new InputEvent('input', { bubbles: true }))
+    }
+    input.dispatchEvent(new Event('change', { bubbles: true }))
+  })
+  await expect(page.locator('#object-color')).not.toHaveValue(originalColor)
+  await page.locator('#undo-action').click()
+  await expect(page.locator('#object-color')).toHaveValue(originalColor)
+  await expect(page.locator('#undo-action')).toBeDisabled()
+
+  const hiddenInput = page.locator('#object-hidden')
+  await hiddenInput.evaluate((input: HTMLInputElement) => {
+    input.checked = true
+    input.dispatchEvent(new InputEvent('input', { bubbles: true }))
+  })
+  await hiddenInput.evaluate((input: HTMLInputElement) => {
+    input.checked = false
+    input.dispatchEvent(new InputEvent('input', { bubbles: true }))
+  })
+  await page.locator('#undo-action').click()
+  await expect(hiddenInput).toBeChecked()
+  await page.locator('#undo-action').click()
+  await expect(hiddenInput).not.toBeChecked()
+  await expect(page.locator('#undo-action')).toBeDisabled()
+})
+
 test('editor updates object action button states from the selection', async ({
   page,
 }) => {
