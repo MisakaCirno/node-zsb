@@ -55,6 +55,7 @@ test('createEditorRenderLoop serializes overlapping render requests', async () =
       onToggleLayerGroupFlag: () => {},
       onToggleLayerFlag: () => {},
       renderInspectorPanel: () => {},
+      showStatus: () => {},
       stageRenderer,
       state,
     })
@@ -100,6 +101,64 @@ test('createEditorRenderLoop serializes overlapping render requests', async () =
   }
 })
 
+test('editor draft failures notify once per failure cycle and reset after success', async () => {
+  let writeAttempt = 0
+  const quotaError = new Error('Storage is full')
+  quotaError.name = 'QuotaExceededError'
+  const restoreGlobals = installBrowserMocks(() => {
+    writeAttempt += 1
+    if (writeAttempt === 1 || writeAttempt === 2 || writeAttempt === 4) {
+      throw quotaError
+    }
+  })
+  const originalWarn = console.warn
+  console.warn = () => {}
+  try {
+    const statusMessages: string[] = []
+    const state = createEditorState()
+    const loop = createEditorRenderLoop({
+      elements: createElements(),
+      onMoveLayerNodeAfter: () => {},
+      onMoveLayerNodeBefore: () => {},
+      onMoveLayerNodeIntoGroup: () => {},
+      onMoveLayerNodeToRoot: () => {},
+      onRenameLayerGroup: () => {},
+      onReorderLayer: () => {},
+      onSelectGroup: () => {},
+      onSelectObject: () => {},
+      onToggleLayerGroup: () => {},
+      onToggleLayerGroupFlag: () => {},
+      onToggleLayerFlag: () => {},
+      renderInspectorPanel: () => {},
+      showStatus: (message) => statusMessages.push(message),
+      stageRenderer: {
+        async renderBoard() {},
+        renderGrid() {},
+        async renderObjects() {},
+      },
+      state,
+    })
+
+    state.board.name = 'first failure'
+    await loop.renderAll()
+    state.board.name = 'same failure cycle'
+    await loop.renderAll()
+    assert.equal(statusMessages.length, 1)
+    assert.match(statusMessages[0] ?? '', /存储空间不足/)
+
+    state.board.name = 'successful retry'
+    await loop.renderAll()
+    state.board.name = 'new failure cycle'
+    await loop.renderAll()
+    assert.equal(writeAttempt, 4)
+    assert.equal(statusMessages.length, 2)
+    assert.match(statusMessages[1] ?? '', /存储空间不足/)
+  } finally {
+    console.warn = originalWarn
+    restoreGlobals()
+  }
+})
+
 function createElements(): RenderLoopDeps['elements'] {
   return {
     fileDirtyIndicator: Object.assign(document.createElement('span'), { hidden: true }),
@@ -122,7 +181,7 @@ function createElement(): FakeElement {
   }
 }
 
-function installBrowserMocks() {
+function installBrowserMocks(onSetItem?: (key: string, value: string) => void) {
   interface FakeDocument {
     createElement(tagName: string): FakeElement
   }
@@ -147,6 +206,7 @@ function installBrowserMocks() {
   const window = {
     localStorage: {
       setItem(key: string, value: string) {
+        onSetItem?.(key, value)
         writes.push({ key, value })
       },
     },

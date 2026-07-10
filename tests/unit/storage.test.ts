@@ -12,7 +12,9 @@ import {
   clearAllProjectStorage,
   clearProjectStorageTarget,
   getProjectStorageUsage,
+  loadLocalFiles,
   loadLocalPresets,
+  persistEditorDraft,
   persistLocalFilesDetailed,
 } from '../../src/web/storage.js'
 
@@ -63,6 +65,76 @@ test('loadLocalPresets sanitizes stale objects from local storage', () => {
     assert.equal(lineAoe.height, 16)
     assert.equal(lineAoe.transparency, 100)
   } finally {
+    restoreLocalStorage()
+  }
+})
+
+test('storage normalization keeps the first valid preset after normalized id deduplication', () => {
+  const restoreLocalStorage = withLocalStorage({
+    [LOCAL_PRESETS_KEY]: JSON.stringify([
+      { id: ' preset ', name: 'Invalid first', objects: null, layers: [] },
+      { id: 'preset', name: 'First valid', objects: {}, layers: [] },
+      { id: ' preset ', name: 'Duplicate valid', objects: {}, layers: [] },
+    ]),
+  })
+  try {
+    const presets = loadLocalPresets()
+
+    assert.equal(presets.length, 1)
+    assert.equal(presets[0]?.id, 'preset')
+    assert.equal(presets[0]?.name, 'First valid')
+  } finally {
+    restoreLocalStorage()
+  }
+})
+
+test('local file normalization keeps the first valid name and syncs its project filename', () => {
+  const restoreLocalStorage = withLocalStorage({
+    [LOCAL_FILES_KEY]: JSON.stringify([
+      { name: ' File ', project: null, board: null },
+      {
+        name: 'File',
+        project: {
+          format: 'node-zsb-project',
+          version: 1,
+          fileName: 'stale-inner-name',
+          board: { name: 'First valid', boardBackground: 'checkered' },
+          objects: {},
+          layers: [],
+        },
+      },
+      { name: ' File ', board: { name: 'Duplicate valid', objects: [] } },
+    ]),
+  })
+  try {
+    const files = loadLocalFiles()
+
+    assert.equal(files.length, 1)
+    assert.equal(files[0]?.name, 'File')
+    assert.equal(files[0]?.project.fileName, 'File')
+    assert.equal(files[0]?.board.name, 'First valid')
+  } finally {
+    restoreLocalStorage()
+  }
+})
+
+test('persistEditorDraft reports structured quota failures', () => {
+  const quotaError = new Error('Storage is full')
+  quotaError.name = 'QuotaExceededError'
+  const restoreLocalStorage = withLocalStorage({}, {
+    setItem() {
+      throw quotaError
+    },
+  })
+  const originalWarn = console.warn
+  console.warn = () => {}
+  try {
+    assert.deepEqual(persistEditorDraft({ format: 'draft' }), {
+      ok: false,
+      reason: 'quota',
+    })
+  } finally {
+    console.warn = originalWarn
     restoreLocalStorage()
   }
 })

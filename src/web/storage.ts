@@ -51,13 +51,16 @@ export function loadEditorDraft(): unknown | null {
   }
 }
 
-export function persistEditorDraft(board: unknown): boolean {
+export function persistEditorDraft(board: unknown): StorageWriteResult {
   try {
     getLocalStorage().setItem(STORAGE_KEY, JSON.stringify(board))
-    return true
+    return { ok: true }
   } catch (error) {
     console.warn('Failed to save editor draft', error)
-    return false
+    return {
+      ok: false,
+      reason: isStorageQuotaError(error) ? 'quota' : 'unknown',
+    }
   }
 }
 
@@ -371,12 +374,11 @@ function normalizeLocalPresets(presets: unknown[]): LocalLayerPreset[] {
     .filter((preset): preset is Record<string, unknown> =>
       isRecord(preset)
         && typeof preset.id === 'string'
-        && !seen.has(preset.id)
         && isRecord(preset.objects)
-        && Array.isArray(preset.layers))
+        && Array.isArray(preset.layers)
+        && claimNormalizedKey(seen, preset.id))
     .map((preset) => {
-      const id = String(preset.id)
-      seen.add(id)
+      const id = String(preset.id).trim()
       const objects = normalizePresetObjects(preset.objects as Record<string, unknown>)
       const layers = normalizePresetLayers(preset.layers as unknown[], objects)
       const contentHash = hashPresetContent({ objects, layers })
@@ -529,12 +531,11 @@ function normalizeLocalFiles(files: unknown[]): LocalFile[] {
     .filter((file): file is Record<string, unknown> & { name: string } =>
       isRecord(file)
         && typeof file.name === 'string'
-        && Boolean(file.project || file.board)
-        && !seen.has(file.name))
+        && (isProject(file.project) || isRecord(file.board))
+        && claimNormalizedKey(seen, file.name))
     .map((file) => {
-      const name = file.name
-      seen.add(name)
-      const project = getLocalFileProject(file)
+      const name = file.name.trim()
+      const project = getLocalFileProject({ ...file, name })
       return {
         name,
         project,
@@ -548,7 +549,10 @@ function normalizeLocalFiles(files: unknown[]): LocalFile[] {
 
 function getLocalFileProject(file: Record<string, unknown> & { name: string }): ProjectFile {
   if (isProject(file.project)) {
-    return normalizeProject(file.project)
+    return {
+      ...normalizeProject(file.project),
+      fileName: file.name,
+    }
   }
   return createProjectFromBoard(file.board as Partial<Board>, { fileName: file.name as string })
 }
@@ -565,6 +569,13 @@ function makeUniqueFileName(name: unknown, usedNames: Set<string>): string {
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return Boolean(value && typeof value === 'object' && !Array.isArray(value))
+}
+
+function claimNormalizedKey(seen: Set<string>, value: string): boolean {
+  const key = value.trim()
+  if (!key || seen.has(key)) return false
+  seen.add(key)
+  return true
 }
 
 function stringOr(value: unknown, fallback: string): string {

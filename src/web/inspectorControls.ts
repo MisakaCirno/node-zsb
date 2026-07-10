@@ -18,7 +18,6 @@ import type {
 } from './inspectorPanel.js'
 import type {
   BoardObject,
-  CheckedElement,
   DisabledElement,
   EditorContext,
   EditorState,

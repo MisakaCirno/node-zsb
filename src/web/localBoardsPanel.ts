@@ -113,10 +113,6 @@ interface InputElement {
   setAttribute(name: string, value: string): void
 }
 
-interface CheckboxElement extends InputElement {
-  checked: boolean
-}
-
 interface TextElement {
   textContent: string | null
 }

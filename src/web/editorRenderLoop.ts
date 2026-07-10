@@ -25,6 +25,7 @@ interface EditorRenderLoopDeps {
   onMoveLayerNodeIntoGroup: (dragged: LayerNodeRef, groupId: string) => void
   onMoveLayerNodeToRoot: (dragged: LayerNodeRef) => void
   renderInspectorPanel(): void
+  showStatus(message: string, options?: { type?: string }): void
   stageRenderer: StageRenderer
   state: EditorState
 }
@@ -55,6 +56,7 @@ export function createEditorRenderLoop({
   onMoveLayerNodeIntoGroup,
   onMoveLayerNodeToRoot,
   renderInspectorPanel,
+  showStatus,
   stageRenderer,
   state,
 }: EditorRenderLoopDeps) {
@@ -62,6 +64,7 @@ export function createEditorRenderLoop({
   let needsRender = false
   let currentRender = Promise.resolve()
   let lastPersistedSnapshot = ''
+  let draftWriteFailureNotified = false
 
   function renderAll() {
     syncDocumentStatus()
@@ -127,8 +130,20 @@ export function createEditorRenderLoop({
     const draft = createEditorDraft(state)
     const snapshot = JSON.stringify(draft)
     if (!force && snapshot === lastPersistedSnapshot) return
-    if (persistEditorDraft(draft)) {
+    const result = persistEditorDraft(draft)
+    if (result.ok) {
       lastPersistedSnapshot = snapshot
+      draftWriteFailureNotified = false
+      return
+    }
+    if (!draftWriteFailureNotified) {
+      showStatus(
+        result.reason === 'quota'
+          ? '自动草稿保存失败：浏览器存储空间不足'
+          : '自动草稿保存失败，请检查浏览器存储设置',
+        { type: 'error' },
+      )
+      draftWriteFailureNotified = true
     }
   }
 

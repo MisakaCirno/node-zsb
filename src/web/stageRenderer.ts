@@ -35,6 +35,7 @@ import {
   getStrategyTextFontLoadSpec,
 } from '../shared/textRendering.js'
 import { getSelectedIndexes } from './editorState.js'
+import { loadCachedBrowserImage } from './imageCache.js'
 import { getObjectBounds } from './objectAlignment.js'
 import {
   getConstrainedObjectsMoveDelta,
@@ -580,7 +581,7 @@ export function createStageRenderer({
       beginNodeDrag(object, index, event)
     })
     node.on('dragmove', (event: KonvaEvent) => {
-      updateNodeDrag(node, object, index, event)
+      updateNodeDrag(node, index, event)
     })
     node.on('dragend', (event: KonvaEvent) => {
       handleDragEnd(node, object, index, event)
@@ -769,7 +770,7 @@ export function createStageRenderer({
     pendingDragPointerStart = null
   }
 
-  function updateNodeDrag(node: KonvaNode, object: BoardObject, index: number, event?: KonvaEvent) {
+  function updateNodeDrag(node: KonvaNode, index: number, event?: KonvaEvent) {
     const dragState = activeDrag
     if (dragState?.referenceIndex !== index && dragState?.indexes.includes(index)) {
       return
@@ -1101,16 +1102,7 @@ export function createStageRenderer({
   }
 
   function loadImage(src: string): Promise<HTMLImageElement> {
-    const cached = state.images.get(src)
-    if (cached) return cached
-    const promise = new Promise<HTMLImageElement>((resolve, reject) => {
-      const image = new Image()
-      image.onload = () => resolve(image)
-      image.onerror = reject
-      image.src = src
-    })
-    state.images.set(src, promise)
-    return promise
+    return loadCachedBrowserImage(state.images, src)
   }
 
   function getLogicalPointerPoint(event?: KonvaEvent): Point | null {

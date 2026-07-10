@@ -141,6 +141,7 @@ export function createEditorApp({
     elements: els,
     stageRenderer,
     renderInspectorPanel,
+    showStatus,
     onSelectObject: selectObject,
     onSelectGroup: selectLayerGroup,
     onReorderLayer: reorderLayer,
