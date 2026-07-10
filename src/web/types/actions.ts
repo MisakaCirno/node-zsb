@@ -92,6 +92,7 @@ export interface LocalBoardsPanel {
 export interface LocalPresetsPanel {
   deletePreset(id: string): Promise<boolean>
   insertPresetAt(id: string, point?: { x: number, y: number }): Promise<boolean>
+  renamePreset(id: string): Promise<boolean>
   renderLocalPresets(): void
   saveSelectedPreset(): Promise<boolean>
   updatePresetButtons(): void
@@ -127,6 +128,7 @@ export interface EditorActionRegistry {
   loadLocalBoard: LocalBoardsPanel['loadLocalBoard']
   deletePreset: LocalPresetsPanel['deletePreset']
   insertPresetAt: LocalPresetsPanel['insertPresetAt']
+  renamePreset: LocalPresetsPanel['renamePreset']
   moveLayerNodeAfter: ObjectCommands['moveLayerNodeAfter']
   moveLayerNodeBefore: ObjectCommands['moveLayerNodeBefore']
   moveLayerNodeIntoGroup: ObjectCommands['moveLayerNodeIntoGroup']

@@ -4,13 +4,15 @@ import test from 'node:test'
 import {
   createCurrentProjectSnapshot,
   createEditorDraft,
+  createLocalFileSnapshot,
   detachDocumentAndMarkDirty,
   isDocumentDirty,
   markDocumentClean,
   readEditorDraft,
 } from '../../src/web/documentState.ts'
 import { createEditorState } from '../../src/web/editorState.ts'
-import { createProjectFromBoard } from '../../src/web/project.ts'
+import { createProjectFromBoard, flattenProjectToBoard } from '../../src/web/project.ts'
+import type { LocalFile } from '../../src/web/types.ts'
 
 test('document state keeps display name, local association, and save baseline separate', () => {
   const state = createEditorState()
@@ -62,4 +64,33 @@ test('editor drafts preserve association and baseline while supporting legacy pr
   assert.ok(legacy)
   assert.equal(legacy.legacy, true)
   assert.equal(legacy.associatedLocalFileName, 'Legacy file')
+})
+
+test('document baselines ignore JSON property order from external local files', () => {
+  const project = {
+    format: 'node-zsb-project' as const,
+    version: 1,
+    fileName: 'External file',
+    board: { boardBackground: 'checkered', name: 'External board' },
+    objects: {
+      object_a: { y: 20, type: 'tank', x: 10 },
+    },
+    layers: [{ id: 'object_a', type: 'object' as const }],
+  }
+  const file: LocalFile = {
+    name: 'External file',
+    project,
+    board: { name: 'External board', boardBackground: 'checkered', objects: [] },
+    createdAt: '2026-07-11T00:00:00.000Z',
+    updatedAt: '2026-07-11T00:00:00.000Z',
+    preview: '',
+  }
+  const state = createEditorState()
+  state.board = flattenProjectToBoard(project)
+  state.layerTree = project.layers
+  state.currentFileName = file.name
+  state.associatedLocalFileName = file.name
+  state.documentBaselineSnapshot = createLocalFileSnapshot(file)
+
+  assert.equal(isDocumentDirty(state), false)
 })

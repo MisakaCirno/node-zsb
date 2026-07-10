@@ -63,6 +63,24 @@ export interface LocalLayerPreset {
   updatedAt: string
 }
 
+export interface LocalAssetsBackupFile {
+  name: string
+  project: ProjectFile
+  createdAt: string
+  updatedAt: string
+  preview: string
+}
+
+export interface LocalAssetsBackup {
+  format: 'node-zsb-local-assets'
+  version: 1
+  exportedAt: string
+  files: LocalAssetsBackupFile[]
+  presets: LocalLayerPreset[]
+}
+
+export type LocalAssetsImportDecision = 'merge' | 'replace' | 'cancel'
+
 export interface CreateProjectOptions {
   fileName?: string
   layerTree?: LayerNode[]

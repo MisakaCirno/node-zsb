@@ -1,6 +1,7 @@
 import { normalizeBoard } from './board.js'
 import { encodeBoardCode, renderPreviewImage } from './api.js'
 import {
+  BUILT_IN_PROJECT_OBJECT_TYPES,
   createProjectFromBoard,
   createPureBoardFromProject,
   flattenProjectToBoard,
@@ -15,12 +16,22 @@ import {
 import { getBrowserDocument } from './browser.js'
 import { syncFlatLayerTree } from './layerTree.js'
 import { createNameDialogController } from './nameDialog.js'
+import { clearPresetPreviewCache } from './presetPreviewCache.js'
+import {
+  LOCAL_ASSETS_BACKUP_EXTENSION,
+  createLocalAssetsBackup,
+  localAssetsBackupToJson,
+  mergeLocalAssets,
+  parseLocalAssetsBackupJson,
+} from './localAssetsBackup.js'
 import {
   clearAllProjectStorage,
   clearProjectStorageTarget,
   getBrowserStorageEstimate,
   getProjectStorageUsage,
   loadLocalFiles,
+  loadLocalPresets,
+  persistLocalAssetsDetailed,
   persistLocalFilesDetailed,
   type BrowserStorageEstimateSummary,
   type ProjectStorageClearTarget,
@@ -32,7 +43,9 @@ import type {
   Board,
   DocumentReplaceDecision,
   EditorState,
+  FileLike,
   LayerNode,
+  LocalAssetsImportDecision,
   LocalFile,
   RunEditorAction,
 } from './types.js'
@@ -52,6 +65,9 @@ interface LocalBoardsPanelDeps {
 
 interface LocalBoardsPanelElements {
   localBoardDialog: DialogElement
+  localAssetsImportDialog: DialogElement
+  localAssetsImportMessage: TextElement
+  localAssetsBackupInput: HTMLInputElement
   localStorageDetailsDialog: DialogElement
   localBoardNameDialog: DialogElement
   unsavedChangesDialog: DialogElement
@@ -65,6 +81,8 @@ interface LocalBoardsPanelElements {
   selectAllLocalBoards: ButtonElement
   clearSelectedLocalBoards: ButtonElement
   deleteSelectedLocalBoards: ButtonElement
+  exportLocalAssets: ButtonElement
+  importLocalAssets: ButtonElement
   saveLocalBoard: DisabledElement
   saveAsLocalBoard: DisabledElement
   newLocalBoard: DisabledElement
@@ -217,6 +235,116 @@ export function createLocalBoardsPanel({
     if (!trigger) return
     openLocalStorageDetails()
   })
+  elements.exportLocalAssets.addEventListener('click', () => {
+    runLocalFileAction(exportLocalAssetsBackup)
+  })
+  elements.importLocalAssets.addEventListener('click', () => {
+    elements.localAssetsBackupInput.value = ''
+    elements.localAssetsBackupInput.click()
+  })
+  elements.localAssetsBackupInput.addEventListener('change', () => {
+    const file = elements.localAssetsBackupInput.files?.[0]
+    if (!file) return
+    runLocalFileAction(() => importLocalAssetsBackup(file))
+  })
+
+  function exportLocalAssetsBackup() {
+    const files = loadLocalFiles()
+    const presets = loadLocalPresets()
+    const backup = createLocalAssetsBackup(files, presets)
+    const blob = new Blob([localAssetsBackupToJson(backup)], { type: 'application/json' })
+    const url = URL.createObjectURL(blob)
+    const link = browserDocument.createElement('a')
+    link.href = url
+    link.download = createLocalAssetsBackupFileName(new Date())
+    browserDocument.body.append(link)
+    link.click()
+    link.remove()
+    URL.revokeObjectURL(url)
+    showStatus(`已导出 ${files.length} 个本地文件和 ${presets.length} 个预设`)
+    return true
+  }
+
+  async function importLocalAssetsBackup(file: FileLike) {
+    const imported = parseLocalAssetsBackupJson(await file.text(), {
+      allowedObjectTypes: new Set([
+        ...BUILT_IN_PROJECT_OBJECT_TYPES,
+        ...Object.keys(state.iconConfigs),
+      ]),
+    })
+    const decision = await requestLocalAssetsImportDecision(imported.files.length, imported.presets.length)
+    if (decision === 'cancel') return false
+
+    const current = {
+      files: loadLocalFiles(),
+      presets: loadLocalPresets(),
+    }
+    const result = decision === 'merge'
+      ? mergeLocalAssets(current, imported)
+      : {
+          files: imported.files,
+          presets: imported.presets,
+          importedFiles: imported.files.length,
+          importedPresets: imported.presets.length,
+          skippedFiles: 0,
+          skippedPresets: 0,
+        }
+    const persisted = persistLocalAssetsDetailed(result.files, result.presets)
+    if (!persisted.ok) {
+      showStatus(
+        persisted.reason === 'quota'
+          ? '浏览器本地存储空间不足，未导入任何本地资产'
+          : '导入本地资产失败，已恢复原有数据',
+        { type: 'error' },
+      )
+      return false
+    }
+
+    if (decision === 'replace') {
+      await reconcileDocumentAfterAssetReplace(result.files)
+      if (!await clearPresetPreviewCache()) {
+        console.warn('Failed to clear stale preset previews after restoring local assets')
+      }
+    }
+    renderLocalBoards()
+    renderLocalPresets()
+    showStatus(formatLocalAssetsImportStatus(decision, result))
+    return true
+  }
+
+  function requestLocalAssetsImportDecision(
+    fileCount: number,
+    presetCount: number,
+  ): Promise<LocalAssetsImportDecision> {
+    elements.localAssetsImportMessage.textContent =
+      `备份包含 ${fileCount} 个本地文件和 ${presetCount} 个预设。合并会保留现有数据，替换会删除当前本地文件和预设。`
+    const reopenLocalBoardDialog = elements.localBoardDialog.open
+    if (reopenLocalBoardDialog) elements.localBoardDialog.close()
+    elements.localAssetsImportDialog.returnValue = 'cancel'
+    elements.localAssetsImportDialog.showModal()
+    return new Promise((resolve) => {
+      elements.localAssetsImportDialog.addEventListener('close', () => {
+        const value = elements.localAssetsImportDialog.returnValue
+        const decision = value === 'merge' || value === 'replace' ? value : 'cancel'
+        if (reopenLocalBoardDialog && !elements.localBoardDialog.open) {
+          elements.localBoardDialog.showModal()
+        }
+        resolve(decision)
+      }, { once: true })
+    })
+  }
+
+  async function reconcileDocumentAfterAssetReplace(files: LocalFile[]) {
+    if (!state.associatedLocalFileName) return
+    const associatedFile = files.find((file) => file.name === state.associatedLocalFileName)
+    if (associatedFile) {
+      state.documentBaselineSnapshot = createLocalFileSnapshot(associatedFile)
+    } else {
+      detachDocumentAndMarkDirty(state)
+    }
+    syncDocumentStatus()
+    await renderAll()
+  }
 
   function renderLocalBoards() {
     void updateLocalStorageSummary()
@@ -871,6 +999,27 @@ export function createLocalBoardsPanel({
       }
     }
   }
+}
+
+function createLocalAssetsBackupFileName(date: Date): string {
+  const day = date.toISOString().slice(0, 10)
+  return `node-zsb-local-assets-${day}${LOCAL_ASSETS_BACKUP_EXTENSION}`
+}
+
+function formatLocalAssetsImportStatus(
+  decision: Exclude<LocalAssetsImportDecision, 'cancel'>,
+  result: {
+    importedFiles: number
+    importedPresets: number
+    skippedFiles: number
+    skippedPresets: number
+  },
+): string {
+  const action = decision === 'merge' ? '合并' : '替换'
+  const skipped = result.skippedFiles + result.skippedPresets
+  return `已${action} ${result.importedFiles} 个本地文件和 ${result.importedPresets} 个预设${
+    skipped > 0 ? `，跳过 ${skipped} 个相同项` : ''
+  }`
 }
 
 function formatLocalFileTime(file: LocalFile) {

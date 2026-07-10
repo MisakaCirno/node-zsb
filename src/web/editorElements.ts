@@ -19,6 +19,9 @@ export interface EditorElements {
   exportProjectFile: HTMLButtonElement
   openExportImageDialog: HTMLButtonElement
   localBoardDialog: HTMLDialogElement
+  localAssetsImportDialog: HTMLDialogElement
+  localAssetsImportMessage: HTMLElement
+  localAssetsBackupInput: HTMLInputElement
   localStorageDetailsDialog: HTMLDialogElement
   localBoardNameDialog: HTMLDialogElement
   importDialog: HTMLDialogElement
@@ -56,6 +59,8 @@ export interface EditorElements {
   selectAllLocalBoards: HTMLButtonElement
   clearSelectedLocalBoards: HTMLButtonElement
   deleteSelectedLocalBoards: HTMLButtonElement
+  exportLocalAssets: HTMLButtonElement
+  importLocalAssets: HTMLButtonElement
   saveLocalBoard: HTMLButtonElement
   saveAsLocalBoard: HTMLButtonElement
   quickSaveLocalBoard: HTMLButtonElement
@@ -182,6 +187,9 @@ export function getEditorElements(): EditorElements {
     exportProjectFile: queryElement('#export-project-file', HTMLButtonElement),
     openExportImageDialog: queryElement('#open-export-image-dialog', HTMLButtonElement),
     localBoardDialog: queryElement('#local-board-dialog', HTMLDialogElement),
+    localAssetsImportDialog: queryElement('#local-assets-import-dialog', HTMLDialogElement),
+    localAssetsImportMessage: queryElement('#local-assets-import-message', HTMLElement),
+    localAssetsBackupInput: queryElement('#local-assets-backup-input', HTMLInputElement),
     localStorageDetailsDialog: queryElement('#local-storage-details-dialog', HTMLDialogElement),
     localBoardNameDialog: queryElement('#local-board-name-dialog', HTMLDialogElement),
     importDialog: queryElement('#import-dialog', HTMLDialogElement),
@@ -219,6 +227,8 @@ export function getEditorElements(): EditorElements {
     selectAllLocalBoards: queryElement('#select-all-local-boards', HTMLButtonElement),
     clearSelectedLocalBoards: queryElement('#clear-selected-local-boards', HTMLButtonElement),
     deleteSelectedLocalBoards: queryElement('#delete-selected-local-boards', HTMLButtonElement),
+    exportLocalAssets: queryElement('#export-local-assets', HTMLButtonElement),
+    importLocalAssets: queryElement('#import-local-assets', HTMLButtonElement),
     saveLocalBoard: queryElement('#save-local-board', HTMLButtonElement),
     saveAsLocalBoard: queryElement('#save-as-local-board', HTMLButtonElement),
     quickSaveLocalBoard: queryElement('#quick-save-local-board', HTMLButtonElement),

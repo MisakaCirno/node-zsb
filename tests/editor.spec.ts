@@ -811,11 +811,23 @@ test('editor saves reusable presets and inserts them from the preset tab', async
   })
   await expect(page.locator('#layer-count')).toHaveText(`2 / ${MAX_BOARD_OBJECTS}`)
 
+  await presetCard.getByRole('button', { name: '重命名' }).click()
+  await expect(page.locator('#preset-name-dialog')).toBeVisible()
+  await expect(page.locator('#preset-name-dialog h2')).toHaveText('重命名预设')
+  await page.locator('#preset-name-input').fill('开场站位（新版）')
+  await page.locator('#confirm-preset-name').click()
+  const renamedPresetCard = page.locator('.preset-card').filter({ hasText: '开场站位（新版）' })
+  await expect(renamedPresetCard).toHaveCount(1)
+  await expect.poll(() => page.evaluate((key) => {
+    const presets = JSON.parse(localStorage.getItem(key) ?? '[]')
+    return presets[0]?.name
+  }, LOCAL_PRESETS_KEY)).toBe('开场站位（新版）')
+
   page.once('dialog', async (dialog) => {
     await dialog.accept()
   })
-  await presetCard.getByRole('button', { name: '删除' }).click()
-  await expect(presetCard).toHaveCount(0)
+  await renamedPresetCard.getByRole('button', { name: '删除' }).click()
+  await expect(renamedPresetCard).toHaveCount(0)
   await expect.poll(() => countPresetPreviewCache(page)).toBe(0)
 })
 
@@ -859,6 +871,134 @@ test('editor refuses to save a preset at the limit without deleting existing pre
   expect(storedPresets[0].id).toBe('preset_0')
   expect(storedPresets[MAX_LOCAL_PRESETS - 1].id).toBe(`preset_${MAX_LOCAL_PRESETS - 1}`)
   expect(storedPresets.some((preset: { name?: string }) => preset.name === '不应保存的新预设')).toBe(false)
+})
+
+test('editor exports, merges, and replaces versioned local asset backups', async ({ page }) => {
+  const timestamp = '2026-07-11T00:00:00.000Z'
+  await page.goto('/editor')
+  await page.evaluate(({ filesKey, presetsKey, timestamp }) => {
+    localStorage.setItem(filesKey, JSON.stringify([{
+      name: '现有文件',
+      project: {
+        format: 'node-zsb-project',
+        version: 1,
+        fileName: '现有文件',
+        board: { name: '现有内容', boardBackground: 'checkered' },
+        objects: { existing: { type: 'tank', x: 100, y: 100 } },
+        layers: [{ type: 'object', id: 'existing' }],
+      },
+      createdAt: timestamp,
+      updatedAt: timestamp,
+      preview: '',
+    }]))
+    localStorage.setItem(presetsKey, JSON.stringify([{
+      id: 'shared-preset',
+      name: '现有预设',
+      objects: { existing: { type: 'tank', x: 100, y: 100 } },
+      layers: [{ type: 'object', id: 'existing' }],
+      createdAt: timestamp,
+      updatedAt: timestamp,
+    }]))
+  }, {
+    filesKey: LOCAL_FILES_KEY,
+    presetsKey: LOCAL_PRESETS_KEY,
+    timestamp,
+  })
+  await page.reload()
+  await openLocalBoardDialog(page)
+  const existingFileRow = page.locator('.local-board-row').filter({ hasText: '现有文件' })
+  await existingFileRow.locator('.local-board-actions').getByRole('button', { name: '打开' }).click()
+  await expect(page.locator('#board-name')).toHaveValue('现有内容')
+  const openedDocument = await page.evaluate((draftKey) => {
+    const draft = JSON.parse(localStorage.getItem(draftKey) ?? '{}')
+    return {
+      baseline: JSON.parse(draft.documentBaselineSnapshot ?? '{}'),
+      project: draft.project,
+    }
+  }, STORAGE_KEY)
+  expect(openedDocument.project).toEqual(openedDocument.baseline)
+  await expect(page.locator('#file-dirty-indicator')).toBeHidden()
+  await openLocalBoardDialog(page)
+
+  const downloadPromise = page.waitForEvent('download')
+  await page.locator('#export-local-assets').click()
+  const download = await downloadPromise
+  expect(download.suggestedFilename()).toMatch(/^node-zsb-local-assets-\d{4}-\d{2}-\d{2}\.zsb-backup\.json$/)
+  const downloadPath = await download.path()
+  expect(downloadPath).not.toBeNull()
+  const exported = JSON.parse(await readFile(downloadPath as string, 'utf8'))
+  expect(exported.format).toBe('node-zsb-local-assets')
+  expect(exported.version).toBe(1)
+  expect(exported.files).toHaveLength(1)
+  expect(exported.files[0].board).toBeUndefined()
+  expect(exported.presets).toHaveLength(1)
+
+  const backup = {
+    format: 'node-zsb-local-assets',
+    version: 1,
+    exportedAt: timestamp,
+    files: [{
+      name: '现有文件',
+      project: {
+        format: 'node-zsb-project',
+        version: 1,
+        fileName: '现有文件',
+        board: { name: '备份内容', boardBackground: 'checkered' },
+        objects: { imported: { type: 'tank', x: 200, y: 200 } },
+        layers: [{ type: 'object', id: 'imported' }],
+      },
+      createdAt: timestamp,
+      updatedAt: timestamp,
+      preview: '',
+    }],
+    presets: [{
+      id: 'shared-preset',
+      name: '备份预设',
+      objects: { imported: { type: 'tank', x: 200, y: 200 } },
+      layers: [{ type: 'object', id: 'imported' }],
+      objectCount: 1,
+      contentHash: 'ignored-on-import',
+      createdAt: timestamp,
+      updatedAt: timestamp,
+    }],
+  }
+  const backupFile = {
+    name: 'assets.zsb-backup.json',
+    mimeType: 'application/json',
+    buffer: Buffer.from(JSON.stringify(backup)),
+  }
+
+  await page.locator('#local-assets-backup-input').setInputFiles(backupFile)
+  await expect(page.locator('#local-assets-import-dialog')).toBeVisible()
+  await expect(page.locator('#local-assets-import-message')).toContainText('1 个本地文件和 1 个预设')
+  await page.locator('#local-assets-import-dialog button[value="merge"]').click()
+  await expect(page.locator('#local-board-dialog')).toBeVisible()
+  await expect(page.locator('#local-board-list')).toContainText('现有文件（导入）')
+  const merged = await page.evaluate(({ filesKey, presetsKey }) => ({
+    files: JSON.parse(localStorage.getItem(filesKey) ?? '[]'),
+    presets: JSON.parse(localStorage.getItem(presetsKey) ?? '[]'),
+  }), { filesKey: LOCAL_FILES_KEY, presetsKey: LOCAL_PRESETS_KEY })
+  expect(merged.files).toHaveLength(2)
+  expect(merged.files[0].project.fileName).toBe('现有文件（导入）')
+  expect(merged.presets).toHaveLength(2)
+  expect(merged.presets[0].id).toBe('shared-preset_imported_1')
+
+  await page.locator('#local-assets-backup-input').setInputFiles(backupFile)
+  await expect(page.locator('#local-assets-import-dialog')).toBeVisible()
+  await page.locator('#local-assets-import-dialog button[value="replace"]').click()
+  await expect(page.locator('#local-board-dialog')).toBeVisible()
+  const replaced = await page.evaluate(({ filesKey, presetsKey }) => ({
+    files: JSON.parse(localStorage.getItem(filesKey) ?? '[]'),
+    presets: JSON.parse(localStorage.getItem(presetsKey) ?? '[]'),
+  }), { filesKey: LOCAL_FILES_KEY, presetsKey: LOCAL_PRESETS_KEY })
+  expect(replaced.files).toHaveLength(1)
+  expect(replaced.files[0].name).toBe('现有文件')
+  expect(replaced.files[0].project.board.name).toBe('备份内容')
+  expect(replaced.presets).toHaveLength(1)
+  expect(replaced.presets[0].name).toBe('备份预设')
+  await expect(page.locator('#board-name')).toHaveValue('现有内容')
+  await expect(page.locator('#file-dirty-indicator')).toBeVisible()
+  await expect(page.locator('#status')).toContainText('已替换 1 个本地文件和 1 个预设')
 })
 
 test('editor preserves layer groups across autosave reloads', async ({ page }) => {

@@ -43,6 +43,7 @@ interface DialogElement {
   showModal(): void
   addEventListener(type: string, listener: () => void): void
   querySelector(selector: 'form'): FormElement
+  querySelector(selector: 'h2'): TextElement
 }
 
 interface FormElement {
@@ -99,6 +100,7 @@ export function createLocalPresetsPanel({
       dialog: elements.presetNameDialog,
       input: elements.presetNameInput,
       error: elements.presetNameError,
+      title: elements.presetNameDialog.querySelector('h2'),
     },
     normalizeName: normalizePresetName,
   })
@@ -178,9 +180,35 @@ export function createLocalPresetsPanel({
     return true
   }
 
+  async function renamePreset(id: string) {
+    const presets = loadLocalPresets()
+    const preset = presets.find((entry) => entry.id === id)
+    if (!preset) return false
+    const name = await requestPresetName({
+      currentName: preset.name,
+      title: '重命名预设',
+    })
+    if (!name || name === preset.name) return false
+    const nextPresets = presets.map((entry) => entry.id === id
+      ? {
+          ...entry,
+          name,
+          updatedAt: new Date().toISOString(),
+        }
+      : entry)
+    if (!persistLocalPresets(nextPresets)) {
+      showStatus('重命名预设失败', { type: 'error' })
+      return false
+    }
+    renderLocalPresets()
+    showStatus(`已重命名预设：${name}`)
+    return true
+  }
+
   return {
     deletePreset,
     insertPresetAt,
+    renamePreset,
     renderLocalPresets,
     saveSelectedPreset,
     updatePresetButtons,
@@ -226,7 +254,12 @@ export function createLocalPresetsPanel({
     deleteButton.className = 'danger-text-button'
     deleteButton.addEventListener('click', () =>
       runPresetAction(() => deletePreset(preset.id)))
-    actions.append(deleteButton)
+    const renameButton = browserDocument.createElement('button')
+    renameButton.type = 'button'
+    renameButton.textContent = '重命名'
+    renameButton.addEventListener('click', () =>
+      runPresetAction(() => renamePreset(preset.id)))
+    actions.append(renameButton, deleteButton)
 
     card.append(preview, meta, actions)
     return card
@@ -245,9 +278,13 @@ export function createLocalPresetsPanel({
     }
   }
 
-  function requestPresetName() {
+  function requestPresetName({
+    currentName = createDefaultPresetName(),
+    title = '保存预设',
+  }: { currentName?: string, title?: string } = {}) {
     return presetNameDialog.requestName({
-      currentName: createDefaultPresetName(),
+      currentName,
+      title,
       validate: validatePresetName,
     })
   }

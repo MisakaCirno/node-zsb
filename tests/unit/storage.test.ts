@@ -15,6 +15,7 @@ import {
   loadLocalFiles,
   loadLocalPresets,
   persistEditorDraft,
+  persistLocalAssetsDetailed,
   persistLocalFilesDetailed,
 } from '../../src/web/storage.js'
 
@@ -175,6 +176,38 @@ test('persistLocalFilesDetailed reports browser quota failures', () => {
 
     assert.deepEqual(result, { ok: false, reason: 'quota' })
     assert.equal(window.localStorage.getItem(LOCAL_FILES_KEY), '[]')
+  } finally {
+    console.warn = originalWarn
+    restoreLocalStorage()
+  }
+})
+
+test('persistLocalAssetsDetailed rolls back files when preset storage fails', () => {
+  const entries = {
+    [LOCAL_FILES_KEY]: JSON.stringify([{ name: 'Original', board: { objects: [] } }]),
+    [LOCAL_PRESETS_KEY]: JSON.stringify([{ id: 'original' }]),
+  }
+  const quotaError = new Error('Storage is full')
+  quotaError.name = 'QuotaExceededError'
+  const restoreLocalStorage = withLocalStorage(entries, {
+    setItem(key, value) {
+      if (key === LOCAL_PRESETS_KEY) throw quotaError
+      entries[key as keyof typeof entries] = value
+    },
+  })
+  const originalWarn = console.warn
+  console.warn = () => {}
+  try {
+    const result = persistLocalAssetsDetailed(
+      [{ name: 'Imported', board: { objects: [] as never[] } }],
+      [{ id: 'imported', name: 'Imported', objects: {}, layers: [] }],
+    )
+
+    assert.deepEqual(result, { ok: false, reason: 'quota' })
+    assert.equal(window.localStorage.getItem(LOCAL_FILES_KEY), JSON.stringify([
+      { name: 'Original', board: { objects: [] } },
+    ]))
+    assert.equal(window.localStorage.getItem(LOCAL_PRESETS_KEY), JSON.stringify([{ id: 'original' }]))
   } finally {
     console.warn = originalWarn
     restoreLocalStorage()

@@ -1,9 +1,7 @@
 import {
   createProjectFromBoard,
-  createProjectSnapshot,
   isProject,
   normalizeProject,
-  projectToJson,
 } from './project.js'
 import type {
   EditorDraft,
@@ -23,10 +21,10 @@ export interface RestoredEditorDraft {
 }
 
 export function createCurrentProjectSnapshot(state: EditorState): string {
-  return createProjectSnapshot(state.board, {
+  return createDocumentComparisonSnapshot(createProjectFromBoard(state.board, {
     fileName: state.currentFileName,
     layerTree: state.layerTree,
-  })
+  }))
 }
 
 export function createEditorDraft(state: EditorState): EditorDraft {
@@ -71,7 +69,9 @@ export function readEditorDraft(value: unknown): RestoredEditorDraft | null {
     return {
       project: normalizeProject(value.project),
       associatedLocalFileName: String(value.associatedLocalFileName ?? ''),
-      documentBaselineSnapshot: String(value.documentBaselineSnapshot ?? ''),
+      documentBaselineSnapshot: normalizeDocumentBaselineSnapshot(
+        value.documentBaselineSnapshot,
+      ),
       legacy: false,
     }
   }
@@ -86,10 +86,35 @@ export function readEditorDraft(value: unknown): RestoredEditorDraft | null {
 }
 
 export function createLocalFileSnapshot(file: LocalFile): string {
-  return projectToJson({
+  return createDocumentComparisonSnapshot({
     ...normalizeProject(file.project),
     fileName: file.name,
   })
+}
+
+function normalizeDocumentBaselineSnapshot(value: unknown): string {
+  const snapshot = String(value ?? '')
+  if (!snapshot) return ''
+  try {
+    const project = JSON.parse(snapshot)
+    return isProject(project) ? createDocumentComparisonSnapshot(project) : snapshot
+  } catch {
+    return snapshot
+  }
+}
+
+function createDocumentComparisonSnapshot(project: unknown): string {
+  return JSON.stringify(sortSnapshotValue(normalizeProject(project)))
+}
+
+function sortSnapshotValue(value: unknown): unknown {
+  if (Array.isArray(value)) return value.map(sortSnapshotValue)
+  if (!value || typeof value !== 'object') return value
+  return Object.fromEntries(
+    Object.entries(value)
+      .sort(([left], [right]) => left.localeCompare(right))
+      .map(([key, entry]) => [key, sortSnapshotValue(entry)]),
+  )
 }
 
 function isEditorDraft(value: unknown): value is Partial<EditorDraft> & { project: unknown } {

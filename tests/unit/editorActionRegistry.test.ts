@@ -40,6 +40,7 @@ test('createEditorActionRegistry exposes the event binding action surface', () =
     'toggleLayerGroup',
     'toggleLayerGroupFlag',
     'renameLayerGroup',
+    'renamePreset',
     'loadFromCode',
     'loadLocalBoard',
     'moveSelected',
@@ -127,6 +128,7 @@ test('createEditorActionRegistry exposes the event binding action surface', () =
     localPresetsPanel: {
       deletePreset: handlers.deletePreset,
       insertPresetAt: handlers.insertPresetAt,
+      renamePreset: handlers.renamePreset,
       renderLocalPresets: handlers.renderLocalPresets,
       saveSelectedPreset: handlers.saveSelectedPreset,
       updatePresetButtons: handlers.updatePresetButtons,

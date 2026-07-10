@@ -344,6 +344,32 @@ export function persistLocalPresets(presets: unknown[]): boolean {
   }
 }
 
+export function persistLocalAssetsDetailed(
+  files: unknown[],
+  presets: unknown[],
+): StorageWriteResult {
+  const storage = getLocalStorage()
+  const previousFiles = storage.getItem(LOCAL_FILES_KEY)
+  const previousPresets = storage.getItem(LOCAL_PRESETS_KEY)
+  try {
+    storage.setItem(LOCAL_FILES_KEY, JSON.stringify(normalizeLocalFiles(files)))
+    storage.setItem(LOCAL_PRESETS_KEY, JSON.stringify(normalizeLocalPresets(presets)))
+    return { ok: true }
+  } catch (error) {
+    console.warn('Failed to save local assets', error)
+    try {
+      restoreStorageValue(storage, LOCAL_FILES_KEY, previousFiles)
+      restoreStorageValue(storage, LOCAL_PRESETS_KEY, previousPresets)
+    } catch (rollbackError) {
+      console.warn('Failed to roll back local assets', rollbackError)
+    }
+    return {
+      ok: false,
+      reason: isStorageQuotaError(error) ? 'quota' : 'unknown',
+    }
+  }
+}
+
 function normalizeEditorSettings(settings: Partial<EditorSettings> | null | undefined): EditorSettings {
   const zoom = Number(settings?.zoom)
   return {
@@ -580,6 +606,14 @@ function claimNormalizedKey(seen: Set<string>, value: string): boolean {
 
 function stringOr(value: unknown, fallback: string): string {
   return typeof value === 'string' ? value : fallback
+}
+
+function restoreStorageValue(storage: Storage, key: string, value: string | null): void {
+  if (value === null) {
+    storage.removeItem(key)
+  } else {
+    storage.setItem(key, value)
+  }
 }
 
 function getLocalStorage(): Storage {

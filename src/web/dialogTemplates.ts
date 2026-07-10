@@ -17,6 +17,7 @@ export function mountEditorDialogTemplates() {
 
 const EDITOR_DIALOG_TEMPLATES = [
   createLocalBoardDialog,
+  createLocalAssetsImportDialog,
   createLocalStorageDetailsDialog,
   createLocalBoardNameDialog,
   createPresetNameDialog,
@@ -36,7 +37,30 @@ function createLocalBoardDialog() {
 
   const bulkActions = document.createElement('div')
   bulkActions.className = 'local-board-bulk-actions'
-  bulkActions.append(
+  const transferActions = document.createElement('div')
+  transferActions.className = 'local-board-transfer-actions'
+  const backupInput = document.createElement('input')
+  backupInput.id = 'local-assets-backup-input'
+  backupInput.className = 'hidden'
+  backupInput.type = 'file'
+  backupInput.accept = '.zsb-backup.json,application/json'
+  transferActions.append(
+    createButton({
+      id: 'export-local-assets',
+      label: '导出备份',
+      type: 'button',
+    }),
+    createButton({
+      id: 'import-local-assets',
+      label: '导入备份',
+      type: 'button',
+    }),
+    backupInput,
+  )
+
+  const selectionActions = document.createElement('div')
+  selectionActions.className = 'local-board-selection-actions'
+  selectionActions.append(
     createButton({
       id: 'select-all-local-boards',
       label: '全选',
@@ -57,6 +81,7 @@ function createLocalBoardDialog() {
       disabled: true,
     }),
   )
+  bulkActions.append(transferActions, selectionActions)
 
   const list = document.createElement('div')
   list.id = 'local-board-list'
@@ -72,6 +97,35 @@ function createLocalBoardDialog() {
     title: '本地文件',
     closeButtonId: 'close-local-board-dialog',
     body: [bulkActions, list, storageDivider, storageSummary],
+  })
+}
+
+function createLocalAssetsImportDialog() {
+  const document = getBrowserDocument()
+  const message = document.createElement('p')
+  message.id = 'local-assets-import-message'
+  message.textContent = '选择如何恢复本地文件和预设。'
+  return createEditorDialog({
+    id: 'local-assets-import-dialog',
+    title: '导入本地资产备份',
+    compact: true,
+    closeButtonId: 'close-local-assets-import-dialog',
+    body: [message],
+    actions: [
+      {
+        label: '取消',
+        value: 'cancel',
+      },
+      {
+        label: '合并并保留现有',
+        value: 'merge',
+      },
+      {
+        className: 'danger-button',
+        label: '替换本地资产',
+        value: 'replace',
+      },
+    ],
   })
 }
 
