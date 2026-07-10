@@ -7,11 +7,13 @@ import {
   stripPureBoardEditorFields,
 } from '../../src/web/editorIds.js'
 import {
+  BUILT_IN_PROJECT_OBJECT_TYPES,
   PROJECT_FORMAT,
   createProjectFromBoard,
   createPureBoardFromProject,
   flattenProjectToBoard,
   normalizeProject,
+  parseProjectJson,
   projectToJson,
 } from '../../src/web/project.js'
 import type { LayerNode } from '../../src/web/types.js'
@@ -276,9 +278,153 @@ test('project normalization deduplicates object references and group ids', () =>
   )
 })
 
+test('strict project parsing rejects future versions with an editor update message', () => {
+  const project = createStrictProject()
+  project.version = 2
+
+  assert.throws(
+    () => parseStrictProject(project),
+    /需要更新编辑器/,
+  )
+  assert.equal(normalizeProject(project).version, 1)
+})
+
+test('strict project parsing rejects missing and unknown object types with the object id', () => {
+  const missingType = createStrictProject()
+  delete missingType.objects.obj_a!.type
+  assert.throws(
+    () => parseStrictProject(missingType),
+    /对象“obj_a”缺少有效的 type/,
+  )
+
+  const unknownType = createStrictProject()
+  unknownType.objects.obj_a!.type = 'future_icon'
+  assert.throws(
+    () => parseStrictProject(unknownType),
+    /对象“obj_a”的类型“future_icon”不受支持/,
+  )
+})
+
+test('strict project parsing rejects invalid and duplicate layer references', () => {
+  const missingObject = createStrictProject()
+  missingObject.layers = [{ type: 'object', id: 'obj_missing' }]
+  assert.throws(
+    () => parseStrictProject(missingObject),
+    /不存在的对象“obj_missing”/,
+  )
+
+  const duplicateReference = createStrictProject()
+  duplicateReference.layers = [
+    { type: 'object', id: 'obj_a' },
+    { type: 'object', id: 'obj_a' },
+  ]
+  assert.throws(
+    () => parseStrictProject(duplicateReference),
+    /图层节点 ID“obj_a”重复/,
+  )
+
+  const unreferencedObject = createStrictProject()
+  unreferencedObject.objects.obj_b = { type: 'healer', x: 3, y: 4 }
+  assert.throws(
+    () => parseStrictProject(unreferencedObject),
+    /对象“obj_b”未被任何图层引用/,
+  )
+
+  const unsafeId = createStrictProject()
+  unsafeId.objects = JSON.parse('{"__proto__":{"type":"tank","x":1,"y":2}}')
+  unsafeId.layers = [{ type: 'object', id: '__proto__' }]
+  assert.throws(
+    () => parseStrictProject(unsafeId),
+    /无效的对象 ID“__proto__”/,
+  )
+})
+
+test('strict project parsing rejects non-finite-shaped coordinates and object overflow', () => {
+  const invalidCoordinate = createStrictProject()
+  invalidCoordinate.objects.obj_a!.x = '12' as unknown as number
+  assert.throws(
+    () => parseStrictProject(invalidCoordinate),
+    /对象“obj_a”的坐标 x 必须是有限数字/,
+  )
+
+  const overflow = createStrictProject()
+  overflow.objects = {}
+  overflow.layers = []
+  for (let index = 0; index < 51; index += 1) {
+    const id = `obj_${index}`
+    overflow.objects[id] = { type: 'tank', x: index, y: index }
+    overflow.layers.push({ type: 'object', id })
+  }
+  assert.throws(
+    () => parseStrictProject(overflow),
+    /对象数量超过上限 50/,
+  )
+})
+
+test('strict project parsing accepts valid nested groups and configured icon types', () => {
+  const project = createStrictProject()
+  project.objects.obj_b = { type: 'healer', x: 3, y: 4 }
+  project.layers = [
+    {
+      type: 'group',
+      id: 'grp_outer',
+      name: 'Outer',
+      children: [
+        { type: 'object', id: 'obj_a' },
+        {
+          type: 'group',
+          id: 'grp_inner',
+          name: 'Inner',
+          collapsed: true,
+          children: [
+            { type: 'object', id: 'obj_b' },
+          ],
+        },
+      ],
+    },
+  ]
+
+  const parsed = parseStrictProject(project)
+
+  assert.deepEqual(collectGroupIds(parsed.layers), ['grp_outer', 'grp_inner'])
+  assert.deepEqual(
+    flattenProjectToBoard(parsed).objects.map((object) => object.editorId),
+    ['obj_a', 'obj_b'],
+  )
+})
+
 function collectGroupIds(nodes: LayerNode[]): string[] {
   return nodes.flatMap((node) =>
     node.type === 'group'
       ? [node.id, ...collectGroupIds(node.children)]
       : [])
+}
+
+function createStrictProject() {
+  return {
+    format: PROJECT_FORMAT,
+    version: 1,
+    fileName: 'strict-project',
+    board: {
+      name: 'Strict',
+      boardBackground: 'checkered',
+    },
+    objects: {
+      obj_a: { type: 'tank', x: 1, y: 2 } as Record<string, unknown>,
+    } as Record<string, Record<string, unknown>>,
+    layers: [
+      { type: 'object', id: 'obj_a' },
+    ] as LayerNode[],
+  }
+}
+
+function parseStrictProject(project: ReturnType<typeof createStrictProject>) {
+  return parseProjectJson(JSON.stringify(project), {
+    allowedObjectTypes: new Set([
+      ...BUILT_IN_PROJECT_OBJECT_TYPES,
+      'tank',
+      'healer',
+      'dps',
+    ]),
+  })
 }

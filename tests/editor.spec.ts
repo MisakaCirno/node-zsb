@@ -484,6 +484,50 @@ test('editor exports and imports project JSON files', async ({ page }) => {
   await expect(page.locator('#file-dirty-indicator')).toBeHidden()
 })
 
+test('editor rejects invalid project files without changing document state or draft', async ({ page }) => {
+  await page.goto('/editor')
+  await page.locator('#file-name').fill('保持当前文件')
+  await page.locator('#board-name').fill('保持当前画板')
+  await page.locator('#board-name').dispatchEvent('change')
+  await expect(page.locator('#file-dirty-indicator')).toBeVisible()
+  await expect(page.locator('#undo-action')).toBeEnabled()
+  await expect.poll(() => page.evaluate((key) => {
+    const raw = localStorage.getItem(key)
+    if (!raw) return ''
+    return JSON.parse(raw).project?.board?.name ?? ''
+  }, STORAGE_KEY)).toBe('保持当前画板')
+
+  const beforeDraft = await page.evaluate((key) => localStorage.getItem(key), STORAGE_KEY)
+  const beforeLayerCount = await page.locator('#layer-count').textContent()
+  const futureProject = {
+    format: 'node-zsb-project',
+    version: 2,
+    fileName: 'future',
+    board: {
+      name: '不应导入',
+      boardBackground: 'checkered',
+    },
+    objects: {},
+    layers: [],
+  }
+
+  await page.locator('#project-file-input').setInputFiles({
+    name: 'future.zsb.json',
+    mimeType: 'application/json',
+    buffer: Buffer.from(JSON.stringify(futureProject)),
+  })
+
+  await expect(page.locator('#status')).toContainText('需要更新编辑器')
+  await expect(page.locator('#unsaved-changes-dialog')).toBeHidden()
+  await expect(page.locator('#file-name')).toHaveValue('保持当前文件')
+  await expect(page.locator('#board-name')).toHaveValue('保持当前画板')
+  await expect(page.locator('#layer-count')).toHaveText(beforeLayerCount ?? '')
+  await expect(page.locator('#undo-action')).toBeEnabled()
+  await expect(page.locator('#file-dirty-indicator')).toBeVisible()
+  await expect.poll(() => page.evaluate((key) => localStorage.getItem(key), STORAGE_KEY))
+    .toBe(beforeDraft)
+})
+
 test('editor applies inherited group flags from project files and local presets', async ({ page }) => {
   await page.goto('/editor')
   const project = {

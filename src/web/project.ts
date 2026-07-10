@@ -1,5 +1,9 @@
 import { cleanBoard, normalizeBoard, sanitizeObject } from './board.js'
-import { DEFAULT_BOARD_BACKGROUND } from '../shared/backgrounds.js'
+import {
+  DEFAULT_BOARD_BACKGROUND,
+  isBoardBackground,
+} from '../shared/backgrounds.js'
+import { MAX_BOARD_OBJECTS } from './constants.js'
 import type {
   Board,
   BoardObject,
@@ -11,6 +15,15 @@ import type {
 export const PROJECT_FORMAT = 'node-zsb-project'
 export const PROJECT_VERSION = 1
 export const PROJECT_FILE_EXTENSION = '.zsb.json'
+export const BUILT_IN_PROJECT_OBJECT_TYPES = [
+  'text',
+  'line',
+  'line_aoe',
+  'circle_aoe',
+  'fan_aoe',
+  'donut',
+] as const
+const UNSAFE_PROJECT_IDS = new Set(['__proto__', 'constructor', 'prototype'])
 
 type ProjectObjects = Record<string, BoardObject>
 
@@ -22,6 +35,16 @@ interface NormalizeLayerContext {
 interface InheritedLayerFlags {
   hidden?: boolean
   locked?: boolean
+}
+
+interface ParseProjectJsonOptions {
+  allowedObjectTypes: Iterable<string>
+}
+
+interface StrictLayerContext {
+  objectIds: Set<string>
+  usedNodeIds: Set<string>
+  referencedObjectIds: Set<string>
 }
 
 export function createProjectFromBoard(
@@ -98,8 +121,18 @@ export function isProject(value: unknown): value is Partial<ProjectFile> {
   )
 }
 
-export function parseProjectJson(text: string): ProjectFile {
-  return normalizeProject(JSON.parse(text))
+export function parseProjectJson(
+  text: string,
+  { allowedObjectTypes }: ParseProjectJsonOptions,
+): ProjectFile {
+  let project: unknown
+  try {
+    project = JSON.parse(text)
+  } catch {
+    throw new Error('工程文件不是有效的 JSON')
+  }
+  validateExternalProject(project, new Set(allowedObjectTypes))
+  return normalizeProject(project)
 }
 
 export function projectToJson(project: unknown): string {
@@ -265,4 +298,152 @@ function collectLayerObjectIds(nodes: LayerNode[], result: Set<string>): void {
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return Boolean(value && typeof value === 'object' && !Array.isArray(value))
+}
+
+function validateExternalProject(
+  value: unknown,
+  allowedObjectTypes: Set<string>,
+): asserts value is ProjectFile {
+  if (!isRecord(value)) {
+    throw new Error('工程文件格式无效：根节点必须是对象')
+  }
+  if (value.format !== PROJECT_FORMAT) {
+    throw new Error(`工程文件格式无效：仅支持 ${PROJECT_FORMAT}`)
+  }
+  if (typeof value.version !== 'number' || !Number.isInteger(value.version)) {
+    throw new Error('工程文件格式无效：version 必须是整数')
+  }
+  if (value.version > PROJECT_VERSION) {
+    throw new Error('工程文件版本较新，需要更新编辑器后再打开')
+  }
+  if (value.version !== PROJECT_VERSION) {
+    throw new Error(`工程文件版本无效：仅支持 v${PROJECT_VERSION}`)
+  }
+  if (typeof value.fileName !== 'string') {
+    throw new Error('工程文件格式无效：fileName 必须是字符串')
+  }
+  validateProjectBoard(value.board)
+  const objectIds = validateProjectObjects(value.objects, allowedObjectTypes)
+  validateProjectLayers(value.layers, objectIds)
+}
+
+function validateProjectBoard(value: unknown): void {
+  if (!isRecord(value)) {
+    throw new Error('工程文件格式无效：board 必须是对象')
+  }
+  if (typeof value.name !== 'string') {
+    throw new Error('工程文件格式无效：board.name 必须是字符串')
+  }
+  if (!isBoardBackground(value.boardBackground)) {
+    throw new Error('工程文件格式无效：board.boardBackground 不受支持')
+  }
+}
+
+function validateProjectObjects(
+  value: unknown,
+  allowedObjectTypes: Set<string>,
+): Set<string> {
+  if (!isRecord(value)) {
+    throw new Error('工程文件格式无效：objects 必须是对象')
+  }
+  const entries = Object.entries(value)
+  if (entries.length > MAX_BOARD_OBJECTS) {
+    throw new Error(`工程文件对象数量超过上限 ${MAX_BOARD_OBJECTS}`)
+  }
+  const objectIds = new Set<string>()
+  for (const [id, object] of entries) {
+    if (!id.trim() || UNSAFE_PROJECT_IDS.has(id)) {
+      throw new Error(`工程文件包含无效的对象 ID“${id}”`)
+    }
+    if (!isRecord(object)) {
+      throw new Error(`对象“${id}”格式无效：必须是对象`)
+    }
+    if (typeof object.type !== 'string' || !object.type.trim()) {
+      throw new Error(`对象“${id}”缺少有效的 type`)
+    }
+    if (!allowedObjectTypes.has(object.type)) {
+      throw new Error(`对象“${id}”的类型“${object.type}”不受支持`)
+    }
+    validateFiniteCoordinate(object, id, 'x', { required: true })
+    validateFiniteCoordinate(object, id, 'y', { required: true })
+    validateFiniteCoordinate(object, id, 'endX')
+    validateFiniteCoordinate(object, id, 'endY')
+    objectIds.add(id)
+  }
+  return objectIds
+}
+
+function validateFiniteCoordinate(
+  object: Record<string, unknown>,
+  id: string,
+  key: 'x' | 'y' | 'endX' | 'endY',
+  { required = false }: { required?: boolean } = {},
+): void {
+  const value = object[key]
+  if (value === undefined && !required) return
+  if (typeof value !== 'number' || !Number.isFinite(value)) {
+    throw new Error(`对象“${id}”的坐标 ${key} 必须是有限数字`)
+  }
+}
+
+function validateProjectLayers(value: unknown, objectIds: Set<string>): void {
+  if (!Array.isArray(value)) {
+    throw new Error('工程文件格式无效：layers 必须是数组')
+  }
+  const context: StrictLayerContext = {
+    objectIds,
+    usedNodeIds: new Set(),
+    referencedObjectIds: new Set(),
+  }
+  validateLayerNodes(value, context)
+  for (const id of objectIds) {
+    if (!context.referencedObjectIds.has(id)) {
+      throw new Error(`对象“${id}”未被任何图层引用`)
+    }
+  }
+}
+
+function validateLayerNodes(nodes: unknown[], context: StrictLayerContext): void {
+  for (const node of nodes) {
+    if (!isRecord(node)) {
+      throw new Error('工程文件包含无效的图层节点')
+    }
+    if (
+      typeof node.id !== 'string'
+      || !node.id.trim()
+      || UNSAFE_PROJECT_IDS.has(node.id)
+    ) {
+      throw new Error('工程文件包含缺少有效 ID 的图层节点')
+    }
+    if (context.usedNodeIds.has(node.id)) {
+      throw new Error(`图层节点 ID“${node.id}”重复`)
+    }
+    context.usedNodeIds.add(node.id)
+
+    if (node.type === 'object') {
+      if (!context.objectIds.has(node.id)) {
+        throw new Error(`图层引用了不存在的对象“${node.id}”`)
+      }
+      if (context.referencedObjectIds.has(node.id)) {
+        throw new Error(`对象“${node.id}”被图层重复引用`)
+      }
+      context.referencedObjectIds.add(node.id)
+      continue
+    }
+    if (node.type !== 'group') {
+      throw new Error(`图层节点“${node.id}”的 type 无效`)
+    }
+    if (typeof node.name !== 'string') {
+      throw new Error(`图层组“${node.id}”的 name 必须是字符串`)
+    }
+    for (const key of ['collapsed', 'hidden', 'locked'] as const) {
+      if (node[key] !== undefined && typeof node[key] !== 'boolean') {
+        throw new Error(`图层组“${node.id}”的 ${key} 必须是布尔值`)
+      }
+    }
+    if (!Array.isArray(node.children)) {
+      throw new Error(`图层组“${node.id}”的 children 必须是数组`)
+    }
+    validateLayerNodes(node.children, context)
+  }
 }

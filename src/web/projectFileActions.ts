@@ -1,6 +1,7 @@
 import { replaceBoard } from './editorState.js'
 import { getBrowserWindow } from './browser.js'
 import {
+  BUILT_IN_PROJECT_OBJECT_TYPES,
   PROJECT_FILE_EXTENSION,
   createProjectFromBoard,
   flattenProjectToBoard,
@@ -62,7 +63,12 @@ export function createProjectFileActions({
 
   async function importProjectFile(file?: FileLike | null) {
     if (!file) return false
-    const project = parseProjectJson(await file.text())
+    const project = parseProjectJson(await file.text(), {
+      allowedObjectTypes: new Set([
+        ...BUILT_IN_PROJECT_OBJECT_TYPES,
+        ...Object.keys(state.iconConfigs),
+      ]),
+    })
     const board = flattenProjectToBoard(project)
     if (!await confirmDocumentReplacement('导入工程文件')) return false
     replaceBoard(state, board)
