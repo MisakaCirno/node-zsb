@@ -98,6 +98,7 @@ export function createEditorApp({
     normalizePoint,
     recordHistory,
     renderAll,
+    runAction,
     selectObject,
     showStatus,
     stage,

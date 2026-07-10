@@ -13,6 +13,7 @@ import { getPresetDragType } from './localPresetsPanel.js'
 import { bindTextInput } from './textInputControl.js'
 import type {
   EditorActionRegistry,
+  RunEditorAction,
 } from './types.js'
 import type {
   EditorElements,
@@ -20,15 +21,9 @@ import type {
 
 interface EditorBindingsDeps {
   elements: EditorElements
-  runAction: RunAction
+  runAction: RunEditorAction
   actions: EditorActionRegistry
 }
-
-type RunAction = (
-  action: () => unknown | Promise<unknown>,
-  successMessage?: string,
-  options?: { busyMessage?: string },
-) => Promise<void> | void
 
 interface Point {
   x: number
@@ -42,6 +37,12 @@ export function bindEditorEvents({
 }: EditorBindingsDeps) {
   bindMenuBar()
   syncDocumentNameCounters(elements)
+  const runLocalFileAction = (action: () => unknown | Promise<unknown>) => {
+    void runAction(action, '', { busyMessage: '正在处理本地文件...' })
+  }
+  const runPresetAction = (action: () => unknown | Promise<unknown>) => {
+    void runAction(action, '', { busyMessage: '正在处理本地预设...' })
+  }
   elements.openLocalBoardDialog.addEventListener('click', () => {
     actions.renderLocalBoards()
     openDialog(elements.localBoardDialog)
@@ -59,9 +60,7 @@ export function bindEditorEvents({
   elements.projectFileInput.addEventListener('change', () => {
     const file = elements.projectFileInput.files?.[0]
     if (!file) return
-    runAction(async () => {
-      await actions.importProjectFile(file)
-    }, '已导入工程文件', {
+    void runAction(() => actions.importProjectFile(file), '已导入工程文件', {
       busyMessage: '正在导入工程文件...',
     })
   })
@@ -122,11 +121,16 @@ export function bindEditorEvents({
   elements.boardName.addEventListener('input', () =>
     syncNameCounter(elements.boardName, elements.shareNameCount))
   elements.fileName.addEventListener('input', actions.onFileNameInput)
-  elements.newLocalBoard.addEventListener('click', actions.newLocalBoard)
-  elements.saveLocalBoard.addEventListener('click', actions.saveLocalBoard)
-  elements.saveAsLocalBoard.addEventListener('click', actions.saveLocalBoardAs)
-  elements.quickSaveLocalBoard.addEventListener('click', actions.saveLocalBoard)
-  elements.quickSaveAsLocalBoard.addEventListener('click', actions.saveLocalBoardAs)
+  elements.newLocalBoard.addEventListener('click', () =>
+    runLocalFileAction(actions.newLocalBoard))
+  elements.saveLocalBoard.addEventListener('click', () =>
+    runLocalFileAction(actions.saveLocalBoard))
+  elements.saveAsLocalBoard.addEventListener('click', () =>
+    runLocalFileAction(actions.saveLocalBoardAs))
+  elements.quickSaveLocalBoard.addEventListener('click', () =>
+    runLocalFileAction(actions.saveLocalBoard))
+  elements.quickSaveAsLocalBoard.addEventListener('click', () =>
+    runLocalFileAction(actions.saveLocalBoardAs))
   elements.undo.addEventListener('click', actions.undo)
   elements.menuUndo.addEventListener('click', actions.undo)
   elements.redo.addEventListener('click', actions.redo)
@@ -148,11 +152,14 @@ export function bindEditorEvents({
     actions.moveSelectedTo(actions.getLastLayerIndex()))
   elements.groupLayers.addEventListener('click', actions.groupSelected)
   elements.ungroupLayers.addEventListener('click', actions.ungroupSelectedGroup)
-  elements.savePreset.addEventListener('click', actions.saveSelectedPreset)
-  elements.savePresetFromLayers.addEventListener('click', actions.saveSelectedPreset)
+  elements.savePreset.addEventListener('click', () =>
+    runPresetAction(actions.saveSelectedPreset))
+  elements.savePresetFromLayers.addEventListener('click', () =>
+    runPresetAction(actions.saveSelectedPreset))
   elements.toolGroupLayers.addEventListener('click', actions.groupSelected)
   elements.toolUngroupLayers.addEventListener('click', actions.ungroupSelectedGroup)
-  elements.toolSavePreset.addEventListener('click', actions.saveSelectedPreset)
+  elements.toolSavePreset.addEventListener('click', () =>
+    runPresetAction(actions.saveSelectedPreset))
   elements.alignLeft.addEventListener('click', () => actions.alignSelected('left'))
   elements.alignCenterX.addEventListener('click', () => actions.alignSelected('center-x'))
   elements.alignRight.addEventListener('click', () => actions.alignSelected('right'))
@@ -178,7 +185,7 @@ export function bindEditorEvents({
     onResize: actions.applyFitZoomOnResize,
   })
   bindAdaptiveSidebarTabs({ elements })
-  bindPaletteDrop(elements, actions)
+  bindPaletteDrop(elements, actions, runPresetAction)
   bindContextMenu(elements, actions)
   window.addEventListener('resize', actions.applyFitZoomOnResize)
   document.addEventListener('keydown', (event: KeyboardEvent) =>
@@ -191,8 +198,8 @@ export function bindEditorEvents({
       nudgeSelected: actions.nudgeSelected,
       pasteObject: actions.pasteObject,
       redo: actions.redo,
-      saveLocalBoard: actions.saveLocalBoard,
-      saveLocalBoardAs: actions.saveLocalBoardAs,
+      saveLocalBoard: () => runLocalFileAction(actions.saveLocalBoard),
+      saveLocalBoardAs: () => runLocalFileAction(actions.saveLocalBoardAs),
       stepZoom: actions.stepZoom,
       undo: actions.undo,
     }),
@@ -296,7 +303,11 @@ function clampNumericValue(input: HTMLInputElement, raw: string): string {
   return String(clamped)
 }
 
-function bindPaletteDrop(elements: EditorElements, actions: EditorActionRegistry) {
+function bindPaletteDrop(
+  elements: EditorElements,
+  actions: EditorActionRegistry,
+  runPresetAction: (action: () => unknown | Promise<unknown>) => void,
+) {
   const presetDragType = getPresetDragType()
   elements.stageHost.addEventListener('dragover', (event: DragEvent) => {
     if (!event.dataTransfer) return
@@ -323,7 +334,7 @@ function bindPaletteDrop(elements: EditorElements, actions: EditorActionRegistry
     const point = getStageDropPoint(elements, event)
     if (!point) return
     if (presetId) {
-      actions.insertPresetAt(presetId, point)
+      runPresetAction(() => actions.insertPresetAt(presetId, point))
       return
     }
     actions.addObjectAt(type, point)

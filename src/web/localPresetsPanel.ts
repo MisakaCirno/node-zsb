@@ -15,6 +15,7 @@ import { loadLocalPresets, persistLocalPresets } from './storage.js'
 import type {
   EditorState,
   LocalLayerPreset,
+  RunEditorAction,
 } from './types.js'
 
 interface LocalPresetsPanelDeps {
@@ -22,6 +23,7 @@ interface LocalPresetsPanelDeps {
   elements: LocalPresetsPanelElements
   recordHistory(): void
   renderAll(): Promise<void>
+  runAction: RunEditorAction
   showStatus(message: string, options?: { type?: string }): void
   confirmAction(message: string): boolean
 }
@@ -83,10 +85,14 @@ export function createLocalPresetsPanel({
   elements,
   recordHistory,
   renderAll,
+  runAction,
   showStatus,
   confirmAction,
 }: LocalPresetsPanelDeps) {
   const browserDocument = getBrowserDocument()
+  const runPresetAction = (action: () => unknown | Promise<unknown>) => {
+    void runAction(action, '', { busyMessage: '正在处理本地预设...' })
+  }
   const presetNameDialog = createNameDialogController({
     elements: {
       dialog: elements.presetNameDialog,
@@ -186,7 +192,8 @@ export function createLocalPresetsPanel({
     preview.draggable = true
     preview.title = `插入 ${preset.name}`
     preview.setAttribute('aria-label', `插入预设 ${preset.name}`)
-    preview.addEventListener('click', () => insertPresetAt(preset.id))
+    preview.addEventListener('click', () =>
+      runPresetAction(() => insertPresetAt(preset.id)))
     preview.addEventListener('dragstart', (event) => {
       if (!event.dataTransfer) return
       event.dataTransfer.effectAllowed = 'copy'
@@ -213,9 +220,8 @@ export function createLocalPresetsPanel({
     deleteButton.type = 'button'
     deleteButton.textContent = '删除'
     deleteButton.className = 'danger-text-button'
-    deleteButton.addEventListener('click', () => {
-      void deletePreset(preset.id)
-    })
+    deleteButton.addEventListener('click', () =>
+      runPresetAction(() => deletePreset(preset.id)))
     actions.append(deleteButton)
 
     card.append(preview, meta, actions)

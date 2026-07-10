@@ -13,6 +13,12 @@ import type {
   FileLike,
 } from './project.js'
 
+export type RunEditorAction = (
+  action: () => unknown | Promise<unknown>,
+  successMessage?: string,
+  options?: { busyMessage?: string },
+) => Promise<void>
+
 export interface ObjectCommands {
   addObject(type: string): void
   addObjectAt(type: string, point: { x: number, y: number }): void
@@ -71,8 +77,8 @@ export interface BoardMetaControls {
 
 export interface LocalBoardsPanel {
   confirmDocumentReplacement(actionLabel: string): Promise<boolean>
-  deleteLocalBoard(fileName: string): boolean
-  deleteSelectedLocalBoards(): boolean
+  deleteLocalBoard(fileName: string): Promise<boolean>
+  deleteSelectedLocalBoards(): Promise<boolean>
   loadLocalBoard(fileName: string): Promise<boolean>
   newLocalBoard(): Promise<boolean>
   onFileNameInput(): void

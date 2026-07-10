@@ -34,18 +34,20 @@ import type {
   EditorState,
   LayerNode,
   LocalFile,
+  RunEditorAction,
 } from './types.js'
 
 interface LocalBoardsPanelDeps {
   state: EditorState
   elements: LocalBoardsPanelElements
   renderAll(): Promise<void>
+  runAction: RunEditorAction
   renderBackgroundOptions(): void
   updateHistoryButtons(): void
   showStatus(message: string, options?: { type?: string }): void
   confirmAction(message: string): boolean
   renderLocalPresets(): void
-  stage: StagePreview
+  stageRenderer: StagePreview
 }
 
 interface LocalBoardsPanelElements {
@@ -74,7 +76,7 @@ interface LocalBoardsPanelElements {
 }
 
 interface StagePreview {
-  toDataURL(options?: { pixelRatio?: number }): string
+  exportCleanPreviewDataUrl(options?: { pixelRatio?: number }): string
 }
 
 interface DialogElement {
@@ -185,14 +187,18 @@ export function createLocalBoardsPanel({
   state,
   elements,
   renderAll,
+  runAction,
   renderBackgroundOptions,
   updateHistoryButtons,
   showStatus,
   confirmAction,
   renderLocalPresets,
-  stage,
+  stageRenderer,
 }: LocalBoardsPanelDeps) {
   const browserDocument = getBrowserDocument()
+  const runLocalFileAction = (action: () => unknown | Promise<unknown>) => {
+    void runAction(action, '', { busyMessage: '正在处理本地文件...' })
+  }
   let storageSummaryRequestId = 0
   let currentStorageStats: StorageStats | null = null
   const fileNameDialog = createNameDialogController({
@@ -364,7 +370,7 @@ export function createLocalBoardsPanel({
     return true
   }
 
-  function deleteLocalBoard(fileName: string) {
+  async function deleteLocalBoard(fileName: string) {
     const files = loadLocalFiles()
     const file = files.find((entry) => entry.name === fileName)
     if (!file) return false
@@ -374,14 +380,14 @@ export function createLocalBoardsPanel({
     if (state.associatedLocalFileName === file.name) {
       detachDocumentAndMarkDirty(state)
       syncDocumentStatus()
-      void renderAll()
+      await renderAll()
     }
     renderLocalBoards()
     showStatus('已删除本地文件')
     return true
   }
 
-  function deleteSelectedLocalBoards() {
+  async function deleteSelectedLocalBoards() {
     const names = getSelectedFileNames()
     if (names.length === 0) return false
     if (!confirmAction(`删除选中的 ${names.length} 个本地文件？`)) return false
@@ -390,7 +396,7 @@ export function createLocalBoardsPanel({
     if (names.includes(state.associatedLocalFileName)) {
       detachDocumentAndMarkDirty(state)
       syncDocumentStatus()
-      void renderAll()
+      await renderAll()
     }
     renderLocalBoards()
     showStatus(`已删除 ${names.length} 个本地文件`)
@@ -405,7 +411,8 @@ export function createLocalBoardsPanel({
     setLocalBoardSelection(false)
   }
 
-  elements.deleteSelectedLocalBoards.addEventListener('click', deleteSelectedLocalBoards)
+  elements.deleteSelectedLocalBoards.addEventListener('click', () =>
+    runLocalFileAction(deleteSelectedLocalBoards))
   elements.selectAllLocalBoards.addEventListener('click', selectAllLocalBoards)
   elements.clearSelectedLocalBoards.addEventListener('click', clearSelectedLocalBoards)
 
@@ -478,7 +485,8 @@ export function createLocalBoardsPanel({
     preview.type = 'button'
     preview.className = 'local-board-preview'
     preview.title = `打开 ${file.name}`
-    preview.addEventListener('click', () => loadLocalBoard(file.name))
+    preview.addEventListener('click', () =>
+      runLocalFileAction(() => loadLocalBoard(file.name)))
     if (file.preview) {
       const image = browserDocument.createElement('img')
       image.src = file.preview
@@ -511,11 +519,14 @@ export function createLocalBoardsPanel({
     return row
   }
 
-  function createRowButton(label: string, onClick: () => void) {
+  function createRowButton(
+    label: string,
+    onClick: () => unknown | Promise<unknown>,
+  ) {
     const button = browserDocument.createElement('button')
     button.type = 'button'
     button.textContent = label
-    button.addEventListener('click', onClick)
+    button.addEventListener('click', () => runLocalFileAction(onClick))
     return button
   }
 
@@ -685,7 +696,7 @@ export function createLocalBoardsPanel({
     clearAllButton.disabled = projectUsage.totalBytes === 0
     clearAllButton.textContent = '清理全部'
     clearAllButton.addEventListener('click', () => {
-      void clearAllStorage()
+      runLocalFileAction(clearAllStorage)
     })
     actions.append(clearAllButton)
 
@@ -727,7 +738,7 @@ export function createLocalBoardsPanel({
     button.disabled = entry.bytes === 0 || !target
     if (target) {
       button.addEventListener('click', () => {
-        void clearStorageTarget(target)
+        runLocalFileAction(() => clearStorageTarget(target))
       })
     }
     return button
@@ -750,30 +761,32 @@ export function createLocalBoardsPanel({
 
   async function clearStorageTarget(target: ProjectStorageClearTarget) {
     const config = STORAGE_CLEAR_CONFIGS[target]
-    if (!confirmAction(config.message)) return
+    if (!confirmAction(config.message)) return false
     const ok = await clearProjectStorageTarget(target)
     if (!ok) {
       showStatus('清理存储失败', { type: 'error' })
-      return
+      return false
     }
-    refreshAfterStorageClear(target)
+    await refreshAfterStorageClear(target)
     showStatus(config.success)
+    return true
   }
 
   async function clearAllStorage() {
     if (!confirmAction('清理所有本项目本地存储？这会删除本地文件、本地预设、自动草稿、视图设置、面板布局、旧数据和预设缩略图缓存，且无法恢复。')) {
-      return
+      return false
     }
     const ok = await clearAllProjectStorage()
     if (!ok) {
       showStatus('清理存储失败', { type: 'error' })
-      return
+      return false
     }
-    refreshAfterStorageClear('local-files', { clearedAll: true })
+    await refreshAfterStorageClear('local-files', { clearedAll: true })
     showStatus('已清理所有本项目本地存储')
+    return true
   }
 
-  function refreshAfterStorageClear(
+  async function refreshAfterStorageClear(
     target: ProjectStorageClearTarget,
     options: { clearedAll?: boolean } = {},
   ) {
@@ -782,10 +795,10 @@ export function createLocalBoardsPanel({
     if (shouldRefreshLocalFiles) {
       detachDocumentAndMarkDirty(state)
       syncDocumentStatus()
-      void renderAll()
+      await renderAll()
       renderLocalBoards()
     } else {
-      void updateLocalStorageSummary()
+      await updateLocalStorageSummary()
     }
     if (shouldRefreshLocalPresets) {
       renderLocalPresets()
@@ -852,7 +865,7 @@ export function createLocalBoardsPanel({
       console.warn('Failed to create local file preview', error)
       try {
         await renderAll()
-        return stage.toDataURL({ pixelRatio: 0.18 })
+        return stageRenderer.exportCleanPreviewDataUrl({ pixelRatio: 0.18 })
       } catch {
         return ''
       }

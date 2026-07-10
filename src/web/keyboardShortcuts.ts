@@ -24,8 +24,8 @@ interface KeyboardHandlers {
   nudgeSelected: EditorActionRegistry['nudgeSelected']
   pasteObject: EditorActionRegistry['pasteObject']
   redo: EditorActionRegistry['redo']
-  saveLocalBoard: EditorActionRegistry['saveLocalBoard']
-  saveLocalBoardAs: EditorActionRegistry['saveLocalBoardAs']
+  saveLocalBoard(): void
+  saveLocalBoardAs(): void
   stepZoom: EditorActionRegistry['stepZoom']
   undo: EditorActionRegistry['undo']
 }

@@ -76,14 +76,27 @@ export function createEditorFeedback({ state, getElements }: EditorFeedbackDeps)
       showStatus(options.busyMessage)
     }
     try {
-      await action()
-      showStatus(successMessage)
+      const result = await action()
+      if (result === false) {
+        clearBusyStatus(options.busyMessage)
+      } else if (successMessage) {
+        showStatus(successMessage)
+      }
     } catch (error) {
       handleError(error instanceof Error ? error : {})
     } finally {
       state.actionRunning = false
       setAsyncActionsDisabled(false)
     }
+  }
+
+  function clearBusyStatus(busyMessage?: string) {
+    if (!busyMessage) return
+    const elements = getElements()
+    if (elements.status.textContent !== busyMessage) return
+    clearTimeout(state.statusTimer)
+    elements.status.textContent = ''
+    elements.status.classList.remove('visible')
   }
 
   function showStatus(message: string, options: ShowStatusOptions = {}) {

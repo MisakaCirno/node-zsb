@@ -9,9 +9,10 @@ import { createViewportControls } from './viewportControls.js'
 import type {
   BoardObject,
   EditorState,
-  GridRenderer,
+  RunEditorAction,
   StageLike,
 } from './types.js'
+import type { StageRenderer } from './stageRenderer.js'
 import type {
   EditorElements,
 } from './editorElements.js'
@@ -25,10 +26,11 @@ interface EditorControllersDeps {
   normalizePoint(x: number, y: number): { x: number, y: number }
   recordHistory(): void
   renderAll(): Promise<void>
+  runAction: RunEditorAction
   selectObject(index: number, options?: { range?: boolean, revealInLayers?: boolean, toggle?: boolean }): void
   showStatus(message: string, options?: { type?: string }): void
   stage: StageLike & { toDataURL(options?: { pixelRatio?: number }): string }
-  stageRenderer: GridRenderer
+  stageRenderer: StageRenderer
   state: EditorState
   updateHistoryButtons(): void
 }
@@ -42,6 +44,7 @@ export function createEditorControllers({
   normalizePoint,
   recordHistory,
   renderAll,
+  runAction,
   selectObject,
   showStatus,
   stage,
@@ -103,6 +106,7 @@ export function createEditorControllers({
     elements,
     recordHistory,
     renderAll,
+    runAction,
     showStatus,
     confirmAction,
   })
@@ -111,12 +115,13 @@ export function createEditorControllers({
     state,
     elements,
     renderAll,
+    runAction,
     renderBackgroundOptions,
     updateHistoryButtons,
     showStatus,
     confirmAction,
     renderLocalPresets: localPresetsPanel.renderLocalPresets,
-    stage,
+    stageRenderer,
   })
 
   const projectFileActions = createProjectFileActions({

@@ -2,6 +2,7 @@ import { expect, test, type Dialog, type Locator, type Page } from '@playwright/
 import { readFile } from 'node:fs/promises'
 import {
   LOCAL_PRESETS_KEY,
+  LOCAL_FILES_KEY,
   LOGICAL_SCALE,
   MAX_BOARD_OBJECTS,
   SCENE_HEIGHT,
@@ -2210,6 +2211,35 @@ test('editor saves, loads, and deletes local browser board slots', async ({
   await expect(page.locator('#local-board-list')).toContainText('暂无本地文件')
   await expect(page.locator('#file-name')).toHaveValue('本地草稿')
   await expect(page.locator('#file-dirty-indicator')).toBeVisible()
+})
+
+test('editor uses a clean local thumbnail fallback and restores editor overlays', async ({ page }) => {
+  await page.route('**/board/render', async (route) => {
+    await route.fulfill({
+      status: 500,
+      contentType: 'application/json',
+      body: JSON.stringify({ ok: false, error: 'forced preview failure' }),
+    })
+  })
+  await page.goto('/editor')
+  await expect(page.locator('#layers')).toContainText('tank')
+  await page.locator('#grid-toggle').check()
+  const selectedRow = page.locator('#layers .layer-row').first()
+  await selectedRow.click()
+  await expect(selectedRow).toHaveClass(/active/)
+  await page.locator('#file-name').fill('本地回退缩略图')
+
+  await clickFileMenuAction(page, '#save-local-board')
+
+  await expect(page.locator('#status')).toContainText('已保存本地文件')
+  const preview = await page.evaluate((key) => {
+    const files = JSON.parse(localStorage.getItem(key) ?? '[]')
+    return files[0]?.preview ?? ''
+  }, LOCAL_FILES_KEY)
+  expect(preview).toMatch(/^data:image\/png;base64,/)
+  await expect(page.locator('#grid-toggle')).toBeChecked()
+  await expect(selectedRow).toHaveClass(/active/)
+  await expect(page.locator('#inspector-form')).toBeVisible()
 })
 
 test('editor creates a new local file from the toolbar', async ({ page }) => {

@@ -130,6 +130,7 @@ interface KonvaNode {
   setAttr(name: string, value: unknown): void
   setAttrs(attrs: Record<string, unknown>): void
   toDataURL(options?: { pixelRatio?: number }): string
+  visible(): boolean
   visible(value: boolean): void
   width(value?: number): number
   height(value?: number): number
@@ -202,9 +203,36 @@ interface ActiveDrag {
 
 export interface StageRenderer {
   stage: StageLike & { toDataURL(options?: { pixelRatio?: number }): string }
+  exportCleanPreviewDataUrl(options?: { pixelRatio?: number }): string
   renderBoard(): Promise<void>
   renderGrid(): void
   renderObjects(): Promise<void>
+}
+
+export interface PreviewVisibilityNode {
+  visible(): boolean
+  visible(value: boolean): void
+}
+
+export interface PreviewStage {
+  draw(): void
+  toDataURL(options?: { pixelRatio?: number }): string
+}
+
+export function exportCleanStagePreviewDataUrl(
+  stage: PreviewStage,
+  excludedLayers: PreviewVisibilityNode[],
+  options?: { pixelRatio?: number },
+): string {
+  const visibility = excludedLayers.map((layer) => layer.visible())
+  try {
+    for (const layer of excludedLayers) layer.visible(false)
+    stage.draw()
+    return stage.toDataURL(options)
+  } finally {
+    excludedLayers.forEach((layer, index) => layer.visible(visibility[index] ?? true))
+    stage.draw()
+  }
 }
 
 export function createStageRenderer({
@@ -1161,7 +1189,16 @@ export function createStageRenderer({
     return textFontReady
   }
 
+  function exportCleanPreviewDataUrl(options?: { pixelRatio?: number }): string {
+    return exportCleanStagePreviewDataUrl(
+      stage,
+      [gridLayer, transformerLayer, marqueeLayer],
+      options,
+    )
+  }
+
   return {
+    exportCleanPreviewDataUrl,
     stage,
     renderBoard,
     renderGrid,
