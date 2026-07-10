@@ -833,6 +833,17 @@ textarea {
   outline: 1px solid #3a4650;
 }
 
+#stage-host.can-pan,
+#stage-host.can-pan canvas {
+  cursor: grab !important;
+}
+
+#stage-host.is-panning,
+#stage-host.is-panning canvas {
+  cursor: grabbing !important;
+  user-select: none;
+}
+
 .field {
   display: grid;
   gap: 6px;

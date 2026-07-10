@@ -3161,3 +3161,114 @@ test('editor fits the stage and changes zoom levels', async ({ page }) => {
   await expect(page.locator('#zoom-value')).toContainText('适配')
   await expect(page.locator('#status')).toContainText('已适配画布视图')
 })
+
+test('editor skips unchanged canvas layer rebuilds during selection and property edits', async ({ page }) => {
+  await page.goto('/editor')
+  await expect(page.locator('#layers')).toContainText('tank')
+  const stageHost = page.locator('#stage-host')
+  const readCounts = () => stageHost.evaluate((host) => ({
+    background: Number((host as HTMLElement).dataset.renderBackgroundCount ?? 0),
+    grid: Number((host as HTMLElement).dataset.renderGridCount ?? 0),
+    objects: Number((host as HTMLElement).dataset.renderObjectsCount ?? 0),
+  }))
+  const initial = await readCounts()
+  expect(initial.background).toBeGreaterThan(0)
+  expect(initial.grid).toBeGreaterThan(0)
+  expect(initial.objects).toBeGreaterThan(0)
+
+  await page.locator('#layers .layer-row').first().click()
+  await expect(page.locator('#layers .layer-row.active')).toHaveCount(1)
+  expect(await readCounts()).toEqual(initial)
+
+  await page.locator('#object-x').fill('123')
+  await expect.poll(async () => (await readCounts()).objects).toBeGreaterThan(initial.objects)
+  const afterObjectEdit = await readCounts()
+  expect(afterObjectEdit.background).toBe(initial.background)
+  expect(afterObjectEdit.grid).toBe(initial.grid)
+
+  await page.locator('#grid-density').fill('20')
+  await expect.poll(async () => (await readCounts()).grid).toBeGreaterThan(afterObjectEdit.grid)
+  const afterGridEdit = await readCounts()
+  expect(afterGridEdit.background).toBe(initial.background)
+  expect(afterGridEdit.objects).toBe(afterObjectEdit.objects)
+  await expect(stageHost).toHaveAttribute('data-render-objects-ms', /\d/)
+})
+
+test('editor zooms around the pointer and pans with middle mouse or Space drag', async ({ page }) => {
+  await page.goto('/editor')
+  await expect(page.locator('#layers')).toContainText('tank')
+  await page.locator('#layers .layer-row').first().click()
+  await expect(page.locator('#layers .layer-row.active')).toHaveCount(1)
+  await page.locator('#zoom-select').fill('1.5')
+  await page.locator('#zoom-select').dispatchEvent('input')
+  await expect(page.locator('#zoom-select')).toHaveValue('1.5')
+
+  const host = page.locator('#stage-host')
+  const canvas = host.locator('canvas').first()
+  await host.evaluate((element) => {
+    element.scrollLeft = 300
+    element.scrollTop = 220
+  })
+  const hostBox = await host.boundingBox()
+  const beforeCanvas = await canvas.boundingBox()
+  if (!hostBox || !beforeCanvas) throw new Error('Missing viewport bounds')
+  const pointer = {
+    x: hostBox.x + hostBox.width * 0.55,
+    y: hostBox.y + hostBox.height * 0.45,
+  }
+  const beforeRatio = {
+    x: (pointer.x - beforeCanvas.x) / beforeCanvas.width,
+    y: (pointer.y - beforeCanvas.y) / beforeCanvas.height,
+  }
+  await host.dispatchEvent('wheel', {
+    clientX: pointer.x,
+    clientY: pointer.y,
+    ctrlKey: true,
+    deltaY: -100,
+  })
+  await expect.poll(async () => Number(await page.locator('#zoom-select').inputValue())).toBeGreaterThan(1.5)
+  await page.evaluate(() => new Promise<void>((resolve) => requestAnimationFrame(() => resolve())))
+  const afterCanvas = await canvas.boundingBox()
+  if (!afterCanvas) throw new Error('Missing zoomed canvas bounds')
+  expect((pointer.x - afterCanvas.x) / afterCanvas.width).toBeCloseTo(beforeRatio.x, 2)
+  expect((pointer.y - afterCanvas.y) / afterCanvas.height).toBeCloseTo(beforeRatio.y, 2)
+
+  await host.evaluate((element) => {
+    element.scrollLeft = 320
+    element.scrollTop = 240
+  })
+  const middleStart = await host.evaluate((element) => ({
+    left: element.scrollLeft,
+    top: element.scrollTop,
+  }))
+  await page.mouse.move(pointer.x, pointer.y)
+  await page.mouse.down({ button: 'middle' })
+  await page.mouse.move(pointer.x - 80, pointer.y - 60, { steps: 4 })
+  await page.mouse.up({ button: 'middle' })
+  const middleEnd = await host.evaluate((element) => ({
+    left: element.scrollLeft,
+    top: element.scrollTop,
+  }))
+  expect(middleEnd.left).toBeGreaterThan(middleStart.left + 60)
+  expect(middleEnd.top).toBeGreaterThan(middleStart.top + 40)
+
+  await page.keyboard.down('Space')
+  await expect(host).toHaveClass(/can-pan/)
+  const spaceStart = await host.evaluate((element) => ({
+    left: element.scrollLeft,
+    top: element.scrollTop,
+  }))
+  await page.mouse.move(pointer.x, pointer.y)
+  await page.mouse.down({ button: 'left' })
+  await page.mouse.move(pointer.x - 60, pointer.y - 40, { steps: 4 })
+  await page.mouse.up({ button: 'left' })
+  await page.keyboard.up('Space')
+  await expect(host).not.toHaveClass(/can-pan|is-panning/)
+  const spaceEnd = await host.evaluate((element) => ({
+    left: element.scrollLeft,
+    top: element.scrollTop,
+  }))
+  expect(spaceEnd.left).toBeGreaterThan(spaceStart.left + 40)
+  expect(spaceEnd.top).toBeGreaterThan(spaceStart.top + 25)
+  await expect(page.locator('#layers .layer-row.active')).toHaveCount(1)
+})

@@ -11,6 +11,7 @@ import { bindMenuBar } from './menuBar.js'
 import { normalizeCoordinate } from './geometry.js'
 import { getPresetDragType } from './localPresetsPanel.js'
 import { bindTextInput } from './textInputControl.js'
+import { bindViewportNavigation } from './viewportNavigation.js'
 import type {
   EditorActionRegistry,
   RunEditorAction,
@@ -183,6 +184,11 @@ export function bindEditorEvents({
   bindLayoutResizers({
     elements,
     onResize: actions.applyFitZoomOnResize,
+  })
+  bindViewportNavigation({
+    host: elements.stageHost,
+    getZoom: () => Number(elements.zoomSelect.value) || 1,
+    setZoom: (zoom) => actions.setStageZoom(zoom, { mode: 'manual' }),
   })
   bindAdaptiveSidebarTabs({ elements })
   bindPaletteDrop(elements, actions, runPresetAction)

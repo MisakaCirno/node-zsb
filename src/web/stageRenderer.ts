@@ -322,6 +322,9 @@ export function createStageRenderer({
   let pendingDragPointerStart: Point | null = null
   let hoveredObjectIndex: number | null = null
   const renderedNodesByIndex = new Map<number, KonvaNode>()
+  let lastBoardRenderSignature = ''
+  let lastGridRenderSignature = ''
+  let lastObjectRenderSignature = ''
 
   void ensureStrategyTextFontLoaded()
 
@@ -416,6 +419,8 @@ export function createStageRenderer({
   async function renderBoard() {
     const backgroundId = state.backgrounds[state.board.boardBackground ?? DEFAULT_BOARD_BACKGROUND]
       ?? getBoardBackgroundId(state.board.boardBackground)
+    if (backgroundId === lastBoardRenderSignature) return
+    const startedAt = performance.now()
     const image = await loadImage(`/assets/background/${backgroundId}.webp`)
     boardLayer.destroyChildren()
     boardLayer.add(
@@ -426,12 +431,19 @@ export function createStageRenderer({
       }),
     )
     boardLayer.draw()
+    lastBoardRenderSignature = backgroundId
+    recordRenderMetric('background', startedAt)
   }
 
   function renderGrid() {
+    const signature = JSON.stringify([state.showGrid, state.gridSize, state.gridOpacity])
+    if (signature === lastGridRenderSignature) return
+    const startedAt = performance.now()
     gridLayer.destroyChildren()
     if (!state.showGrid) {
       gridLayer.draw()
+      lastGridRenderSignature = signature
+      recordRenderMetric('grid', startedAt)
       return
     }
 
@@ -443,9 +455,18 @@ export function createStageRenderer({
       gridLayer.add(createGridLine([0, y, SCENE_WIDTH, y], index))
     }
     gridLayer.draw()
+    lastGridRenderSignature = signature
+    recordRenderMetric('grid', startedAt)
   }
 
   async function renderObjects() {
+    const signature = JSON.stringify(state.board.objects)
+    if (signature === lastObjectRenderSignature) {
+      syncSelectionTransformer({ draw: false })
+      transformerLayer.draw()
+      return
+    }
+    const startedAt = performance.now()
     if (state.board.objects.some((object) => object.type === 'text')) {
       await ensureStrategyTextFontLoaded()
     }
@@ -467,6 +488,22 @@ export function createStageRenderer({
     objectLayer.draw()
     syncSelectionTransformer({ draw: false })
     transformerLayer.draw()
+    lastObjectRenderSignature = signature
+    recordRenderMetric('objects', startedAt)
+  }
+
+  function recordRenderMetric(
+    phase: 'background' | 'grid' | 'objects',
+    startedAt: number,
+  ) {
+    if (!stageHost) return
+    const phaseName = phase[0]?.toUpperCase() + phase.slice(1)
+    const countKey = `render${phaseName}Count`
+    const durationKey = `render${phaseName}Ms`
+    const count = Number(stageHost.dataset[countKey] ?? 0) + 1
+    const duration = Number(stageHost.dataset[durationKey] ?? 0) + (performance.now() - startedAt)
+    stageHost.dataset[countKey] = String(count)
+    stageHost.dataset[durationKey] = duration.toFixed(2)
   }
 
   function createGridLine(points: number[], index: number): KonvaNode {

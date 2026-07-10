@@ -77,6 +77,7 @@
 - `localPresetsPanel`：本地预设的保存、插入、拖拽和删除。
 - `objectCommands`：新增、删除、复制、粘贴、移动、对齐、分组、解组和图层标记。
 - `viewportControls`：缩放、适配、网格和吸附。
+- `viewportNavigation`：桌面端指针锚定滚轮缩放，以及空格键/中键拖拽平移。
 
 `src/web/editorActionRegistry.ts` 将这些控制器组装成事件绑定层需要的扁平 `actions` 对象。这样 `editorBindings.ts` 只关心 DOM 事件到 action 的映射，不关心 action 来自哪个控制器。
 
@@ -102,6 +103,8 @@
 7. 渲染属性面板
 
 `renderAll()` 使用串行合并队列。若渲染尚未完成时再次触发刷新，只标记需要补渲染；当前渲染结束后会自动使用最新状态再渲染一轮。
+
+`stageRenderer` 分别缓存背景 ID、网格配置和对象内容签名。选择变化只同步 Transformer，不再重建未变化的背景、网格和对象节点；实际重绘次数与累计耗时记录在 `#stage-host` 的 `data-render-*-count` / `data-render-*-ms` 诊断属性中，供性能回归测试和现场测量使用。
 
 浏览器自动保存由 `editorRenderLoop` 统一触发。任何只修改状态但不触发渲染的流程，都需要显式调用 `renderAll()` 或重新评估保存策略。
 

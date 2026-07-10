@@ -80,6 +80,8 @@ http://localhost:3000/editor
 | `Ctrl/Cmd + +` | 放大画布 |
 | `Ctrl/Cmd + -` | 缩小画布 |
 | `Ctrl/Cmd + 0` | 适配画布视图 |
+| `Ctrl/Cmd + 滚轮` | 围绕鼠标位置缩放画布 |
+| `Space + 左键拖拽` / `中键拖拽` | 平移画布视图 |
 
 ## 校验
 
