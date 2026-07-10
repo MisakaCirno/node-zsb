@@ -1,6 +1,5 @@
 import Elysia from 'elysia'
 import openapi, { fromTypes } from '@elysiajs/openapi'
-import { node } from '@elysiajs/node'
 import { boardController } from './src/server/controllers/imageController.ts'
 import { utilsController } from './src/server/controllers/utilsController.ts'
 import { webController } from './src/server/controllers/webController.ts'
@@ -14,14 +13,6 @@ interface StoppableServer {
   stop?: () => void | Promise<void>
 }
 
-declare global {
-  namespace NodeJS {
-    interface Process {
-      isBun?: boolean
-    }
-  }
-}
-
 const app = new Elysia()
   .use(
     openapi({
@@ -32,17 +23,7 @@ const app = new Elysia()
   .use(utilsController)
   .use(webController)
 
-let server: unknown
-
-function initNodeServer() {
-  server = new Elysia({ adapter: node() }).use(app).listen(serverInfo)
-}
-
-function initBunServer() {
-  server = app.listen(serverInfo)
-}
-
-process.isBun ? initBunServer() : initNodeServer()
+const server: unknown = app.listen(serverInfo)
 
 console.log(
   `Server running at http://${serverInfo.hostname}:${serverInfo.port}`

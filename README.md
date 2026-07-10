@@ -2,6 +2,8 @@
 
 基于 Bun、Elysia、Konva、skia-canvas 和 sharp 的战术板图片渲染与可视化编辑服务。
 
+项目统一使用 Bun 运行，不提供 Node.js 启动路径。当前固定并验证的运行时版本为 Bun 1.3.5；Windows 部署基线为 Windows Server 2022 x64。
+
 项目同时提供两类能力：
 
 - 服务端 API：把战术板分享码或 JSON 渲染为 WebP 图片。
@@ -12,6 +14,8 @@
 ```bash
 bun install
 ```
+
+部署机器应在本机执行依赖安装，以获取与操作系统和 CPU 架构匹配的 `sharp`、`skia-canvas` 原生模块。不要从其他平台复制 `node_modules`。
 
 ## 启动
 
@@ -99,6 +103,13 @@ Playwright headed 或 UI 模式：
 ```bash
 bun run test:e2e:headed
 bun run test:e2e:ui
+```
+
+构建完成后，可运行 Bun 服务冒烟测试。该测试覆盖生产静态资源、编辑器入口、直接 WebP 渲染、缓存渲染和预览读取：
+
+```bash
+bun run build
+bun run test:smoke
 ```
 
 ## 架构
