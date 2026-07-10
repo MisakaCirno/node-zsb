@@ -58,7 +58,7 @@ export const boardController = new Elysia()
       }),
       detail: {
         description:
-          '解析战术板,并返回图片hash和缩略图.注意本接口没有并发缓解机制,请勿频繁调用',
+          '解析战术板并返回版本化图片 hash 和缩略图；相同请求会复用缓存并合并进程内并发渲染',
       },
     },
   )

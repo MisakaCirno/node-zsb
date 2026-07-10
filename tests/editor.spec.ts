@@ -2321,6 +2321,37 @@ test('editor creates a new local file from the toolbar', async ({ page }) => {
   await expect(page.locator('#local-board-list')).toContainText('分享名：原分享名')
 })
 
+test('editor treats Escape and the close button as cancelling unsaved replacement', async ({ page }) => {
+  await page.goto('/editor')
+  await page.evaluate(() => {
+    localStorage.removeItem('node-zsb-editor-local-files-v1')
+    localStorage.removeItem('node-zsb-editor-board-v1')
+  })
+  await page.reload()
+
+  await page.locator('#file-name').fill('取消替换测试')
+  await page.locator('#board-name').fill('保存前内容')
+  await page.locator('#board-name').dispatchEvent('change')
+  await clickFileMenuAction(page, '#save-local-board')
+  await expect(page.locator('#file-dirty-indicator')).toBeHidden()
+
+  await page.locator('#board-name').fill('不得丢失的修改')
+  await page.locator('#board-name').dispatchEvent('change')
+  await clickFileMenuAction(page, '#new-local-board')
+  await expect(page.locator('#unsaved-changes-dialog')).toBeVisible()
+  await page.keyboard.press('Escape')
+  await expect(page.locator('#unsaved-changes-dialog')).toBeHidden()
+  await expect(page.locator('#board-name')).toHaveValue('不得丢失的修改')
+  await expect(page.locator('#file-dirty-indicator')).toBeVisible()
+
+  await clickFileMenuAction(page, '#new-local-board')
+  await expect(page.locator('#unsaved-changes-dialog')).toBeVisible()
+  await page.locator('#close-unsaved-changes-dialog').click()
+  await expect(page.locator('#unsaved-changes-dialog')).toBeHidden()
+  await expect(page.locator('#board-name')).toHaveValue('不得丢失的修改')
+  await expect(page.locator('#file-dirty-indicator')).toBeVisible()
+})
+
 test('editor restores unsaved local drafts as dirty and saves before replacement', async ({ page }) => {
   await page.goto('/editor')
   await page.evaluate(() => {

@@ -188,7 +188,8 @@ export function bindEditorEvents({
   bindPaletteDrop(elements, actions, runPresetAction)
   bindContextMenu(elements, actions)
   window.addEventListener('resize', actions.applyFitZoomOnResize)
-  document.addEventListener('keydown', (event: KeyboardEvent) =>
+  document.addEventListener('keydown', (event: KeyboardEvent) => {
+    if (document.querySelector('dialog[open]')) return
     handleEditorKeyboard(event, {
       applyFitZoom: actions.applyFitZoom,
       copySelected: actions.copySelected,
@@ -202,8 +203,8 @@ export function bindEditorEvents({
       saveLocalBoardAs: () => runLocalFileAction(actions.saveLocalBoardAs),
       stepZoom: actions.stepZoom,
       undo: actions.undo,
-    }),
-  )
+    })
+  })
   const updateInspectorContinuously = () =>
     actions.updateSelectedFromInspector({ continuous: true })
   for (const input of [

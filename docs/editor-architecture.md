@@ -4,7 +4,7 @@
 
 ## 顶层结构
 
-- `index.ts`：服务入口，组装 Elysia 应用和服务端控制器。
+- `index.ts`：Bun 服务入口，组装 Elysia 应用和服务端控制器；项目不提供 Node.js 启动路径。
 - `src/server`：服务端代码，负责 HTTP API、战术板图片渲染、资源读取和图片缓存。
 - `src/web`：浏览器端编辑器，负责画板 UI、Konva 舞台、交互控制器、本地文件和导入导出。
 - `src/web/types`：前端共享类型，按业务领域拆分为 `board`、`layers`、`editor`、`actions` 和 `project`。
@@ -16,7 +16,7 @@
 ## TypeScript 配置
 
 - `tsconfig.base.json`：公共严格类型规则。
-- `tsconfig.server.json`：服务端检查，包含 `index.ts`、`src/server` 和 `src/shared`，使用 Node 类型。
+- `tsconfig.server.json`：服务端检查，包含 `index.ts`、`src/server` 和 `src/shared`；使用 Node 类型描述兼容的文件系统等 API，但运行时统一为 Bun。
 - `tsconfig.web.json`：前端检查，包含 `src/web` 和 `src/shared`，使用 DOM 类型。
 - `tsconfig.tests.json`：测试配置，包含 Playwright 配置和 E2E 测试。
 
@@ -37,6 +37,8 @@
 - 战术板代码解析和编码。
 - 图标配置和静态资源路径。
 - 图片加载、尺寸常量和缓存写入。
+
+`renderCache.ts` 使用显式缓存版本和分享码生成 SHA-256 opaque hash。新版本不会命中旧缓存，但旧 hash 文件仍可由 `/preview/:hash` 读取。缓存写入先落到同目录临时文件，再原子重命名；相同请求的进程内并发渲染会合并为同一个 Promise。
 
 服务端新增功能时优先判断：
 
@@ -72,6 +74,7 @@
 - `projectFileActions`：编辑器工程 JSON 的导入和导出。
 - `inspectorControls`：右侧属性面板。
 - `localBoardsPanel`：浏览器本地文件系统。
+- `localPresetsPanel`：本地预设的保存、插入、拖拽和删除。
 - `objectCommands`：新增、删除、复制、粘贴、移动、对齐、分组、解组和图层标记。
 - `viewportControls`：缩放、适配、网格和吸附。
 
@@ -90,12 +93,13 @@
 
 `src/web/editorRenderLoop.ts` 负责完整刷新流程：
 
-1. 渲染背景
-2. 渲染网格
-3. 渲染对象
-4. 渲染图层面板
-5. 渲染属性面板
-6. 将编辑器项目写入浏览器自动保存
+1. 同步文档未保存标记
+2. 将发生变化的版本化编辑器草稿写入浏览器存储
+3. 渲染背景
+4. 渲染网格
+5. 渲染对象
+6. 渲染图层面板
+7. 渲染属性面板
 
 `renderAll()` 使用串行合并队列。若渲染尚未完成时再次触发刷新，只标记需要补渲染；当前渲染结束后会自动使用最新状态再渲染一轮。
 
@@ -117,15 +121,19 @@
 ## 本地文件与项目格式
 
 - `src/web/storage.ts` 封装 localStorage 读写。
-- 自动恢复使用 `STORAGE_KEY`。
+- 自动恢复使用 `STORAGE_KEY`，写入 `node-zsb-editor-draft` v1 包装格式，同时兼容旧版裸工程草稿。
 - 本地文件列表使用 `LOCAL_FILES_KEY`，保留文件名、项目 JSON、纯净战术板、创建/更新时间和预览图。
+- 本地预设使用 `LOCAL_PRESETS_KEY`；预设缩略图单独缓存在 IndexedDB，不占用 localStorage 主数据空间。
 - `src/web/project.ts` 负责编辑器项目格式。项目 JSON 可以保留编辑器专属信息，例如嵌套组。
 - `createPureBoardFromProject()` 和 `flattenProjectToBoard()` 负责导出给游戏使用的纯净战术板结构。
+
+文档显示文件名、本地文件关联和最后保存基线是三个独立状态。草稿恢复时会优先保留编辑内容；关联文件已不存在时解除关联并保持未保存状态。新建、打开和工程导入都必须经过“保存 / 不保存 / 取消”替换确认。
 
 编辑器项目格式和游戏分享码是两种不同边界：
 
 - 工程 JSON 用于编辑器继续编辑和后续扩展。
 - 分享码用于游戏或现有战术板渲染链路，导出时必须展平编辑器专属结构。
+- 外部工程 JSON 只接受当前 `node-zsb-project` v1 并执行严格结构、对象类型和图层引用校验；旧草稿和旧 localStorage 迁移继续走宽容归一化。
 
 ## 共享类型
 
@@ -144,6 +152,7 @@
 - `bun run typecheck`：运行 server、web 和 tests 三套 TypeScript 配置。
 - `bun run test:unit`：运行 Bun test，覆盖纯逻辑模块。
 - `bun run test:e2e`：运行 Playwright 端到端测试，覆盖编辑器主要用户流程。
+- `bun run test:smoke`：在构建后启动生产模式 Bun 服务，覆盖静态资源、编辑器、WebP、缓存渲染和预览读取。
 - `playwright.config.ts` 忽略 `tests/unit`，避免 E2E 输出混入 Node TAP 单测结果。
 
 新增功能时建议：
