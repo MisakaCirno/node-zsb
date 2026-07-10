@@ -1,4 +1,7 @@
-import { createProjectFromBoard } from './project.js'
+import {
+  createCurrentProjectSnapshot,
+  createEditorDraft,
+} from './documentState.js'
 import { persistEditorDraft } from './storage.js'
 import { renderLayers as renderLayersPanel } from './layersPanel.js'
 import type {
@@ -27,6 +30,7 @@ interface EditorRenderLoopDeps {
 }
 
 interface LayerPanelElements {
+  fileDirtyIndicator: TextElement & { hidden: boolean }
   layers: HTMLElement
   layerCount: TextElement
 }
@@ -60,6 +64,7 @@ export function createEditorRenderLoop({
   let lastPersistedSnapshot = ''
 
   function renderAll() {
+    syncDocumentStatus()
     persistBoardIfChanged()
     needsRender = true
     if (!isRendering) {
@@ -119,15 +124,18 @@ export function createEditorRenderLoop({
   }
 
   function persistProjectSnapshot({ force }: { force: boolean }) {
-    const project = createProjectFromBoard(state.board, {
-      fileName: state.currentFileName,
-      layerTree: state.layerTree,
-    })
-    const snapshot = JSON.stringify(project)
+    const draft = createEditorDraft(state)
+    const snapshot = JSON.stringify(draft)
     if (!force && snapshot === lastPersistedSnapshot) return
-    if (persistEditorDraft(project)) {
+    if (persistEditorDraft(draft)) {
       lastPersistedSnapshot = snapshot
     }
+  }
+
+  function syncDocumentStatus() {
+    const dirty = createCurrentProjectSnapshot(state) !== state.documentBaselineSnapshot
+    elements.fileDirtyIndicator.hidden = !dirty
+    elements.fileDirtyIndicator.textContent = dirty ? '未保存' : ''
   }
 
   return {

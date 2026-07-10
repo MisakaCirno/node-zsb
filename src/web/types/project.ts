@@ -25,6 +25,16 @@ export interface ProjectFile {
   layers: LayerNode[]
 }
 
+export interface EditorDraft {
+  format: 'node-zsb-editor-draft'
+  version: 1
+  project: ProjectFile
+  associatedLocalFileName: string
+  documentBaselineSnapshot: string
+}
+
+export type DocumentReplaceDecision = 'save' | 'discard' | 'cancel'
+
 export interface LocalBoardSlot {
   id?: string
   name?: string

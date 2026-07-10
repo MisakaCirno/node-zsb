@@ -120,8 +120,7 @@ export function bindEditorEvents({
   elements.boardName.addEventListener('change', actions.onBoardNameChange)
   elements.boardName.addEventListener('input', () =>
     syncNameCounter(elements.boardName, elements.shareNameCount))
-  elements.fileName.addEventListener('input', () =>
-    syncNameCounter(elements.fileName, elements.fileNameCount))
+  elements.fileName.addEventListener('input', actions.onFileNameInput)
   elements.newLocalBoard.addEventListener('click', actions.newLocalBoard)
   elements.saveLocalBoard.addEventListener('click', actions.saveLocalBoard)
   elements.saveAsLocalBoard.addEventListener('click', actions.saveLocalBoardAs)

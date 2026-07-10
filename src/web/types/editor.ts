@@ -35,7 +35,8 @@ export interface EditorData {
 export interface EditorState extends EditorStateSlice {
   selectedGroupId: string
   currentFileName: string
-  localFileSnapshot: string
+  associatedLocalFileName: string
+  documentBaselineSnapshot: string
   revealSelectedLayer: boolean
   iconConfigs: Record<string, IconConfig>
   iconGroups: Record<string, string[]>

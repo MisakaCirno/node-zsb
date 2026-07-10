@@ -69,10 +69,12 @@ export interface BoardMetaControls {
 }
 
 export interface LocalBoardsPanel {
+  confirmDocumentReplacement(actionLabel: string): Promise<boolean>
   deleteLocalBoard(fileName: string): boolean
   deleteSelectedLocalBoards(): boolean
   loadLocalBoard(fileName: string): Promise<boolean>
   newLocalBoard(): Promise<boolean>
+  onFileNameInput(): void
   renderLocalBoards(): void
   renameLocalBoard(fileName: string): Promise<boolean>
   saveLocalBoard(): Promise<boolean>
@@ -124,6 +126,7 @@ export interface EditorActionRegistry {
   moveSelected: ObjectCommands['moveSelected']
   moveSelectedTo: ObjectCommands['moveSelectedTo']
   newLocalBoard: LocalBoardsPanel['newLocalBoard']
+  onFileNameInput: LocalBoardsPanel['onFileNameInput']
   nudgeSelected: ObjectCommands['nudgeSelected']
   onBackgroundChange: BoardMetaControls['onBackgroundChange']
   onBoardNameChange: BoardMetaControls['onBoardNameChange']

@@ -3,11 +3,11 @@ import { getBrowserWindow } from './browser.js'
 import {
   PROJECT_FILE_EXTENSION,
   createProjectFromBoard,
-  createProjectSnapshot,
   flattenProjectToBoard,
   parseProjectJson,
   projectToJson,
 } from './project.js'
+import { markDocumentClean } from './documentState.js'
 import type {
   EditorState,
   FileLike,
@@ -28,17 +28,19 @@ interface ProjectFileElements {
 interface ProjectFileActionsDeps {
   state: EditorState
   elements: ProjectFileElements
-  recordHistory: () => void
+  confirmDocumentReplacement(actionLabel: string): Promise<boolean>
   renderAll: () => Promise<void>
   renderBackgroundOptions: () => void
+  updateHistoryButtons(): void
 }
 
 export function createProjectFileActions({
   state,
   elements,
-  recordHistory,
+  confirmDocumentReplacement,
   renderAll,
   renderBackgroundOptions,
+  updateHistoryButtons,
 }: ProjectFileActionsDeps): ProjectFileActions {
   function downloadProjectFile() {
     const projectFileName = stripProjectFileExtension(getCurrentFileName())
@@ -62,15 +64,17 @@ export function createProjectFileActions({
     if (!file) return false
     const project = parseProjectJson(await file.text())
     const board = flattenProjectToBoard(project)
-    recordHistory()
+    if (!await confirmDocumentReplacement('导入工程文件')) return false
     replaceBoard(state, board)
     state.layerTree = project.layers
     const fileName = stripProjectFileExtension(file.name || project.fileName || '')
-    state.currentFileName = fileName
-    state.localFileSnapshot = createProjectSnapshot(state.board, {
+    state.history = []
+    state.future = []
+    markDocumentClean(state, {
+      associatedLocalFileName: '',
       fileName,
-      layerTree: state.layerTree,
     })
+    updateHistoryButtons()
     elements.fileName.value = fileName
     elements.boardName.value = state.board.name ?? ''
     syncNameCounter(elements.fileName, elements.fileNameCount)

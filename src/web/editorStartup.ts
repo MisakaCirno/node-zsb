@@ -1,17 +1,19 @@
 import { normalizeBoard } from './board.js'
 import { getOptionalBrowserWindow } from './browser.js'
-import { loadEditorDraft } from './storage.js'
+import {
+  createCurrentProjectSnapshot,
+  createLocalFileSnapshot,
+  readEditorDraft,
+  type RestoredEditorDraft,
+} from './documentState.js'
+import { loadEditorDraft, loadLocalFiles } from './storage.js'
 import { syncFlatLayerTree } from './layerTree.js'
 import {
-  createProjectSnapshot,
   flattenProjectToBoard,
-  isProject,
-  normalizeProject,
 } from './project.js'
 import type {
   Board,
   EditorState,
-  ProjectFile,
   TextElement,
   ValueElement,
 } from './types.js'
@@ -85,10 +87,10 @@ export async function applyInitialBoardSource({
   syncBoardNameInput,
 }: ApplyInitialBoardSourceDeps) {
   if (source.type === 'editor-draft') {
-    const project = getSavedProject(source.board)
-    if (project) {
-      state.board = flattenProjectToBoard(project)
-      state.layerTree = project.layers
+    const draft = readEditorDraft(source.board)
+    if (draft) {
+      state.board = flattenProjectToBoard(draft.project)
+      state.layerTree = draft.project.layers
     } else {
       state.board = normalizeBoard(source.board as Partial<Board>)
       syncFlatLayerTree(state)
@@ -124,12 +126,8 @@ export async function initializeEditorBoard({
   if (source.type === 'url-code') {
     clearUrlCodeParameter()
   }
-  const project = source.type === 'editor-draft' ? getSavedProject(source.board) : null
-  state.currentFileName = project?.fileName ?? ''
-  state.localFileSnapshot = createProjectSnapshot(state.board, {
-    fileName: state.currentFileName,
-    layerTree: state.layerTree,
-  })
+  const draft = source.type === 'editor-draft' ? readEditorDraft(source.board) : null
+  restoreDocumentIdentity(state, draft)
   elements.fileName.value = state.currentFileName
   syncNameCounter(elements.fileName, elements.fileNameCount)
   return source
@@ -138,10 +136,6 @@ export async function initializeEditorBoard({
 function syncNameCounter(input: ValueElement & { maxLength: number }, output: TextElement) {
   const maxLength = input.maxLength > 0 ? input.maxLength : input.value.length
   output.textContent = `${input.value.length}/${maxLength}`
-}
-
-function getSavedProject(value: unknown): ProjectFile | null {
-  return isProject(value) ? normalizeProject(value) : null
 }
 
 export function clearUrlCodeParameter() {
@@ -156,4 +150,35 @@ export function clearUrlCodeParameter() {
 
 function getLocationSearch(): string {
   return getOptionalBrowserWindow()?.location.search ?? ''
+}
+
+function restoreDocumentIdentity(
+  state: EditorState,
+  draft: RestoredEditorDraft | null,
+): void {
+  state.currentFileName = draft?.project.fileName ?? ''
+  state.associatedLocalFileName = ''
+  const currentSnapshot = createCurrentProjectSnapshot(state)
+  if (!draft) {
+    state.documentBaselineSnapshot = currentSnapshot
+    return
+  }
+
+  const associatedName = draft.associatedLocalFileName.trim()
+  const localFile = associatedName
+    ? loadLocalFiles().find((file) => file.name === associatedName)
+    : null
+  if (localFile) {
+    state.associatedLocalFileName = localFile.name
+    state.documentBaselineSnapshot = createLocalFileSnapshot(localFile)
+    return
+  }
+
+  if (associatedName) {
+    state.documentBaselineSnapshot = ''
+    return
+  }
+  state.documentBaselineSnapshot = draft.legacy
+    ? currentSnapshot
+    : draft.documentBaselineSnapshot
 }

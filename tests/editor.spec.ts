@@ -15,6 +15,16 @@ async function openImportDialog(page: Page) {
   await expect(page.locator('#editor-dialog-root > #import-dialog')).toHaveCount(1)
 }
 
+async function chooseUnsavedChanges(
+  page: Page,
+  decision: 'save' | 'discard' | 'cancel',
+) {
+  const dialog = page.locator('#unsaved-changes-dialog')
+  await expect(dialog).toBeVisible()
+  await dialog.locator(`.dialog-actions button[value="${decision}"]`).click()
+  await expect(dialog).toBeHidden()
+}
+
 async function openExportCodeDialog(page: Page) {
   await clickFileMenuAction(page, '#open-export-code-dialog')
   await expect(page.locator('#export-code-dialog')).toBeVisible()
@@ -300,7 +310,7 @@ test('editor creates an object by dragging from the palette to the canvas', asyn
     const raw = localStorage.getItem(key)
     if (!raw) return 0
     const draft = JSON.parse(raw)
-    return Array.isArray(draft?.layers) ? draft.layers.length : 0
+    return Array.isArray(draft?.project?.layers) ? draft.project.layers.length : 0
   }, STORAGE_KEY)
   expect(draftObjectCount).toBe(before + 1)
 
@@ -465,10 +475,13 @@ test('editor exports and imports project JSON files', async ({ page }) => {
     mimeType: 'application/json',
     buffer: Buffer.from(JSON.stringify(importedProject)),
   })
+  await chooseUnsavedChanges(page, 'discard')
 
   await expect(page.locator('#layers')).toContainText('text')
   await expect(page.locator('#file-name')).toHaveValue('imported')
   await expect(page.locator('#board-name')).toHaveValue('JSON')
+  await expect(page.locator('#undo-action')).toBeDisabled()
+  await expect(page.locator('#file-dirty-indicator')).toBeHidden()
 })
 
 test('editor applies inherited group flags from project files and local presets', async ({ page }) => {
@@ -779,9 +792,9 @@ test('editor preserves layer groups across autosave reloads', async ({ page }) =
     const raw = localStorage.getItem('node-zsb-editor-board-v1')
     if (!raw) return false
     const saved = JSON.parse(raw)
-    return saved.format === 'node-zsb-project'
-      && saved.layers?.[0]?.type === 'group'
-      && saved.layers?.[0]?.name === 'Persist Group'
+    return saved.format === 'node-zsb-editor-draft'
+      && saved.project?.layers?.[0]?.type === 'group'
+      && saved.project?.layers?.[0]?.name === 'Persist Group'
   })
 
   await page.reload()
@@ -1056,7 +1069,7 @@ test('editor renders readable Chinese labels', async ({ page }) => {
   await expect(page.locator('.stage-document-row')).toHaveCount(1)
   await expect(page.locator('.file-menu-local-actions')).toHaveCount(1)
   await expect(page.locator('.file-menu-code-actions')).toHaveCount(1)
-  await expect(page.locator('.file-name-field .document-name-label')).toHaveText('文件名')
+  await expect(page.locator('.file-name-field .document-name-label')).toContainText('文件名')
   await expect(page.locator('.stage-document-row #share-name-title')).toHaveText('战术板名称')
   await expect(page.locator('.inspector-section')).toHaveCount(2)
   await expect(page.locator('.stage-document-row .share-name-field')).toBeVisible()
@@ -1468,7 +1481,7 @@ test('editor commits multi-selected canvas scaling in one stable batch', async (
     const raw = localStorage.getItem('node-zsb-editor-board-v1')
     if (!raw) return null
     const saved = JSON.parse(raw)
-    const objects = Object.values(saved.objects ?? {}) as Array<{ size?: number, x: number, y: number }>
+    const objects = Object.values(saved.project?.objects ?? {}) as Array<{ size?: number, x: number, y: number }>
     if (objects.length !== 2) return null
     if (!objects.every((object: { size?: number }) => (object.size ?? 0) > 100)) return null
     return objects.map((object) => ({
@@ -2021,15 +2034,12 @@ test('editor saves, loads, and deletes local browser board slots', async ({
   await page.locator('#board-name').fill('临时修改')
   await page.locator('#board-name').dispatchEvent('change')
   await openLocalBoardDialog(page)
-  page.once('dialog', async (dialog) => {
-    expect(dialog.message()).toContain('未保存修改')
-    await dialog.dismiss()
-  })
   await page.locator('#local-board-list .local-board-row')
     .filter({ hasText: '本地草稿' })
     .locator('.local-board-actions')
     .getByRole('button', { name: '打开' })
     .click()
+  await chooseUnsavedChanges(page, 'discard')
   await expect(page.locator('#file-name')).toHaveValue('本地草稿')
   await expect(page.locator('#board-name')).toHaveValue('分享草稿')
   await expect(page.locator('#status')).toContainText('已打开文件 本地草稿')
@@ -2054,6 +2064,8 @@ test('editor saves, loads, and deletes local browser board slots', async ({
   await expect(page.locator('#delete-selected-local-boards')).toBeEnabled()
   await page.locator('#delete-selected-local-boards').click()
   await expect(page.locator('#local-board-list')).toContainText('暂无本地文件')
+  await expect(page.locator('#file-name')).toHaveValue('本地草稿')
+  await expect(page.locator('#file-dirty-indicator')).toBeVisible()
 })
 
 test('editor creates a new local file from the toolbar', async ({ page }) => {
@@ -2075,11 +2087,13 @@ test('editor creates a new local file from the toolbar', async ({ page }) => {
 
   await page.locator('#board-name').fill('未保存分享')
   await page.locator('#board-name').dispatchEvent('change')
-  page.once('dialog', async (dialog) => {
-    expect(dialog.message()).toContain('新建文件前')
-    await dialog.dismiss()
-  })
   await clickFileMenuAction(page, '#new-local-board')
+  await chooseUnsavedChanges(page, 'cancel')
+  await expect(page.locator('#board-name')).toHaveValue('未保存分享')
+  await expect(page.locator('#file-dirty-indicator')).toBeVisible()
+
+  await clickFileMenuAction(page, '#new-local-board')
+  await chooseUnsavedChanges(page, 'discard')
   await expect(page.locator('#status')).toContainText('已新建文件')
   await expect(page.locator('#file-name')).toHaveValue('')
   await expect(page.locator('#board-name')).toHaveValue('')
@@ -2088,6 +2102,40 @@ test('editor creates a new local file from the toolbar', async ({ page }) => {
   await openLocalBoardDialog(page)
   await expect(page.locator('#local-board-list')).toContainText('新建前草稿')
   await expect(page.locator('#local-board-list')).toContainText('分享名：原分享名')
+})
+
+test('editor restores unsaved local drafts as dirty and saves before replacement', async ({ page }) => {
+  await page.goto('/editor')
+  await page.evaluate(() => {
+    localStorage.removeItem('node-zsb-editor-local-files-v1')
+    localStorage.removeItem('node-zsb-editor-board-v1')
+  })
+  await page.reload()
+
+  await page.locator('#file-name').fill('恢复测试')
+  await page.locator('#board-name').fill('已保存内容')
+  await page.locator('#board-name').dispatchEvent('change')
+  await clickFileMenuAction(page, '#save-local-board')
+  await expect(page.locator('#file-dirty-indicator')).toBeHidden()
+
+  await page.locator('#file-name').fill('恢复测试另存')
+  await page.locator('#board-name').fill('刷新前修改')
+  await page.locator('#board-name').dispatchEvent('change')
+  await expect(page.locator('#file-dirty-indicator')).toBeVisible()
+  await page.reload()
+
+  await expect(page.locator('#file-name')).toHaveValue('恢复测试另存')
+  await expect(page.locator('#board-name')).toHaveValue('刷新前修改')
+  await expect(page.locator('#file-dirty-indicator')).toBeVisible()
+
+  await clickFileMenuAction(page, '#new-local-board')
+  await chooseUnsavedChanges(page, 'save')
+  await expect(page.locator('#file-name')).toHaveValue('')
+  await expect(page.locator('#file-dirty-indicator')).toBeHidden()
+
+  await openLocalBoardDialog(page)
+  await expect(page.locator('#local-board-list')).toContainText('恢复测试另存')
+  await expect(page.locator('#local-board-list')).toContainText('分享名：刷新前修改')
 })
 
 test('editor does not mark the current local file dirty after renaming it', async ({ page }) => {

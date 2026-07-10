@@ -37,7 +37,7 @@
         <div class="stage-toolbar">
           <div class="stage-toolbar-row stage-document-row" aria-label="文档信息">
             <label class="document-name-field file-name-field" for="file-name">
-              <span class="document-name-label">文件名</span>
+              <span class="document-name-label">文件名 <span id="file-dirty-indicator" class="document-dirty-indicator" role="status" aria-live="polite" hidden></span></span>
               <span class="document-name-input-wrap">
                 <input id="file-name" maxlength="48" placeholder="未命名文件" aria-describedby="file-name-count" />
                 <output id="file-name-count" class="document-name-count" for="file-name">0/48</output>

@@ -60,6 +60,7 @@ export function createEditorActionRegistry({
     deletePreset: localPresetsPanel.deletePreset,
     insertPresetAt: localPresetsPanel.insertPresetAt,
     newLocalBoard: localBoardsPanel.newLocalBoard,
+    onFileNameInput: localBoardsPanel.onFileNameInput,
     getLastLayerIndex: objectCommands.getLastLayerIndex,
     groupSelected: objectCommands.groupSelected,
     moveLayerNodeAfter: objectCommands.moveLayerNodeAfter,

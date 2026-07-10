@@ -388,6 +388,17 @@ textarea {
   font-weight: 700;
 }
 
+.document-dirty-indicator {
+  margin-left: 6px;
+  color: #ffca80;
+  font-size: 11px;
+  font-weight: 600;
+}
+
+.document-dirty-indicator[hidden] {
+  display: none;
+}
+
 .stage-toolbar-cluster {
   display: flex;
   align-items: center;

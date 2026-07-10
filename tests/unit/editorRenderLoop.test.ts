@@ -66,7 +66,7 @@ test('createEditorRenderLoop serializes overlapping render requests', async () =
     const writes = (globalThis as typeof globalThis & { localStorageWrites: Array<{ value: string }> }).localStorageWrites
     assert.equal(writes.length, 1)
     const immediateDraft = JSON.parse(writes.at(-1)?.value ?? '{}')
-    assert.equal(immediateDraft.board.name, 'queued')
+    assert.equal(immediateDraft.project.board.name, 'queued')
 
     releaseFirstBoard()
     await secondRender
@@ -75,8 +75,8 @@ test('createEditorRenderLoop serializes overlapping render requests', async () =
     assert.equal(objectRenderCount, 2)
     assert.equal(writes.length, 1)
     const saved = JSON.parse(writes.at(-1)?.value ?? '{}')
-    assert.equal(saved.format, 'node-zsb-project')
-    assert.equal(saved.fileName, 'queued-file')
+    assert.equal(saved.format, 'node-zsb-editor-draft')
+    assert.equal(saved.project.fileName, 'queued-file')
 
     await loop.renderAll()
     assert.equal(writes.length, 1)
@@ -85,16 +85,16 @@ test('createEditorRenderLoop serializes overlapping render requests', async () =
     await loop.renderAll()
     assert.equal(writes.length, 2)
     const updated = JSON.parse(writes.at(-1)?.value ?? '{}')
-    assert.equal(updated.board.name, 'changed')
+    assert.equal(updated.project.board.name, 'changed')
 
     state.currentFileName = ''
     state.board.name = 'unsaved draft'
     await loop.renderAll()
     assert.equal(writes.length, 3)
     const draft = JSON.parse(writes.at(-1)?.value ?? '{}')
-    assert.equal(draft.format, 'node-zsb-project')
-    assert.equal(draft.fileName, '')
-    assert.equal(draft.board.name, 'unsaved draft')
+    assert.equal(draft.format, 'node-zsb-editor-draft')
+    assert.equal(draft.project.fileName, '')
+    assert.equal(draft.project.board.name, 'unsaved draft')
   } finally {
     restoreGlobals()
   }
@@ -102,6 +102,7 @@ test('createEditorRenderLoop serializes overlapping render requests', async () =
 
 function createElements(): RenderLoopDeps['elements'] {
   return {
+    fileDirtyIndicator: Object.assign(document.createElement('span'), { hidden: true }),
     layers: document.createElement('div'),
     layerCount: document.createElement('span'),
   }

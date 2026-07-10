@@ -23,6 +23,7 @@ const EDITOR_DIALOG_TEMPLATES = [
   createImportDialog,
   createExportCodeDialog,
   createExportImageDialog,
+  createUnsavedChangesDialog,
 ]
 
 function createLocalBoardDialog() {
@@ -194,6 +195,35 @@ function createExportImageDialog() {
         id: 'download-preview-image',
         label: '下载图片',
         type: 'button',
+      },
+    ],
+  })
+}
+
+function createUnsavedChangesDialog() {
+  const document = getBrowserDocument()
+  const message = document.createElement('p')
+  message.id = 'unsaved-changes-message'
+  message.textContent = '当前文件有未保存修改。'
+  return createEditorDialog({
+    id: 'unsaved-changes-dialog',
+    title: '未保存修改',
+    compact: true,
+    closeButtonId: 'close-unsaved-changes-dialog',
+    body: [message],
+    actions: [
+      {
+        label: '取消',
+        value: 'cancel',
+      },
+      {
+        className: 'danger-button',
+        label: '不保存',
+        value: 'discard',
+      },
+      {
+        label: '保存',
+        value: 'save',
       },
     ],
   })

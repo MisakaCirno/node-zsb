@@ -24,6 +24,8 @@ export interface EditorElements {
   importDialog: HTMLDialogElement
   exportCodeDialog: HTMLDialogElement
   exportImageDialog: HTMLDialogElement
+  unsavedChangesDialog: HTMLDialogElement
+  unsavedChangesMessage: HTMLElement
   closeLocalBoardDialog: HTMLButtonElement
   closeLocalBoardNameDialog: HTMLButtonElement
   closeImportDialog: HTMLButtonElement
@@ -63,6 +65,7 @@ export interface EditorElements {
   quickOpenExportImageDialog: HTMLButtonElement
   fileName: HTMLInputElement
   fileNameCount: HTMLOutputElement
+  fileDirtyIndicator: HTMLElement
   boardName: HTMLInputElement
   shareNameCount: HTMLOutputElement
   paletteTabs: HTMLElement
@@ -184,6 +187,8 @@ export function getEditorElements(): EditorElements {
     importDialog: queryElement('#import-dialog', HTMLDialogElement),
     exportCodeDialog: queryElement('#export-code-dialog', HTMLDialogElement),
     exportImageDialog: queryElement('#export-image-dialog', HTMLDialogElement),
+    unsavedChangesDialog: queryElement('#unsaved-changes-dialog', HTMLDialogElement),
+    unsavedChangesMessage: queryElement('#unsaved-changes-message', HTMLElement),
     closeLocalBoardDialog: queryElement('#close-local-board-dialog', HTMLButtonElement),
     closeLocalBoardNameDialog: queryElement('#close-local-board-name-dialog', HTMLButtonElement),
     closeImportDialog: queryElement('#close-import-dialog', HTMLButtonElement),
@@ -223,6 +228,7 @@ export function getEditorElements(): EditorElements {
     quickOpenExportImageDialog: queryElement('#quick-open-export-image-dialog', HTMLButtonElement),
     fileName: queryElement('#file-name', HTMLInputElement),
     fileNameCount: queryElement('#file-name-count', HTMLOutputElement),
+    fileDirtyIndicator: queryElement('#file-dirty-indicator', HTMLElement),
     boardName: queryElement('#board-name', HTMLInputElement),
     shareNameCount: queryElement('#share-name-count', HTMLOutputElement),
     paletteTabs: queryElement('#palette-tabs', HTMLElement),

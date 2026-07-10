@@ -90,14 +90,6 @@ export function createEditorControllers({
     renderBackgroundOptions,
   })
 
-  const projectFileActions = createProjectFileActions({
-    state,
-    elements,
-    recordHistory,
-    renderAll,
-    renderBackgroundOptions,
-  })
-
   const viewportControls = createViewportControls({
     state,
     elements,
@@ -125,6 +117,15 @@ export function createEditorControllers({
     confirmAction,
     renderLocalPresets: localPresetsPanel.renderLocalPresets,
     stage,
+  })
+
+  const projectFileActions = createProjectFileActions({
+    state,
+    elements,
+    confirmDocumentReplacement: localBoardsPanel.confirmDocumentReplacement,
+    renderAll,
+    renderBackgroundOptions,
+    updateHistoryButtons,
   })
 
   return {

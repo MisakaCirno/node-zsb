@@ -2,11 +2,16 @@ import { normalizeBoard } from './board.js'
 import { encodeBoardCode, renderPreviewImage } from './api.js'
 import {
   createProjectFromBoard,
-  createProjectSnapshot,
   createPureBoardFromProject,
   flattenProjectToBoard,
   normalizeProject,
 } from './project.js'
+import {
+  createLocalFileSnapshot,
+  detachDocumentAndMarkDirty,
+  isDocumentDirty,
+  markDocumentClean,
+} from './documentState.js'
 import { getBrowserDocument } from './browser.js'
 import { syncFlatLayerTree } from './layerTree.js'
 import { createNameDialogController } from './nameDialog.js'
@@ -25,6 +30,7 @@ import {
 import { DEFAULT_BOARD_BACKGROUND } from '../shared/backgrounds.js'
 import type {
   Board,
+  DocumentReplaceDecision,
   EditorState,
   LayerNode,
   LocalFile,
@@ -46,6 +52,8 @@ interface LocalBoardsPanelElements {
   localBoardDialog: DialogElement
   localStorageDetailsDialog: DialogElement
   localBoardNameDialog: DialogElement
+  unsavedChangesDialog: DialogElement
+  unsavedChangesMessage: TextElement
   localStorageSummary: HTMLElement
   localStorageDetails: HTMLElement
   localBoardList: ListElement
@@ -60,6 +68,7 @@ interface LocalBoardsPanelElements {
   newLocalBoard: DisabledElement
   fileName: InputElement
   fileNameCount: TextElement
+  fileDirtyIndicator: TextElement & { hidden: boolean }
   boardName: InputElement
   shareNameCount: TextElement
 }
@@ -73,7 +82,7 @@ interface DialogElement {
   returnValue: string
   close(): void
   showModal(): void
-  addEventListener(type: string, listener: () => void): void
+  addEventListener(type: string, listener: () => void, options?: { once?: boolean }): void
   querySelector(selector: 'form'): FormElement
   querySelector(selector: 'h2'): TextElement
   querySelector(selector: string): FormElement | TextElement | null
@@ -242,15 +251,15 @@ export function createLocalBoardsPanel({
     const fileName = rawName || await requestFileName({
       currentName: state.currentFileName || state.board.name || '未命名文件',
       title: '保存文件',
-      validate: uniqueFileNameValidator(state.currentFileName),
+      validate: uniqueFileNameValidator(state.associatedLocalFileName),
     })
     if (!fileName) return false
-    if (fileExists(fileName) && fileName !== state.currentFileName) {
+    if (fileExists(fileName) && fileName !== state.associatedLocalFileName) {
       const nextName = await requestFileName({
         currentName: fileName,
         title: '保存文件',
         initialError: '已有同名文件，请换一个名称',
-        validate: uniqueFileNameValidator(state.currentFileName),
+        validate: uniqueFileNameValidator(state.associatedLocalFileName),
       })
       if (!nextName) return false
       return saveFile(nextName, { allowOverwrite: false })
@@ -269,10 +278,7 @@ export function createLocalBoardsPanel({
   }
 
   async function newLocalBoard() {
-    if (isCurrentFileDirty()) {
-      const shouldSave = confirmAction('当前文件有未保存修改，新建文件前是否先保存当前文件？')
-      if (shouldSave && !await saveLocalBoard()) return false
-    }
+    if (!await confirmDocumentReplacement('新建文件')) return false
     state.board = normalizeBoard({
       name: '',
       boardBackground: DEFAULT_BOARD_BACKGROUND,
@@ -285,7 +291,9 @@ export function createLocalBoardsPanel({
     state.history = []
     state.future = []
     updateHistoryButtons()
-    setCurrentFile('')
+    setCurrentDocument('', '')
+    markDocumentClean(state)
+    syncDocumentStatus()
     elements.boardName.value = ''
     syncNameCounter(elements.boardName, elements.shareNameCount)
     renderBackgroundOptions()
@@ -299,10 +307,7 @@ export function createLocalBoardsPanel({
     const files = loadLocalFiles()
     const file = files.find((entry) => entry.name === fileName)
     if (!file) return false
-    if (isCurrentFileDirty()) {
-      const shouldSave = confirmAction('当前文件有未保存修改，打开其他文件前是否先保存当前文件？')
-      if (shouldSave && !await saveLocalBoard()) return false
-    }
+    if (!await confirmDocumentReplacement('打开其他文件')) return false
     const project = file.project ? normalizeProject(file.project) : null
     state.board = normalizeBoard(project ? flattenProjectToBoard(project) : file.board)
     state.layerTree = project?.layers ?? state.board.objects.map((object) => ({
@@ -315,7 +320,9 @@ export function createLocalBoardsPanel({
     state.history = []
     state.future = []
     updateHistoryButtons()
-    setCurrentFile(file.name)
+    setCurrentDocument(file.name, file.name)
+    state.documentBaselineSnapshot = createLocalFileSnapshot(file)
+    syncDocumentStatus()
     elements.boardName.value = state.board.name ?? ''
     syncNameCounter(elements.boardName, elements.shareNameCount)
     renderBackgroundOptions()
@@ -341,10 +348,20 @@ export function createLocalBoardsPanel({
       return false
     }
     file.name = name
+    file.project.fileName = name
     file.updatedAt = new Date().toISOString()
     if (!saveLocalFiles(files)) return false
-    if (state.currentFileName === fileName) {
-      setCurrentFile(name)
+    if (state.associatedLocalFileName === fileName) {
+      const shouldRenameDisplay = state.currentFileName === fileName
+      state.associatedLocalFileName = name
+      if (shouldRenameDisplay) {
+        state.currentFileName = name
+        elements.fileName.value = name
+        syncNameCounter(elements.fileName, elements.fileNameCount)
+      }
+      state.documentBaselineSnapshot = createLocalFileSnapshot(file)
+      syncDocumentStatus()
+      await renderAll()
     }
     renderLocalBoards()
     showStatus('已重命名本地文件')
@@ -358,8 +375,10 @@ export function createLocalBoardsPanel({
     if (!confirmAction(`删除本地文件“${file.name}”？`)) return false
     const nextFiles = files.filter((entry) => entry.name !== file.name)
     if (!saveLocalFiles(nextFiles)) return false
-    if (state.currentFileName === file.name) {
-      setCurrentFile('')
+    if (state.associatedLocalFileName === file.name) {
+      detachDocumentAndMarkDirty(state)
+      syncDocumentStatus()
+      void renderAll()
     }
     renderLocalBoards()
     showStatus('已删除本地文件')
@@ -372,8 +391,10 @@ export function createLocalBoardsPanel({
     if (!confirmAction(`删除选中的 ${names.length} 个本地文件？`)) return false
     const nextFiles = loadLocalFiles().filter((file) => !names.includes(file.name))
     if (!saveLocalFiles(nextFiles)) return false
-    if (names.includes(state.currentFileName)) {
-      setCurrentFile('')
+    if (names.includes(state.associatedLocalFileName)) {
+      detachDocumentAndMarkDirty(state)
+      syncDocumentStatus()
+      void renderAll()
     }
     renderLocalBoards()
     showStatus(`已删除 ${names.length} 个本地文件`)
@@ -393,10 +414,12 @@ export function createLocalBoardsPanel({
   elements.clearSelectedLocalBoards.addEventListener('click', clearSelectedLocalBoards)
 
   return {
+    confirmDocumentReplacement,
     deleteLocalBoard,
     deleteSelectedLocalBoards,
     loadLocalBoard,
     newLocalBoard,
+    onFileNameInput,
     renderLocalBoards,
     renameLocalBoard,
     saveLocalBoard,
@@ -430,7 +453,13 @@ export function createLocalBoardsPanel({
       ? files.map((entry, index) => index === existingIndex ? file : entry)
       : [file, ...files]
     if (!saveLocalFiles(nextFiles)) return false
-    setCurrentFile(name)
+    setCurrentDocument(name, name)
+    markDocumentClean(state, {
+      associatedLocalFileName: name,
+      fileName: name,
+    })
+    syncDocumentStatus()
+    await renderAll()
     renderLocalBoards()
     showStatus('已保存本地文件')
     return true
@@ -504,21 +533,21 @@ export function createLocalBoardsPanel({
   }
 
   function getCurrentFileName() {
-    return normalizeFileName(elements.fileName.value || state.currentFileName)
+    return normalizeFileName(state.currentFileName)
   }
 
-  function currentProjectSnapshot(fileName = getCurrentFileName()) {
-    return createProjectSnapshot(state.board, {
-      fileName,
-      layerTree: state.layerTree,
-    })
-  }
-
-  function setCurrentFile(fileName: string) {
+  function setCurrentDocument(fileName: string, associatedLocalFileName: string) {
     state.currentFileName = fileName
-    state.localFileSnapshot = currentProjectSnapshot(fileName)
+    state.associatedLocalFileName = associatedLocalFileName
     elements.fileName.value = fileName
     syncNameCounter(elements.fileName, elements.fileNameCount)
+  }
+
+  function onFileNameInput() {
+    state.currentFileName = elements.fileName.value
+    syncNameCounter(elements.fileName, elements.fileNameCount)
+    syncDocumentStatus()
+    void renderAll()
   }
 
   function syncNameCounter(input: InputElement, output: TextElement) {
@@ -526,8 +555,30 @@ export function createLocalBoardsPanel({
     output.textContent = `${input.value.length}/${maxLength}`
   }
 
-  function isCurrentFileDirty() {
-    return currentProjectSnapshot() !== state.localFileSnapshot
+  function syncDocumentStatus() {
+    const dirty = isDocumentDirty(state)
+    elements.fileDirtyIndicator.hidden = !dirty
+    elements.fileDirtyIndicator.textContent = dirty ? '未保存' : ''
+  }
+
+  async function confirmDocumentReplacement(actionLabel: string): Promise<boolean> {
+    if (!isDocumentDirty(state)) return true
+    const decision = await requestDocumentReplaceDecision(actionLabel)
+    if (decision === 'cancel') return false
+    if (decision === 'discard') return true
+    return saveLocalBoard()
+  }
+
+  function requestDocumentReplaceDecision(actionLabel: string): Promise<DocumentReplaceDecision> {
+    elements.unsavedChangesMessage.textContent = `当前文件有未保存修改。${actionLabel}前是否保存？`
+    elements.unsavedChangesDialog.returnValue = 'cancel'
+    elements.unsavedChangesDialog.showModal()
+    return new Promise((resolve) => {
+      elements.unsavedChangesDialog.addEventListener('close', () => {
+        const value = elements.unsavedChangesDialog.returnValue
+        resolve(value === 'save' || value === 'discard' ? value : 'cancel')
+      }, { once: true })
+    })
   }
 
   async function updateLocalStorageSummary() {
@@ -733,7 +784,9 @@ export function createLocalBoardsPanel({
     const shouldRefreshLocalFiles = options.clearedAll || target === 'local-files'
     const shouldRefreshLocalPresets = options.clearedAll || target === 'local-presets'
     if (shouldRefreshLocalFiles) {
-      setCurrentFile('')
+      detachDocumentAndMarkDirty(state)
+      syncDocumentStatus()
+      void renderAll()
       renderLocalBoards()
     } else {
       void updateLocalStorageSummary()
