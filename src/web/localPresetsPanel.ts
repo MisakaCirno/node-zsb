@@ -4,6 +4,7 @@ import {
   canSavePresetFromSelection,
   createPresetFromSelection,
   insertPresetIntoBoard,
+  prependLocalPreset,
 } from './localPresets.js'
 import { createNameDialogController } from './nameDialog.js'
 import {
@@ -133,8 +134,11 @@ export function createLocalPresetsPanel({
     const preset = createPresetFromSelection(state, name)
     if (!preset) return false
     const presets = loadLocalPresets()
-    const nextPresets = [preset, ...presets.filter((entry) => entry.id !== preset.id)]
-      .slice(0, MAX_LOCAL_PRESETS)
+    const nextPresets = prependLocalPreset(presets, preset)
+    if (!nextPresets) {
+      showStatus(`本地预设已达到上限 ${MAX_LOCAL_PRESETS}，请删除旧预设后再保存`, { type: 'error' })
+      return false
+    }
     if (!persistLocalPresets(nextPresets)) {
       showStatus('保存预设失败', { type: 'error' })
       return false

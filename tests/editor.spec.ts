@@ -5,6 +5,7 @@ import {
   LOCAL_FILES_KEY,
   LOGICAL_SCALE,
   MAX_BOARD_OBJECTS,
+  MAX_LOCAL_PRESETS,
   SCENE_HEIGHT,
   SCENE_WIDTH,
   STORAGE_KEY,
@@ -816,6 +817,48 @@ test('editor saves reusable presets and inserts them from the preset tab', async
   await presetCard.getByRole('button', { name: '删除' }).click()
   await expect(presetCard).toHaveCount(0)
   await expect.poll(() => countPresetPreviewCache(page)).toBe(0)
+})
+
+test('editor refuses to save a preset at the limit without deleting existing presets', async ({ page }) => {
+  await page.goto('/editor')
+  await page.evaluate(({ key, limit }) => {
+    const timestamp = '2026-01-01T00:00:00.000Z'
+    const presets = Array.from({ length: limit }, (_, index) => {
+      const objectId = `object_${index}`
+      return {
+        id: `preset_${index}`,
+        name: `预设 ${index}`,
+        objects: {
+          [objectId]: {
+            type: 'tank',
+            x: 256,
+            y: 192,
+          },
+        },
+        layers: [{ type: 'object', id: objectId }],
+        objectCount: 1,
+        contentHash: `hash_${index}`,
+        createdAt: timestamp,
+        updatedAt: timestamp,
+      }
+    })
+    localStorage.setItem(key, JSON.stringify(presets))
+  }, { key: LOCAL_PRESETS_KEY, limit: MAX_LOCAL_PRESETS })
+  await page.reload()
+  await expect(page.locator('#layers')).toContainText('tank')
+
+  await page.locator('#layers .layer-row').nth(0).click()
+  await page.locator('#tool-save-preset').click()
+  await page.locator('#preset-name-input').fill('不应保存的新预设')
+  await page.locator('#confirm-preset-name').click()
+
+  await expect(page.locator('#status')).toContainText(`本地预设已达到上限 ${MAX_LOCAL_PRESETS}`)
+  const storedPresets = await page.evaluate((key) =>
+    JSON.parse(localStorage.getItem(key) ?? '[]'), LOCAL_PRESETS_KEY)
+  expect(storedPresets).toHaveLength(MAX_LOCAL_PRESETS)
+  expect(storedPresets[0].id).toBe('preset_0')
+  expect(storedPresets[MAX_LOCAL_PRESETS - 1].id).toBe(`preset_${MAX_LOCAL_PRESETS - 1}`)
+  expect(storedPresets.some((preset: { name?: string }) => preset.name === '不应保存的新预设')).toBe(false)
 })
 
 test('editor preserves layer groups across autosave reloads', async ({ page }) => {

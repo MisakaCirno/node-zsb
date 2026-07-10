@@ -1,5 +1,5 @@
 import { sanitizeObject } from './board.js'
-import { MAX_BOARD_OBJECTS } from './constants.js'
+import { MAX_BOARD_OBJECTS, MAX_LOCAL_PRESETS } from './constants.js'
 import { createEditorId } from './editorIds.js'
 import { getSelectedIndexes } from './editorState.js'
 import { syncBoardOrderFromLayerTree } from './layerTree.js'
@@ -61,6 +61,15 @@ export function createPresetFromSelection(
 
 export function canSavePresetFromSelection(state: EditorState): boolean {
   return Boolean(getPresetSelection(state))
+}
+
+export function prependLocalPreset(
+  presets: LocalLayerPreset[],
+  preset: LocalLayerPreset,
+): LocalLayerPreset[] | null {
+  const replacesExisting = presets.some((entry) => entry.id === preset.id)
+  if (!replacesExisting && presets.length >= MAX_LOCAL_PRESETS) return null
+  return [preset, ...presets.filter((entry) => entry.id !== preset.id)]
 }
 
 export function insertPresetIntoBoard(

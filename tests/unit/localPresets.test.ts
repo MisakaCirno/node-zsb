@@ -1,9 +1,12 @@
 import assert from 'node:assert/strict'
 import test from 'node:test'
 
-import { MAX_BOARD_OBJECTS } from '../../src/web/constants.js'
+import { MAX_BOARD_OBJECTS, MAX_LOCAL_PRESETS } from '../../src/web/constants.js'
 import { createEditorState } from '../../src/web/editorState.js'
-import { insertPresetIntoBoard } from '../../src/web/localPresets.js'
+import {
+  insertPresetIntoBoard,
+  prependLocalPreset,
+} from '../../src/web/localPresets.js'
 import type {
   BoardObject,
   EditorState,
@@ -122,6 +125,42 @@ test('insertPresetIntoBoard sanitizes stale preset objects before insertion', ()
   assert.equal(lineAoe.width, 512)
   assert.equal(lineAoe.height, 16)
   assert.equal(lineAoe.transparency, 100)
+})
+
+test('prependLocalPreset rejects new presets at the limit without dropping old data', () => {
+  const presets = Array.from({ length: MAX_LOCAL_PRESETS }, (_, index) => ({
+    ...createTwoObjectPreset(),
+    id: `preset_${index}`,
+    name: `预设 ${index}`,
+  }))
+  const nextPreset = {
+    ...createTwoObjectPreset(),
+    id: 'preset_new',
+    name: '新预设',
+  }
+
+  assert.equal(prependLocalPreset(presets, nextPreset), null)
+  assert.equal(presets.length, MAX_LOCAL_PRESETS)
+  assert.equal(presets[0]?.id, 'preset_0')
+  assert.equal(presets.at(-1)?.id, `preset_${MAX_LOCAL_PRESETS - 1}`)
+})
+
+test('prependLocalPreset still allows replacing an existing preset at the limit', () => {
+  const presets = Array.from({ length: MAX_LOCAL_PRESETS }, (_, index) => ({
+    ...createTwoObjectPreset(),
+    id: `preset_${index}`,
+    name: `预设 ${index}`,
+  }))
+  const replacement = {
+    ...presets[10]!,
+    name: '已更新预设',
+  }
+
+  const result = prependLocalPreset(presets, replacement)
+
+  assert.equal(result?.length, MAX_LOCAL_PRESETS)
+  assert.equal(result?.[0]?.name, '已更新预设')
+  assert.equal(result?.filter((preset) => preset.id === replacement.id).length, 1)
 })
 
 function createState(objects: BoardObject[] = []): EditorState {
