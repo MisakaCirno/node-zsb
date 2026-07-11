@@ -313,7 +313,8 @@ test('object commands reject additions when the board object limit is reached', 
     confirmAction: () => true,
   })
 
-  commands.addObject('tank')
+  assert.equal(commands.addObject('tank'), false)
+  assert.equal(commands.addObjectAt('tank', { x: 20, y: 20 }), false)
   commands.duplicateSelected()
   commands.pasteObject()
 

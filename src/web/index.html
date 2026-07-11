@@ -19,7 +19,12 @@
           <div id="asset-panel-background" class="asset-tab-panel hidden" role="tabpanel" aria-labelledby="asset-tab-background">
             <div id="background-list" class="background-list" role="radiogroup" aria-label="背景"></div>
           </div>
-          <div id="asset-panel-objects" class="asset-tab-panel" role="tabpanel" aria-labelledby="asset-tab-objects">
+          <div id="asset-panel-objects" class="asset-tab-panel object-tab-panel" role="tabpanel" aria-labelledby="asset-tab-objects">
+            <div class="palette-search-row">
+              <input id="palette-search" type="search" placeholder="搜索对象" autocomplete="off" spellcheck="false" aria-label="搜索对象" aria-describedby="palette-result-status" />
+              <button id="clear-palette-search" class="icon-button" type="button" title="清除搜索" aria-label="清除对象搜索" hidden>×</button>
+            </div>
+            <output id="palette-result-status" class="palette-result-status" for="palette-search" aria-live="polite"></output>
             <div id="palette-tabs" class="segmented"></div>
             <div id="palette" class="palette" role="tabpanel"></div>
           </div>

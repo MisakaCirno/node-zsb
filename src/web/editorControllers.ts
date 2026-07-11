@@ -26,6 +26,7 @@ interface EditorControllersDeps {
   normalizePoint(x: number, y: number): { x: number, y: number }
   recordHistory(): void
   renderAll(): Promise<void>
+  renderPalette(): void
   runAction: RunEditorAction
   selectObject(index: number, options?: { range?: boolean, revealInLayers?: boolean, toggle?: boolean }): void
   showStatus(message: string, options?: { type?: string }): void
@@ -44,6 +45,7 @@ export function createEditorControllers({
   normalizePoint,
   recordHistory,
   renderAll,
+  renderPalette,
   runAction,
   selectObject,
   showStatus,
@@ -121,6 +123,7 @@ export function createEditorControllers({
     showStatus,
     confirmAction,
     renderLocalPresets: localPresetsPanel.renderLocalPresets,
+    renderPalette,
     stageRenderer,
   })
 

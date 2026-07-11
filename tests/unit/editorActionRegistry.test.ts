@@ -134,7 +134,7 @@ test('createEditorActionRegistry exposes the event binding action surface', () =
       updatePresetButtons: handlers.updatePresetButtons,
     },
     objectCommands: {
-      addObject: () => {},
+      addObject: () => true,
       alignSelected: handlers.alignSelected,
       clearBoard: handlers.clearBoard,
       copySelected: handlers.copySelected,

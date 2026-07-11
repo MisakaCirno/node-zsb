@@ -6,6 +6,7 @@ import {
   LOGICAL_SCALE,
   MAX_BOARD_OBJECTS,
   MAX_LOCAL_PRESETS,
+  PALETTE_PREFERENCES_KEY,
   SCENE_HEIGHT,
   SCENE_WIDTH,
   STORAGE_KEY,
@@ -71,6 +72,10 @@ async function openFileMenu(page: Page) {
 async function clickFileMenuAction(page: Page, selector: string) {
   await openFileMenu(page)
   await page.locator(selector).click()
+}
+
+function getPaletteItem(page: Page, type: string) {
+  return page.locator(`#palette .palette-item[data-object-type="${type}"]`)
 }
 
 async function getGridCanvasStats(page: Page) {
@@ -258,7 +263,7 @@ test('editor loads, edits an object, exports code, and renders a preview', async
   const before = await canvas.screenshot()
   expect(before.length).toBeGreaterThan(1_000)
 
-  await page.getByTitle('tank').first().click()
+  await getPaletteItem(page, 'tank').click()
   await expect(page.locator('#object-type')).toHaveValue('tank')
 
   await page.locator('#object-x').fill('260')
@@ -302,8 +307,8 @@ test('editor creates an object by dragging from the palette to the canvas', asyn
     y: Math.round(box.height * 0.4),
   }
 
-  await expect(page.getByTitle('tank').first()).toHaveAttribute('draggable', 'true')
-  await page.getByTitle('tank').first().dragTo(canvas, {
+  await expect(getPaletteItem(page, 'tank')).toHaveAttribute('draggable', 'true')
+  await getPaletteItem(page, 'tank').dragTo(canvas, {
     force: true,
     targetPosition: target,
   })
@@ -327,7 +332,7 @@ test('editor creates an object by dragging from the palette to the canvas', asyn
   const hostBox = await stageHost.boundingBox()
   const canvasBox = await canvas.boundingBox()
   if (!hostBox || !canvasBox) throw new Error('Stage host is not visible')
-  await page.getByTitle('tank').first().dragTo(stageHost, {
+  await getPaletteItem(page, 'tank').dragTo(stageHost, {
     force: true,
     targetPosition: {
       x: Math.max(2, canvasBox.x - hostBox.x - 8),
@@ -341,11 +346,64 @@ test('editor creates an object by dragging from the palette to the canvas', asyn
   await expect(page.locator('#layers .layer-row')).toHaveCount(before + 2)
 })
 
+test('editor searches Chinese object names and keeps recent usage as UI-only metadata', async ({ page }) => {
+  await page.goto('/editor')
+  await page.evaluate((key) => localStorage.removeItem(key), PALETTE_PREFERENCES_KEY)
+  await page.reload()
+  await expect(page.locator('#layers')).toContainText('tank')
+
+  const tank = getPaletteItem(page, 'tank')
+  await expect(tank).toContainText('防护职业')
+  await expect(tank).toHaveAttribute('aria-label', '防护职业')
+  await expect(tank).toHaveAttribute('title', '防护职业（tank）')
+
+  await page.locator('#palette-search').fill('扇形')
+  await expect(page.locator('#palette-result-status')).toHaveText('找到 1 个对象')
+  await expect(page.locator('#palette-tabs [aria-selected="true"]')).toHaveCount(0)
+  await expect(getPaletteItem(page, 'fan_aoe')).toContainText('扇形范围')
+  await expect(tank).toHaveCount(0)
+
+  await page.locator('#palette-search').fill('darkknight')
+  await expect(page.locator('#palette-result-status')).toHaveText('找到 1 个对象')
+  await expect(getPaletteItem(page, 'dark_knight')).toContainText('暗黑骑士')
+
+  await page.locator('#palette-search').fill('不存在的对象')
+  await expect(page.locator('#palette')).toContainText('没有匹配的对象')
+  await page.locator('#clear-palette-search').click()
+  await expect(page.locator('#palette-search')).toHaveValue('')
+
+  const before = await page.locator('#layers .layer-row').count()
+  await getPaletteItem(page, 'tank').click()
+  await expect(page.locator('#layers .layer-row')).toHaveCount(before + 1)
+  await expect(getPaletteItem(page, 'tank')).toBeFocused()
+  await getPaletteItem(page, 'healer').click()
+  await expect(page.locator('#layers .layer-row')).toHaveCount(before + 2)
+  await expect(page.getByRole('tab', { name: '最近' })).toBeVisible()
+  await page.getByRole('tab', { name: '最近' }).click()
+  await expect(page.locator('#palette-result-status')).toHaveText('最近 · 2 个')
+  await expect(page.locator('#palette .palette-item')).toHaveCount(2)
+  expect(await page.locator('#palette .palette-item').evaluateAll((items) =>
+    items.map((item) => (item as HTMLElement).dataset.objectType))).toEqual(['healer', 'tank'])
+
+  await expect.poll(() => page.evaluate((draftKey) => {
+    const draft = JSON.parse(localStorage.getItem(draftKey) ?? '{}')
+    const objects = Object.values(draft.project?.objects ?? {}) as Array<Record<string, unknown>>
+    return objects.some((object) => object.type === 'healer')
+      && objects.every((object) => !('displayName' in object) && !('keywords' in object))
+  }, STORAGE_KEY)).toBe(true)
+
+  await page.reload()
+  await expect(page.getByRole('tab', { name: '最近' })).toBeVisible()
+  await page.getByRole('tab', { name: '最近' }).click()
+  expect(await page.locator('#palette .palette-item').evaluateAll((items) =>
+    items.map((item) => (item as HTMLElement).dataset.objectType))).toEqual(['healer', 'tank'])
+})
+
 test('editor preserves fractional coordinates when dragging on the canvas', async ({ page }) => {
   await page.goto('/editor')
   await expect(page.locator('#layers')).toContainText('tank')
 
-  await page.getByTitle('tank').first().click()
+  await getPaletteItem(page, 'tank').click()
   await page.locator('#object-x').fill('260.2')
   await page.locator('#object-y').fill('196.3')
   await expect(page.locator('#object-x')).toHaveValue('260.2')
@@ -432,7 +490,7 @@ test('editor exports and imports project JSON files', async ({ page }) => {
   await page.goto('/editor')
   await expect(page.locator('#layers')).toContainText('tank')
 
-  await page.getByTitle('tank').first().click()
+  await getPaletteItem(page, 'tank').click()
   await page.locator('#object-x').fill('123')
   await page.locator('#object-y').fill('234')
 
@@ -672,7 +730,7 @@ test('editor groups selected layers and exports the group in project JSON', asyn
 
   await dragLayerIntoGroup(page.locator('#layers .layer-row').filter({ hasText: 'dps' }).first(), groupRow)
   await expect(groupRow.locator('.layer-position')).toHaveText('3 个对象')
-  await page.getByTitle('tank').first().click()
+  await getPaletteItem(page, 'tank').click()
   await expect(page.locator('#layers .layer-group-row')).toHaveCount(1)
   await expect(groupRow.locator('.layer-position')).toHaveText('3 个对象')
 
@@ -1313,7 +1371,7 @@ test('editor renders readable Chinese labels', async ({ page }) => {
   await closeDialog(page, '#export-code-dialog')
   await expect(page.locator('#layers')).toContainText('tank')
   await expect(page.locator('#layer-count')).not.toHaveText('0')
-  await expect(page.getByTitle('tank').first().locator('.object-preview')).toHaveCSS(
+  await expect(getPaletteItem(page, 'tank').locator('.object-preview')).toHaveCSS(
     'background-image',
     /tab1\.webp/,
   )
@@ -1359,7 +1417,7 @@ test('editor renders readable Chinese labels', async ({ page }) => {
   await page.getByRole('tab', { name: '形状' }).click()
   await expect(page.getByRole('tab', { name: '形状' })).toHaveAttribute('aria-selected', 'true')
   for (const shapeType of ['line', 'line_aoe', 'circle_aoe', 'fan_aoe', 'donut']) {
-    await expect(page.locator(`button[title="${shapeType}"] svg`)).toBeVisible()
+    await expect(getPaletteItem(page, shapeType).locator('svg')).toBeVisible()
   }
   await expect(page.locator('.section-title')).toContainText([
     '属性',
@@ -1441,7 +1499,7 @@ test('editor imports code, changes background, and edits text and line objects',
 
   await page.locator('#asset-tab-objects').click()
   await page.getByRole('tab', { name: '形状' }).click()
-  await page.getByTitle('text').click()
+  await getPaletteItem(page, 'text').click()
   await expect(page.locator('#object-type')).toHaveValue('text')
   await page.locator('#object-text').fill('MT')
   await expect(page.locator('#object-color')).toHaveAttribute('type', 'text')
@@ -1469,7 +1527,7 @@ test('editor imports code, changes background, and edits text and line objects',
   await expect(page.locator('#object-color-preview')).toHaveCSS('background-color', 'rgb(67, 168, 216)')
   await expect(page.locator('#layers')).toContainText('text')
 
-  await page.locator('button[title="line"]').click()
+  await getPaletteItem(page, 'line').click()
   await expect(page.locator('#object-type')).toHaveValue('line')
   await page.locator('#object-end-x').fill('360')
   await page.locator('#object-end-y').fill('240')
@@ -1489,7 +1547,7 @@ test('editor drags line endpoints directly on the canvas', async ({ page }) => {
   await expect(page.locator('#layers')).toContainText('tank')
 
   await page.getByRole('tab', { name: '形状' }).click()
-  await page.locator('button[title="line"]').click()
+  await getPaletteItem(page, 'line').click()
   await expect(page.locator('#object-type')).toHaveValue('line')
   await expect(page.locator('#object-end-x')).toHaveValue('320')
   await expect(page.locator('#object-end-y')).toHaveValue('192')
@@ -1543,7 +1601,7 @@ test('editor scales the selected object from the canvas transformer', async ({ p
   await page.goto('/editor')
   await expect(page.locator('#layers')).toContainText('tank')
 
-  await page.getByTitle('tank').first().click()
+  await getPaletteItem(page, 'tank').click()
   await expect(page.locator('#object-type')).toHaveValue('tank')
   await expect(page.locator('#object-size')).toHaveValue('100')
 
@@ -1578,7 +1636,7 @@ test('editor keeps objects stationary when transformer scaling hits the size lim
   await page.goto('/editor')
   await expect(page.locator('#layers')).toContainText('tank')
 
-  await page.getByTitle('tank').first().click()
+  await getPaletteItem(page, 'tank').click()
   await page.locator('#object-size').fill('200')
   await page.locator('#object-size').blur()
   await expect(page.locator('#object-size')).toHaveValue('200')
@@ -1610,7 +1668,7 @@ test('editor scales fixed-ratio objects from side handles around the opposite mi
   await page.goto('/editor')
   await expect(page.locator('#layers')).toContainText('tank')
 
-  await page.getByTitle('tank').first().click()
+  await getPaletteItem(page, 'tank').click()
   await expect(page.locator('#object-size')).toHaveValue('100')
   await expect(page.locator('#object-x')).toHaveValue('256')
   await expect(page.locator('#object-y')).toHaveValue('192')
@@ -1642,7 +1700,7 @@ test('editor free-scales line AOE objects from side transformer handles', async 
   await expect(page.locator('#layers')).toContainText('tank')
 
   await page.getByRole('tab', { name: '形状' }).click()
-  await page.locator('button[title="line_aoe"]').click()
+  await getPaletteItem(page, 'line_aoe').click()
   await expect(page.locator('#object-width')).toHaveValue('128')
   await expect(page.locator('#object-height')).toHaveValue('128')
 
@@ -1676,10 +1734,10 @@ test('editor commits multi-selected canvas scaling in one stable batch', async (
   await page.locator('#clear-board').click()
   await expect(page.locator('#layers .layer-row')).toHaveCount(0)
 
-  await page.getByTitle('tank').first().click()
+  await getPaletteItem(page, 'tank').click()
   await page.locator('#object-x').fill('220')
   await page.locator('#object-y').fill('160')
-  await page.getByTitle('tank').first().click()
+  await getPaletteItem(page, 'tank').click()
   await page.locator('#object-x').fill('320')
   await page.locator('#object-y').fill('220')
 
@@ -1737,10 +1795,10 @@ test('editor multi-selects objects on the canvas and aligns them', async ({ page
   await page.goto('/editor')
   await expect(page.locator('#layers')).toContainText('tank')
 
-  await page.getByTitle('tank').first().click()
+  await getPaletteItem(page, 'tank').click()
   await page.locator('#object-x').fill('220')
   await page.locator('#object-y').fill('160')
-  await page.getByTitle('tank').first().click()
+  await getPaletteItem(page, 'tank').click()
   await page.locator('#object-x').fill('320')
   await page.locator('#object-y').fill('220')
 
@@ -1784,10 +1842,10 @@ test('editor drags multi-selected objects together on the canvas', async ({ page
   await page.locator('#clear-board').click()
   await expect(page.locator('#layers .layer-row')).toHaveCount(0)
 
-  await page.getByTitle('tank').first().click()
+  await getPaletteItem(page, 'tank').click()
   await page.locator('#object-x').fill('220')
   await page.locator('#object-y').fill('160')
-  await page.getByTitle('tank').first().click()
+  await getPaletteItem(page, 'tank').click()
   await page.locator('#object-x').fill('320')
   await page.locator('#object-y').fill('220')
 
@@ -1844,7 +1902,7 @@ test('editor aligns a single selected object to the canvas', async ({ page }) =>
   await page.goto('/editor')
   await expect(page.locator('#layers')).toContainText('tank')
 
-  await page.getByTitle('tank').first().click()
+  await getPaletteItem(page, 'tank').click()
   await page.locator('#object-x').fill('120')
   await page.locator('#object-y').fill('80')
   await expect(page.locator('#align-center-x')).toBeEnabled()
@@ -1871,7 +1929,7 @@ test('editor uses CAD-style marquee direction for contained and intersect select
   await page.locator('#clear-board').click()
   await expect(page.locator('#layers .layer-row')).toHaveCount(0)
 
-  await page.locator('button[title="tank"]').click()
+  await getPaletteItem(page, 'tank').click()
   await page.locator('#object-x').fill('180')
   await page.locator('#object-y').fill('80')
   await expect(page.locator('#layers .layer-row')).toHaveCount(1)
@@ -1926,7 +1984,7 @@ test('editor reorders layers by dragging rows', async ({ page }) => {
   await expect(page.locator('#layers')).toContainText('tank')
 
   await page.getByRole('tab', { name: '形状' }).click()
-  await page.getByTitle('text').click()
+  await getPaletteItem(page, 'text').click()
   const textRow = page.locator('#layers .layer-row').filter({ hasText: 'text' })
   await expect(textRow).toHaveCount(1)
   await expect(page.locator('#layers .layer-row').first()).not.toContainText('text')
@@ -1966,7 +2024,7 @@ test('editor opens custom context menus for canvas and layers', async ({ page })
   await expect(page.locator('#layers .layer-row')).toHaveCount(before + 1)
 
   await page.getByRole('tab', { name: '形状' }).click()
-  await page.getByTitle('text').click()
+  await getPaletteItem(page, 'text').click()
   const textRow = page.locator('#layers .layer-row').filter({ hasText: 'text' })
   const layerCount = await page.locator('#layers .layer-row').count()
   await textRow.click({ button: 'right' })
@@ -1978,10 +2036,10 @@ test('editor selects the canvas right-click target before opening object actions
   await page.goto('/editor')
   await expect(page.locator('#layers')).toContainText('tank')
 
-  await page.getByTitle('tank').first().click()
+  await getPaletteItem(page, 'tank').click()
   await page.locator('#object-x').fill('120')
   await page.locator('#object-y').fill('120')
-  await page.getByTitle('healer').first().click()
+  await getPaletteItem(page, 'healer').click()
   await page.locator('#object-x').fill('360')
   await page.locator('#object-y').fill('120')
 
@@ -2032,7 +2090,7 @@ test('editor supports undo and redo for object creation', async ({ page }) => {
   await expect(page.locator('#layers')).toContainText('tank')
 
   const before = await page.locator('#layers .layer-row').count()
-  await page.getByTitle('tank').first().click()
+  await getPaletteItem(page, 'tank').click()
   await expect(page.locator('#layers .layer-row')).toHaveCount(before + 1)
 
   await page.getByRole('button', { name: '撤销' }).click()
@@ -2185,7 +2243,7 @@ test('editor moves layers to extremes and deletes from the layer toolbar', async
   await expect(page.locator('#layers')).toContainText('tank')
 
   await page.getByRole('tab', { name: '形状' }).click()
-  await page.getByTitle('text').click()
+  await getPaletteItem(page, 'text').click()
   const layerCount = await page.locator('#layers .layer-row').count()
   await expect(page.locator('#layers .layer-row').nth(layerCount - 1)).toContainText('text')
 
@@ -2268,8 +2326,15 @@ test('editor saves, loads, and deletes local browser board slots', async ({
       updatedAt: now,
     }]))
   }, LOCAL_PRESETS_KEY)
+  await page.evaluate((key) => {
+    localStorage.setItem(key, JSON.stringify({
+      version: 1,
+      recentObjectTypes: ['tank'],
+    }))
+  }, PALETTE_PREFERENCES_KEY)
   await page.reload()
   await expect(page.locator('#layers')).toContainText('tank')
+  await expect(page.getByRole('tab', { name: '最近' })).toHaveCount(1)
   await page.locator('#asset-tab-presets').click()
   const cleanupPresetCard = page.locator('.preset-card').filter({ hasText: '清理测试预设' })
   await expect(cleanupPresetCard).toHaveCount(1)
@@ -2294,7 +2359,17 @@ test('editor saves, loads, and deletes local browser board slots', async ({
   await expect(page.locator('#local-storage-details')).toContainText('本地文件')
   await expect(page.locator('#local-storage-details')).toContainText(/可用空间|不可用/)
   await expect(page.locator('#local-storage-details')).toContainText('清理全部')
-  await expect(page.locator('#local-storage-details .local-storage-usage-row button')).toHaveCount(7)
+  await expect(page.locator('#local-storage-details .local-storage-usage-row button')).toHaveCount(8)
+  page.once('dialog', async (dialog) => {
+    expect(dialog.message()).toContain('对象面板最近使用记录')
+    await dialog.accept()
+  })
+  await page.locator('#local-storage-details .local-storage-usage-row')
+    .filter({ hasText: '对象面板偏好' })
+    .getByRole('button', { name: '清理' })
+    .click()
+  await expect.poll(() => page.evaluate((key) => localStorage.getItem(key), PALETTE_PREFERENCES_KEY)).toBeNull()
+  await expect(page.getByRole('tab', { name: '最近' })).toHaveCount(0)
   page.once('dialog', async (dialog) => {
     expect(dialog.message()).toContain('删除所有本地预设')
     await dialog.accept()
@@ -2602,7 +2677,7 @@ test('editor persists the board across reloads', async ({ page }) => {
   const before = await page.locator('#layers .layer-row').count()
   await page.locator('#board-name').fill('自动保存')
   await page.locator('#board-name').dispatchEvent('change')
-  await page.getByTitle('tank').first().click()
+  await getPaletteItem(page, 'tank').click()
   await expect(page.locator('#layers .layer-row')).toHaveCount(before + 1)
 
   await page.reload()
@@ -2641,7 +2716,7 @@ test('editor nudges the selected object with arrow keys', async ({ page }) => {
   await page.goto('/editor')
   await expect(page.locator('#layers')).toContainText('tank')
 
-  await page.getByTitle('tank').first().click()
+  await getPaletteItem(page, 'tank').click()
   await expect(page.locator('#object-type')).toHaveValue('tank')
   const before = Number(await page.locator('#object-x').inputValue())
 
@@ -2790,7 +2865,7 @@ test('editor shows inspector fields that match the selected object type', async 
   await expect(page.locator('#object-size-range')).toHaveValue('120')
 
   await page.getByRole('tab', { name: '形状' }).click()
-  await page.getByTitle('text').click()
+  await getPaletteItem(page, 'text').click()
   await expect(page.locator('[data-field="text"]')).toBeVisible()
   await expect(page.locator('[data-field="line"]')).toBeHidden()
   await expect(page.locator('[data-field="transform"]')).toBeHidden()
@@ -2826,12 +2901,12 @@ test('editor shows inspector fields that match the selected object type', async 
   })
   expect(selectedTextBorderPixels).toBeGreaterThan(0)
 
-  await page.locator('button[title="line"]').click()
+  await getPaletteItem(page, 'line').click()
   await expect(page.locator('[data-field="line"]')).toBeVisible()
   await expect(page.locator('[data-field="text"]')).toBeHidden()
   await expect(page.locator('[data-field="transform"]')).toBeHidden()
 
-  await page.locator('button[title="line_aoe"]').click()
+  await getPaletteItem(page, 'line_aoe').click()
   await expect(page.locator('[data-field="dimensions"]')).toBeVisible()
   await expect(page.locator('[data-field="color"]')).toBeVisible()
   await expect(page.locator('[data-field="transparency"]')).toBeVisible()
@@ -2866,7 +2941,7 @@ test('editor shows inspector fields that match the selected object type', async 
     /.+ 72px/,
   )
 
-  await page.locator('button[title="circle_aoe"]').click()
+  await getPaletteItem(page, 'circle_aoe').click()
   await expect(page.locator('[data-field="size"]')).toBeVisible()
   await expect(page.locator('#object-size')).toHaveValue('50')
   await page.locator('#object-x').fill('0')
@@ -2874,7 +2949,7 @@ test('editor shows inspector fields that match the selected object type', async 
   await expect(page.locator('#object-x')).toHaveValue('0')
   await expect(page.locator('#object-y')).toHaveValue('0')
 
-  await page.locator('button[title="fan_aoe"]').click()
+  await getPaletteItem(page, 'fan_aoe').click()
   await expect(page.locator('[data-field="size"]')).toBeVisible()
   await expect(page.locator('[data-field="color"]')).toBeHidden()
   await expect(page.locator('[data-field="transparency"]')).toBeVisible()
@@ -2899,7 +2974,7 @@ test('editor shows inspector fields that match the selected object type', async 
   await page.locator('#object-arc-range').fill('180')
   await expect(page.locator('#object-arc')).toHaveValue('180')
 
-  await page.locator('button[title="donut"]').click()
+  await getPaletteItem(page, 'donut').click()
   await expect(page.locator('[data-field="color"]')).toBeHidden()
   await expect(page.locator('[data-field="transparency"]')).toBeVisible()
   await expect(page.locator('[data-field="arc-angle"]')).toBeVisible()
@@ -3094,7 +3169,7 @@ test('editor deselects and deletes objects with keyboard shortcuts', async ({
   await expect(page.locator('#layers')).toContainText('tank')
 
   const before = await page.locator('#layers .layer-row').count()
-  await page.getByTitle('tank').first().click()
+  await getPaletteItem(page, 'tank').click()
   await expect(page.locator('#layers .layer-row')).toHaveCount(before + 1)
 
   await page.keyboard.press('Escape')

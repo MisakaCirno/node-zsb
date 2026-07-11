@@ -13,6 +13,7 @@ import { createEditorRenderLoop } from './editorRenderLoop.js'
 import { initializeEditorBoard } from './editorStartup.js'
 import { createStageRenderer } from './stageRenderer.js'
 import { renderPaletteTabs as renderPaletteTabsPanel } from './palettePanel.js'
+import { rememberRecentObjectType } from './palettePreferences.js'
 import type {
   EditorState,
 } from './types.js'
@@ -98,6 +99,7 @@ export function createEditorApp({
     normalizePoint,
     recordHistory,
     renderAll,
+    renderPalette: renderPaletteTabs,
     runAction,
     selectObject,
     showStatus,
@@ -194,6 +196,8 @@ export function createEditorApp({
       elements: els,
       runAction,
       actions: eventActions,
+      onPaletteObjectUsed,
+      renderPalette: renderPaletteTabs,
     })
   }
 
@@ -201,8 +205,22 @@ export function createEditorApp({
     renderPaletteTabsPanel({
       state,
       elements: els,
-      onAddObject: addObject,
+      onAddObject: (type) => {
+        if (addObject(type)) onPaletteObjectUsed(type)
+      },
     })
+  }
+
+  function onPaletteObjectUsed(type: string): void {
+    const activeElement = getBrowserWindow().document.activeElement
+    const restoreFocus = activeElement instanceof HTMLElement
+      && activeElement.classList.contains('palette-item')
+    if (!rememberRecentObjectType(type)) return
+    renderPaletteTabs()
+    if (!restoreFocus) return
+    const matchingButton = [...els.palette.querySelectorAll<HTMLButtonElement>('.palette-item')]
+      .find((button) => button.dataset.objectType === type)
+    matchingButton?.focus()
   }
 
   async function renderAll(): Promise<void> {

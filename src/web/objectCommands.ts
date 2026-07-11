@@ -75,21 +75,23 @@ export function createObjectCommands({
 }: ObjectCommandsDeps): ObjectCommands {
   return {
     addObject(type: string) {
-      if (!canAddObjects(state, 1, showStatus)) return
+      if (!canAddObjects(state, 1, showStatus)) return false
       recordHistory()
       const object = createDefaultObject(type)
       state.board.objects.push(object)
       appendObjectLayerNode(state.layerTree, object.editorId)
       selectObject(state.board.objects.length - 1)
+      return true
     },
 
     addObjectAt(type: string, point: { x: number, y: number }) {
-      if (!canAddObjects(state, 1, showStatus)) return
+      if (!canAddObjects(state, 1, showStatus)) return false
       recordHistory()
       const object = createDefaultObject(type, normalizePoint(point.x, point.y))
       state.board.objects.push(object)
       appendObjectLayerNode(state.layerTree, object.editorId)
       selectObject(state.board.objects.length - 1)
+      return true
     },
 
     toggleLayerFlag(index: number, key: LayerFlag) {

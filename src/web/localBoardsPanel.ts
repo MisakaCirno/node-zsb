@@ -60,6 +60,7 @@ interface LocalBoardsPanelDeps {
   showStatus(message: string, options?: { type?: string }): void
   confirmAction(message: string): boolean
   renderLocalPresets(): void
+  renderPalette(): void
   stageRenderer: StagePreview
 }
 
@@ -187,6 +188,10 @@ const STORAGE_CLEAR_CONFIGS: Record<ProjectStorageClearTarget, StorageClearConfi
     message: '清理其他本项目本地数据？此操作无法恢复。',
     success: '已清理其他本项目本地数据',
   },
+  'palette-preferences': {
+    message: '清理对象面板最近使用记录？',
+    success: '已清理对象面板偏好',
+  },
   'preset-preview-cache': {
     message: '清理预设缩略图缓存？需要时会重新生成。',
     success: '已清理预设缩略图缓存',
@@ -211,6 +216,7 @@ export function createLocalBoardsPanel({
   showStatus,
   confirmAction,
   renderLocalPresets,
+  renderPalette,
   stageRenderer,
 }: LocalBoardsPanelDeps) {
   const browserDocument = getBrowserDocument()
@@ -901,15 +907,15 @@ export function createLocalBoardsPanel({
   }
 
   async function clearAllStorage() {
-    if (!confirmAction('清理所有本项目本地存储？这会删除本地文件、本地预设、自动草稿、视图设置、面板布局、旧数据和预设缩略图缓存，且无法恢复。')) {
+    if (!confirmAction('清理所有本项目本地存储？这会删除本地文件、本地预设、自动草稿、视图设置、面板布局、对象面板偏好、旧数据和预设缩略图缓存，且无法恢复。')) {
       return false
     }
     const ok = await clearAllProjectStorage()
+    await refreshAfterStorageClear('local-files', { clearedAll: true })
     if (!ok) {
-      showStatus('清理存储失败', { type: 'error' })
+      showStatus('本地存储已清理，但预设缩略图缓存清理失败', { type: 'error' })
       return false
     }
-    await refreshAfterStorageClear('local-files', { clearedAll: true })
     showStatus('已清理所有本项目本地存储')
     return true
   }
@@ -920,6 +926,7 @@ export function createLocalBoardsPanel({
   ) {
     const shouldRefreshLocalFiles = options.clearedAll || target === 'local-files'
     const shouldRefreshLocalPresets = options.clearedAll || target === 'local-presets'
+    const shouldRefreshPalette = options.clearedAll || target === 'palette-preferences'
     if (shouldRefreshLocalFiles) {
       detachDocumentAndMarkDirty(state)
       syncDocumentStatus()
@@ -930,6 +937,9 @@ export function createLocalBoardsPanel({
     }
     if (shouldRefreshLocalPresets) {
       renderLocalPresets()
+    }
+    if (shouldRefreshPalette) {
+      renderPalette()
     }
   }
 

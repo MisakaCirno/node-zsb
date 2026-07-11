@@ -299,6 +299,29 @@ textarea {
   height: 100%;
 }
 
+.object-tab-panel {
+  display: grid;
+  grid-template-rows: auto auto auto minmax(0, 1fr);
+  gap: 8px;
+  height: 100%;
+}
+
+.palette-search-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 6px;
+}
+
+.palette-search-row input {
+  min-width: 0;
+}
+
+.palette-result-status {
+  min-height: 16px;
+  color: #81909a;
+  font-size: 12px;
+}
+
 .preset-panel-toolbar {
   display: flex;
   gap: 8px;
@@ -913,16 +936,39 @@ textarea {
 
 .palette {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(52px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(64px, 1fr));
   gap: 8px;
+  min-height: 0;
+  overflow-y: auto;
+  padding-right: 2px;
+  align-content: start;
 }
 
 .palette button {
-  height: 46px;
-  padding: 0;
+  height: 68px;
+  min-width: 0;
+  padding: 5px 4px;
   display: grid;
+  grid-template-rows: 30px auto;
+  gap: 3px;
   place-items: center;
   cursor: grab;
+}
+
+.palette-item-label {
+  width: 100%;
+  overflow: hidden;
+  color: #cbd5da;
+  font-size: 11px;
+  line-height: 1.2;
+  text-align: center;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.palette-empty {
+  grid-column: 1 / -1;
+  margin: 8px 0 0;
 }
 
 .palette button:active {

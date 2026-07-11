@@ -75,6 +75,9 @@ export interface EditorElements {
   shareNameCount: HTMLOutputElement
   paletteTabs: HTMLElement
   palette: HTMLElement
+  paletteSearch: HTMLInputElement
+  clearPaletteSearch: HTMLButtonElement
+  paletteResultStatus: HTMLOutputElement
   layers: HTMLElement
   layerCount: HTMLElement
   stageHost: HTMLElement
@@ -243,6 +246,9 @@ export function getEditorElements(): EditorElements {
     shareNameCount: queryElement('#share-name-count', HTMLOutputElement),
     paletteTabs: queryElement('#palette-tabs', HTMLElement),
     palette: queryElement('#palette', HTMLElement),
+    paletteSearch: queryElement('#palette-search', HTMLInputElement),
+    clearPaletteSearch: queryElement('#clear-palette-search', HTMLButtonElement),
+    paletteResultStatus: queryElement('#palette-result-status', HTMLOutputElement),
     layers: queryElement('#layers', HTMLElement),
     layerCount: queryElement('#layer-count', HTMLElement),
     stageHost: queryElement('#stage-host', HTMLElement),

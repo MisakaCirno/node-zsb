@@ -6,6 +6,7 @@ import {
   LAYOUT_SETTINGS_KEY,
   LOCAL_FILES_KEY,
   LOCAL_PRESETS_KEY,
+  PALETTE_PREFERENCES_KEY,
   STORAGE_KEY,
 } from '../../src/web/constants.js'
 import {
@@ -257,6 +258,7 @@ test('clearAllProjectStorage clears tracked and project-prefixed local storage',
     [STORAGE_KEY]: 'draft',
     [EDITOR_SETTINGS_KEY]: '{}',
     [LAYOUT_SETTINGS_KEY]: '{}',
+    [PALETTE_PREFERENCES_KEY]: '{"version":1}',
     'node-zsb-extra': 'extra',
     unrelated: 'keep',
   })
@@ -268,6 +270,7 @@ test('clearAllProjectStorage clears tracked and project-prefixed local storage',
     assert.equal(window.localStorage.getItem(STORAGE_KEY), null)
     assert.equal(window.localStorage.getItem(EDITOR_SETTINGS_KEY), null)
     assert.equal(window.localStorage.getItem(LAYOUT_SETTINGS_KEY), null)
+    assert.equal(window.localStorage.getItem(PALETTE_PREFERENCES_KEY), null)
     assert.equal(window.localStorage.getItem('node-zsb-extra'), null)
     assert.equal(window.localStorage.getItem('unrelated'), 'keep')
   } finally {

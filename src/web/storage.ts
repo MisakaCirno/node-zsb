@@ -12,6 +12,7 @@ import {
   MAX_GRID_SIZE,
   MIN_GRID_OPACITY,
   MIN_GRID_SIZE,
+  PALETTE_PREFERENCES_KEY,
   STORAGE_KEY,
   ZOOM_LEVELS,
 } from './constants.js'
@@ -175,6 +176,7 @@ type ProjectLocalStorageTarget =
   | 'editor-draft'
   | 'view-settings'
   | 'layout-settings'
+  | 'palette-preferences'
   | 'legacy-local-files'
 
 const PROJECT_LOCAL_STORAGE_KEYS = [
@@ -183,6 +185,7 @@ const PROJECT_LOCAL_STORAGE_KEYS = [
   { id: 'editor-draft', label: '自动草稿', key: STORAGE_KEY },
   { id: 'view-settings', label: '视图设置', key: EDITOR_SETTINGS_KEY },
   { id: 'layout-settings', label: '面板布局', key: LAYOUT_SETTINGS_KEY },
+  { id: 'palette-preferences', label: '对象面板偏好', key: PALETTE_PREFERENCES_KEY },
   { id: 'legacy-local-files', label: '旧版本地文件', key: LOCAL_BOARDS_KEY },
 ] as const
 

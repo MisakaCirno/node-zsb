@@ -127,6 +127,7 @@
 - 自动恢复使用 `STORAGE_KEY`，写入 `node-zsb-editor-draft` v1 包装格式，同时兼容旧版裸工程草稿。
 - 本地文件列表使用 `LOCAL_FILES_KEY`，保留文件名、项目 JSON、纯净战术板、创建/更新时间和预览图。
 - 本地预设使用 `LOCAL_PRESETS_KEY`；预设缩略图单独缓存在 IndexedDB，不占用 localStorage 主数据空间。
+- 对象面板最近使用项通过 `PALETTE_PREFERENCES_KEY` 独立保存，不属于工程或画板数据。
 - `localAssetsBackup.ts` 定义 `node-zsb-local-assets` v1 备份格式。导入会严格校验嵌入工程和预设图层，支持保留现有数据的冲突合并或显式整库替换；文件与预设写入失败时会回滚两类存储。
 - `src/web/project.ts` 负责编辑器项目格式。项目 JSON 可以保留编辑器专属信息，例如嵌套组。
 - `createPureBoardFromProject()` 和 `flattenProjectToBoard()` 负责导出给游戏使用的纯净战术板结构。
@@ -138,6 +139,7 @@
 - 工程 JSON 用于编辑器继续编辑和后续扩展。
 - 分享码用于游戏或现有战术板渲染链路，导出时必须展平编辑器专属结构。
 - 外部工程 JSON 只接受当前 `node-zsb-project` v1 并执行严格结构、对象类型和图层引用校验；旧草稿和旧 localStorage 迁移继续走宽容归一化。
+- `objectCatalog.ts` 中的中文显示名和搜索别名只服务对象面板；画板、工程和分享码仍仅保存原有对象 `type`。
 
 ## 共享类型
 
@@ -169,7 +171,7 @@
 
 - 新增编辑器命令：优先放到已有控制器；若命令横跨多个领域，再考虑新增控制器。
 - 新增画布工具：交互落在 `stageRenderer.ts` 或专门的舞台工具模块，命令仍通过 `objectCommands` 或新的控制器进入状态层。
-- 新增对象类型：同时检查 `board.ts`、`stageRenderer.ts`、`inspectorPanel.ts`、`inspectorControls.ts`、`palettePanel.ts` 和 E2E 覆盖。
+- 新增对象类型：同时检查 `board.ts`、`stageRenderer.ts`、`inspectorPanel.ts`、`inspectorControls.ts`、`palettePanel.ts`、`objectCatalog.ts`、目录覆盖单元测试和 E2E 覆盖；目录元数据不能引入游戏不支持的对象类型。
 - 新增分组能力：优先检查 `layerTree.ts`、`layersPanel.ts`、`objectCommands.ts`、`project.ts` 和项目 JSON 展平逻辑。
 - 新增本地文件能力：优先检查 `storage.ts`、`localBoardsPanel.ts`、`project.ts` 和保存前 dirty 检测。
 - 新增前后端共享算法：只有在不依赖 DOM、Konva、Bun、Elysia、文件系统时，才放到 `src/shared`。

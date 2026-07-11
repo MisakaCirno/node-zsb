@@ -17,6 +17,7 @@ export const LAYOUT_SETTINGS_KEY = 'node-zsb-editor-layout-v1'
 export const LOCAL_BOARDS_KEY = 'node-zsb-editor-local-boards-v1'
 export const LOCAL_FILES_KEY = 'node-zsb-editor-local-files-v1'
 export const LOCAL_PRESETS_KEY = 'node-zsb-editor-local-presets-v1'
+export const PALETTE_PREFERENCES_KEY = 'node-zsb-editor-palette-v1'
 export const MAX_BOARD_OBJECTS = 50
 export const MAX_LOCAL_PRESETS = 50
 export const MAX_TEXT_LENGTH = 30

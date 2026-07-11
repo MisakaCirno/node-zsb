@@ -24,6 +24,8 @@ interface EditorBindingsDeps {
   elements: EditorElements
   runAction: RunEditorAction
   actions: EditorActionRegistry
+  onPaletteObjectUsed(type: string): void
+  renderPalette(): void
 }
 
 interface Point {
@@ -35,6 +37,8 @@ export function bindEditorEvents({
   elements,
   runAction,
   actions,
+  onPaletteObjectUsed,
+  renderPalette,
 }: EditorBindingsDeps) {
   bindMenuBar()
   syncDocumentNameCounters(elements)
@@ -99,6 +103,12 @@ export function bindEditorEvents({
   elements.assetTabPresets.addEventListener('click', () => {
     selectAssetTab(elements, 'presets')
     actions.renderLocalPresets()
+  })
+  elements.paletteSearch.addEventListener('input', renderPalette)
+  elements.clearPaletteSearch.addEventListener('click', () => {
+    elements.paletteSearch.value = ''
+    renderPalette()
+    elements.paletteSearch.focus()
   })
   bindColorPicker({
     elements,
@@ -191,7 +201,7 @@ export function bindEditorEvents({
     setZoom: (zoom) => actions.setStageZoom(zoom, { mode: 'manual' }),
   })
   bindAdaptiveSidebarTabs({ elements })
-  bindPaletteDrop(elements, actions, runPresetAction)
+  bindPaletteDrop(elements, actions, runPresetAction, onPaletteObjectUsed)
   bindContextMenu(elements, actions)
   window.addEventListener('resize', actions.applyFitZoomOnResize)
   document.addEventListener('keydown', (event: KeyboardEvent) => {
@@ -314,6 +324,7 @@ function bindPaletteDrop(
   elements: EditorElements,
   actions: EditorActionRegistry,
   runPresetAction: (action: () => unknown | Promise<unknown>) => void,
+  onPaletteObjectUsed: (type: string) => void,
 ) {
   const presetDragType = getPresetDragType()
   elements.stageHost.addEventListener('dragover', (event: DragEvent) => {
@@ -344,7 +355,7 @@ function bindPaletteDrop(
       runPresetAction(() => actions.insertPresetAt(presetId, point))
       return
     }
-    actions.addObjectAt(type, point)
+    if (actions.addObjectAt(type, point)) onPaletteObjectUsed(type)
   })
 }
 

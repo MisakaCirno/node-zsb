@@ -20,8 +20,8 @@ export type RunEditorAction = (
 ) => Promise<void>
 
 export interface ObjectCommands {
-  addObject(type: string): void
-  addObjectAt(type: string, point: { x: number, y: number }): void
+  addObject(type: string): boolean
+  addObjectAt(type: string, point: { x: number, y: number }): boolean
   alignSelected(alignment: Alignment): void
   clearBoard(): void
   copySelected(): void
