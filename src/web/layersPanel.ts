@@ -2,6 +2,7 @@ import { createObjectPreview } from './iconPreview.js'
 import { MAX_BOARD_OBJECTS } from './constants.js'
 import { getSelectedIndexes } from './editorState.js'
 import { formatCoordinate } from './geometry.js'
+import { getObjectDisplayName } from './objectCatalog.js'
 import type {
   BoardObject,
   EditorState,
@@ -226,6 +227,7 @@ export function renderLayers({
     row.className = 'layer-row'
     row.draggable = !object.locked
     row.dataset.index = String(index)
+    row.dataset.objectType = object.type
     row.style.setProperty('--layer-depth', String(depth))
     row.classList.toggle('active', selectedIndexes.includes(index))
     row.classList.toggle('primary', index === state.selectedIndex)
@@ -256,7 +258,7 @@ export function renderLayers({
         onIcon: lockIcon(),
       }),
       preview,
-      createLayerText('layer-name', `${index + 1}. ${object.type}`),
+      createLayerText('layer-name', `${index + 1}. ${getObjectLayerName(object)}`),
       createLayerText('layer-position', `${formatCoordinate(object.x)}, ${formatCoordinate(object.y)}`),
     )
     getRequiredLayerAction(row, 'hidden').addEventListener('click', (event: MouseEvent) => {
@@ -323,6 +325,11 @@ export function renderLayers({
       return index !== undefined && Boolean(state.board.objects[index]?.locked)
     })
   }
+}
+
+function getObjectLayerName(object: BoardObject): string {
+  if (object.type !== 'text') return object.type
+  return object.text?.trim() || getObjectDisplayName(object.type)
 }
 
 function createLayerToggle({

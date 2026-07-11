@@ -43,11 +43,16 @@ interface TextElement {
 
 const PALETTE_LABELS: Record<string, string> = {
   rolesAndJobs: '职业/特职',
-  mechanics: '机制',
-  enemiesAndMarkers: '标记',
-  shapes: '形状',
-  backgrounds: '地面',
+  mechanics: '攻击范围',
+  enemiesAndMarkers: '图标/标记',
+  shapes: '图形/记号',
+  backgrounds: '场地',
   recent: '最近',
+}
+
+const BUILT_IN_TYPES_BY_GROUP: Record<string, readonly string[]> = {
+  mechanics: BUILT_IN_OBJECT_TYPES.slice(2),
+  shapes: BUILT_IN_OBJECT_TYPES.slice(0, 2),
 }
 
 export function renderPaletteTabs({ state, elements, onAddObject }: PalettePanelDeps) {
@@ -137,7 +142,7 @@ function renderPalette({ state, elements, onAddObject }: PalettePanelDeps) {
 function getTypesForGroup(state: EditorState, group: string): string[] {
   return [
     ...(state.iconGroups[group] ?? []),
-    ...(group === 'shapes' ? BUILT_IN_OBJECT_TYPES : []),
+    ...(BUILT_IN_TYPES_BY_GROUP[group] ?? []),
   ]
 }
 

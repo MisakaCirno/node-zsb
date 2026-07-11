@@ -78,6 +78,10 @@ function getPaletteItem(page: Page, type: string) {
   return page.locator(`#palette .palette-item[data-object-type="${type}"]`)
 }
 
+function getLayerRow(page: Page, type: string) {
+  return page.locator(`#layers .layer-row[data-object-type="${type}"]`)
+}
+
 async function getGridCanvasStats(page: Page) {
   return page.evaluate(`(() => {
     const gridCanvas = document.querySelectorAll('#stage-host canvas')[1]
@@ -363,7 +367,7 @@ test('editor searches Chinese object names and keeps recent usage as UI-only met
   await page.locator('#palette-search').fill('扇形')
   await expect(page.locator('#palette-result-status')).toHaveText('找到 1 个对象')
   await expect(page.locator('#palette-tabs [aria-selected="true"]')).toHaveCount(0)
-  await expect(getPaletteItem(page, 'fan_aoe')).toContainText('扇形范围')
+  await expect(getPaletteItem(page, 'fan_aoe')).toContainText('扇形范围攻击')
   await expect(tank).toHaveCount(0)
 
   await page.locator('#palette-search').fill('darkknight')
@@ -540,7 +544,7 @@ test('editor exports and imports project JSON files', async ({ page }) => {
   })
   await chooseUnsavedChanges(page, 'discard')
 
-  await expect(page.locator('#layers')).toContainText('text')
+  await expect(getLayerRow(page, 'text')).toContainText('Project JSON')
   await expect(page.locator('#file-name')).toHaveValue('imported')
   await expect(page.locator('#board-name')).toHaveValue('JSON')
   await expect(page.locator('#undo-action')).toBeDisabled()
@@ -1416,12 +1420,29 @@ test('editor renders readable Chinese labels', async ({ page }) => {
   await expect(page.locator('#asset-tab-presets')).toHaveAttribute('role', 'tab')
   await expect(page.locator('#asset-tab-presets')).toHaveText('预设')
   await expect(page.locator('#palette-tabs')).toHaveAttribute('role', 'tablist')
-  await expect(page.getByRole('tab', { name: '形状' })).toHaveAttribute('aria-selected', 'false')
-  await page.getByRole('tab', { name: '形状' }).click()
-  await expect(page.getByRole('tab', { name: '形状' })).toHaveAttribute('aria-selected', 'true')
-  for (const shapeType of ['line', 'line_aoe', 'circle_aoe', 'fan_aoe', 'donut']) {
-    await expect(getPaletteItem(page, shapeType).locator('svg')).toBeVisible()
+  for (const category of ['职业/特职', '攻击范围', '图标/标记', '图形/记号', '场地']) {
+    await expect(page.getByRole('tab', { name: category })).toBeVisible()
   }
+  await expect(page.getByRole('tab', { name: '图形/记号' })).toHaveAttribute('aria-selected', 'false')
+  await page.getByRole('tab', { name: '图形/记号' }).click()
+  await expect(page.getByRole('tab', { name: '图形/记号' })).toHaveAttribute('aria-selected', 'true')
+  await expect(page.locator('#palette-result-status')).toHaveText('图形/记号 · 14 个')
+  await expect(getPaletteItem(page, 'text')).toBeVisible()
+  await expect(getPaletteItem(page, 'text')).toHaveAttribute('title', '文字（text）')
+  await expect(getPaletteItem(page, 'line').locator('svg')).toBeVisible()
+  await expect(getPaletteItem(page, 'circle_aoe')).toHaveCount(0)
+  await page.getByRole('tab', { name: '攻击范围' }).click()
+  await expect(page.locator('#palette-result-status')).toHaveText('攻击范围 · 20 个')
+  for (const rangeType of ['line_aoe', 'circle_aoe', 'fan_aoe', 'donut']) {
+    await expect(getPaletteItem(page, rangeType).locator('svg')).toBeVisible()
+  }
+  await expect(getPaletteItem(page, 'line')).toHaveCount(0)
+  await page.getByRole('tab', { name: '图标/标记' }).click()
+  await expect(page.locator('#palette-result-status')).toHaveText('图标/标记 · 34 个')
+  await expect(getPaletteItem(page, 'lockon_green')).toHaveAttribute('title', '瞄准标记（绿色）（lockon_green）')
+  await page.getByRole('tab', { name: '场地' }).click()
+  await expect(page.locator('#palette-result-status')).toHaveText('场地 · 4 个')
+  await expect(getPaletteItem(page, 'grey_square')).toHaveAttribute('title', '正方形灰底（grey_square）')
   await expect(page.locator('.section-title')).toContainText([
     '属性',
     '图层',
@@ -1501,7 +1522,7 @@ test('editor imports code, changes background, and edits text and line objects',
   )
 
   await page.locator('#asset-tab-objects').click()
-  await page.getByRole('tab', { name: '形状' }).click()
+  await page.getByRole('tab', { name: '图形/记号' }).click()
   await getPaletteItem(page, 'text').click()
   await expect(page.locator('#object-type')).toHaveValue('text')
   await page.locator('#object-text').fill('MT')
@@ -1528,7 +1549,7 @@ test('editor imports code, changes background, and edits text and line objects',
   await expect(page.locator('#object-color')).toHaveValue('#43a8d8')
   await expect(page.locator('#object-color-text')).toHaveValue('#43a8d8')
   await expect(page.locator('#object-color-preview')).toHaveCSS('background-color', 'rgb(67, 168, 216)')
-  await expect(page.locator('#layers')).toContainText('text')
+  await expect(getLayerRow(page, 'text')).toContainText('MT')
 
   await getPaletteItem(page, 'line').click()
   await expect(page.locator('#object-type')).toHaveValue('line')
@@ -1541,7 +1562,7 @@ test('editor imports code, changes background, and edits text and line objects',
   await openImportDialog(page)
   await page.locator('#code-input').fill(exported)
   await page.locator('#load-code').click()
-  await expect(page.locator('#layers')).toContainText('text')
+  await expect(getLayerRow(page, 'text')).toContainText('MT')
   await expect(page.locator('#layers')).toContainText('line')
 })
 
@@ -1549,7 +1570,7 @@ test('editor drags line endpoints directly on the canvas', async ({ page }) => {
   await page.goto('/editor')
   await expect(page.locator('#layers')).toContainText('tank')
 
-  await page.getByRole('tab', { name: '形状' }).click()
+  await page.getByRole('tab', { name: '图形/记号' }).click()
   await getPaletteItem(page, 'line').click()
   await expect(page.locator('#object-type')).toHaveValue('line')
   await expect(page.locator('#object-end-x')).toHaveValue('320')
@@ -1702,7 +1723,7 @@ test('editor free-scales line AOE objects from side transformer handles', async 
   await page.goto('/editor')
   await expect(page.locator('#layers')).toContainText('tank')
 
-  await page.getByRole('tab', { name: '形状' }).click()
+  await page.getByRole('tab', { name: '攻击范围' }).click()
   await getPaletteItem(page, 'line_aoe').click()
   await expect(page.locator('#object-width')).toHaveValue('128')
   await expect(page.locator('#object-height')).toHaveValue('128')
@@ -1986,17 +2007,17 @@ test('editor reorders layers by dragging rows', async ({ page }) => {
   await page.goto('/editor')
   await expect(page.locator('#layers')).toContainText('tank')
 
-  await page.getByRole('tab', { name: '形状' }).click()
+  await page.getByRole('tab', { name: '图形/记号' }).click()
   await getPaletteItem(page, 'text').click()
-  const textRow = page.locator('#layers .layer-row').filter({ hasText: 'text' })
+  const textRow = getLayerRow(page, 'text')
   await expect(textRow).toHaveCount(1)
-  await expect(page.locator('#layers .layer-row').first()).not.toContainText('text')
+  await expect(page.locator('#layers .layer-row').first()).not.toHaveAttribute('data-object-type', 'text')
 
   const layerCount = await page.locator('#layers .layer-row').count()
   await textRow.scrollIntoViewIfNeeded()
   await page.locator('#layers').evaluate((layers, targetIndex) => {
     const rows = [...layers.querySelectorAll('.layer-row')]
-    const source = rows.find((row) => row.textContent?.includes('text'))
+    const source = layers.querySelector('.layer-row[data-object-type="text"]')
     const target = rows[targetIndex]
     if (!source || !target) throw new Error('Layer rows are not available')
     const dataTransfer = new DataTransfer()
@@ -2005,10 +2026,10 @@ test('editor reorders layers by dragging rows', async ({ page }) => {
     target.dispatchEvent(new DragEvent('drop', { bubbles: true, dataTransfer }))
     source.dispatchEvent(new DragEvent('dragend', { bubbles: true, dataTransfer }))
   }, layerCount - 2)
-  await expect(page.locator('#layers .layer-row').nth(layerCount - 2)).toContainText('text')
+  await expect(page.locator('#layers .layer-row').nth(layerCount - 2)).toHaveAttribute('data-object-type', 'text')
 
   await page.getByRole('button', { name: '撤销' }).click()
-  await expect(page.locator('#layers .layer-row').nth(layerCount - 1)).toContainText('text')
+  await expect(page.locator('#layers .layer-row').nth(layerCount - 1)).toHaveAttribute('data-object-type', 'text')
 })
 
 test('editor opens custom context menus for canvas and layers', async ({ page }) => {
@@ -2026,13 +2047,13 @@ test('editor opens custom context menus for canvas and layers', async ({ page })
   await page.getByRole('menuitem', { name: '粘贴' }).click()
   await expect(page.locator('#layers .layer-row')).toHaveCount(before + 1)
 
-  await page.getByRole('tab', { name: '形状' }).click()
+  await page.getByRole('tab', { name: '图形/记号' }).click()
   await getPaletteItem(page, 'text').click()
-  const textRow = page.locator('#layers .layer-row').filter({ hasText: 'text' })
+  const textRow = getLayerRow(page, 'text')
   const layerCount = await page.locator('#layers .layer-row').count()
   await textRow.click({ button: 'right' })
   await page.getByRole('menuitem', { name: '上移图层' }).click()
-  await expect(page.locator('#layers .layer-row').nth(layerCount - 2)).toContainText('text')
+  await expect(page.locator('#layers .layer-row').nth(layerCount - 2)).toHaveAttribute('data-object-type', 'text')
 })
 
 test('editor selects the canvas right-click target before opening object actions', async ({ page }) => {
@@ -2245,18 +2266,18 @@ test('editor moves layers to extremes and deletes from the layer toolbar', async
   await page.goto('/editor')
   await expect(page.locator('#layers')).toContainText('tank')
 
-  await page.getByRole('tab', { name: '形状' }).click()
+  await page.getByRole('tab', { name: '图形/记号' }).click()
   await getPaletteItem(page, 'text').click()
   const layerCount = await page.locator('#layers .layer-row').count()
-  await expect(page.locator('#layers .layer-row').nth(layerCount - 1)).toContainText('text')
+  await expect(page.locator('#layers .layer-row').nth(layerCount - 1)).toHaveAttribute('data-object-type', 'text')
 
   await page.locator('#move-top').click()
-  await expect(page.locator('#layers .layer-row').first()).toContainText('text')
+  await expect(page.locator('#layers .layer-row').first()).toHaveAttribute('data-object-type', 'text')
   await expect(page.locator('#move-top')).toBeDisabled()
   await expect(page.locator('#move-bottom')).toBeEnabled()
 
   await page.locator('#move-bottom').click()
-  await expect(page.locator('#layers .layer-row').nth(layerCount - 1)).toContainText('text')
+  await expect(page.locator('#layers .layer-row').nth(layerCount - 1)).toHaveAttribute('data-object-type', 'text')
   await expect(page.locator('#move-bottom')).toBeDisabled()
 
   await page.locator('#delete-object').click()
@@ -2711,7 +2732,7 @@ test('editor can open a board from the code query parameter', async ({
     'aria-checked',
     'true',
   )
-  await expect(page.locator('#layers')).toContainText('text')
+  await expect(getLayerRow(page, 'text')).toContainText('URL')
   await expect(page.locator('#status')).toContainText('已从链接导入战术板')
 })
 
@@ -2867,7 +2888,7 @@ test('editor shows inspector fields that match the selected object type', async 
   await expect(page.locator('#object-size')).toHaveValue('120')
   await expect(page.locator('#object-size-range')).toHaveValue('120')
 
-  await page.getByRole('tab', { name: '形状' }).click()
+  await page.getByRole('tab', { name: '图形/记号' }).click()
   await getPaletteItem(page, 'text').click()
   await expect(page.locator('[data-field="text"]')).toBeVisible()
   await expect(page.locator('[data-field="line"]')).toBeHidden()
@@ -2909,6 +2930,7 @@ test('editor shows inspector fields that match the selected object type', async 
   await expect(page.locator('[data-field="text"]')).toBeHidden()
   await expect(page.locator('[data-field="transform"]')).toBeHidden()
 
+  await page.getByRole('tab', { name: '攻击范围' }).click()
   await getPaletteItem(page, 'line_aoe').click()
   await expect(page.locator('[data-field="dimensions"]')).toBeVisible()
   await expect(page.locator('[data-field="color"]')).toBeVisible()

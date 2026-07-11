@@ -906,7 +906,8 @@ textarea {
   border-bottom: 2px solid transparent;
   background: transparent;
   color: #9ba8b1;
-  padding: 0 11px;
+  padding: 0 5px;
+  font-size: 13px;
 }
 
 .segmented.compact-tabs button {
