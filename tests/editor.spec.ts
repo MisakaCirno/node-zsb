@@ -351,11 +351,14 @@ test('editor searches Chinese object names and keeps recent usage as UI-only met
   await page.evaluate((key) => localStorage.removeItem(key), PALETTE_PREFERENCES_KEY)
   await page.reload()
   await expect(page.locator('#layers')).toContainText('tank')
+  await expect(page.getByRole('tab', { name: '职业/特职' })).toHaveAttribute('aria-selected', 'true')
 
   const tank = getPaletteItem(page, 'tank')
   await expect(tank).toContainText('防护职业')
   await expect(tank).toHaveAttribute('aria-label', '防护职业')
   await expect(tank).toHaveAttribute('title', '防护职业（tank）')
+  await expect(getPaletteItem(page, 'dps_4')).toHaveAttribute('title', '进攻职业4（dps_4）')
+  await expect(getPaletteItem(page, 'barrier_healer')).toContainText('护罩治疗职业')
 
   await page.locator('#palette-search').fill('扇形')
   await expect(page.locator('#palette-result-status')).toHaveText('找到 1 个对象')

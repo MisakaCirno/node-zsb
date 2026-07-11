@@ -139,7 +139,7 @@
 - 工程 JSON 用于编辑器继续编辑和后续扩展。
 - 分享码用于游戏或现有战术板渲染链路，导出时必须展平编辑器专属结构。
 - 外部工程 JSON 只接受当前 `node-zsb-project` v1 并执行严格结构、对象类型和图层引用校验；旧草稿和旧 localStorage 迁移继续走宽容归一化。
-- `objectCatalog.ts` 中的中文显示名和搜索别名只服务对象面板；画板、工程和分享码仍仅保存原有对象 `type`。
+- `objectNamesZhCN.ts` 集中维护对象面板的简体中文显示名，`objectCatalog.ts` 维护搜索别名和匹配逻辑；两者都只服务 UI，画板、工程和分享码仍仅保存原有对象 `type`。
 
 ## 共享类型
 
@@ -171,7 +171,7 @@
 
 - 新增编辑器命令：优先放到已有控制器；若命令横跨多个领域，再考虑新增控制器。
 - 新增画布工具：交互落在 `stageRenderer.ts` 或专门的舞台工具模块，命令仍通过 `objectCommands` 或新的控制器进入状态层。
-- 新增对象类型：同时检查 `board.ts`、`stageRenderer.ts`、`inspectorPanel.ts`、`inspectorControls.ts`、`palettePanel.ts`、`objectCatalog.ts`、目录覆盖单元测试和 E2E 覆盖；目录元数据不能引入游戏不支持的对象类型。
+- 新增对象类型：同时检查 `board.ts`、`stageRenderer.ts`、`inspectorPanel.ts`、`inspectorControls.ts`、`palettePanel.ts`、`objectNamesZhCN.ts`、`objectCatalog.ts`、目录覆盖单元测试和 E2E 覆盖；目录元数据不能引入游戏不支持的对象类型。
 - 新增分组能力：优先检查 `layerTree.ts`、`layersPanel.ts`、`objectCommands.ts`、`project.ts` 和项目 JSON 展平逻辑。
 - 新增本地文件能力：优先检查 `storage.ts`、`localBoardsPanel.ts`、`project.ts` 和保存前 dirty 检测。
 - 新增前后端共享算法：只有在不依赖 DOM、Konva、Bun、Elysia、文件系统时，才放到 `src/shared`。

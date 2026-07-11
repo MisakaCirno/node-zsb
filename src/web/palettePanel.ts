@@ -42,7 +42,7 @@ interface TextElement {
 }
 
 const PALETTE_LABELS: Record<string, string> = {
-  rolesAndJobs: '职能',
+  rolesAndJobs: '职业/特职',
   mechanics: '机制',
   enemiesAndMarkers: '标记',
   shapes: '形状',
