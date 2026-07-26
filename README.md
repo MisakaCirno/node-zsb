@@ -168,4 +168,8 @@ bun run test:smoke
 - 服务端渲染结果会写入项目根目录下的 `cache` 目录。
 - 服务端缓存同时按文件数和总容量裁剪，并以低频更新时间的方式近似保留最近使用的图片。
 - 带当前 `rv` 参数的 `/board/:code` 和 `/preview/:hash` 图片允许浏览器长期缓存；无版本 `/board/:code` 保持兼容并使用 ETag 重新验证。
+- 生产构建会为编辑器模块、样式、字体和素材生成内容版本；版本化资源使用一年不可变缓存，内容变化后 URL 自动更新。
+- 浏览器使用 WOFF2 版 MiSans 字体，服务端渲染继续使用原始 TTF，两端文字度量保持一致。
 - `cache` 已在 `.gitignore` 中忽略。
+
+`RENDER_CACHE_VERSION` 只在渲染像素可能变化时升级，并应同步更新 FFXIVShare 的 `BOARD_RENDER_CACHE_VERSION`。推荐先部署分享站的新版本参数，再部署新版渲染器；版本不一致请求会使用 `no-store` 临时跳转到当前版本。

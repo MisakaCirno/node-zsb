@@ -67,7 +67,7 @@ export function createBoardCodeActions({
   async function renderPreview() {
     const code = await exportAndReturnCode()
     const data = await renderPreviewImage(code)
-    const src = toAppUrl(`/preview/${data.hash}.webp?${Date.now()}`)
+    const src = toAppUrl(`/preview/${data.hash}.webp`)
     elements.preview.src = src
     elements.preview.style.display = 'block'
     elements.preview.dataset.downloadUrl = toAppUrl(`/preview/${data.hash}.webp`)

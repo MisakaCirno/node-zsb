@@ -3164,7 +3164,7 @@ test('editor toggles the visual grid overlay', async ({ page }) => {
 })
 
 test('editor syncs restored grid switch state on startup', async ({ page }) => {
-  await page.route('**/editor/app.js', async (route) => {
+  await page.route('**/editor/app.js*', async (route) => {
     await route.fulfill({
       contentType: 'application/javascript',
       body: `

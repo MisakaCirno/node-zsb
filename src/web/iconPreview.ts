@@ -1,7 +1,7 @@
 import type {
   IconConfig,
 } from './types.js'
-import { toAppUrl } from './appUrl.js'
+import { toAssetUrl } from './assetUrl.js'
 
 type ShapePreviewTag = 'circle' | 'path' | 'rect'
 type ShapePreviewEntry = [ShapePreviewTag, Record<string, string>]
@@ -57,7 +57,7 @@ export function createObjectPreview({
   preview.setAttribute('aria-hidden', 'true')
   preview.style.width = `${size}px`
   preview.style.height = `${size}px`
-  preview.style.backgroundImage = `url("${toAppUrl(`/assets/objects/${config.src}.webp`)}")`
+  preview.style.backgroundImage = `url("${toAssetUrl(`/assets/objects/${config.src}.webp`)}")`
   const scale = size / config.crop.width
   const spriteWidth = getSpriteWidth(iconConfigs, config.src)
   const spriteHeight = getSpriteHeight(iconConfigs, config.src)

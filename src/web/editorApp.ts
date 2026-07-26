@@ -1,4 +1,5 @@
 import { getEditorData } from './api.js'
+import { configureAssetVersions } from './assetUrl.js'
 import { getBrowserWindow } from './browser.js'
 import { createEditorState } from './editorState.js'
 import { createEditorActionRegistry } from './editorActionRegistry.js'
@@ -170,6 +171,7 @@ export function createEditorApp({
 
   async function runStart(): Promise<void> {
     const meta = await getEditorData()
+    configureAssetVersions(meta.assetVersions ?? {})
     state.iconConfigs = meta.iconConfigs
     state.iconGroups = meta.iconGroups
     state.backgrounds = meta.backgrounds

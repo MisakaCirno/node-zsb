@@ -1,4 +1,4 @@
-import { existsSync } from 'node:fs'
+import { existsSync, readFileSync } from 'node:fs'
 import { spawn } from 'node:child_process'
 import type { ChildProcess } from 'node:child_process'
 import { RENDER_CACHE_VERSION } from '../src/server/utils/renderCache.ts'
@@ -8,6 +8,7 @@ const builtEntry = 'dist/web/app.js'
 let serverProcess: ChildProcess | null = null
 
 interface EditorDataPayload {
+  assetVersions?: Record<string, unknown>
   defaultCode?: unknown
 }
 
@@ -19,10 +20,20 @@ interface RenderPayload {
   }
 }
 
+interface AssetManifest {
+  webVersion: string
+  stylesVersion: string
+  vendorVersion: string
+  assets: Record<string, string>
+}
+
 async function main() {
   if (!existsSync(builtEntry)) {
     throw new Error(`Missing ${builtEntry}; run bun run build before the smoke test`)
   }
+  const assetManifest = JSON.parse(
+    readFileSync('dist/asset-manifest.json', 'utf8'),
+  ) as AssetManifest
 
   const hadServer = await isServerReady()
   if (!hadServer) {
@@ -45,8 +56,48 @@ async function main() {
   if (health.status !== 'ok') {
     throw new Error('Health endpoint did not report an ok status')
   }
-  await expectResponse('/editor', 'text/html')
-  await expectResponse('/editor/app.js', 'javascript')
+  const editor = await expectResponse('/editor', 'text/html')
+  const editorHtml = await editor.text()
+  for (const versionedReference of [
+    `./editor/styles.css?v=${assetManifest.stylesVersion}`,
+    `./vendor/konva.min.js?v=${assetManifest.vendorVersion}`,
+    `./editor/app.js?v=${assetManifest.webVersion}`,
+  ]) {
+    if (!editorHtml.includes(versionedReference)) {
+      throw new Error(`Editor HTML did not reference ${versionedReference}`)
+    }
+  }
+  const appScript = await expectResponse(
+    `/editor/app.js?v=${assetManifest.webVersion}`,
+    'javascript',
+  )
+  expectHeader(appScript, 'cache-control', 'public, max-age=31536000, immutable')
+  const styles = await expectResponse(
+    `/editor/styles.css?v=${assetManifest.stylesVersion}`,
+    'text/css',
+  )
+  expectHeader(styles, 'cache-control', 'public, max-age=31536000, immutable')
+  const vendor = await expectResponse(
+    `/vendor/konva.min.js?v=${assetManifest.vendorVersion}`,
+    'javascript',
+  )
+  expectHeader(vendor, 'cache-control', 'public, max-age=31536000, immutable')
+  const backgroundVersion = assetManifest.assets['/assets/background/1.webp']
+  const background = await expectResponse(
+    `/assets/background/1.webp?v=${backgroundVersion}`,
+    'image/webp',
+    { requireBody: true },
+  )
+  expectHeader(background, 'cache-control', 'public, max-age=31536000, immutable')
+  const unversionedBackground = await expectResponse('/assets/background/1.webp', 'image/webp')
+  expectHeader(unversionedBackground, 'cache-control', 'no-store')
+  const fontPath = '/assets/fonts/MiSans-Semibold.woff2'
+  const font = await expectResponse(
+    `${fontPath}?v=${assetManifest.assets[fontPath]}`,
+    'font/woff2',
+    { requireBody: true },
+  )
+  expectHeader(font, 'cache-control', 'public, max-age=31536000, immutable')
   const compatibleBoard = await expectResponse('/board', 'image/webp', { requireBody: true })
   expectHeader(compatibleBoard, 'cache-control', 'public, no-cache')
   const versionedBoard = await expectResponse(
@@ -63,6 +114,9 @@ async function main() {
   const editorData = await expectJson<EditorDataPayload>('/editor-data')
   if (typeof editorData.defaultCode !== 'string' || !editorData.defaultCode) {
     throw new Error('Editor metadata did not include a default board code')
+  }
+  if (editorData.assetVersions?.['/assets/background/1.webp'] !== backgroundVersion) {
+    throw new Error('Editor metadata did not include the current background version')
   }
 
   const render = await expectJson<RenderPayload>('/board/render', {

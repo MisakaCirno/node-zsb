@@ -26,6 +26,7 @@ export interface EditorSettings {
 }
 
 export interface EditorData {
+  assetVersions?: Record<string, string>
   backgrounds: Record<string, string>
   defaultCode: string
   iconConfigs: Record<string, IconConfig>
