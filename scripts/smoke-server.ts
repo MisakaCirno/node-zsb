@@ -1,6 +1,7 @@
 import { existsSync } from 'node:fs'
 import { spawn } from 'node:child_process'
 import type { ChildProcess } from 'node:child_process'
+import { RENDER_CACHE_VERSION } from '../src/server/utils/renderCache.ts'
 
 const origin = process.env.NODE_ZSB_SMOKE_ORIGIN ?? 'http://localhost:3000'
 const builtEntry = 'dist/web/app.js'
@@ -46,7 +47,18 @@ async function main() {
   }
   await expectResponse('/editor', 'text/html')
   await expectResponse('/editor/app.js', 'javascript')
-  await expectResponse('/board', 'image/webp', { requireBody: true })
+  const compatibleBoard = await expectResponse('/board', 'image/webp', { requireBody: true })
+  expectHeader(compatibleBoard, 'cache-control', 'public, no-cache')
+  const versionedBoard = await expectResponse(
+    `/board?rv=${encodeURIComponent(RENDER_CACHE_VERSION)}`,
+    'image/webp',
+    { requireBody: true },
+  )
+  expectHeader(versionedBoard, 'cache-control', 'public, max-age=31536000, immutable')
+  await expectNotModified(
+    `/board?rv=${encodeURIComponent(RENDER_CACHE_VERSION)}`,
+    versionedBoard.headers.get('etag'),
+  )
 
   const editorData = await expectJson<EditorDataPayload>('/editor-data')
   if (typeof editorData.defaultCode !== 'string' || !editorData.defaultCode) {
@@ -65,7 +77,11 @@ async function main() {
   if (typeof render.data?.thumbhash !== 'string' || !render.data.thumbhash) {
     throw new Error('Render endpoint did not return a thumbhash')
   }
-  await expectResponse(`/preview/${hash}.webp`, 'image/webp', { requireBody: true })
+  const preview = await expectResponse(`/preview/${hash}.webp`, 'image/webp', {
+    requireBody: true,
+  })
+  expectHeader(preview, 'cache-control', 'public, max-age=31536000, immutable')
+  await expectNotModified(`/preview/${hash}.webp`, preview.headers.get('etag'))
 
   console.log('Bun server smoke test passed')
 }
@@ -93,6 +109,24 @@ async function expectResponse(
   }
   if (requireBody && (await response.arrayBuffer()).byteLength === 0) {
     throw new Error(`${path} returned an empty body`)
+  }
+  return response
+}
+
+function expectHeader(response: Response, name: string, expected: string) {
+  const actual = response.headers.get(name)
+  if (actual !== expected) {
+    throw new Error(`${name} was ${actual || '(empty)'} instead of ${expected}`)
+  }
+}
+
+async function expectNotModified(path: string, etag: string | null) {
+  if (!etag) throw new Error(`${path} did not return an etag`)
+  const response = await fetch(`${origin}${path}`, {
+    headers: { 'if-none-match': etag },
+  })
+  if (response.status !== 304) {
+    throw new Error(`${path} returned HTTP ${response.status} instead of 304`)
   }
 }
 

@@ -16,10 +16,18 @@ import {
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
 const cacheDir = path.resolve(__dirname, '..', '..', '..', 'cache')
-const MAX_CACHE_FILES = 500
+const MAX_CACHE_FILES = readPositiveInteger(
+  process.env.NODE_ZSB_RENDER_CACHE_MAX_FILES,
+  5_000,
+)
+const MAX_CACHE_BYTES = readPositiveInteger(
+  process.env.NODE_ZSB_RENDER_CACHE_MAX_MB,
+  512,
+) * 1024 * 1024
 const renderCacheStore = createRenderCacheStore({
   directory: cacheDir,
   maxFiles: MAX_CACHE_FILES,
+  maxBytes: MAX_CACHE_BYTES,
 })
 const renderCache = createCachedRenderService({
   store: renderCacheStore,
@@ -30,6 +38,11 @@ const renderCache = createCachedRenderService({
 export async function renderImage(code = defaultCode) {
   validateBoardCodeInput(code)
   return (await renderCache.render(code)).data
+}
+
+export async function renderImageWithMetadata(code = defaultCode) {
+  validateBoardCodeInput(code)
+  return renderCache.render(code)
 }
 
 async function renderCodeToWebp(code: string): Promise<Buffer> {
@@ -60,6 +73,10 @@ export function getCachePath(hash: string) {
   return renderCacheStore.getPath(hash)
 }
 
+export function readCachedImage(hash: string) {
+  return renderCacheStore.read(hash)
+}
+
 export async function renderImageOffline(code = defaultCode) {
   validateBoardCodeInput(code)
   const { hash, data } = await renderCache.render(code)
@@ -75,4 +92,10 @@ export async function renderImageOffline(code = defaultCode) {
     hash,
     thumbhash: thumbHashToBase64,
   }
+}
+
+function readPositiveInteger(value: string | undefined, fallback: number): number {
+  if (value === undefined || value.trim() === '') return fallback
+  const parsed = Number(value)
+  return Number.isSafeInteger(parsed) && parsed > 0 ? parsed : fallback
 }

@@ -138,3 +138,12 @@ powershell.exe -NoProfile -ExecutionPolicy Bypass `
 再双击 `start_node_zsb.bat`。不要在有受跟踪文件修改时切换提交。
 
 服务端渲染缓存继续位于仓库根目录的 `cache`。直接在同一仓库更新不会删除当前缓存；Git 和启动器都不会清理它。
+
+默认最多保留 5000 张、总计 512 MB 的渲染图片。需要按服务器磁盘容量调整时，在启动服务前设置：
+
+```powershell
+$env:NODE_ZSB_RENDER_CACHE_MAX_FILES = '5000'
+$env:NODE_ZSB_RENDER_CACHE_MAX_MB = '512'
+```
+
+缓存达到任一上限后会优先删除长期未访问的图片；删除只影响服务端缓存，下一次请求仍可重新渲染。

@@ -12,7 +12,8 @@ export interface RenderCacheFileSystem {
   rename(sourcePath: string, targetPath: string): Promise<unknown>
   rm(filePath: string, options: { force: boolean }): Promise<unknown>
   readdir(directory: string): Promise<string[]>
-  stat(filePath: string): Promise<{ mtimeMs: number }>
+  stat(filePath: string): Promise<{ mtimeMs: number, size: number }>
+  utimes(filePath: string, atime: Date, mtime: Date): Promise<unknown>
 }
 
 export interface RenderCacheStore {
@@ -26,14 +27,19 @@ export interface RenderCacheStore {
 interface CreateRenderCacheStoreOptions {
   directory: string
   maxFiles?: number
+  maxBytes?: number
+  touchIntervalMs?: number
   fileSystem?: RenderCacheFileSystem
+  now?: () => number
 }
 
 interface CreateCachedRenderServiceOptions {
   store: RenderCacheStore
   render(code: string): Promise<Buffer>
   version?: string
+  pruneIntervalMs?: number
   onPruneError?(error: unknown): void
+  now?: () => number
 }
 
 export interface CachedRenderResult {
@@ -49,6 +55,7 @@ const defaultFileSystem: RenderCacheFileSystem = {
   rm: (filePath, options) => nodeFs.rm(filePath, options),
   readdir: (directory) => nodeFs.readdir(directory),
   stat: (filePath) => nodeFs.stat(filePath),
+  utimes: (filePath, atime, mtime) => nodeFs.utimes(filePath, atime, mtime),
 }
 
 export function createRenderCacheKey(
@@ -65,9 +72,13 @@ export function createRenderCacheKey(
 export function createRenderCacheStore({
   directory,
   maxFiles = 500,
+  maxBytes = Number.POSITIVE_INFINITY,
+  touchIntervalMs = 6 * 60 * 60 * 1_000,
   fileSystem = defaultFileSystem,
+  now = Date.now,
 }: CreateRenderCacheStoreOptions): RenderCacheStore {
   const cacheDirectory = path.resolve(directory)
+  const lastTouched = new Map<string, number>()
 
   function getPath(hash: string): string {
     assertCacheHash(hash)
@@ -76,7 +87,10 @@ export function createRenderCacheStore({
 
   async function read(hash: string): Promise<Buffer | null> {
     try {
-      return await fileSystem.readFile(getPath(hash))
+      const filePath = getPath(hash)
+      const data = await fileSystem.readFile(filePath)
+      touchAfterRead(filePath)
+      return data
     } catch (error) {
       if (isMissingFileError(error)) return null
       throw error
@@ -93,6 +107,7 @@ export function createRenderCacheStore({
     try {
       await fileSystem.writeFile(temporaryPath, data)
       await fileSystem.rename(temporaryPath, targetPath)
+      lastTouched.set(targetPath, now())
     } finally {
       await fileSystem.rm(temporaryPath, { force: true }).catch(() => undefined)
     }
@@ -107,25 +122,45 @@ export function createRenderCacheStore({
       throw error
     }
 
-    const entries: Array<{ filePath: string, mtimeMs: number }> = []
+    const entries: Array<{ filePath: string, mtimeMs: number, size: number }> = []
     for (const name of names) {
       if (!name.endsWith('.webp')) continue
       const hash = name.slice(0, -'.webp'.length)
       if (!RENDER_CACHE_HASH_PATTERN.test(hash)) continue
       const filePath = path.join(cacheDirectory, name)
       try {
-        const { mtimeMs } = await fileSystem.stat(filePath)
-        entries.push({ filePath, mtimeMs })
+        const { mtimeMs, size } = await fileSystem.stat(filePath)
+        entries.push({ filePath, mtimeMs, size })
       } catch (error) {
         if (!isMissingFileError(error)) throw error
       }
     }
 
     entries.sort((left, right) => left.mtimeMs - right.mtimeMs)
-    const overflow = entries.length - Math.max(0, maxFiles)
-    for (const entry of entries.slice(0, Math.max(0, overflow))) {
+    let remainingFiles = entries.length
+    let remainingBytes = entries.reduce((sum, entry) => sum + entry.size, 0)
+    for (const entry of entries) {
+      if (
+        remainingFiles <= Math.max(0, maxFiles)
+        && remainingBytes <= Math.max(0, maxBytes)
+      ) {
+        break
+      }
       await fileSystem.rm(entry.filePath, { force: true })
+      lastTouched.delete(entry.filePath)
+      remainingFiles -= 1
+      remainingBytes -= entry.size
     }
+  }
+
+  function touchAfterRead(filePath: string): void {
+    const touchedAt = now()
+    const previousTouch = lastTouched.get(filePath)
+    if (previousTouch !== undefined && touchedAt - previousTouch < touchIntervalMs) return
+
+    lastTouched.set(filePath, touchedAt)
+    const date = new Date(touchedAt)
+    void fileSystem.utimes(filePath, date, date).catch(() => undefined)
   }
 
   return {
@@ -141,9 +176,13 @@ export function createCachedRenderService({
   store,
   render,
   version = RENDER_CACHE_VERSION,
+  pruneIntervalMs = 60_000,
   onPruneError = () => undefined,
+  now = Date.now,
 }: CreateCachedRenderServiceOptions) {
   const pending = new Map<string, Promise<CachedRenderResult>>()
+  let lastPruneStartedAt = Number.NEGATIVE_INFINITY
+  let prunePromise: Promise<void> | null = null
 
   async function renderCached(code: string): Promise<CachedRenderResult> {
     const hash = createRenderCacheKey(code, version)
@@ -159,11 +198,7 @@ export function createCachedRenderService({
     const renderPromise = (async () => {
       const data = await render(code)
       await store.writeAtomic(hash, data)
-      try {
-        await store.prune()
-      } catch (error) {
-        onPruneError(error)
-      }
+      schedulePrune()
       return { hash, data }
     })()
     pending.set(hash, renderPromise)
@@ -178,6 +213,18 @@ export function createCachedRenderService({
 
   return {
     render: renderCached,
+  }
+
+  function schedulePrune(): void {
+    const currentTime = now()
+    if (prunePromise || currentTime - lastPruneStartedAt < pruneIntervalMs) return
+
+    lastPruneStartedAt = currentTime
+    prunePromise = store.prune()
+      .catch(onPruneError)
+      .finally(() => {
+        prunePromise = null
+      })
   }
 }
 

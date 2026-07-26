@@ -9,6 +9,7 @@ import {
   createRenderCacheKey,
   createRenderCacheStore,
   type RenderCacheFileSystem,
+  type RenderCacheStore,
 } from '../../src/server/utils/renderCache.ts'
 
 test('render cache keys isolate versions while keeping old hashes readable', async () => {
@@ -158,6 +159,92 @@ test('render cache pruning removes the oldest versioned files first', async () =
   })
 })
 
+test('render cache pruning also respects the configured byte budget', async () => {
+  await withTempDirectory(async (directory) => {
+    const store = createRenderCacheStore({
+      directory,
+      maxFiles: 10,
+      maxBytes: 4,
+    })
+    const hashes = ['a', 'b', 'c'].map((value) => value.repeat(64))
+    for (const hash of hashes) {
+      await store.writeAtomic(hash, Buffer.from('xx'))
+    }
+    await nodeFs.utimes(store.getPath(hashes[0] as string), new Date(1_000), new Date(1_000))
+    await nodeFs.utimes(store.getPath(hashes[1] as string), new Date(2_000), new Date(2_000))
+    await nodeFs.utimes(store.getPath(hashes[2] as string), new Date(3_000), new Date(3_000))
+
+    await store.prune()
+
+    await assert.rejects(nodeFs.access(store.getPath(hashes[0] as string)))
+    assert.equal((await nodeFs.readFile(store.getPath(hashes[1] as string))).toString(), 'xx')
+    assert.equal((await nodeFs.readFile(store.getPath(hashes[2] as string))).toString(), 'xx')
+  })
+})
+
+test('render cache approximates LRU with throttled file touches', async () => {
+  await withTempDirectory(async (directory) => {
+    let currentTime = 1_000
+    let touchCount = 0
+    const fileSystem = createFileSystem({
+      utimes: async (filePath, atime, mtime) => {
+        touchCount += 1
+        await nodeFs.utimes(filePath, atime, mtime)
+      },
+    })
+    const store = createRenderCacheStore({
+      directory,
+      fileSystem,
+      touchIntervalMs: 100,
+      now: () => currentTime,
+    })
+    const hash = 'd'.repeat(64)
+    await store.writeAtomic(hash, Buffer.from('hot'))
+
+    currentTime = 1_050
+    await store.read(hash)
+    assert.equal(touchCount, 0)
+
+    currentTime = 1_101
+    await store.read(hash)
+    assert.equal(touchCount, 1)
+
+    currentTime = 1_150
+    await store.read(hash)
+    assert.equal(touchCount, 1)
+  })
+})
+
+test('render cache pruning does not block a newly rendered response', async () => {
+  let signalPruneStarted: () => void = () => {}
+  const pruneStarted = new Promise<void>((resolve) => {
+    signalPruneStarted = resolve
+  })
+  let releasePrune: () => void = () => {}
+  const pruneGate = new Promise<void>((resolve) => {
+    releasePrune = resolve
+  })
+  const store: RenderCacheStore = {
+    directory: 'virtual',
+    getPath: (hash) => hash,
+    read: async () => null,
+    writeAtomic: async () => undefined,
+    prune: async () => {
+      signalPruneStarted()
+      await pruneGate
+    },
+  }
+  const service = createCachedRenderService({
+    store,
+    render: async () => Buffer.from('ready'),
+  })
+
+  const result = await service.render('non-blocking')
+  await pruneStarted
+  assert.equal(result.data.toString(), 'ready')
+  releasePrune()
+})
+
 test('render cache key is stable for the same version and code', () => {
   assert.equal(
     createRenderCacheKey('stable-code', 'stable-version'),
@@ -180,6 +267,7 @@ function createFileSystem(
     rm: (filePath, options) => nodeFs.rm(filePath, options),
     readdir: (directory) => nodeFs.readdir(directory),
     stat: (filePath) => nodeFs.stat(filePath),
+    utimes: (filePath, atime, mtime) => nodeFs.utimes(filePath, atime, mtime),
     ...overrides,
   }
 }

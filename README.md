@@ -45,6 +45,8 @@ http://localhost:3000
 | --- | --- | --- |
 | `NODE_ZSB_HOST` | `localhost` | 服务监听主机；当前 Windows 生产环境会解析为 IPv6 回环 `[::1]` |
 | `NODE_ZSB_PORT` | `3000` | 1 到 65535 的监听端口 |
+| `NODE_ZSB_RENDER_CACHE_MAX_FILES` | `5000` | 服务端最多保留的渲染图片数量 |
+| `NODE_ZSB_RENDER_CACHE_MAX_MB` | `512` | 服务端渲染缓存的磁盘容量上限（MB） |
 
 编辑器入口：
 
@@ -164,4 +166,6 @@ bun run test:smoke
 
 - 浏览器自动恢复、编辑器设置和本地文件保存在浏览器 `localStorage` 中。
 - 服务端渲染结果会写入项目根目录下的 `cache` 目录。
+- 服务端缓存同时按文件数和总容量裁剪，并以低频更新时间的方式近似保留最近使用的图片。
+- 带当前 `rv` 参数的 `/board/:code` 和 `/preview/:hash` 图片允许浏览器长期缓存；无版本 `/board/:code` 保持兼容并使用 ETag 重新验证。
 - `cache` 已在 `.gitignore` 中忽略。
