@@ -21,7 +21,7 @@
     "elysia": "^1.4.29",
     "file-type": "^22.0.1",
     "konva": "^10.2.0",
-    "sharp": "^0.34.5",
+    "sharp": "^0.35.3",
     "skia-canvas": "^3.0.8",
     "thumbhash": "^0.1.1",
     "xiv-strat-board": "^0.2.3"
