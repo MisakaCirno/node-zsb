@@ -1,15 +1,12 @@
 interface SidebarTabLayoutDeps {
   elements: {
-    paletteTabs: HTMLElement
     shell: HTMLElement
   }
 }
 
 export function bindAdaptiveSidebarTabs({ elements }: SidebarTabLayoutDeps) {
-  const tabLists = [
-    document.querySelector<HTMLElement>('.sidebar-tabs'),
-    elements.paletteTabs,
-  ].filter((tabList): tabList is HTMLElement => Boolean(tabList))
+  const tabLists = [document.querySelector<HTMLElement>('.sidebar-tabs')]
+    .filter((tabList): tabList is HTMLElement => Boolean(tabList))
   const update = () => updateSidebarTabLayout(tabLists)
   const scheduleUpdate = () => window.requestAnimationFrame(update)
 

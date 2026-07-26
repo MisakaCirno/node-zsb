@@ -358,21 +358,21 @@ test('editor searches Chinese object names and keeps recent usage as UI-only met
   await expect(page.getByRole('tab', { name: '职业/特职' })).toHaveAttribute('aria-selected', 'true')
 
   const tank = getPaletteItem(page, 'tank')
-  await expect(tank).toContainText('防护职业')
   await expect(tank).toHaveAttribute('aria-label', '防护职业')
   await expect(tank).toHaveAttribute('title', '防护职业（tank）')
   await expect(getPaletteItem(page, 'dps_4')).toHaveAttribute('title', '进攻职业4（dps_4）')
-  await expect(getPaletteItem(page, 'barrier_healer')).toContainText('护罩治疗职业')
+  await expect(getPaletteItem(page, 'barrier_healer')).toHaveAttribute('title', '护罩治疗职业（barrier_healer）')
+  await expect(page.locator('#palette .palette-item-label')).toHaveCount(0)
 
   await page.locator('#palette-search').fill('扇形')
   await expect(page.locator('#palette-result-status')).toHaveText('找到 1 个对象')
   await expect(page.locator('#palette-tabs [aria-selected="true"]')).toHaveCount(0)
-  await expect(getPaletteItem(page, 'fan_aoe')).toContainText('扇形范围攻击')
+  await expect(getPaletteItem(page, 'fan_aoe')).toHaveAttribute('title', '扇形范围攻击（fan_aoe）')
   await expect(tank).toHaveCount(0)
 
   await page.locator('#palette-search').fill('darkknight')
   await expect(page.locator('#palette-result-status')).toHaveText('找到 1 个对象')
-  await expect(getPaletteItem(page, 'dark_knight')).toContainText('暗黑骑士')
+  await expect(getPaletteItem(page, 'dark_knight')).toHaveAttribute('title', '暗黑骑士（dark_knight）')
 
   await page.locator('#palette-search').fill('不存在的对象')
   await expect(page.locator('#palette')).toContainText('没有匹配的对象')
@@ -1209,6 +1209,13 @@ test('editor resizes side panels and keeps object tabs visible', async ({ page }
   const paletteTabWritingMode = async () =>
     page.locator('#palette-tabs button').first().evaluate((tab) =>
       tab.ownerDocument.defaultView?.getComputedStyle(tab).writingMode ?? '')
+  const paletteTabColumnCount = async () =>
+    page.locator('#palette-tabs').evaluate((tabs) =>
+      tabs.ownerDocument.defaultView
+        ?.getComputedStyle(tabs)
+        .gridTemplateColumns
+        .split(' ')
+        .length ?? 0)
   const rightPropertyHeight = async () =>
     page.locator('#editor-shell').evaluate((shell) =>
       Number.parseFloat(
@@ -1234,6 +1241,8 @@ test('editor resizes side panels and keeps object tabs visible', async ({ page }
   expect(await toolrailFitsHorizontally()).toBe(true)
   expect(await tabsFit()).toBe(true)
   expect(await paletteTabWritingMode()).toBe('horizontal-tb')
+  expect(await paletteTabColumnCount()).toBe(2)
+  expect(assetBox.y + assetBox.height).toBeLessThanOrEqual(900)
   const initialPaletteColumns = await paletteColumnCount()
 
   const initialColumns = await shellColumns()
@@ -1247,9 +1256,10 @@ test('editor resizes side panels and keeps object tabs visible', async ({ page }
   await page.mouse.up()
   const narrowLeftColumns = await shellColumns()
   expect(narrowLeftColumns[0]).toBeCloseTo(276, 0)
-  expect(await paletteColumnCount()).toBe(3)
+  expect(await paletteColumnCount()).toBe(4)
   expect(await tabsFit()).toBe(true)
-  expect(await paletteTabWritingMode()).toBe('vertical-rl')
+  expect(await paletteTabWritingMode()).toBe('horizontal-tb')
+  expect(await paletteTabColumnCount()).toBe(2)
 
   await page.locator('#left-panel-resizer').dblclick()
   await expect.poll(() => shellColumns()).toEqual(expect.arrayContaining([390]))

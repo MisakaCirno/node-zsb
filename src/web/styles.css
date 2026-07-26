@@ -129,6 +129,8 @@ textarea {
 }
 
 .sidebar {
+  display: grid;
+  grid-template-rows: minmax(0, 1fr);
   border-right: 1px solid #27313a;
   min-height: 0;
   overflow: hidden;
@@ -234,8 +236,10 @@ textarea {
 
 .asset-panel {
   display: grid;
+  grid-template-rows: auto minmax(0, 1fr);
   gap: 0;
   min-width: 0;
+  min-height: 0;
   margin: 14px;
   padding: 0;
   overflow: hidden;
@@ -296,14 +300,12 @@ textarea {
   display: grid;
   grid-template-rows: auto minmax(0, 1fr);
   gap: 10px;
-  height: 100%;
 }
 
 .object-tab-panel {
   display: grid;
   grid-template-rows: auto auto auto minmax(0, 1fr);
   gap: 8px;
-  height: 100%;
 }
 
 .palette-search-row {
@@ -889,56 +891,41 @@ textarea {
 }
 
 .segmented {
-  align-items: flex-end;
-  gap: 0;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 6px;
   margin-bottom: 12px;
-  border-bottom: 1px solid #303b43;
-  overflow-x: auto;
-  scrollbar-width: thin;
 }
 
 .segmented button {
   position: relative;
-  flex: 0 0 auto;
   height: 34px;
-  border: 0;
-  border-radius: 0;
-  border-bottom: 2px solid transparent;
-  background: transparent;
+  min-width: 0;
+  border: 1px solid #303b43;
+  border-radius: 6px;
+  background: #151a1f;
   color: #9ba8b1;
-  padding: 0 5px;
+  padding: 0 8px;
   font-size: 13px;
-}
-
-.segmented.compact-tabs button {
-  min-width: 36px;
-  min-height: 54px;
-  height: auto;
-  padding: 7px 8px 8px;
-  line-height: 1.05;
-  writing-mode: vertical-rl;
+  white-space: nowrap;
 }
 
 .segmented button.active {
-  border-bottom-color: #66c2a5;
-  background: #12171b;
+  border-color: #66c2a5;
+  background: #20362f;
   color: #eef2f3;
+  box-shadow: inset 3px 0 0 #66c2a5;
 }
 
-.segmented button.active::after {
-  position: absolute;
-  right: 1px;
-  bottom: -1px;
-  left: 1px;
-  height: 1px;
-  background: #12171b;
-  content: "";
+.segmented button:not(.active):hover {
+  border-color: #4d665e;
+  background: #19251f;
 }
 
 .palette {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(64px, 1fr));
-  gap: 8px;
+  grid-template-columns: repeat(auto-fill, minmax(48px, 1fr));
+  gap: 6px;
   min-height: 0;
   overflow-y: auto;
   padding-right: 2px;
@@ -946,25 +933,12 @@ textarea {
 }
 
 .palette button {
-  height: 68px;
+  height: 48px;
   min-width: 0;
-  padding: 5px 4px;
+  padding: 5px;
   display: grid;
-  grid-template-rows: 30px auto;
-  gap: 3px;
   place-items: center;
   cursor: grab;
-}
-
-.palette-item-label {
-  width: 100%;
-  overflow: hidden;
-  color: #cbd5da;
-  font-size: 11px;
-  line-height: 1.2;
-  text-align: center;
-  text-overflow: ellipsis;
-  white-space: nowrap;
 }
 
 .palette-empty {

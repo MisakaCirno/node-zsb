@@ -122,12 +122,9 @@ function renderPalette({ state, elements, onAddObject }: PalettePanelDeps) {
     button.setAttribute('aria-label', displayName)
     button.append(createObjectPreview({
       iconConfigs: state.iconConfigs,
+      size: 36,
       type,
     }))
-    const label = document.createElement('span')
-    label.className = 'palette-item-label'
-    label.textContent = displayName
-    button.append(label)
     button.addEventListener('dragstart', (event) => {
       if (!event.dataTransfer) return
       event.dataTransfer.effectAllowed = 'copy'
