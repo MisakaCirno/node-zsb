@@ -3,17 +3,17 @@ import openapi, { fromTypes } from '@elysiajs/openapi'
 import { boardController } from './src/server/controllers/imageController.ts'
 import { utilsController } from './src/server/controllers/utilsController.ts'
 import { webController } from './src/server/controllers/webController.ts'
-
-const serverInfo = {
-  hostname: 'localhost',
-  port: 3000,
-}
+import { formatServerOrigin, getServerInfo } from './src/server/serverConfig.ts'
 
 interface StoppableServer {
   stop?: () => void | Promise<void>
 }
 
+const serverInfo = getServerInfo()
 const app = new Elysia()
+  .get('/health/live', () => ({
+    status: 'ok',
+  }))
   .use(
     openapi({
       references: fromTypes(),
@@ -26,7 +26,7 @@ const app = new Elysia()
 const server: unknown = app.listen(serverInfo)
 
 console.log(
-  `Server running at http://${serverInfo.hostname}:${serverInfo.port}`
+  `Server running at ${formatServerOrigin(serverInfo)}`
 )
 
 async function shutdown() {

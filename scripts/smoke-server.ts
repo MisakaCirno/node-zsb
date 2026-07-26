@@ -40,6 +40,10 @@ async function main() {
     await waitForServer()
   }
 
+  const health = await expectJson<{ status?: unknown }>('/health/live')
+  if (health.status !== 'ok') {
+    throw new Error('Health endpoint did not report an ok status')
+  }
   await expectResponse('/editor', 'text/html')
   await expectResponse('/editor/app.js', 'javascript')
   await expectResponse('/board', 'image/webp', { requireBody: true })

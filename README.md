@@ -2,7 +2,7 @@
 
 基于 Bun、Elysia、Konva、skia-canvas 和 sharp 的战术板图片渲染与可视化编辑服务。
 
-项目统一使用 Bun 运行，不提供 Node.js 启动路径。当前固定并验证的运行时版本为 Bun 1.3.5；Windows 部署基线为 Windows Server 2022 x64。
+项目统一使用 Bun 运行，不提供 Node.js 启动路径。当前开发和完整回归基线为 Bun 1.3.5；Windows 启动器不强制锁定补丁版本，部署机器可在构建和冒烟通过后使用同一 1.x 系列的较新补丁版本。Windows 部署基线为 Windows Server 2022 x64。
 
 项目同时提供两类能力：
 
@@ -25,6 +25,8 @@ bun install
 bun run start
 ```
 
+Windows Server 生产环境使用仓库根目录的 `start_node_zsb.bat`。启动器会检查当前分支的远端更新，只接受快进更新，并在提交变化时自动安装锁定依赖、构建、冒烟后以前台方式启动服务。详细步骤见 [Windows Server 直接 Git 部署手册](docs/windows-server-deployment.md)。
+
 开发 watch 模式：
 
 ```bash
@@ -36,6 +38,13 @@ bun run dev
 ```text
 http://localhost:3000
 ```
+
+可通过环境变量修改监听参数：
+
+| 环境变量 | 默认值 | 用途 |
+| --- | --- | --- |
+| `NODE_ZSB_HOST` | `localhost` | 服务监听主机；当前 Windows 生产环境会解析为 IPv6 回环 `[::1]` |
+| `NODE_ZSB_PORT` | `3000` | 1 到 65535 的监听端口 |
 
 编辑器入口：
 
@@ -139,6 +148,7 @@ bun run test:smoke
 - `POST /utils/json2code`：战术板 JSON 转分享码。
 - `GET /editor`：打开可编辑战术板画板。
 - `GET /editor-data`：读取编辑器图标、背景和默认代码元数据。
+- `GET /health/live`：返回轻量进程存活状态。
 
 无效战术板分享码会返回 `400`，不会静默回退为默认图。
 

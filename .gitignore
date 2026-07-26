@@ -1,5 +1,6 @@
 # dependencies (bun install)
 node_modules
+/package-lock.json
 
 # output
 out
@@ -37,6 +38,11 @@ report.[0-9]_.[0-9]_.[0-9]_.[0-9]_.json
 cache
 playwright-report
 test-results
+.node-zsb-runtime
+
+# Legacy launchers kept only on the existing Windows server for manual rollback.
+/bun_start.bat
+/node_start.bat
 
 # Local font experiments; the app tracks the specific MiSans weight it uses.
 src/assets/fonts/MiSans-*.ttf
