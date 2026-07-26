@@ -242,6 +242,44 @@ function numberAt(values: number[], index: number): number {
   return value
 }
 
+test('editor loads and renders through a stripped reverse-proxy prefix', async ({
+  page,
+}) => {
+  const proxiedPaths: string[] = []
+  await page.route('**/n/**', async (route) => {
+    const upstream = new URL(route.request().url())
+    proxiedPaths.push(upstream.pathname)
+    upstream.pathname = upstream.pathname.replace(/^\/n(?=\/)/, '')
+    const response = await route.fetch({ url: upstream.toString() })
+    await route.fulfill({ response })
+  })
+
+  await page.goto('/n/editor')
+
+  await expect(page).toHaveTitle('战术板编辑器')
+  await expect(page.locator('#stage-host canvas').first()).toBeVisible()
+  await expect(getPaletteItem(page, 'tank')).toBeVisible()
+  await openExportImageDialog(page)
+  await expect(page.locator('#preview-image')).toHaveAttribute(
+    'src',
+    /^\/n\/preview\/[a-f0-9]{64}\.webp/,
+  )
+  await expect.poll(() => page.locator('#preview-image').evaluate((image) =>
+    image instanceof HTMLImageElement && image.complete && image.naturalWidth > 0)).toBe(true)
+  await page.unrouteAll({ behavior: 'wait' })
+
+  expect(proxiedPaths).toEqual(expect.arrayContaining([
+    '/n/editor',
+    '/n/editor/styles.css',
+    '/n/vendor/konva.min.js',
+    '/n/editor/app.js',
+    '/n/editor-data',
+    '/n/board/render',
+  ]))
+  expect(proxiedPaths.some((path) => path.startsWith('/n/assets/background/'))).toBe(true)
+  expect(proxiedPaths.some((path) => path.startsWith('/n/preview/'))).toBe(true)
+})
+
 test('editor loads, edits an object, exports code, and renders a preview', async ({
   page,
 }) => {

@@ -1,4 +1,5 @@
 import { normalizeBoard } from './board.js'
+import { toAppUrl } from './appUrl.js'
 import { encodeBoardCode, renderPreviewImage } from './api.js'
 import {
   BUILT_IN_PROJECT_OBJECT_TYPES,
@@ -998,7 +999,7 @@ export function createLocalBoardsPanel({
     try {
       const code = await encodeBoardCode(board)
       const data = await renderPreviewImage(code)
-      return `/preview/${data.hash}.webp`
+      return toAppUrl(`/preview/${data.hash}.webp`)
     } catch (error) {
       console.warn('Failed to create local file preview', error)
       try {

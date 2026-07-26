@@ -14,6 +14,7 @@ import {
   traceCenteredSectorPath,
   traceDonutPath,
 } from '../shared/objectRendering.js'
+import { toAppUrl } from './appUrl.js'
 import {
   getStrategyTextCanvasFont,
   getStrategyTextCanvasStrokeWidth,
@@ -154,7 +155,7 @@ async function drawIcon(
     return
   }
   try {
-    const image = await loadImage(`/assets/objects/${config.src}.webp`)
+    const image = await loadImage(toAppUrl(`/assets/objects/${config.src}.webp`))
     const size = config.size * scale
     context.drawImage(
       image,

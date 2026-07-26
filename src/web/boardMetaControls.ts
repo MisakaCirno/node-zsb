@@ -1,4 +1,5 @@
 import { getBrowserDocument } from './browser.js'
+import { toAppUrl } from './appUrl.js'
 import type {
   EditorState,
   TextElement,
@@ -43,7 +44,7 @@ export function createBoardMetaControls({
       button.classList.toggle('active', key === state.board.boardBackground)
       button.title = key
       button.innerHTML = `
-        <img src="/assets/background/${imageId}.webp" alt="" />
+        <img src="${toAppUrl(`/assets/background/${imageId}.webp`)}" alt="" />
         <span>${key}</span>
       `
       button.addEventListener('click', () => onBackgroundChange(key))

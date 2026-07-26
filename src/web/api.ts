@@ -2,6 +2,7 @@ import type {
   Board,
   EditorData,
 } from './types.js'
+import { toAppUrl } from './appUrl.js'
 
 declare function fetch(url: string, init?: FetchInit): Promise<FetchResponse>
 
@@ -58,14 +59,14 @@ export async function renderPreviewImage(code: string): Promise<RenderPreviewDat
 }
 
 async function getJson<T>(url: string): Promise<T> {
-  const response = await fetch(url)
+  const response = await fetch(toAppUrl(url))
   const payload = await readResponsePayload(response)
   if (!response.ok) throw new Error(getErrorMessage(payload))
   return payload as T
 }
 
 async function postJson<T>(url: string, body: unknown): Promise<T> {
-  const response = await fetch(url, {
+  const response = await fetch(toAppUrl(url), {
     method: 'POST',
     headers: { 'content-type': 'application/json' },
     body: JSON.stringify(body),

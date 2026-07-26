@@ -35,6 +35,7 @@ import {
   getStrategyTextFontLoadSpec,
 } from '../shared/textRendering.js'
 import { getSelectedIndexes } from './editorState.js'
+import { toAppUrl } from './appUrl.js'
 import { loadCachedBrowserImage } from './imageCache.js'
 import { getObjectBounds } from './objectAlignment.js'
 import {
@@ -421,7 +422,7 @@ export function createStageRenderer({
       ?? getBoardBackgroundId(state.board.boardBackground)
     if (backgroundId === lastBoardRenderSignature) return
     const startedAt = performance.now()
-    const image = await loadImage(`/assets/background/${backgroundId}.webp`)
+    const image = await loadImage(toAppUrl(`/assets/background/${backgroundId}.webp`))
     boardLayer.destroyChildren()
     boardLayer.add(
       new Konva.Image({
@@ -1074,7 +1075,7 @@ export function createStageRenderer({
         traceCircleAoeClipPath(ctx, spec)
       })
     }
-    const image = await loadImage('/assets/objects/circle_aoe.webp')
+    const image = await loadImage(toAppUrl('/assets/objects/circle_aoe.webp'))
     group.add(new Konva.Image({ image, width: spec.imageWidth, height: spec.imageHeight }))
     return group
   }
@@ -1106,7 +1107,7 @@ export function createStageRenderer({
     if (!config) {
       return createTextNode({ ...object, text: object.type, color: DEFAULT_TEXT_COLOR })
     }
-    const image = await loadImage(`/assets/objects/${config.src}.webp`)
+    const image = await loadImage(toAppUrl(`/assets/objects/${config.src}.webp`))
     const spec = createIconRenderSpec(object, config.size)
     return new Konva.Image({
       image,

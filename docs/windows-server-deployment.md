@@ -13,6 +13,12 @@ Internet
 
 Nginx 的 `proxy_pass http://[::1]:3000/;` 会去掉 `/n/` 前缀。只要启动器继续使用默认的 `localhost:3000`，部署时不需要修改 Nginx。
 
+编辑器会根据浏览器中的 `/n/editor` 地址自动为脚本、素材、API 和预览请求保留 `/n` 前缀；公网入口固定为：
+
+```text
+https://ff14hub.com/n/editor
+```
+
 ## 启动器行为
 
 双击仓库根目录的 `start_node_zsb.bat` 后，启动器会：

@@ -52,6 +52,14 @@ http://localhost:3000
 http://localhost:3000/editor
 ```
 
+当前生产环境经 Nginx 的 `/n/` 前缀访问，公网编辑器入口为：
+
+```text
+https://ff14hub.com/n/editor
+```
+
+编辑器会从页面地址自动识别反向代理前缀，因此脚本、素材、API 和预览请求会继续经过同一个 `/n/` location。
+
 如果浏览器显示 `NOT_FOUND`，先确认访问的是 `/editor`，不是站点根路径 `/`。
 
 ## 编辑器能力
