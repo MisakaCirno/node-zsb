@@ -12,6 +12,7 @@ import {
 } from '../utils/renderCache.ts'
 
 const IMMUTABLE_CACHE_CONTROL = 'public, max-age=31536000, immutable'
+const RENDER_META_CACHE_CONTROL = 'public, max-age=60, must-revalidate'
 const REVALIDATE_CACHE_CONTROL = 'public, no-cache'
 const NO_STORE_CACHE_CONTROL = 'no-store'
 
@@ -35,6 +36,26 @@ export function createBoardController(
   dependencies: BoardControllerDependencies = defaultDependencies,
 ) {
   return new Elysia()
+    .get(
+      '/render-meta',
+      ({ set }) => {
+        set.headers['cache-control'] = RENDER_META_CACHE_CONTROL
+        return {
+          ok: true as const,
+          data: { renderVersion: dependencies.renderVersion },
+        }
+      },
+      {
+        response: t.Object({
+          ok: t.Literal(true),
+          data: t.Object({ renderVersion: t.String({ minLength: 1 }) }),
+        }),
+        detail: {
+          summary: '获取当前渲染版本',
+          description: '返回图片 URL 的 rv 参数；最多缓存 60 秒，不触发图片渲染或读取图片缓存。',
+        },
+      },
+    )
     .get(
       '/board/:code?',
       async ({ params, query, request, set }) => {

@@ -20,6 +20,11 @@ interface RenderPayload {
   }
 }
 
+interface RenderMetaPayload {
+  ok?: unknown
+  data?: { renderVersion?: unknown }
+}
+
 interface AssetManifest {
   webVersion: string
   stylesVersion: string
@@ -55,6 +60,12 @@ async function main() {
   const health = await expectJson<{ status?: unknown }>('/health/live')
   if (health.status !== 'ok') {
     throw new Error('Health endpoint did not report an ok status')
+  }
+  const renderMeta = await expectResponse('/render-meta', 'application/json')
+  expectHeader(renderMeta, 'cache-control', 'public, max-age=60, must-revalidate')
+  const renderMetaPayload = await renderMeta.json() as RenderMetaPayload
+  if (renderMetaPayload.ok !== true || renderMetaPayload.data?.renderVersion !== RENDER_CACHE_VERSION) {
+    throw new Error('Render metadata did not advertise the active image cache version')
   }
   const editor = await expectResponse('/editor', 'text/html')
   const editorHtml = await editor.text()
@@ -101,7 +112,7 @@ async function main() {
   const compatibleBoard = await expectResponse('/board', 'image/webp', { requireBody: true })
   expectHeader(compatibleBoard, 'cache-control', 'public, no-cache')
   const versionedBoard = await expectResponse(
-    `/board?rv=${encodeURIComponent(RENDER_CACHE_VERSION)}`,
+    `/board?rv=${encodeURIComponent(renderMetaPayload.data.renderVersion)}`,
     'image/webp',
     { requireBody: true },
   )

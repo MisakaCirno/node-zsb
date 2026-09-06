@@ -5,9 +5,51 @@ import {
   createBoardController,
   type BoardControllerDependencies,
 } from '../../src/server/controllers/imageController.ts'
+import { RENDER_CACHE_VERSION } from '../../src/server/utils/renderCache.ts'
 
 const code = '[stgy:test]'
 const hash = 'a'.repeat(64)
+
+test('render metadata exposes the active renderer version without image work', async () => {
+  const unexpectedImageWork = () => {
+    assert.fail('Reading render metadata must not render, read image files or validate board codes')
+  }
+  const app = createBoardController(createDependencies({
+    renderVersion: 'next/version',
+    render: unexpectedImageWork,
+    renderOffline: unexpectedImageWork,
+    readCached: unexpectedImageWork,
+    validate: unexpectedImageWork,
+  }))
+  const response = await app.handle(requestFor('/render-meta'))
+
+  assert.equal(response.status, 200)
+  assert.match(response.headers.get('content-type') ?? '', /application\/json/)
+  assert.equal(response.headers.get('cache-control'), 'public, max-age=60, must-revalidate')
+  assert.deepEqual(await response.json(), { ok: true, data: { renderVersion: 'next/version' } })
+})
+
+test('default render metadata uses the same version as the image cache', async () => {
+  const response = await createBoardController().handle(requestFor('/render-meta'))
+  assert.equal(response.status, 200)
+  assert.deepEqual(await response.json(), { ok: true, data: { renderVersion: RENDER_CACHE_VERSION } })
+})
+
+test('discovered render versions produce immutable URLs and update across renderer releases', async () => {
+  for (const renderVersion of ['old-renderer', 'next/version']) {
+    const app = createBoardController(createDependencies({ renderVersion }))
+    const metadata = await app.handle(requestFor('/render-meta'))
+    const payload = await metadata.json() as { data: { renderVersion: string } }
+    const response = await app.handle(requestFor(
+      `/board/${encodeURIComponent(code)}?rv=${encodeURIComponent(payload.data.renderVersion)}`,
+    ))
+
+    assert.equal(payload.data.renderVersion, renderVersion)
+    assert.equal(response.status, 200)
+    assert.equal(response.headers.get('location'), null)
+    assert.equal(response.headers.get('cache-control'), 'public, max-age=31536000, immutable')
+  }
+})
 
 test('versioned board images use immutable browser caching and stable etags', async () => {
   const app = createBoardController(createDependencies())

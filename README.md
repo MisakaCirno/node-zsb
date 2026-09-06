@@ -151,6 +151,7 @@ bun run test:smoke
 
 ## API
 
+- `GET /render-meta`：返回当前渲染版本，供分享站自动生成图片 URL；不触发图片渲染。
 - `GET /board/:code?`：根据战术板分享码渲染 WebP 图片；未传 `code` 时渲染默认示例图。
 - `POST /board/render`：渲染战术板并返回图片 `hash` 和 `thumbhash`。
 - `GET /preview/:name`：根据 `hash` 读取缓存图片。
@@ -172,4 +173,19 @@ bun run test:smoke
 - 浏览器使用 WOFF2 版 MiSans 字体，服务端渲染继续使用原始 TTF，两端文字度量保持一致。
 - `cache` 已在 `.gitignore` 中忽略。
 
-`RENDER_CACHE_VERSION` 只在渲染像素可能变化时升级，并应同步更新 FFXIVShare 的 `BOARD_RENDER_CACHE_VERSION`。推荐先部署分享站的新版本参数，再部署新版渲染器；版本不一致请求会使用 `no-store` 临时跳转到当前版本。
+`RENDER_CACHE_VERSION` 只在渲染像素可能变化时升级，由本项目统一维护。接入方应通过下述接口自动发现版本；版本不一致的图片请求仍会使用 `no-store` 临时跳转到当前版本。
+
+### 自动获取渲染版本
+
+请求 `GET /render-meta`，经生产反向代理访问时为 `/n/render-meta`。无需登录或分享码，响应示例：
+
+```json
+{"ok":true,"data":{"renderVersion":"3"}}
+```
+
+- `data.renderVersion` 是非空的不透明字符串，与服务端图片缓存键及 `rv` 校验共用同一来源；不要将它解析为整数或在接入项目中写死。
+- 元数据响应使用 `Cache-Control: public, max-age=60, must-revalidate`，图片仍使用一年不可变缓存。该接口仅返回版本，不访问图片文件或生成图片。
+- 分享站后端统一获取并复用该版本，拼接 `/n/board/<编码后的分享码>?rv=<编码后的版本>`。卡片、详情和弹窗应共用同一个版本获取器，避免逐图片查询。
+- 接入方缓存版本值时，最长复用 60 秒；若上游响应带 `Age`，应扣除已缓存时间，避免代理缓存和应用缓存叠加延迟。缓存过期后的下一次请求重新获取，且并发刷新应合并。
+- 接口不可用、超时或响应格式不合法时，回退到不带 `rv` 的图片 URL。该入口使用 `no-cache` 和 ETag 校验；不要无限延长旧版本值的有效期。
+- 元数据支持上线后，FFXIVShare 仍需一次性接入，并移除固定 `BOARD_RENDER_CACHE_VERSION`。完成后仅更新和部署本项目即可让后续页面自动使用新版本；已经打开的页面需刷新，整页 HTML 缓存也不能长期固定旧图片地址。
