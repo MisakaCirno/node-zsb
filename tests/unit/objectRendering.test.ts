@@ -171,7 +171,35 @@ test('createDonutRenderSpec shares inner radius, crop offset and fill color', ()
   assert.equal(spec.offsetX, offset.offsetX)
   assert.equal(spec.offsetY, offset.offsetY)
   assert.equal(spec.fill, DEFAULT_DONUT_COLOR)
+  assert.equal(spec.fill, '#FFA131')
   assert.equal(spec.arcAngle, 180)
+})
+
+test('donut local bounds follow the visible arc around the path origin', () => {
+  for (const arcAngle of [10, 45, 90, 180, 210, 270, 360]) {
+    for (const donutRadius of [0, 80, 240]) {
+      const spec = createDonutRenderSpec({ type: 'donut', x: 0, y: 0, arcAngle, donutRadius })
+      const points = []
+      for (let step = 0; step <= 3600; step += 1) {
+        const angle = spec.startAngle + (spec.endAngle - spec.startAngle) * step / 3600
+        for (const radius of [spec.innerRadius, spec.outerRadius]) {
+          points.push({ x: Math.cos(angle) * radius, y: Math.sin(angle) * radius })
+        }
+      }
+      const left = Math.min(...points.map((point) => point.x))
+      const top = Math.min(...points.map((point) => point.y))
+      const right = Math.max(...points.map((point) => point.x))
+      const bottom = Math.max(...points.map((point) => point.y))
+      for (const [actual, expected] of [
+        [spec.localBounds.x, left],
+        [spec.localBounds.y, top],
+        [spec.localBounds.width, right - left],
+        [spec.localBounds.height, bottom - top],
+      ]) {
+        assert.ok(Math.abs(actual! - expected!) < 0.001, `arc=${arcAngle}, radius=${donutRadius}`)
+      }
+    }
+  }
 })
 
 test('createIconRenderSpec converts icon size and flips consistently', () => {

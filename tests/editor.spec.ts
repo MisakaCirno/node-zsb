@@ -496,6 +496,95 @@ test('editor shows a hover preselection outline without selecting the object', a
   await expect(page.locator('#inspector-form')).toBeHidden()
 })
 
+test('object menu icons use orange defaults and match rectangle and ring geometry', async ({ page }) => {
+  await page.goto('/editor')
+  await expect(page.locator('#layers')).toContainText('tank')
+  await page.getByRole('tab', { name: '攻击范围' }).click()
+  for (const type of ['line_aoe', 'circle_aoe', 'fan_aoe', 'donut']) {
+    const fill = getPaletteItem(page, type).locator('.shape-fill')
+    await expect(fill).toHaveCSS('fill', type === 'donut' ? 'rgb(255, 161, 49)' : 'rgb(255, 127, 0)')
+    await expect(fill).toHaveCSS('stroke', 'none')
+  }
+  await expect(getPaletteItem(page, 'line_aoe').locator('rect')).not.toHaveAttribute('rx')
+  const donut = getPaletteItem(page, 'donut')
+  await expect(donut.locator('svg > *')).toHaveCount(1)
+  await expect(donut.locator('path')).toHaveAttribute('fill-rule', 'evenodd')
+  await donut.click()
+  await expect(getLayerRow(page, 'donut').locator('.shape-fill')).toHaveCSS('fill', 'rgb(255, 161, 49)')
+  await page.getByRole('tab', { name: '图形/记号' }).click()
+  await expect(getPaletteItem(page, 'line').locator('path')).toHaveCSS('stroke', 'rgb(255, 127, 0)')
+})
+
+for (const arcAngle of [45, 180, 360]) {
+  test(`donut ${arcAngle} shows hover and selection bounds`, async ({ page }) => {
+    await page.goto('/editor')
+    await expect(page.locator('#layers')).toContainText('tank')
+    await page.getByRole('tab', { name: '攻击范围' }).click()
+    await getPaletteItem(page, 'donut').click()
+    await page.locator('#object-size').fill('30')
+    await page.locator('#object-size').press('Tab')
+    await page.locator('#object-arc').fill(String(arcAngle))
+    await page.locator('#object-arc').press('Tab')
+
+    const readBounds = () => page.evaluate(`(() => {
+      const stage = Konva.stages.find(stage => stage.container().id === 'stage-host')
+      const transformers = stage.getLayers()[3].getChildren()
+      const selected = transformers[2]
+      const node = selected.nodes()[0] || transformers[0].nodes()[0]
+      return {
+        selected: selected.nodes().length,
+        hovered: transformers[0].nodes().length,
+        width: node?.getClientRect().width || 0,
+        height: node?.getClientRect().height || 0,
+      }
+    })()`) as Promise<{ selected: number, hovered: number, width: number, height: number }>
+    await expect.poll(async () => (await readBounds()).width).toBeGreaterThan(20)
+    await expect.poll(async () => (await readBounds()).height).toBeGreaterThan(20)
+
+    // Pick a point on the actual painted ring, including its crop offset.
+    const hitPoint = await page.evaluate(`(() => {
+      const stage = Konva.stages.find(stage => stage.container().id === 'stage-host')
+      const group = stage.getLayers()[3].getChildren()[2].nodes()[0]
+      const angle = (-90 + ${arcAngle} / 2) * Math.PI / 180
+      const point = group.getAbsoluteTransform().point({x: 320 * Math.cos(angle), y: 320 * Math.sin(angle)})
+      return {x: point.x / stage.width(), y: point.y / stage.height()}
+    })()`) as { x: number, y: number }
+    await clickCanvasLogical(page, 20, 20)
+    await expect.poll(async () => (await readBounds()).selected).toBe(0)
+    const box = await page.locator('#stage-host canvas').first().boundingBox()
+    if (!box) throw new Error('Canvas is not visible')
+    await page.mouse.move(box.x + hitPoint.x * box.width, box.y + hitPoint.y * box.height)
+    await expect.poll(async () => (await readBounds()).hovered).toBe(1)
+    await expect.poll(async () => (await getHoverHighlightStats(page)).lightPixels).toBeGreaterThan(20)
+    await page.mouse.click(box.x + hitPoint.x * box.width, box.y + hitPoint.y * box.height)
+    await expect(page.locator('#object-type')).toHaveValue('donut')
+    await expect.poll(async () => (await readBounds()).selected).toBe(1)
+    await expect.poll(async () => (await readBounds()).hovered).toBe(0)
+    if (arcAngle === 360) {
+      const pixels = await page.evaluate(`(() => {
+        const stage = Konva.stages.find(stage => stage.container().id === 'stage-host')
+        const transformer = stage.getLayers()[3].getChildren()[2]
+        const canvas = transformer.nodes()[0].toCanvas()
+        const context = canvas.getContext('2d')
+        const anchor = transformer.findOne('.top-left').getAbsolutePosition()
+        return {
+          ring: [...context.getImageData(canvas.width * 0.75, canvas.height / 2, 1, 1).data],
+          center: [...context.getImageData(canvas.width / 2, canvas.height / 2, 1, 1).data],
+          anchor: {x: anchor.x / stage.width(), y: anchor.y / stage.height()},
+        }
+      })()`) as { ring: number[], center: number[], anchor: { x: number, y: number } }
+      expect(pixels.ring).toEqual([255, 161, 49, 255])
+      expect(pixels.center[3]).toBe(0)
+      const corner = { x: box.x + pixels.anchor.x * box.width, y: box.y + pixels.anchor.y * box.height }
+      await page.mouse.move(corner.x, corner.y)
+      await page.mouse.down()
+      await page.mouse.move(corner.x - 20, corner.y - 20, { steps: 8 })
+      await page.mouse.up()
+      await expect.poll(async () => Number(await page.locator('#object-size').inputValue())).toBeGreaterThan(30)
+    }
+  })
+}
+
 test('editor selects an unselected object as soon as canvas drag starts', async ({ page }) => {
   await page.goto('/editor')
   await expect(page.locator('#layers')).toContainText('tank')

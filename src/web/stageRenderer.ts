@@ -116,6 +116,7 @@ interface KonvaNode {
   getAttr(name: string): unknown
   getActiveAnchor?(): string | null
   getLayer(): unknown
+  getSelfRect(): { x: number, y: number, width: number, height: number }
   getPointerPosition(): Point | null
   keepRatio(value: boolean): void
   nodes(nodes: KonvaNode[]): void
@@ -1098,6 +1099,8 @@ export function createStageRenderer({
         ctx.fillStrokeShape(shape)
       },
     })
+    // Custom scene paths do not supply geometry to Konva's transformers.
+    shape.getSelfRect = () => ({ ...spec.localBounds })
     group.add(shape)
     return group
   }

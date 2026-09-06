@@ -4,6 +4,8 @@ import test from 'node:test'
 import type { DecodeResult } from 'xiv-strat-board'
 import { renderBoard } from '../../src/server/renderer/renderer.ts'
 import { SCENE_HEIGHT, SCENE_WIDTH } from '../../src/server/utils/resize.ts'
+import { getObjectBounds } from '../../src/web/objectAlignment.ts'
+import { createEditorState } from '../../src/web/editorState.ts'
 
 test('renderBoard creates a server-side stage for mixed objects', async () => {
   const boardData = {
@@ -43,5 +45,30 @@ test('renderBoard creates a server-side stage for mixed objects', async () => {
     ])
   } finally {
     stage.destroy()
+  }
+})
+
+test('server donuts expose visible bounds through rotations and flips', async () => {
+  const state = createEditorState()
+  for (const arcAngle of [45, 180, 360]) {
+    for (const angle of [0, 35]) {
+      const object = {
+        type: 'donut' as const, x: 256, y: 192, size: 30,
+        donutRadius: 80, arcAngle, angle, horizontalFlip: true, verticalFlip: true,
+      }
+      const stage = await renderBoard({ version: 1, name: '', boardBackground: 'none', objects: [object] })
+      try {
+        const node = stage.getLayers()[1]!.getChildren()[0]!
+        const rect = node.getClientRect()
+        const expected = getObjectBounds(object, state)
+        assert.ok(Math.abs(rect.x - expected.left * 2) < 0.001)
+        assert.ok(Math.abs(rect.y - expected.top * 2) < 0.001)
+        assert.ok(Math.abs(rect.width - (expected.right - expected.left) * 2) < 0.001)
+        assert.ok(Math.abs(rect.height - (expected.bottom - expected.top) * 2) < 0.001)
+        assert.equal(stage.getLayers()[1]!.findOne('Shape')!.getAttr('fill'), '#FFA131')
+      } finally {
+        stage.destroy()
+      }
+    }
   }
 })

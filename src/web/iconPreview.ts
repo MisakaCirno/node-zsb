@@ -2,6 +2,11 @@ import type {
   IconConfig,
 } from './types.js'
 import { toAssetUrl } from './assetUrl.js'
+import {
+  DEFAULT_AOE_COLOR,
+  DEFAULT_DONUT_COLOR,
+  DEFAULT_LINE_COLOR,
+} from '../shared/boardGeometry.js'
 
 type ShapePreviewTag = 'circle' | 'path' | 'rect'
 type ShapePreviewEntry = [ShapePreviewTag, Record<string, string>]
@@ -15,8 +20,6 @@ interface ObjectPreviewOptions {
 const SHAPE_PREVIEWS: Record<string, ShapePreviewEntry[]> = {
   line: [
     ['path', { d: 'M6 22L22 6', class: 'shape-stroke' }],
-    ['circle', { cx: '6', cy: '22', r: '2', class: 'shape-dot' }],
-    ['circle', { cx: '22', cy: '6', r: '2', class: 'shape-dot' }],
   ],
   line_aoe: [
     ['rect', {
@@ -24,7 +27,6 @@ const SHAPE_PREVIEWS: Record<string, ShapePreviewEntry[]> = {
       y: '4',
       width: '10',
       height: '20',
-      rx: '3',
       class: 'shape-fill',
       transform: 'rotate(45 14 14)',
     }],
@@ -37,8 +39,11 @@ const SHAPE_PREVIEWS: Record<string, ShapePreviewEntry[]> = {
     ['path', { d: 'M14 14L14 4M14 14L23.5 17.2', class: 'shape-stroke' }],
   ],
   donut: [
-    ['circle', { cx: '14', cy: '14', r: '9', class: 'shape-ring' }],
-    ['circle', { cx: '14', cy: '14', r: '4', class: 'shape-ring-hole' }],
+    ['path', {
+      d: 'M14 3A11 11 0 1 1 14 25A11 11 0 1 1 14 3Z M14 9A5 5 0 1 1 14 19A5 5 0 1 1 14 9Z',
+      class: 'shape-fill',
+      'fill-rule': 'evenodd',
+    }],
   ],
 }
 
@@ -84,6 +89,9 @@ function createFallbackPreview(type: string, size: number) {
   }
 
   preview.classList.add('shape-swatch')
+  preview.style.setProperty('--shape-color', type === 'donut'
+    ? DEFAULT_DONUT_COLOR
+    : type === 'line' || type === 'line_aoe' ? DEFAULT_LINE_COLOR : DEFAULT_AOE_COLOR)
   preview.classList.remove('text-swatch')
   preview.setAttribute('aria-hidden', 'true')
   const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg')

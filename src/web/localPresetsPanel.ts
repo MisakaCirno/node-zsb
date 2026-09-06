@@ -310,5 +310,5 @@ function normalizePresetName(name: unknown) {
 }
 
 function getPresetCacheKey(preset: LocalLayerPreset): string {
-  return `${preset.id}:${preset.contentHash}`
+  return `v2:${preset.id}:${preset.contentHash}`
 }

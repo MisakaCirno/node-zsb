@@ -4,6 +4,7 @@ import {
   DEFAULT_LINE_COLOR,
   calculateCircleOffset,
   calculateDonutOffset,
+  calculateSectorBounds,
   flippedScale,
   normalizeArcAngle,
   normalizeLineAoeHeight,
@@ -89,6 +90,7 @@ export interface CircleAoeRenderSpec {
 }
 
 export interface DonutRenderSpec {
+  localBounds: { x: number, y: number, width: number, height: number }
   x: number
   y: number
   offsetX: number
@@ -234,6 +236,7 @@ export function createDonutRenderSpec(
   const arcAngle = normalizeArcAngle(object.arcAngle ?? 360)
   const startAngle = -Math.PI / 2
   const innerRadius = toSceneCoordinate(object.donutRadius ?? 80)
+  const bounds = calculateSectorBounds(arcAngle, AOE_RADIUS, innerRadius)
   const offset = calculateDonutOffset({
     arcAngle,
     outerRadius: AOE_RADIUS,
@@ -247,6 +250,12 @@ export function createDonutRenderSpec(
     outerRadius: AOE_RADIUS,
     innerRadius,
     arcAngle,
+    localBounds: {
+      x: bounds.left - AOE_RADIUS,
+      y: bounds.top - AOE_RADIUS,
+      width: bounds.right - bounds.left,
+      height: bounds.bottom - bounds.top,
+    },
     startAngle,
     endAngle: startAngle + (arcAngle * Math.PI) / 180,
     fill: DEFAULT_DONUT_COLOR,

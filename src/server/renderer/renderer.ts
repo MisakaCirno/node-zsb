@@ -156,6 +156,7 @@ function createDonutNode(data: StrategyObject): Konva.Group {
     fill: spec.fill,
   })
 
+  shape.getSelfRect = () => ({ ...spec.localBounds })
   group.add(shape)
   return group
 }

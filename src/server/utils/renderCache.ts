@@ -2,7 +2,7 @@ import { createHash, randomUUID } from 'node:crypto'
 import * as nodeFs from 'node:fs/promises'
 import path from 'node:path'
 
-export const RENDER_CACHE_VERSION = '2'
+export const RENDER_CACHE_VERSION = '3'
 export const RENDER_CACHE_HASH_PATTERN = /^[a-f0-9]{64}$/
 
 export interface RenderCacheFileSystem {
